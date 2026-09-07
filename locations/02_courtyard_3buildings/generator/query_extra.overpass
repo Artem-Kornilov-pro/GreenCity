@@ -1,0 +1,11 @@
+[out:json][timeout:20];
+(
+  way["amenity"="parking"](55.6715,37.5680,55.6760,37.5760);
+  way["amenity"="parking_space"](55.6715,37.5680,55.6760,37.5760);
+  way["landuse"="grass"](55.6715,37.5680,55.6760,37.5760);
+  way["leisure"="garden"](55.6715,37.5680,55.6760,37.5760);
+  node["highway"="street_lamp"](55.6715,37.5680,55.6760,37.5760);
+);
+out body;
+>;
+out skel qt;

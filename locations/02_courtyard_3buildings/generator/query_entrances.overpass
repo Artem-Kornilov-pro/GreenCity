@@ -1,0 +1,5 @@
+[out:json][timeout:20];
+(
+  node["entrance"](55.6715,37.5680,55.6760,37.5760);
+);
+out body;
