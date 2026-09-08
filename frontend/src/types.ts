@@ -63,4 +63,18 @@ export interface Scene {
 }
 
 // Типы объектов, которые пользователь может перетаскивать на сцене.
-export const EDITABLE_TYPES = new Set(["tree", "bush", "bench", "lamp"]);
+// path_segment/hedge_segment — линейные элементы дизайна (плитка дорожки,
+// секция живой изгороди), которые собираются в дорожку/изгородь вручную:
+// пользователь ставит и разворачивает несколько сегментов подряд, а не
+// рисует полилинию — так они укладываются в ту же модель SceneObject
+// (позиция + поворот + масштаб), что и все остальные объекты.
+export const EDITABLE_TYPES = new Set([
+  "tree",
+  "bush",
+  "bench",
+  "lamp",
+  "trash",
+  "fountain",
+  "path_segment",
+  "hedge_segment",
+]);

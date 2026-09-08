@@ -144,3 +144,79 @@
 .dot.allowed {
   background: #3fae5a;
 }
+
+.add-row {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+}
+
+.add-row select {
+  flex: 1;
+  min-width: 0;
+  border-radius: 6px;
+  border: 1px solid #cfe0cf;
+  padding: 5px 6px;
+  font-size: 12px;
+  background: #fff;
+}
+
+.add-buttons {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.add-btn {
+  cursor: pointer;
+  background: #eef4ee;
+  color: #1f2733;
+  border: 1px solid #cfe0cf;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.add-btn:hover {
+  background: #dcebdc;
+}
+
+.delete-btn {
+  margin-top: 10px;
+  cursor: pointer;
+  background: #e0433b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 12px;
+  width: 100%;
+}
+
+.delete-btn:hover {
+  background: #c93a32;
+}
+
+.mode-toggle {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+}
+
+.mode-btn {
+  flex: 1;
+  cursor: pointer;
+  background: #eef2f4;
+  color: #1f2733;
+  border: 1px solid #dfe3e7;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.mode-btn.active {
+  background: #2f5aa8;
+  color: #fff;
+  border-color: #2f5aa8;
+}
