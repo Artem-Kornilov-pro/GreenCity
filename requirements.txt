@@ -1,0 +1,4 @@
+ezdxf==1.4.4
+numpy==2.5.3
+pyproj==3.8.0
+shapely==2.1.2
