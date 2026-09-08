@@ -386,6 +386,50 @@ def extract_point_objects(msp, tf):
 
 # ---------------------------------------------------------------------------
 
+def parse_dxf_doc(doc, scale=None, center=True):
+    """Разобрать уже открытый ezdxf-документ в {boundary, restrictions, objects, meta}.
+    Общее ядро для CLI (main()) и для backend/main.py (веб-эндпоинт /api/parse) —
+    оба должны парсить одинаково, поэтому вся логика тут, а не продублирована."""
+    msp = doc.modelspace()
+    insunits = doc.header.get("$INSUNITS", 0)
+    resolved_scale = scale if scale is not None else INSUNITS_TO_METERS.get(insunits, 1.0)
+
+    origin_x, origin_y = 0.0, 0.0
+    if center:
+        for e in msp.query("LWPOLYLINE POLYLINE"):
+            if layer_matches(e.dxf.layer, BOUNDARY_LAYER_KEYWORDS):
+                pts = polygon_points(e)
+                if pts:
+                    origin_x, origin_y = centroid(pts)
+                break
+
+    tf = Transform(scale=resolved_scale, origin_x=origin_x, origin_y=origin_y)
+
+    boundary = extract_boundary(msp, tf)
+    restrictions = extract_restrictions(msp, tf)
+    buildings = extract_buildings(msp, tf, restrictions)
+    points = extract_point_objects(msp, tf)
+    objects = buildings + points
+
+    return {
+        "boundary": boundary,
+        "restrictions": restrictions,
+        "objects": objects,
+        "meta": {
+            "scale": resolved_scale,
+            "insunits": insunits,
+            "origin": {"x": origin_x, "y": origin_y},
+            "buildingCount": len(buildings),
+            "pointObjectCount": len(points),
+        },
+    }
+
+
+def parse_dxf_file(path, scale=None, center=True):
+    doc = ezdxf.readfile(path)
+    return parse_dxf_doc(doc, scale=scale, center=center)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("input", help="Путь к .dxf файлу")
@@ -406,26 +450,11 @@ def main():
         print_summary(doc)
         return
 
-    msp = doc.modelspace()
-    insunits = doc.header.get("$INSUNITS", 0)
-    scale = args.scale if args.scale is not None else INSUNITS_TO_METERS.get(insunits, 1.0)
-
-    origin_x, origin_y = 0.0, 0.0
-    if not args.no_center:
-        for e in msp.query("LWPOLYLINE POLYLINE"):
-            if layer_matches(e.dxf.layer, BOUNDARY_LAYER_KEYWORDS):
-                pts = polygon_points(e)
-                if pts:
-                    origin_x, origin_y = centroid(pts)
-                break
-
-    tf = Transform(scale=scale, origin_x=origin_x, origin_y=origin_y)
-
-    boundary = extract_boundary(msp, tf)
-    restrictions = extract_restrictions(msp, tf)
-    buildings = extract_buildings(msp, tf, restrictions)
-    points = extract_point_objects(msp, tf)
-    objects = buildings + points
+    result = parse_dxf_doc(doc, scale=args.scale, center=not args.no_center)
+    boundary, restrictions, objects, meta = (
+        result["boundary"], result["restrictions"], result["objects"], result["meta"])
+    buildings = [o for o in objects if o["type"] == "building"]
+    points = [o for o in objects if o["type"] != "building"]
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -437,7 +466,8 @@ def main():
     (out_dir / "objects.json").write_text(
         json.dumps(objects, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    print(f"Масштаб: {scale} м/ед. (INSUNITS={insunits}), origin=({origin_x:.2f}, {origin_y:.2f})")
+    print(f"Масштаб: {meta['scale']} м/ед. (INSUNITS={meta['insunits']}), "
+          f"origin=({meta['origin']['x']:.2f}, {meta['origin']['y']:.2f})")
     print(f"boundary.json      — {'1 полигон' if boundary else 'не найден'}")
     print(f"restrictions.json  — {len(restrictions)} зон")
     print(f"objects.json       — {len(objects)} объектов ({len(buildings)} зданий, {len(points)} точечных)")
