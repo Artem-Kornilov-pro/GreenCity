@@ -4,7 +4,8 @@ PIP      := $(VENV)/bin/pip
 UVICORN  := $(VENV)/bin/uvicorn
 OUT      ?= output
 
-.PHONY: help venv backend frontend-install frontend frontend-build parse clean
+.PHONY: help venv backend frontend-install frontend frontend-build parse clean \
+        docker-build docker-up docker-down docker-logs
 
 help:
 	@echo "make venv              - создать venv и поставить Python-зависимости"
@@ -14,6 +15,10 @@ help:
 	@echo "make frontend-build    - собрать production-сборку фронтенда"
 	@echo "make parse FILE=path/to.dxf [OUT=output] - разобрать DXF в JSON парсером"
 	@echo "make clean             - удалить venv, node_modules, кэши сборки"
+	@echo "make docker-build      - собрать образы backend+frontend"
+	@echo "make docker-up         - поднять оба сервиса через docker compose"
+	@echo "make docker-down       - остановить и удалить контейнеры"
+	@echo "make docker-logs       - логи обоих сервисов (docker compose up без -d)"
 
 # venv пересоздаётся только если requirements.txt новее .venv/bin/activate
 $(VENV)/bin/activate: requirements.txt
@@ -45,3 +50,15 @@ parse: $(VENV)/bin/activate
 clean:
 	rm -rf $(VENV) frontend/node_modules frontend/dist
 	find . -name "__pycache__" -type d -prune -exec rm -rf {} +
+
+docker-build:
+	docker compose build
+
+docker-up:
+	docker compose up -d --build
+
+docker-down:
+	docker compose down
+
+docker-logs:
+	docker compose up --build

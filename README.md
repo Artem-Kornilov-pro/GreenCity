@@ -5,7 +5,7 @@
 ## Структура репозитория
 
 ```
-locations/    5 тестовых DXF-локаций (от одного дома до района на 264 здания)
+locations/    6 тестовых DXF-локаций (от одного дома до района на 264 здания)
 parser/       DXF -> JSON (parse_dxf.py): границы участка, зоны ограничений, объекты
 converters/   GeoJSON / SHP / DWG -> DXF (для внешних источников данных)
 backend/      FastAPI: принимает DXF, отдаёт JSON фронтенду
@@ -14,7 +14,17 @@ frontend/     React + TypeScript + react-three-fiber: 3D-просмотр и р�
 
 ## Быстрый старт
 
-### 1. Python-окружение (parser, converters, backend)
+### Вариант A: Docker
+
+```bash
+docker compose up -d --build
+```
+
+Поднимет оба сервиса: backend на `http://localhost:8000`, frontend на `http://localhost:5173`. Код смонтирован volume'ами — правки в `backend/`, `parser/`, `frontend/` подхватываются на лету (uvicorn `--reload`, vite dev server), без пересборки образа.
+
+### Вариант B: локально
+
+#### 1. Python-окружение (parser, converters, backend)
 
 ```bash
 python3 -m venv .venv
@@ -24,7 +34,7 @@ pip install -r requirements.txt
 
 Для конвертации `.dwg` дополнительно нужен LibreDWG (`brew install libredwg` / `apt install libredwg-tools`).
 
-### 2. Backend
+#### 2. Backend
 
 ```bash
 source .venv/bin/activate
@@ -32,9 +42,9 @@ cd backend
 uvicorn main:app --reload --port 8000
 ```
 
-Один эндпоинт — `POST /api/parse`, принимает `.dxf`, отдаёт `{boundary, restrictions, objects, windows, canopies, meta}`.
+Эндпоинты: `POST /api/parse` — принимает `.dxf`, отдаёт `{boundary, restrictions, objects, windows, canopies, meta}`; `POST /api/generate-greenery` — принимает сцену того же формата, пока заглушка (см. докстринг в `backend/main.py`).
 
-### 3. Frontend
+#### 3. Frontend
 
 ```bash
 cd frontend
@@ -52,10 +62,11 @@ npm run dev
 - Редактирование расположения деревьев/кустов/лавок/фонарей с проверкой нарушений отступов в реальном времени
 - Экспорт отредактированного расположения объектов в JSON
 - Конвертация GeoJSON/SHP/DWG в DXF для импорта внешних геоданных (Мосгеотрест, data.mos.ru)
+- Кнопка "Сгенерировать растительность автоматически" и эндпоинт `/api/generate-greenery` — контракт готов, сам алгоритм ещё нет (заглушка)
+- Запуск в Docker (`docker compose up`)
 
 ## Дальше
 
-- Алгоритм автоматического подбора мест посадки (сейчас редактирование только ручное)
+- Алгоритм автоматического подбора мест посадки (реализация `generate_greenery` в `backend/main.py`)
 - Каталог типовых видов посадок с полным набором нормативных отступов
 - Экспорт отредактированного плана обратно в DXF
-- Docker для backend/frontend

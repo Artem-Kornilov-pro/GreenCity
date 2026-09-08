@@ -1,0 +1,28 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./parser:/app/parser
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      # Резолвится в браузере пользователя, а не внутри контейнера -- поэтому
+      # localhost:8000 работает, пока backend публикует порт на хост (см. выше).
+      - VITE_API_BASE=http://localhost:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
