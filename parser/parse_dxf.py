@@ -31,7 +31,11 @@ import ezdxf
 # стоять раньше более общих (POWER), иначе общее правило перехватит совпадение
 # первым и специфичное никогда не сработает.
 POLYGON_RULES = [
-    ("BUILDING",    dict(type="building",            severity="forbidden", minDistance=3.0, message="Отступ от здания")),
+    # minDistance -- базовое (кустарник); для дерева фронтенд применяет 5.0 м
+    # из своего каталога норм (frontend/src/setbackNorms.ts) -- отступ по
+    # СНиП 2.07.01-89*/СП 42.13330.2016 различается по виду посадки.
+    ("BUILDING",    dict(type="building",            severity="forbidden", minDistance=1.5,
+                          message="Отступ от здания: дерево — 5 м, кустарник — 1.5 м")),
     ("TRANSFORMER", dict(type="transformer",          severity="forbidden", minDistance=2.0, message="Трансформаторная подстанция")),
     ("ROAD",        dict(type="road",                 severity="forbidden", minDistance=1.0, message="Дорожное полотно — посадка запрещена")),
     ("PARK",        dict(type="custom",               severity="warning",   minDistance=1.0, message="Зона парковки")),
@@ -72,10 +76,18 @@ POINT_LAYER_RULES = [
     ("BENCH",      dict(type="bench",      model="/models/bench.glb")),
     ("LAMP",       dict(type="lamp",       model="/models/lamp.glb")),
     ("PLAYGROUND", dict(type="playground", model="/models/playground.glb")),
+    ("ENTRANCE",   dict(type="entrance",   model="/models/entrance.glb")),
 ]
 
 # Слой с 3D-мешами зданий (используется только для высоты)
 BUILDING_MESH_LAYER_KEYWORDS = ["BUILDING"]
+
+# Слои с фасадными элементами (3DFACE) -- не самостоятельные объекты сцены,
+# а геометрия для отрисовки прямо на фасаде здания (см. extract_facade_quads).
+FACADE_LAYER_KEYWORDS = {
+    "windows": ["WINDOW"],
+    "canopies": ["CANOPIES", "CANOPY"],
+}
 
 # Единицы DXF ($INSUNITS) -> метры
 INSUNITS_TO_METERS = {0: 1.0, 1: 0.0254, 2: 0.3048, 4: 0.001, 5: 0.01, 6: 1.0, 8: 0.9144}
@@ -381,7 +393,36 @@ def extract_point_objects(msp, tf):
                     "metadata": {"height": round(top_z * tf.scale, 2), "sourceLayer": ln.dxf.layer},
                 })
 
+        # Одиночные CIRCLE без пары LINE -- просто маркер точки (напр. дверь
+        # подъезда на слое ENTRANCES), а не фонарный столб.
+        elif circles and not lines and not inserts_or_points:
+            for c in circles:
+                counters[cfg["type"]] += 1
+                objects.append({
+                    "id": f"{cfg['type']}_{counters[cfg['type']]:03d}",
+                    "type": cfg["type"],
+                    "model": cfg["model"],
+                    "position": tf.point(c.dxf.center.x, c.dxf.center.y, c.dxf.center.z),
+                    "rotation": 0,
+                    "scale": 1,
+                    "metadata": {"sourceLayer": c.dxf.layer},
+                })
+
     return objects
+
+
+def extract_facade_quads(msp, tf):
+    """3DFACE-элементы окон/козырьков -- не самостоятельные объекты сцены (их
+    сотни-тысячи и они не переставляются), а геометрия для отрисовки прямо на
+    фасаде здания. Каждая грань -- 4 вершины в 3D (уже с учётом высоты)."""
+    result = {name: [] for name in FACADE_LAYER_KEYWORDS}
+    for e in msp.query("3DFACE"):
+        for name, keywords in FACADE_LAYER_KEYWORDS.items():
+            if layer_matches(e.dxf.layer, keywords):
+                quad = [e.dxf.vtx0, e.dxf.vtx1, e.dxf.vtx2, e.dxf.vtx3]
+                result[name].append([tf.point(v.x, v.y, v.z) for v in quad])
+                break
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -410,11 +451,14 @@ def parse_dxf_doc(doc, scale=None, center=True):
     buildings = extract_buildings(msp, tf, restrictions)
     points = extract_point_objects(msp, tf)
     objects = buildings + points
+    facade = extract_facade_quads(msp, tf)
 
     return {
         "boundary": boundary,
         "restrictions": restrictions,
         "objects": objects,
+        "windows": facade["windows"],
+        "canopies": facade["canopies"],
         "meta": {
             "scale": resolved_scale,
             "insunits": insunits,
@@ -465,12 +509,16 @@ def main():
         json.dumps(restrictions, ensure_ascii=False, indent=2), encoding="utf-8")
     (out_dir / "objects.json").write_text(
         json.dumps(objects, ensure_ascii=False, indent=2), encoding="utf-8")
+    (out_dir / "facade.json").write_text(
+        json.dumps({"windows": result["windows"], "canopies": result["canopies"]},
+                    ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"Масштаб: {meta['scale']} м/ед. (INSUNITS={meta['insunits']}), "
           f"origin=({meta['origin']['x']:.2f}, {meta['origin']['y']:.2f})")
     print(f"boundary.json      — {'1 полигон' if boundary else 'не найден'}")
     print(f"restrictions.json  — {len(restrictions)} зон")
     print(f"objects.json       — {len(objects)} объектов ({len(buildings)} зданий, {len(points)} точечных)")
+    print(f"facade.json        — {len(result['windows'])} окон, {len(result['canopies'])} граней козырьков")
     print(f"\nЗаписано в {out_dir.resolve()}")
 
 

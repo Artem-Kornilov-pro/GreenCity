@@ -48,6 +48,19 @@ export function ObjectVisual({ type, violated }: { type: string; violated: boole
           </mesh>
         </group>
       );
+    case "entrance":
+      return (
+        <group>
+          <mesh position={[0, 1.05, 0]}>
+            <boxGeometry args={[1.2, 2.1, 0.15]} />
+            <meshStandardMaterial color="#2b2f36" />
+          </mesh>
+          <mesh position={[0, 1.05, 0.08]}>
+            <boxGeometry args={[0.9, 1.9, 0.05]} />
+            <meshStandardMaterial color="#5b463a" />
+          </mesh>
+        </group>
+      );
     case "playground":
       return (
         <mesh position={[0, 0.1, 0]}>

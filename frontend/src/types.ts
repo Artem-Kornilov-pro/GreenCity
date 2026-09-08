@@ -48,10 +48,17 @@ export interface SceneMeta {
   pointObjectCount: number;
 }
 
+// Грань фасадного элемента (окно, козырёк) — 4 вершины в 3D, уже поднятые на
+// нужную высоту. Не самостоятельные объекты сцены (их сотни-тысячи и они не
+// перетаскиваются), рисуются напрямую как геометрия на фасаде здания.
+export type FacadeQuad = Point3[];
+
 export interface Scene {
   boundary: Boundary | null;
   restrictions: RestrictionZone[];
   objects: SceneObject[];
+  windows: FacadeQuad[];
+  canopies: FacadeQuad[];
   meta: SceneMeta;
 }
 

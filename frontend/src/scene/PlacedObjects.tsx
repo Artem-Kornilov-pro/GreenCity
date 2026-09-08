@@ -4,6 +4,7 @@ import { TransformControls } from "@react-three/drei";
 import type { RestrictionZone, SceneObject } from "../types";
 import { EDITABLE_TYPES } from "../types";
 import { checkViolations } from "../geometry";
+import { plantKindOfObjectType } from "../setbackNorms";
 import { ObjectVisual } from "./ObjectVisual";
 
 export function PlacedObjects({
@@ -23,7 +24,11 @@ export function PlacedObjects({
   return (
     <>
       {items.map((obj) => {
-        const violated = checkViolations(obj.position.x, obj.position.z, restrictions).length > 0;
+        // Подъезд встроен в стену по построению — отступ от здания к нему
+        // неприменим, проверять и подсвечивать это как нарушение бессмысленно.
+        const violated =
+          obj.type !== "entrance" &&
+          checkViolations(obj.position.x, obj.position.z, restrictions, plantKindOfObjectType(obj.type)).length > 0;
         return (
           <PlacedObjectItem
             key={obj.id}

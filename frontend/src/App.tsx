@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { SceneView } from "./scene/SceneView";
 import { uploadDxf } from "./api";
 import { checkViolations } from "./geometry";
+import { plantKindOfObjectType } from "./setbackNorms";
 import type { RestrictionZone, Scene } from "./types";
 import "./App.css";
 
@@ -49,7 +50,12 @@ function App() {
 
   const selectedObj = scene?.objects.find((o) => o.id === selectedId) ?? null;
   const selectedViolations = selectedObj
-    ? checkViolations(selectedObj.position.x, selectedObj.position.z, scene?.restrictions ?? [])
+    ? checkViolations(
+        selectedObj.position.x,
+        selectedObj.position.z,
+        scene?.restrictions ?? [],
+        plantKindOfObjectType(selectedObj.type)
+      )
     : [];
 
   return (
@@ -109,8 +115,8 @@ function App() {
               {selectedViolations.length > 0 ? (
                 <div className="violations">
                   {selectedViolations.map((v) => (
-                    <div key={v.id} className="violation-item">
-                      ⚠ {v.message} (мин. {v.minDistance} м)
+                    <div key={v.zone.id} className="violation-item">
+                      ⚠ {v.zone.message} (мин. {v.minDistance} м)
                     </div>
                   ))}
                 </div>

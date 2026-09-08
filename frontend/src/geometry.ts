@@ -1,4 +1,5 @@
-import type { Point2, RestrictionZone } from "./types";
+import type { Point2, RestrictionZone, Scene } from "./types";
+import { setbackFor, type PlantKind } from "./setbackNorms";
 
 export function pointInPolygon(px: number, pz: number, poly: Point2[]): boolean {
   let inside = false;
@@ -29,14 +30,67 @@ export function distanceToPolygonEdge(px: number, pz: number, poly: Point2[]): n
   return min;
 }
 
-// Точка нарушает зону, если она внутри неё, либо снаружи, но ближе minDistance
-// к её границе. Для зон-коридоров (трубы/кабели, где minDistance уже заложен в
-// ширину полигона парсером) это консервативно требует дополнительный запас —
+export interface ZoneViolation {
+  zone: RestrictionZone;
+  minDistance: number; // применённый отступ — из каталога норм для plantKind, либо zone.minDistance
+}
+
+// Точка нарушает зону, если она внутри неё, либо снаружи, но ближе применимого
+// отступа к её границе. Для деревьев/кустарников отступ берётся из каталога
+// норм (setbackNorms.ts) — он различается по виду посадки; для прочих
+// объектов (лавка, фонарь) используется общий zone.minDistance. Для
+// зон-коридоров (трубы/кабели, где minDistance уже заложен в ширину полигона
+// парсером) это консервативно требует дополнительный запас сверху —
 // сознательный компромисс ради простоты единой проверки для MVP.
-export function checkViolations(px: number, pz: number, zones: RestrictionZone[]): RestrictionZone[] {
-  return zones.filter((zone) => {
-    if (zone.severity === "allowed" || zone.polygon.length < 3) return false;
-    if (pointInPolygon(px, pz, zone.polygon)) return true;
-    return distanceToPolygonEdge(px, pz, zone.polygon) < zone.minDistance;
+export function checkViolations(
+  px: number,
+  pz: number,
+  zones: RestrictionZone[],
+  plantKind?: PlantKind
+): ZoneViolation[] {
+  const result: ZoneViolation[] = [];
+  for (const zone of zones) {
+    if (zone.severity === "allowed" || zone.polygon.length < 3) continue;
+    const minDistance = plantKind ? setbackFor(zone.type, plantKind, zone.minDistance) : zone.minDistance;
+    if (pointInPolygon(px, pz, zone.polygon) || distanceToPolygonEdge(px, pz, zone.polygon) < minDistance) {
+      result.push({ zone, minDistance });
+    }
+  }
+  return result;
+}
+
+export interface SceneBounds {
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+  maxHeight: number;
+}
+
+const FALLBACK_BOUNDS: SceneBounds = { minX: -20, maxX: 20, minZ: -20, maxZ: 20, maxHeight: 10 };
+
+// Границы вычисляются из boundary (не меняется при перетаскивании объектов),
+// поэтому камеру можно безопасно перепозиционировать на каждую загрузку сцены,
+// не дёргая её при каждом drag-move.
+export function computeSceneBounds(scene: Scene): SceneBounds {
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity, maxHeight = 10;
+  const consider = (x: number, z: number) => {
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minZ = Math.min(minZ, z);
+    maxZ = Math.max(maxZ, z);
+  };
+
+  scene.boundary?.polygon.forEach((p) => consider(p.x, p.z));
+  if (!Number.isFinite(minX)) {
+    scene.objects.forEach((o) => consider(o.position.x, o.position.z));
+    scene.restrictions.forEach((r) => r.polygon.forEach((p) => consider(p.x, p.z)));
+  }
+  scene.objects.forEach((o) => {
+    const h = o.metadata?.height as number | undefined;
+    if (typeof h === "number") maxHeight = Math.max(maxHeight, h);
   });
+
+  if (!Number.isFinite(minX)) return FALLBACK_BOUNDS;
+  return { minX, maxX, minZ, maxZ, maxHeight };
 }
