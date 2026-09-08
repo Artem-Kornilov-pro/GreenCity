@@ -7,18 +7,24 @@ import { checkViolations } from "../geometry";
 import { plantKindOfObjectType } from "../setbackNorms";
 import { ObjectVisual } from "./ObjectVisual";
 
+export type TransformMode = "translate" | "rotate";
+
 export function PlacedObjects({
   objects,
   restrictions,
   selectedId,
+  transformMode,
   onSelect,
   onMove,
+  onRotate,
 }: {
   objects: SceneObject[];
   restrictions: RestrictionZone[];
   selectedId: string | null;
+  transformMode: TransformMode;
   onSelect: (id: string | null) => void;
   onMove: (id: string, x: number, z: number) => void;
+  onRotate: (id: string, rotationY: number) => void;
 }) {
   const items = objects.filter((o) => o.type !== "building");
   return (
@@ -35,8 +41,10 @@ export function PlacedObjects({
             obj={obj}
             violated={violated}
             selected={obj.id === selectedId}
+            transformMode={transformMode}
             onSelect={onSelect}
             onMove={onMove}
+            onRotate={onRotate}
           />
         );
       })}
@@ -48,14 +56,18 @@ function PlacedObjectItem({
   obj,
   violated,
   selected,
+  transformMode,
   onSelect,
   onMove,
+  onRotate,
 }: {
   obj: SceneObject;
   violated: boolean;
   selected: boolean;
+  transformMode: TransformMode;
   onSelect: (id: string | null) => void;
   onMove: (id: string, x: number, z: number) => void;
+  onRotate: (id: string, rotationY: number) => void;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const editable = EDITABLE_TYPES.has(obj.type);
@@ -71,20 +83,31 @@ function PlacedObjectItem({
         if (editable) onSelect(obj.id);
       }}
     >
-      <ObjectVisual type={obj.type} violated={violated} />
+      <ObjectVisual type={obj.type} violated={violated} metadata={obj.metadata} />
     </group>
   );
 
   if (!selected || !editable) return body;
 
+  // Двигать — только по земле (Y выключен). Поворачивать — только вокруг
+  // вертикальной оси (X/Z выключены), иначе объект завалится набок.
+  const isTranslate = transformMode === "translate";
+
   return (
     <TransformControls
       object={groupRef as RefObject<THREE.Object3D>}
-      mode="translate"
-      showY={false}
+      mode={transformMode}
+      showX={isTranslate}
+      showY={!isTranslate}
+      showZ={isTranslate}
       onMouseUp={() => {
         const g = groupRef.current;
-        if (g) onMove(obj.id, g.position.x, g.position.z);
+        if (!g) return;
+        if (isTranslate) {
+          onMove(obj.id, g.position.x, g.position.z);
+        } else {
+          onRotate(obj.id, g.rotation.y);
+        }
       }}
     >
       {body}

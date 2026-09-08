@@ -6,7 +6,7 @@ import { computeSceneBounds } from "../geometry";
 import { Ground } from "./Ground";
 import { RestrictionZones } from "./RestrictionZones";
 import { Buildings } from "./Buildings";
-import { PlacedObjects } from "./PlacedObjects";
+import { PlacedObjects, type TransformMode } from "./PlacedObjects";
 import { FitCamera } from "./FitCamera";
 import { computeBuildingSetbackZones } from "./buildingSetbacks";
 import { Windows, Canopies } from "./FacadeFeatures";
@@ -14,14 +14,18 @@ import { Windows, Canopies } from "./FacadeFeatures";
 export function SceneView({
   scene,
   selectedId,
+  transformMode,
   onSelect,
   onMove,
+  onRotate,
   onHoverZone,
 }: {
   scene: Scene;
   selectedId: string | null;
+  transformMode: TransformMode;
   onSelect: (id: string | null) => void;
   onMove: (id: string, x: number, z: number) => void;
+  onRotate: (id: string, rotationY: number) => void;
   onHoverZone: (zone: RestrictionZone | null) => void;
 }) {
   const bounds = useMemo(() => computeSceneBounds(scene), [scene]);
@@ -65,8 +69,10 @@ export function SceneView({
         objects={scene.objects}
         restrictions={scene.restrictions}
         selectedId={selectedId}
+        transformMode={transformMode}
         onSelect={onSelect}
         onMove={onMove}
+        onRotate={onRotate}
       />
       <gridHelper
         args={[gridSize, gridDivisions, "#8fa6b3", "#b9cdd6"]}
