@@ -21,7 +21,8 @@
 }
 
 .upload-btn,
-.export-btn {
+.export-btn,
+.generate-btn {
   cursor: pointer;
   background: #3d7a4a;
   color: #fff;
@@ -33,6 +34,15 @@
 
 .export-btn {
   background: #2f5aa8;
+}
+
+.generate-btn {
+  background: #1e7a5a;
+}
+
+.generate-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 
 .error-banner {

@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { SceneView } from "./scene/SceneView";
-import { uploadDxf } from "./api";
+import { uploadDxf, generateGreenery } from "./api";
 import { checkViolations } from "./geometry";
 import { plantKindOfObjectType } from "./setbackNorms";
 import type { RestrictionZone, Scene } from "./types";
@@ -11,6 +11,7 @@ function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoveredZone, setHoveredZone] = useState<RestrictionZone | null>(null);
   const [loading, setLoading] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleFile = useCallback(async (file: File) => {
@@ -36,6 +37,26 @@ function App() {
       };
     });
   }, []);
+
+  const handleGenerateGreenery = useCallback(async () => {
+    if (!scene) return;
+    setGenerating(true);
+    setError(null);
+    try {
+      const updated = await generateGreenery(scene);
+      if (updated) {
+        setScene(updated);
+      } else {
+        // Бэкенд пока заглушка (backend/main.py::generate_greenery) -- null
+        // означает "ещё не реализовано", а не ошибку сети. Сцену не трогаем.
+        setError("Автогенерация растительности пока не реализована на бэкенде.");
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setGenerating(false);
+    }
+  }, [scene]);
 
   const handleExport = () => {
     if (!scene) return;
@@ -71,6 +92,11 @@ function App() {
             onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
           />
         </label>
+        {scene && (
+          <button className="generate-btn" onClick={handleGenerateGreenery} disabled={generating}>
+            {generating ? "Генерация..." : "Сгенерировать растительность автоматически"}
+          </button>
+        )}
         {scene && (
           <button className="export-btn" onClick={handleExport}>
             Экспорт JSON
