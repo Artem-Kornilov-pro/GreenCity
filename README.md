@@ -8,7 +8,7 @@
 locations/    6 тестовых DXF-локаций (от одного дома до района на 264 здания)
 parser/       DXF -> JSON (parse_dxf.py): границы участка, зоны ограничений, объекты
 converters/   GeoJSON / SHP / DWG -> DXF (для внешних источников данных)
-backend/      FastAPI: принимает DXF, отдаёт JSON фронтенду
+backend/      FastAPI: DXF -> JSON, автогенерация озеленения (подробности — backend/README.md)
 frontend/     React + TypeScript + react-three-fiber: 3D-просмотр и редактирование
 ```
 
@@ -42,7 +42,7 @@ cd backend
 uvicorn main:app --reload --port 8000
 ```
 
-Эндпоинты: `POST /api/parse` — принимает `.dxf`, отдаёт `{boundary, restrictions, objects, windows, canopies, meta}`; `POST /api/generate-greenery` — принимает сцену того же формата, пока заглушка (см. докстринг в `backend/main.py`).
+Эндпоинты: `POST /api/parse` — принимает `.dxf`, отдаёт `{boundary, restrictions, objects, windows, canopies, meta}`; `POST /api/generate-greenery` — принимает сцену того же формата (+ опциональные `species`/`grid_spacing_m`/`min_tree_spacing_m` через query string), возвращает её же с добавленными деревьями. Пока реализованы только деревья (детерминированный генератор по сетке, без ML); кустарники и газон — TODO. Полное описание алгоритма и параметров — `backend/README.md`.
 
 #### 3. Frontend
 
@@ -62,11 +62,12 @@ npm run dev
 - Редактирование расположения деревьев/кустов/лавок/фонарей с проверкой нарушений отступов в реальном времени
 - Экспорт отредактированного расположения объектов в JSON
 - Конвертация GeoJSON/SHP/DWG в DXF для импорта внешних геоданных (Мосгеотрест, data.mos.ru)
-- Кнопка "Сгенерировать растительность автоматически" и эндпоинт `/api/generate-greenery` — контракт готов, сам алгоритм ещё нет (заглушка)
+- Кнопка "Сгенерировать растительность автоматически" → `/api/generate-greenery`: расставляет деревья по сетке внутри зон газона, обходя здания/коммуникации/парковки/дорожки с нужным по нормам отступом; не трогает уже расставленные пользователем объекты (`backend/greenery_generator.py`, `backend/setback_norms.py`)
 - Запуск в Docker (`docker compose up`)
 
 ## Дальше
 
-- Алгоритм автоматического подбора мест посадки (реализация `generate_greenery` в `backend/main.py`)
-- Каталог типовых видов посадок с полным набором нормативных отступов
+- Кустарники и газон в автогенераторе (сейчас только деревья — `generate_bushes()`/`generate_lawn()` в `backend/greenery_generator.py`)
+- Каталог реальных видов деревьев с разными отступами по породе (интерфейс уже готов — `SPECIES_SETBACK_OVERRIDES` в `backend/setback_norms.py`, каталог пока пуст)
+- Параметры генератора (`species`/`grid_spacing_m`/`min_tree_spacing_m`) пока настраиваются только через query string/Swagger — на фронте нет полей для них, плотность посадки нужно подбирать под масштаб конкретной сцены вручную (см. `backend/README.md`, "Плотность посадки")
 - Экспорт отредактированного плана обратно в DXF
