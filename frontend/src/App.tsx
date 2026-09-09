@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { SceneView } from "./scene/SceneView";
 import type { TransformMode } from "./scene/PlacedObjects";
-import { TREE_PRESETS, BUSH_PRESETS, type TreeKind, type BushKind } from "./scene/ObjectVisual";
+import { TREE_PRESETS, BUSH_PRESETS, type TreeKind, type BushKind } from "./scene/plantPresets";
 import { uploadDxf, generateGreenery } from "./api";
 import { checkViolations, computeSceneBounds } from "./geometry";
 import { plantKindOfObjectType } from "./setbackNorms";

@@ -1,0 +1,6 @@
+# Инструменты разработки. Отдельно от requirements.txt намеренно: тот ставится
+# внутрь backend-образа (backend/Dockerfile), и линтеру там делать нечего.
+# Ставится в локальный venv через `make venv`.
+-r requirements.txt
+
+ruff==0.16.6

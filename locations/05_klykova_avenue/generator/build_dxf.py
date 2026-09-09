@@ -12,10 +12,11 @@
 
 import math
 import random
-import numpy as np
-from shapely.geometry import Polygon, Point, box, LineString
-from shapely.ops import unary_union, nearest_points
+
 import ezdxf
+import numpy as np
+from shapely.geometry import LineString, Point, Polygon, box
+from shapely.ops import nearest_points, unary_union
 
 random.seed(5)
 
@@ -102,7 +103,7 @@ def build_belt(n_columns, row_sign, start_x=0.0):
     front_row = []  # depth-0 (road-facing) building of each column, for the parking-gap logic
     x = start_x
     end_x = start_x
-    for i in range(n_columns):
+    for _ in range(n_columns):
         depth = random.choice(DEPTH_WEIGHTS)
         col_buildings, widest_length = build_column(x, row_sign, depth)
         belt += col_buildings

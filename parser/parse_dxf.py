@@ -187,7 +187,8 @@ def print_summary(doc):
     for e in msp:
         if e.dxftype() in ("LWPOLYLINE", "POLYLINE"):
             for x, y, *_ in polygon_points(e):
-                xs.append(x); ys.append(y)
+                xs.append(x)
+                ys.append(y)
     if xs:
         print(f"\nBBox X: {min(xs):.2f} .. {max(xs):.2f}")
         print(f"BBox Y: {min(ys):.2f} .. {max(ys):.2f}")
@@ -485,7 +486,7 @@ def main():
 
     try:
         doc = ezdxf.readfile(args.input)
-    except IOError:
+    except OSError:
         sys.exit(f"Не удалось открыть файл: {args.input}")
     except ezdxf.DXFStructureError:
         sys.exit(f"Файл повреждён или не является корректным DXF: {args.input}")

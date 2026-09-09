@@ -2,9 +2,11 @@ VENV     := $(CURDIR)/.venv
 PYTHON   := $(VENV)/bin/python
 PIP      := $(VENV)/bin/pip
 UVICORN  := $(VENV)/bin/uvicorn
+RUFF     := $(VENV)/bin/ruff
 OUT      ?= output
 
 .PHONY: help venv backend frontend-install frontend frontend-build parse clean \
+        lint lint-py lint-web lint-fix \
         docker-build docker-up docker-down docker-logs
 
 help:
@@ -14,16 +16,20 @@ help:
 	@echo "make frontend          - запустить dev-сервер фронтенда (http://localhost:5173)"
 	@echo "make frontend-build    - собрать production-сборку фронтенда"
 	@echo "make parse FILE=path/to.dxf [OUT=output] - разобрать DXF в JSON парсером"
+	@echo "make lint              - прогнать все линтеры (Python + фронтенд)"
+	@echo "make lint-py           - только Python (ruff, конфиг в pyproject.toml)"
+	@echo "make lint-web          - только фронтенд (oxlint, конфиг .oxlintrc.json)"
+	@echo "make lint-fix          - автоисправление того, что чинится автоматически"
 	@echo "make clean             - удалить venv, node_modules, кэши сборки"
 	@echo "make docker-build      - собрать образы backend+frontend"
 	@echo "make docker-up         - поднять оба сервиса через docker compose"
 	@echo "make docker-down       - остановить и удалить контейнеры"
 	@echo "make docker-logs       - логи обоих сервисов (docker compose up без -d)"
 
-# venv пересоздаётся только если requirements.txt новее .venv/bin/activate
-$(VENV)/bin/activate: requirements.txt
+# venv пересоздаётся только если список зависимостей новее .venv/bin/activate
+$(VENV)/bin/activate: requirements.txt requirements-dev.txt
 	python3 -m venv $(VENV)
-	$(PIP) install -r requirements.txt
+	$(PIP) install -r requirements-dev.txt
 	touch $(VENV)/bin/activate
 
 venv: $(VENV)/bin/activate
@@ -46,6 +52,21 @@ parse: $(VENV)/bin/activate
 		exit 1; \
 	fi
 	$(PYTHON) parser/parse_dxf.py $(FILE) --out-dir $(OUT)
+
+# Оба линтера завершаются ненулевым кодом при любой находке (у oxlint для
+# этого нужен --deny-warnings) — цель годится как гейт в CI, а не только
+# для чтения глазами.
+lint: lint-py lint-web
+
+lint-py: $(VENV)/bin/activate
+	$(RUFF) check .
+
+lint-web:
+	cd frontend && npx oxlint --deny-warnings
+
+lint-fix: $(VENV)/bin/activate
+	$(RUFF) check . --fix
+	cd frontend && npx oxlint --fix
 
 clean:
 	rm -rf $(VENV) frontend/node_modules frontend/dist

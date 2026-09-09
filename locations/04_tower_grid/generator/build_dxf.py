@@ -17,10 +17,11 @@
 # Output is written one level up, as ../04_tower_grid.dxf
 
 import math
-import numpy as np
-from shapely.geometry import Polygon, Point, box, LineString
-from shapely.ops import unary_union, nearest_points
+
 import ezdxf
+import numpy as np
+from shapely.geometry import LineString, Point, Polygon, box
+from shapely.ops import nearest_points, unary_union
 
 # --- 10 towers on a 5x2 grid ------------------------------------------------
 BW, BD = 20.0, 16.0       # building footprint: 20m x 16m
