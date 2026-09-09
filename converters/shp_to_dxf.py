@@ -23,8 +23,7 @@ import argparse
 import sys
 
 import shapefile  # pyshp
-
-from geo_to_dxf_core import write_features_to_dxf, DEFAULT_DST_EPSG
+from geo_to_dxf_core import DEFAULT_DST_EPSG, write_features_to_dxf
 
 
 def load_features(path):

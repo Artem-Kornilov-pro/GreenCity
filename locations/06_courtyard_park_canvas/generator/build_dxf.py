@@ -17,10 +17,11 @@
 # Output is written one level up, as ../06_courtyard_park_canvas.dxf
 
 import math
-import numpy as np
-from shapely.geometry import Polygon, Point, box, LineString
-from shapely.ops import unary_union, nearest_points
+
 import ezdxf
+import numpy as np
+from shapely.geometry import LineString, Point, Polygon, box
+from shapely.ops import nearest_points, unary_union
 
 # --- 3 buildings forming a "П" shape open to the north ---------------------
 D = 14.0                  # arm thickness (depth of each building)

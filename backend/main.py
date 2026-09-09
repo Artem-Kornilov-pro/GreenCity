@@ -19,7 +19,6 @@ from typing import Optional
 
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-
 from greenery_generator import (
     DEFAULT_GRID_SPACING_M,
     DEFAULT_MIN_TREE_SPACING_M,
@@ -60,7 +59,7 @@ async def parse_dxf_endpoint(file: UploadFile = File(...)):
         try:
             scene = parse_dxf_file(tmp.name)
         except Exception as e:
-            raise HTTPException(400, f"Не удалось разобрать DXF: {e}")
+            raise HTTPException(400, f"Не удалось разобрать DXF: {e}") from e
 
     return scene
 

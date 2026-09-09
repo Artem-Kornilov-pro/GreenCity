@@ -14,9 +14,13 @@ export function Buildings({ objects }: { objects: SceneObject[] }) {
 }
 
 function BuildingMesh({ obj }: { obj: SceneObject }) {
-  const footprint = (obj.metadata.footprint as Point2[] | undefined) ?? [];
-  const height = (obj.metadata.height as number | undefined) ?? 9;
-  const geometry = useMemo(() => extrudedPolygonGeometry(footprint, height), [footprint, height]);
+  // Извлечение внутри useMemo, а не снаружи: `?? []` создаёт новый массив на
+  // каждый рендер, из-за чего мемоизация по `footprint` не работала бы вовсе.
+  const geometry = useMemo(() => {
+    const footprint = (obj.metadata.footprint as Point2[] | undefined) ?? [];
+    const height = (obj.metadata.height as number | undefined) ?? 9;
+    return extrudedPolygonGeometry(footprint, height);
+  }, [obj.metadata]);
   if (!geometry) return null;
 
   return (

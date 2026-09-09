@@ -17,11 +17,12 @@
 # Output is written one level up, as ../03_lshape_vs_rect.dxf
 
 import math
-import numpy as np
-from shapely.geometry import Polygon, Point, box, LineString
-from shapely.ops import unary_union, nearest_points
-from shapely.affinity import rotate
+
 import ezdxf
+import numpy as np
+from shapely.affinity import rotate
+from shapely.geometry import LineString, Point, Polygon, box
+from shapely.ops import nearest_points, unary_union
 
 # --- Buildings ---------------------------------------------------------------
 a_main = box(0, 60, 60, 72)     # main wing: 60m x 12m

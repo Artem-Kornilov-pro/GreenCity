@@ -6,15 +6,16 @@
 # alongside this script so the location can be rebuilt without re-fetching OSM data).
 # Output is written one level up, as ../02_courtyard_3buildings.dxf
 
+import itertools
 import json
 import math
+
+import ezdxf
 import numpy as np
 from pyproj import Transformer
-from shapely.geometry import Polygon, MultiPolygon, Point, box, LineString
-from shapely.ops import unary_union, nearest_points
 from shapely.affinity import rotate, translate
-import ezdxf
-from ezdxf import zoom
+from shapely.geometry import LineString, Point, Polygon, box
+from shapely.ops import nearest_points, unary_union
 
 RAW = "buildings_raw.json"
 
@@ -79,8 +80,6 @@ print(f"{len(res_buildings)} residential (>=4 floors) buildings")
 
 # Find a triple of buildings that actually *encloses* a courtyard: search all
 # combinations, score by how enclosing (triangle area) vs how compact (tight) they are.
-import itertools
-
 best = None
 for combo in itertools.combinations(res_buildings, 3):
     centroids = [b["poly"].centroid for b in combo]
@@ -403,7 +402,7 @@ def add_boundary_lamps(poly, inset, spacing):
     coords = list(ring.exterior.coords)
     total_len = sum(math.dist(coords[i], coords[i + 1]) for i in range(len(coords) - 1))
     n = max(4, int(total_len // spacing))
-    acc, idx = 0.0, 0
+    acc = 0.0
     step = total_len / n
     target = 0.0
     for i in range(len(coords) - 1):

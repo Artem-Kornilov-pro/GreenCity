@@ -14,12 +14,13 @@
 
 import json
 import math
+
+import ezdxf
 import numpy as np
 from pyproj import Transformer
-from shapely.geometry import Polygon, Point, box, LineString
-from shapely.ops import unary_union, nearest_points
 from shapely.affinity import rotate
-import ezdxf
+from shapely.geometry import LineString, Point, Polygon, box
+from shapely.ops import nearest_points, unary_union
 
 BUILDING_WAY_ID = 39129708  # addr 30/43, apartments, 5 floors, ~218m x 13m
 

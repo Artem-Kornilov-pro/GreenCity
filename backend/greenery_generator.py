@@ -29,11 +29,10 @@ from __future__ import annotations
 
 from typing import Optional
 
-from shapely.geometry import Point, Polygon
-from shapely.ops import unary_union
-
 from schemas import Point3, RestrictionZone, Scene, SceneObject
 from setback_norms import DEFAULT_TREE_SPECIES, setback_for
+from shapely.geometry import Point, Polygon
+from shapely.ops import unary_union
 
 # Дефолты шага сетки кандидатных точек и минимального расстояния между
 # стволами -- используются, когда вызывающий код (main.py) не передал свои

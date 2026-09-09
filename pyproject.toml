@@ -1,0 +1,33 @@
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = [".venv", "frontend", "locations/*/*.dxf"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort (порядок импортов)
+    "UP",  # pyupgrade (устаревший синтаксис)
+    "B",   # bugbear (частые баги/антипаттерны)
+    "C4",  # comprehensions (упрощение генераторов/comprehension)
+    "SIM", # simplify (упрощение очевидно избыточного кода)
+]
+ignore = [
+    "E501",   # длина строки -- в generator-скриптах много намеренно
+              # выровненных табличных литералов (см. POLYGON_RULES и т.п.),
+              # ломать их выравнивание ради лимита длины строки не стоит
+    "C408",   # dict(a=1, b=2) вместо {"a": 1, "b": 2} -- сознательный,
+              # последовательно используемый по всему проекту стиль ради
+              # читаемости табличных конфигов (POLYGON_RULES и т.п.)
+    "UP045",  # Optional[X] вместо X | None -- оба варианта валидны,
+              # не стоит форсировать переписывание уже согласованного кода
+    "B905",   # zip() без strict= -- в этом проекте zip(pts, pts[1:])
+              # намеренно используется для попарного обхода (разная длина
+              # операндов -- не баг, а весь смысл идиомы)
+]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI-идиома `param: T = File(...)`/`Query(...)` -- не мутируемый
+# дефолт-баг, а штатный способ декларации параметров запроса.
+extend-immutable-calls = ["fastapi.File", "fastapi.Query", "fastapi.Depends", "fastapi.Body"]
