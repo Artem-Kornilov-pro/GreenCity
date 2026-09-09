@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import type { RestrictionZone, Scene } from "../types";
+import type { CatalogItem } from "../catalog";
 import { computeSceneBounds } from "../geometry";
 import { Ground } from "./Ground";
 import { RestrictionZones } from "./RestrictionZones";
@@ -13,6 +14,8 @@ import { Windows, Canopies } from "./FacadeFeatures";
 
 export function SceneView({
   scene,
+  catalogById,
+  availableModels,
   selectedId,
   transformMode,
   onSelect,
@@ -21,6 +24,8 @@ export function SceneView({
   onHoverZone,
 }: {
   scene: Scene;
+  catalogById: Map<string, CatalogItem>;
+  availableModels: Set<string>;
   selectedId: string | null;
   transformMode: TransformMode;
   onSelect: (id: string | null) => void;
@@ -68,6 +73,8 @@ export function SceneView({
       <PlacedObjects
         objects={scene.objects}
         restrictions={scene.restrictions}
+        catalogById={catalogById}
+        availableModels={availableModels}
         selectedId={selectedId}
         transformMode={transformMode}
         onSelect={onSelect}

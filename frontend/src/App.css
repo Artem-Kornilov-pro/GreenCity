@@ -220,3 +220,12 @@
   color: #fff;
   border-color: #2f5aa8;
 }
+
+.catalog-filter {
+  margin-top: 8px;
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #cfe0cf;
+  padding: 6px 8px;
+  font-size: 12px;
+}

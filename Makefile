@@ -4,9 +4,10 @@ PIP      := $(VENV)/bin/pip
 UVICORN  := $(VENV)/bin/uvicorn
 RUFF     := $(VENV)/bin/ruff
 OUT      ?= output
+CATEGORY ?= tree
 
 .PHONY: help venv backend frontend-install frontend frontend-build parse clean \
-        lint lint-py lint-web lint-fix \
+        lint lint-py lint-web lint-fix models \
         docker-build docker-up docker-down docker-logs
 
 help:
@@ -20,6 +21,7 @@ help:
 	@echo "make lint-py           - только Python (ruff, конфиг в pyproject.toml)"
 	@echo "make lint-web          - только фронтенд (oxlint, конфиг .oxlintrc.json)"
 	@echo "make lint-fix          - автоисправление того, что чинится автоматически"
+	@echo "make models SRC=path/to/pack [CATEGORY=tree] - конвертировать пак моделей OBJ -> GLB"
 	@echo "make clean             - удалить venv, node_modules, кэши сборки"
 	@echo "make docker-build      - собрать образы backend+frontend"
 	@echo "make docker-up         - поднять оба сервиса через docker compose"
@@ -67,6 +69,15 @@ lint-web:
 lint-fix: $(VENV)/bin/activate
 	$(RUFF) check . --fix
 	cd frontend && npx oxlint --fix
+
+# Конвертация готового пака 3D-моделей в .glb для фронтенда.
+# Подробности и требования -- frontend/public/models/README.md.
+models:
+	@if [ -z "$(SRC)" ]; then \
+		echo "Использование: make models SRC=path/to/pack [CATEGORY=tree]"; \
+		exit 1; \
+	fi
+	node tools/convert_models.mjs $(SRC) --category $(CATEGORY)
 
 clean:
 	rm -rf $(VENV) frontend/node_modules frontend/dist

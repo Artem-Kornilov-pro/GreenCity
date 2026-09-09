@@ -1,146 +1,176 @@
-// Реальных 3D-моделей (glb) пока нет — parser/parse_dxf.py уже прописывает
-// пути вида /models/tree.glb на будущее, а сейчас каждый тип объекта рисуется
-// простым примитивом, узнаваемым по силуэту и цвету.
+// Отрисовка объекта сцены по записи каталога (backend/plant_catalog.py).
+//
+// Если для записи есть .glb (путь перечислен в frontend/public/models/
+// manifest.json, который пишет tools/convert_models.mjs) -- рисуется модель.
+// Если нет -- примитив-заглушка по `render.shape` и габаритам из каталога.
+// Поэтому добавление пака готовых моделей не требует правок этого файла:
+// положили .glb, прогнали конвертацию -- объекты начали рисоваться моделями.
 
-import type { ReactNode } from "react";
+import { Suspense } from "react";
+import { useGLTF } from "@react-three/drei";
+import type { CatalogItem } from "../catalog";
 
-import { CLUSTER_LOBES, TREE_PRESETS, BUSH_PRESETS, isTreeKind, isBushKind } from "./plantPresets";
+const VIOLATION_COLOR = "#e0433b";
 
-function ClusterCrown({ radius, baseY, color }: { radius: number; baseY: number; color: string }) {
+// Смещения (доля от радиуса кроны) для кластера из 4 сфер разного размера,
+// собранных в один пушистый ком вместо одного идеального шара.
+const CLUSTER_LOBES: [number, number, number, number][] = [
+  [0, 0.55, 0, 1],
+  [0.55, 0.15, 0.2, 0.68],
+  [-0.5, 0.3, -0.3, 0.62],
+  [0.1, 0.65, -0.55, 0.58],
+];
+
+function GltfModel({ url }: { url: string }) {
+  const { scene } = useGLTF(url);
+  // Клон обязателен: загруженный glTF переиспользуется всеми экземплярами
+  // этого вида, а один и тот же Object3D нельзя вставить в несколько мест
+  // графа сцены -- он "переедет" в последнее.
+  return <primitive object={scene.clone()} />;
+}
+
+function Trunk({ height }: { height: number }) {
+  if (height <= 0) return null;
   return (
-    <group>
-      {CLUSTER_LOBES.map(([dx, dy, dz, scale], i) => (
-        <mesh key={i} position={[dx * radius, baseY + dy * radius, dz * radius]} castShadow>
-          <sphereGeometry args={[radius * scale, 10, 8]} />
-          <meshStandardMaterial color={color} />
-        </mesh>
-      ))}
-    </group>
+    <mesh position={[0, height / 2, 0]} castShadow>
+      <cylinderGeometry args={[height * 0.1, height * 0.13, height, 8]} />
+      <meshStandardMaterial color="#6b4a2f" />
+    </mesh>
   );
 }
 
-function Tree({ treeKind, violated }: { treeKind: unknown; violated: boolean }) {
-  const preset = TREE_PRESETS[isTreeKind(treeKind) ? treeKind : "medium"];
-  const crownColor = violated ? "#e0433b" : preset.color;
-  const crownBaseY = preset.trunkHeight;
+function Primitive({ item, violated }: { item: CatalogItem; violated: boolean }) {
+  const color = violated ? VIOLATION_COLOR : item.render.color;
+  const d = item.dimensions;
+  const radius = d.radius ?? 0.5;
+  const trunkHeight = d.trunk_height ?? 0;
+  const crownHeight = Math.max(d.height - trunkHeight, 0.2);
 
-  let crown: ReactNode;
-  if (preset.crownShape === "cluster") {
-    crown = <ClusterCrown radius={preset.crownRadius} baseY={crownBaseY} color={crownColor} />;
-  } else if (preset.crownShape === "pine") {
-    // Классический силуэт сосны/ели — три сужающихся кверху яруса конусов.
-    const tiers = [1, 0.7, 0.42];
-    crown = (
-      <group>
-        {tiers.map((scale, i) => (
-          <mesh
-            key={i}
-            position={[0, crownBaseY + preset.crownHeight * (0.18 + i * 0.32) * scale, 0]}
-            castShadow
-          >
-            <coneGeometry args={[preset.crownRadius * scale * 1.15, preset.crownHeight * 0.42, 8]} />
-            <meshStandardMaterial color={crownColor} />
-          </mesh>
-        ))}
-      </group>
-    );
-  } else {
-    crown = (
-      <mesh position={[0, crownBaseY + preset.crownHeight / 2, 0]} castShadow>
-        <coneGeometry args={[preset.crownRadius, preset.crownHeight, 8]} />
-        <meshStandardMaterial color={crownColor} />
-      </mesh>
-    );
-  }
-
-  return (
-    <group>
-      <mesh position={[0, preset.trunkHeight / 2, 0]} castShadow>
-        <cylinderGeometry args={[preset.trunkRadius[0], preset.trunkRadius[1], preset.trunkHeight, 8]} />
-        <meshStandardMaterial color="#6b4a2f" />
-      </mesh>
-      {crown}
-    </group>
-  );
-}
-
-function Bush({ bushKind, violated }: { bushKind: unknown; violated: boolean }) {
-  const preset = BUSH_PRESETS[isBushKind(bushKind) ? bushKind : "medium"];
-  const color = violated ? "#e0433b" : preset.color;
-  return (
-    <group>
-      <mesh position={[0, preset.radius * 0.55, 0]} castShadow>
-        <sphereGeometry args={[preset.radius, 10, 8]} />
-        <meshStandardMaterial color={color} />
-      </mesh>
-      <mesh position={[preset.radius * 0.45, preset.radius * 0.35, preset.radius * 0.2]} castShadow>
-        <sphereGeometry args={[preset.radius * 0.6, 8, 7]} />
-        <meshStandardMaterial color={color} />
-      </mesh>
-    </group>
-  );
-}
-
-export function ObjectVisual({
-  type,
-  violated,
-  metadata,
-}: {
-  type: string;
-  violated: boolean;
-  metadata?: Record<string, unknown>;
-}) {
-  switch (type) {
-    case "tree":
-      return <Tree treeKind={metadata?.treeKind} violated={violated} />;
-    case "bush":
-      return <Bush bushKind={metadata?.bushKind} violated={violated} />;
-    case "bench":
-      return (
-        <mesh position={[0, 0.25, 0]} castShadow>
-          <boxGeometry args={[1.4, 0.4, 0.5]} />
-          <meshStandardMaterial color={violated ? "#e0433b" : "#7a5230"} />
-        </mesh>
-      );
-    case "lamp":
+  switch (item.render.shape) {
+    case "cone":
       return (
         <group>
-          <mesh position={[0, 1.5, 0]}>
-            <cylinderGeometry args={[0.05, 0.05, 3, 6]} />
-            <meshStandardMaterial color="#555555" />
-          </mesh>
-          <mesh position={[0, 3, 0]}>
-            <sphereGeometry args={[0.2, 8, 8]} />
-            <meshStandardMaterial
-              color={violated ? "#e0433b" : "#f5e28a"}
-              emissive={violated ? "#e0433b" : "#f5e28a"}
-              emissiveIntensity={0.6}
-            />
+          <Trunk height={trunkHeight} />
+          <mesh position={[0, trunkHeight + crownHeight / 2, 0]} castShadow>
+            <coneGeometry args={[radius, crownHeight, 8]} />
+            <meshStandardMaterial color={color} />
           </mesh>
         </group>
       );
+
+    case "pine": {
+      // Силуэт сосны/ели -- три сужающихся кверху яруса конусов.
+      const tiers = [1, 0.7, 0.42];
+      return (
+        <group>
+          <Trunk height={trunkHeight} />
+          {tiers.map((s, i) => (
+            <mesh key={i} position={[0, trunkHeight + crownHeight * (0.18 + i * 0.32) * s, 0]} castShadow>
+              <coneGeometry args={[radius * s * 1.15, crownHeight * 0.42, 8]} />
+              <meshStandardMaterial color={color} />
+            </mesh>
+          ))}
+        </group>
+      );
+    }
+
+    case "cluster":
+      // Лиственная крона кластером сфер: один идеальный шар смотрится как
+      // примитивная заготовка, а не как дерево.
+      return (
+        <group>
+          <Trunk height={trunkHeight} />
+          {CLUSTER_LOBES.map(([dx, dy, dz, s], i) => (
+            <mesh key={i} position={[dx * radius, trunkHeight + dy * radius, dz * radius]} castShadow>
+              <sphereGeometry args={[radius * s, 10, 8]} />
+              <meshStandardMaterial color={color} />
+            </mesh>
+          ))}
+        </group>
+      );
+
+    case "sphere":
+      return (
+        <group>
+          <mesh position={[0, radius * 0.55, 0]} castShadow>
+            <sphereGeometry args={[radius, 10, 8]} />
+            <meshStandardMaterial color={color} />
+          </mesh>
+          <mesh position={[radius * 0.45, radius * 0.35, radius * 0.2]} castShadow>
+            <sphereGeometry args={[radius * 0.6, 8, 7]} />
+            <meshStandardMaterial color={color} />
+          </mesh>
+        </group>
+      );
+
+    case "box":
+      return (
+        <group>
+          <mesh position={[0, d.height / 2, 0]} castShadow>
+            <boxGeometry args={[d.width ?? 2, d.height, d.depth ?? 0.6]} />
+            <meshStandardMaterial color={color} />
+          </mesh>
+          <mesh position={[0, d.height + 0.06, 0]} castShadow>
+            <boxGeometry args={[d.width ?? 2, 0.12, d.depth ?? 0.6]} />
+            <meshStandardMaterial color={violated ? VIOLATION_COLOR : "#568a4f"} />
+          </mesh>
+        </group>
+      );
+
+    // Плоские участки: газон, цветник, плитка дорожки.
+    case "patch":
+      return (
+        <mesh position={[0, d.height / 2, 0]} receiveShadow>
+          <boxGeometry args={[d.width ?? 2, d.height, d.depth ?? 2]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+      );
+
+    case "bench":
+      return (
+        <mesh position={[0, d.height / 2, 0]} castShadow>
+          <boxGeometry args={[d.width ?? 1.4, d.height, d.depth ?? 0.5]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+      );
+
+    case "lamp":
+      return (
+        <group>
+          <mesh position={[0, d.height / 2, 0]}>
+            <cylinderGeometry args={[0.05, 0.05, d.height, 6]} />
+            <meshStandardMaterial color="#555555" />
+          </mesh>
+          <mesh position={[0, d.height, 0]}>
+            <sphereGeometry args={[radius, 8, 8]} />
+            <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.6} />
+          </mesh>
+        </group>
+      );
+
     case "trash":
       return (
         <group>
-          <mesh position={[0, 0.35, 0]} castShadow>
-            <cylinderGeometry args={[0.24, 0.2, 0.6, 10]} />
-            <meshStandardMaterial color={violated ? "#e0433b" : "#3d4a3d"} />
+          <mesh position={[0, d.height / 2, 0]} castShadow>
+            <cylinderGeometry args={[radius * 0.92, radius * 0.77, d.height, 10]} />
+            <meshStandardMaterial color={color} />
           </mesh>
-          <mesh position={[0, 0.66, 0]}>
-            <cylinderGeometry args={[0.26, 0.26, 0.05, 10]} />
+          <mesh position={[0, d.height + 0.02, 0]}>
+            <cylinderGeometry args={[radius, radius, 0.05, 10]} />
             <meshStandardMaterial color="#2a332a" />
           </mesh>
         </group>
       );
+
     case "fountain":
       return (
         <group>
           <mesh position={[0, 0.15, 0]} castShadow>
-            <cylinderGeometry args={[1.1, 1.2, 0.3, 20]} />
-            <meshStandardMaterial color={violated ? "#e0433b" : "#9aa0a6"} />
+            <cylinderGeometry args={[radius * 0.92, radius, 0.3, 20]} />
+            <meshStandardMaterial color={color} />
           </mesh>
           <mesh position={[0, 0.32, 0]}>
-            <cylinderGeometry args={[0.95, 0.95, 0.08, 20]} />
+            <cylinderGeometry args={[radius * 0.79, radius * 0.79, 0.08, 20]} />
             <meshStandardMaterial color="#4a90c4" transparent opacity={0.85} />
           </mesh>
           <mesh position={[0, 0.55, 0]}>
@@ -153,46 +183,7 @@ export function ObjectVisual({
           </mesh>
         </group>
       );
-    case "path_segment":
-      return (
-        <mesh position={[0, 0.03, 0]} receiveShadow>
-          <boxGeometry args={[2, 0.06, 1.2]} />
-          <meshStandardMaterial color={violated ? "#e0433b" : "#b7ada0"} />
-        </mesh>
-      );
-    case "hedge_segment":
-      return (
-        <group>
-          <mesh position={[0, 0.45, 0]} castShadow>
-            <boxGeometry args={[2, 0.9, 0.6]} />
-            <meshStandardMaterial color={violated ? "#e0433b" : "#4a7a44"} />
-          </mesh>
-          <mesh position={[0, 0.92, 0]} castShadow>
-            <boxGeometry args={[2, 0.12, 0.6]} />
-            <meshStandardMaterial color={violated ? "#e0433b" : "#568a4f"} />
-          </mesh>
-        </group>
-      );
-    case "entrance":
-      return (
-        <group>
-          <mesh position={[0, 1.05, 0]}>
-            <boxGeometry args={[1.2, 2.1, 0.15]} />
-            <meshStandardMaterial color="#2b2f36" />
-          </mesh>
-          <mesh position={[0, 1.05, 0.08]}>
-            <boxGeometry args={[0.9, 1.9, 0.05]} />
-            <meshStandardMaterial color="#5b463a" />
-          </mesh>
-        </group>
-      );
-    case "playground":
-      return (
-        <mesh position={[0, 0.1, 0]}>
-          <boxGeometry args={[2, 0.2, 2]} />
-          <meshStandardMaterial color="#e08a3c" />
-        </mesh>
-      );
+
     default:
       return (
         <mesh position={[0, 0.3, 0]}>
@@ -201,4 +192,62 @@ export function ObjectVisual({
         </mesh>
       );
   }
+}
+
+// Структурные объекты, которых нет в каталоге (пользователь их не расставляет):
+// подъезды и площадки приходят из DXF-подосновы.
+function StructuralVisual({ type }: { type: string }) {
+  if (type === "entrance") {
+    return (
+      <group>
+        <mesh position={[0, 1.05, 0]}>
+          <boxGeometry args={[1.2, 2.1, 0.15]} />
+          <meshStandardMaterial color="#2b2f36" />
+        </mesh>
+        <mesh position={[0, 1.05, 0.08]}>
+          <boxGeometry args={[0.9, 1.9, 0.05]} />
+          <meshStandardMaterial color="#5b463a" />
+        </mesh>
+      </group>
+    );
+  }
+  if (type === "playground") {
+    return (
+      <mesh position={[0, 0.1, 0]}>
+        <boxGeometry args={[2, 0.2, 2]} />
+        <meshStandardMaterial color="#e08a3c" />
+      </mesh>
+    );
+  }
+  return (
+    <mesh position={[0, 0.3, 0]}>
+      <boxGeometry args={[0.5, 0.6, 0.5]} />
+      <meshStandardMaterial color="#999999" />
+    </mesh>
+  );
+}
+
+export function ObjectVisual({
+  type,
+  item,
+  hasModel,
+  violated,
+}: {
+  type: string;
+  item?: CatalogItem;
+  hasModel: boolean;
+  violated: boolean;
+}) {
+  if (!item) return <StructuralVisual type={type} />;
+
+  // Нарушение отступа подсвечивается цветом, а на .glb-модели цвет так просто
+  // не подменить -- поэтому в состоянии нарушения намеренно рисуем примитив:
+  // увидеть проблему важнее, чем красивую модель.
+  if (!hasModel || violated) return <Primitive item={item} violated={violated} />;
+
+  return (
+    <Suspense fallback={<Primitive item={item} violated={false} />}>
+      <GltfModel url={item.model} />
+    </Suspense>
+  );
 }

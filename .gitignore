@@ -3,3 +3,11 @@ __pycache__/
 .DS_Store
 .venv/
 venv/
+
+# Генерируется tools/convert_models.mjs при конвертации пака 3D-моделей:
+# сами модели, общая текстура и манифест. В репозиторий не кладём (сотни
+# мегабайт), коллега прогоняет конвертацию у себя -- см.
+# frontend/public/models/README.md.
+frontend/public/models/*
+!frontend/public/models/README.md
+backend/catalog_generated.json

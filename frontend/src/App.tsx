@@ -1,38 +1,44 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SceneView } from "./scene/SceneView";
 import type { TransformMode } from "./scene/PlacedObjects";
-import { TREE_PRESETS, BUSH_PRESETS, type TreeKind, type BushKind } from "./scene/plantPresets";
+import {
+  CATEGORY_LABELS,
+  fetchCatalog,
+  fetchModelManifest,
+  type CatalogCategory,
+  type CatalogItem,
+} from "./catalog";
 import { uploadDxf, generateGreenery } from "./api";
 import { checkViolations, computeSceneBounds } from "./geometry";
 import { plantKindOfObjectType } from "./setbackNorms";
 import type { RestrictionZone, Scene, SceneObject } from "./types";
 import "./App.css";
 
-// Дорожка/изгородь — не полилиния, а линейный сегмент (плитка/секция),
-// который двигают и разворачивают как любой другой объект, укладывая
-// несколько подряд вручную (см. комментарий у EDITABLE_TYPES в types.ts).
-const ADDABLE_TYPES: { type: string; label: string; model: string }[] = [
-  { type: "bench", label: "Лавка", model: "/models/bench.glb" },
-  { type: "lamp", label: "Фонарь", model: "/models/lamp.glb" },
-  { type: "trash", label: "Мусорка", model: "/models/trash.glb" },
-  { type: "fountain", label: "Фонтан", model: "/models/fountain.glb" },
-  { type: "path_segment", label: "Дорожка (сегмент)", model: "/models/path_segment.glb" },
-  { type: "hedge_segment", label: "Живая изгородь (сегмент)", model: "/models/hedge_segment.glb" },
-];
-
-const TREE_KIND_OPTIONS = Object.entries(TREE_PRESETS) as [TreeKind, { label: string }][];
-const BUSH_KIND_OPTIONS = Object.entries(BUSH_PRESETS) as [BushKind, { label: string }][];
-
 function App() {
   const [scene, setScene] = useState<Scene | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [transformMode, setTransformMode] = useState<TransformMode>("translate");
-  const [treeKind, setTreeKind] = useState<TreeKind>("medium");
-  const [bushKind, setBushKind] = useState<BushKind>("medium");
+  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
+  const [availableModels, setAvailableModels] = useState<Set<string>>(new Set());
+  const [selectedItemId, setSelectedItemId] = useState<string>("");
+  const [catalogFilter, setCatalogFilter] = useState("");
   const [hoveredZone, setHoveredZone] = useState<RestrictionZone | null>(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Каталог -- источник правды по видам посадок (backend/plant_catalog.py).
+  // Манифест перечисляет реально имеющиеся .glb; нет манифеста -- рисуем
+  // примитивами, это штатный режим до того, как положили модели.
+  useEffect(() => {
+    fetchCatalog()
+      .then((items) => {
+        setCatalog(items);
+        setSelectedItemId((prev) => prev || items[0]?.id || "");
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
+    fetchModelManifest().then(setAvailableModels);
+  }, []);
 
   const handleSelect = useCallback((id: string | null) => {
     setSelectedId(id);
@@ -64,7 +70,8 @@ function App() {
   }, []);
 
   const handleAddObject = useCallback(
-    (type: string, model: string, metadata: Record<string, unknown> = {}) => {
+    (item: CatalogItem) => {
+      const type = item.object_type;
       setScene((prev) => {
         if (!prev) return prev;
         const bounds = computeSceneBounds(prev);
@@ -80,11 +87,13 @@ function App() {
         const newObject: SceneObject = {
           id: `${type}_manual_${id}`,
           type,
-          model,
+          model: item.model,
           position: { x: cx + offsetX, y: 0, z: cz + offsetZ },
           rotation: 0,
           scale: 1,
-          metadata,
+          // catalogId -- ключ, по которому рендер и будущий агент понимают,
+          // что именно за вид посадки тут стоит.
+          metadata: { catalogId: item.id, label: item.label },
         };
         setSelectedId(newObject.id);
         setTransformMode("translate");
@@ -159,6 +168,24 @@ function App() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [selectedId, handleDelete]);
 
+  const catalogById = useMemo(() => new Map(catalog.map((i) => [i.id, i])), [catalog]);
+  // С подключённым паком в каталоге сотни позиций -- без фильтра выпадающий
+  // список превращается в бесконечную прокрутку.
+  const filteredCatalog = useMemo(() => {
+    const q = catalogFilter.trim().toLowerCase();
+    if (!q) return catalog;
+    return catalog.filter((i) => i.label.toLowerCase().includes(q));
+  }, [catalog, catalogFilter]);
+
+  // Если фильтр отсёк текущий выбор -- берём первую подходящую позицию.
+  // Вычисляем при рендере, а не через useEffect с setState: эффект здесь
+  // порождал бы лишний цикл рендера ради значения, которое и так выводится
+  // из фильтра.
+  const effectiveItemId = filteredCatalog.some((i) => i.id === selectedItemId)
+    ? selectedItemId
+    : (filteredCatalog[0]?.id ?? "");
+  const selectedItem = catalogById.get(effectiveItemId);
+
   const selectedObj = scene?.objects.find((o) => o.id === selectedId) ?? null;
   const selectedViolations = selectedObj
     ? checkViolations(
@@ -200,6 +227,8 @@ function App() {
         {scene ? (
           <SceneView
             scene={scene}
+            catalogById={catalogById}
+            availableModels={availableModels}
             selectedId={selectedId}
             transformMode={transformMode}
             onSelect={handleSelect}
@@ -215,43 +244,43 @@ function App() {
           {scene && (
             <div className="panel add-panel">
               <strong>Добавить объект</strong>
+              <input
+                className="catalog-filter"
+                type="text"
+                placeholder="Поиск: раскидистое, низкое, сосна..."
+                value={catalogFilter}
+                onChange={(e) => setCatalogFilter(e.target.value)}
+              />
               <div className="add-row">
-                <select value={treeKind} onChange={(e) => setTreeKind(e.target.value as TreeKind)}>
-                  {TREE_KIND_OPTIONS.map(([kind, preset]) => (
-                    <option key={kind} value={kind}>
-                      {preset.label}
-                    </option>
-                  ))}
+                <select value={effectiveItemId} onChange={(e) => setSelectedItemId(e.target.value)}>
+                  {(Object.keys(CATEGORY_LABELS) as CatalogCategory[]).map((category) => {
+                    const items = filteredCatalog.filter((i) => i.category === category);
+                    if (items.length === 0) return null;
+                    return (
+                      <optgroup key={category} label={CATEGORY_LABELS[category]}>
+                        {items.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    );
+                  })}
                 </select>
                 <button
                   className="add-btn"
-                  onClick={() => handleAddObject("tree", "/models/tree.glb", { treeKind })}
+                  disabled={!selectedItem}
+                  onClick={() => selectedItem && handleAddObject(selectedItem)}
                 >
                   + Добавить
                 </button>
               </div>
-              <div className="add-row">
-                <select value={bushKind} onChange={(e) => setBushKind(e.target.value as BushKind)}>
-                  {BUSH_KIND_OPTIONS.map(([kind, preset]) => (
-                    <option key={kind} value={kind}>
-                      {preset.label}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  className="add-btn"
-                  onClick={() => handleAddObject("bush", "/models/bush.glb", { bushKind })}
-                >
-                  + Добавить
-                </button>
-              </div>
-              <div className="add-buttons">
-                {ADDABLE_TYPES.map(({ type, label, model }) => (
-                  <button key={type} className="add-btn" onClick={() => handleAddObject(type, model)}>
-                    + {label}
-                  </button>
-                ))}
-              </div>
+              <p className="muted hint">
+                {catalogFilter ? `${filteredCatalog.length} из ${catalog.length}` : `${catalog.length} видов`} в каталоге
+                {availableModels.size > 0
+                  ? `, 3D-моделей загружено: ${availableModels.size}`
+                  : ", 3D-модели не подключены — рисуются заглушки"}
+              </p>
             </div>
           )}
 

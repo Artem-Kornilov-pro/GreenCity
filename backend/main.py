@@ -27,6 +27,7 @@ from greenery_generator import (
     MIN_ALLOWED_GRID_SPACING_M,
     generate_trees,
 )
+from plant_catalog import CatalogItem, load_catalog
 from schemas import Scene
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "parser"))
@@ -45,6 +46,21 @@ app.add_middleware(
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/api/catalog", response_model=list[CatalogItem])
+def get_catalog():
+    """Каталог типовых посадок и МАФ (plant_catalog.py).
+
+    Единый источник правды: фронтенд строит по нему панель "Добавить объект"
+    и выбирает, чем рисовать объект (моделью .glb или примитивом-заглушкой),
+    а генератор/будущий LLM-агент -- что вообще можно ставить и с каким
+    нормативным отступом. Добавление новых видов не требует правок кода:
+    достаточно дописать запись в plant_catalog.CATALOG (или сконвертировать
+    пак моделей -- tools/convert_models.mjs) и положить .glb в
+    frontend/public/models/.
+    """
+    return load_catalog()
 
 
 @app.post("/api/parse")
