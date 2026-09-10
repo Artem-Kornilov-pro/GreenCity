@@ -12,6 +12,7 @@ FastAPI-бэкенд для веб-редактора озеленения. Эн
     uvicorn main:app --reload --port 8000
 """
 
+import logging
 import sys
 import tempfile
 from pathlib import Path
@@ -27,11 +28,23 @@ from greenery_generator import (
     MIN_ALLOWED_GRID_SPACING_M,
     generate_trees,
 )
+from llm_editor import (
+    LlmError,
+    LlmNotConfiguredError,
+    TextEditRequest,
+    TextEditResult,
+    edit_scene_with_text,
+)
 from plant_catalog import CatalogItem, load_catalog
 from schemas import Scene
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "parser"))
 from parse_dxf import parse_dxf_file  # noqa: E402
+
+# Логи приложения (например greencity.llm -- почему не сработала правка текстом)
+# в том же потоке, что и логи uvicorn. Логгеры самого uvicorn настроены с
+# propagate=False, поэтому их сообщения здесь не задвоятся.
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
 
 app = FastAPI(title="GreenCity API")
 
@@ -157,3 +170,24 @@ async def generate_greenery(
     )
     scene.objects = [*scene.objects, *new_trees]
     return scene
+
+
+# Синхронный def, а не async: клиент openai блокирующий, и FastAPI сам уводит
+# такой обработчик в пул потоков -- ответ модели (~5-10 с) не подвесит
+# остальные запросы.
+@app.post("/api/edit-with-text", response_model=TextEditResult)
+def edit_with_text(request: TextEditRequest):
+    """Правка плана текстом (ТЗ: корректировки в текстовом формате).
+
+    LLM возвращает не сцену, а список операций: групповых (ряд вдоль дорожек,
+    группа у точки, удаление по условию) и точечных (add/remove/move/rotate).
+    Координаты считает и проверяет по нормам планировщик (llm_editor.apply_plan,
+    placement.py). В ответе -- новая сцена и что применено, что отклонено и
+    почему, какие есть предупреждения.
+    """
+    try:
+        return edit_scene_with_text(request.scene, request.instruction)
+    except LlmNotConfiguredError as e:
+        raise HTTPException(503, str(e)) from e
+    except LlmError as e:
+        raise HTTPException(502, str(e)) from e

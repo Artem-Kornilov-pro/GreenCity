@@ -5,3 +5,7 @@ frontend/dist
 **/__pycache__
 *.pyc
 .DS_Store
+
+# Секреты не должны попадать в контекст сборки образа
+.env
+.env.local

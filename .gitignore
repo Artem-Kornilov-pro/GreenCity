@@ -11,3 +11,7 @@ venv/
 frontend/public/models/*
 !frontend/public/models/README.md
 backend/catalog_generated.json
+
+# Секреты (ключи LLM и т.п.) -- никогда не коммитим. Шаблон без значений: .env.example
+.env
+.env.local

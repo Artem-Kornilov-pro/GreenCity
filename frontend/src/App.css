@@ -229,3 +229,48 @@
   padding: 6px 8px;
   font-size: 12px;
 }
+
+.text-edit-panel textarea {
+  margin-top: 8px;
+  width: 100%;
+  min-height: 72px;
+  resize: vertical;
+  border-radius: 6px;
+  border: 1px solid #cfd8e3;
+  padding: 7px 8px;
+  font: inherit;
+  font-size: 12px;
+}
+
+.text-edit-panel .apply-btn {
+  margin-top: 6px;
+  width: 100%;
+  cursor: pointer;
+  background: #2f5aa8;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 12px;
+}
+
+.text-edit-panel .apply-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.edit-result {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.edit-result .rejected-item {
+  color: #b3261e;
+}
+
+.edit-result .warning-item {
+  color: #9a6700;
+}

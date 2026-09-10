@@ -8,6 +8,11 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./parser:/app/parser
+    # Ключи LLM. required: false -- без .env сервис всё равно поднимется, просто
+    # текстовое редактирование ответит понятной ошибкой, а не упадёт весь compose.
+    env_file:
+      - path: .env
+        required: false
     restart: unless-stopped
 
   frontend:

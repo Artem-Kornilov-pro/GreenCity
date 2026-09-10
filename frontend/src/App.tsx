@@ -8,7 +8,7 @@ import {
   type CatalogCategory,
   type CatalogItem,
 } from "./catalog";
-import { uploadDxf, generateGreenery } from "./api";
+import { uploadDxf, generateGreenery, editWithText, type TextEditResult } from "./api";
 import { checkViolations, computeSceneBounds } from "./geometry";
 import { plantKindOfObjectType } from "./setbackNorms";
 import type { RestrictionZone, Scene, SceneObject } from "./types";
@@ -26,6 +26,10 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [instruction, setInstruction] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [editResult, setEditResult] = useState<TextEditResult | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
 
   // Каталог -- источник правды по видам посадок (backend/plant_catalog.py).
   // Манифест перечисляет реально имеющиеся .glb; нет манифеста -- рисуем
@@ -141,6 +145,28 @@ function App() {
     }
   }, [scene]);
 
+  const handleTextEdit = useCallback(async () => {
+    if (!scene || !instruction.trim()) return;
+    setEditing(true);
+    setEditError(null);
+    setEditResult(null);
+    try {
+      const result = await editWithText(scene, instruction.trim());
+      setScene(result.scene);
+      setEditResult(result);
+      setInstruction("");
+      // Модель могла удалить выбранный объект -- не держим выделение на пустоте.
+      setSelectedId((prev) => (prev && result.scene.objects.some((o) => o.id === prev) ? prev : null));
+    } catch (e) {
+      // Ошибку показываем в самой панели правки, а не только в полосе вверху
+      // страницы: после минуты ожидания взгляд у пользователя на панели, и
+      // уведомление наверху выглядело так, будто "ничего не произошло".
+      setEditError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setEditing(false);
+    }
+  }, [scene, instruction]);
+
   const handleExport = () => {
     if (!scene) return;
     const blob = new Blob([JSON.stringify(scene.objects, null, 2)], { type: "application/json" });
@@ -241,6 +267,47 @@ function App() {
         )}
 
         <aside className="sidebar">
+          {scene && (
+            <div className="panel text-edit-panel">
+              <strong>Правка текстом (ИИ)</strong>
+              <textarea
+                placeholder="Например: посади 5 раскидистых деревьев вдоль южного дома, убери лавки у парковки"
+                value={instruction}
+                disabled={editing}
+                onChange={(e) => setInstruction(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault();
+                    handleTextEdit();
+                  }
+                }}
+              />
+              <button className="apply-btn" disabled={editing || !instruction.trim()} onClick={handleTextEdit}>
+                {editing ? "Модель думает..." : "Применить (Ctrl/⌘ + Enter)"}
+              </button>
+              {editError && <div className="edit-result rejected-item">✕ {editError}</div>}
+              {editResult && (
+                <div className="edit-result">
+                  {editResult.explanation && <div>{editResult.explanation}</div>}
+                  <div className="muted">
+                    Применено: {editResult.applied.length}
+                    {editResult.rejected.length > 0 && `, отклонено: ${editResult.rejected.length}`}
+                  </div>
+                  {editResult.rejected.map((r, i) => (
+                    <div key={`rejected-${i}`} className="rejected-item">
+                      ✕ {r}
+                    </div>
+                  ))}
+                  {editResult.warnings.map((w, i) => (
+                    <div key={`warning-${i}`} className="warning-item">
+                      ⚠ {w}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {scene && (
             <div className="panel add-panel">
               <strong>Добавить объект</strong>

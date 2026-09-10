@@ -8,11 +8,19 @@
 locations/    6 тестовых DXF-локаций (от одного дома до района на 264 здания)
 parser/       DXF -> JSON (parse_dxf.py): границы участка, зоны ограничений, объекты
 converters/   GeoJSON / SHP / DWG -> DXF (для внешних источников данных)
-backend/      FastAPI: DXF -> JSON, автогенерация озеленения (подробности — backend/README.md)
+backend/      FastAPI: DXF -> JSON, автогенерация озеленения, правка текстом через LLM (подробности — backend/README.md)
 frontend/     React + TypeScript + react-three-fiber: 3D-просмотр и редактирование
 ```
 
 ## Быстрый старт
+
+Для правки плана текстом нужен ключ LLM (Yandex Cloud). Скопируйте шаблон и заполните значения — сам `.env` в git не попадает:
+
+```bash
+cp .env.example .env
+```
+
+Без `.env` всё остальное работает, а правка текстом отвечает понятной ошибкой.
 
 ### Вариант A: Docker
 
@@ -20,7 +28,7 @@ frontend/     React + TypeScript + react-three-fiber: 3D-просмотр и р�
 docker compose up -d --build
 ```
 
-Поднимет оба сервиса: backend на `http://localhost:8000`, frontend на `http://localhost:5173`. Код смонтирован volume'ами — правки в `backend/`, `parser/`, `frontend/` подхватываются на лету (uvicorn `--reload`, vite dev server), без пересборки образа.
+Поднимет оба сервиса: backend на `http://localhost:8000`, frontend на `http://localhost:5173`. Код смонтирован volume'ами — правки в `backend/`, `parser/`, `frontend/` подхватываются на лету (uvicorn `--reload`, vite dev server), без пересборки образа. Это касается только кода: **новые зависимости** в `requirements.txt` так не подхватываются — после их изменения нужен `docker compose up -d --build backend`, иначе бэкенд упадёт на импорте.
 
 ### Вариант B: локально
 
@@ -42,7 +50,7 @@ cd backend
 uvicorn main:app --reload --port 8000
 ```
 
-Эндпоинты: `POST /api/parse` — принимает `.dxf`, отдаёт `{boundary, restrictions, objects, windows, canopies, meta}`; `POST /api/generate-greenery` — принимает сцену того же формата (+ опциональные `species`/`grid_spacing_m`/`min_tree_spacing_m` через query string), возвращает её же с добавленными деревьями. Пока реализованы только деревья (детерминированный генератор по сетке, без ML); кустарники и газон — TODO. Полное описание алгоритма и параметров — `backend/README.md`.
+Эндпоинты: `POST /api/parse` — принимает `.dxf`, отдаёт `{boundary, restrictions, objects, windows, canopies, meta}`; `POST /api/generate-greenery` — принимает сцену того же формата (+ опциональные `species`/`grid_spacing_m`/`min_tree_spacing_m` через query string), возвращает её же с добавленными деревьями. Пока реализованы только деревья (детерминированный генератор по сетке, без ML); кустарники и газон — TODO. Полное описание алгоритма и параметров — `backend/README.md`. `GET /api/catalog` — каталог видов посадок и МАФ. `POST /api/edit-with-text` — принимает `{scene, instruction}`, правит план текстом через LLM.
 
 #### 3. Frontend
 
@@ -76,6 +84,7 @@ make lint-fix    # автоисправление того, что чинитс�
 - Экспорт отредактированного расположения объектов в JSON
 - Конвертация GeoJSON/SHP/DWG в DXF для импорта внешних геоданных (Мосгеотрест, data.mos.ru)
 - Кнопка "Сгенерировать растительность автоматически" → `/api/generate-greenery`: расставляет деревья по сетке внутри зон газона, обходя здания/коммуникации/парковки/дорожки с нужным по нормам отступом; не трогает уже расставленные пользователем объекты (`backend/greenery_generator.py`, `backend/setback_norms.py`)
+- Правка плана текстом через LLM (ТЗ: корректировки в текстовом формате). Задача разбита на два уровня: модель выбирает намерение, виды и параметры, а координаты считает детерминированный планировщик (`backend/placement.py`). Групповые операции: `place_along` — ряд вдоль дорожек, фасадов, парковок, площадок или по периметру участка; `place_in_area` — группа у точки или равномерно по свободной области; `remove_where` — удаление по условию. Планировщик сам берёт шаг по размеру вида и держит отступы по нормам: от зданий, сетей, дорожек, парковок, фонарей (дерево — 4 м от опоры освещения) и подъездов. Точечные `add`/`remove`/`move`/`rotate` — для конкретных объектов: точку с нарушением планировщик сдвигает в ближайшее допустимое место (не дальше 10 м), а если такого нет — отклоняет с причиной (`backend/llm_editor.py`). Модель по умолчанию — `yandexgpt` (переменная `YANDEX_CLOUD_MODEL` в `.env`), ответ приходит за несколько секунд
 - Запуск в Docker (`docker compose up`)
 
 ## Дальше

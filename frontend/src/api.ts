@@ -29,3 +29,29 @@ export async function generateGreenery(scene: Scene): Promise<Scene | null> {
   }
   return res.json() as Promise<Scene | null>;
 }
+
+export interface TextEditResult {
+  scene: Scene;
+  explanation: string;
+  applied: string[];
+  rejected: string[];
+  warnings: string[];
+}
+
+// Правка плана текстом через LLM (backend/llm_editor.py). Модель отвечает
+// несколько секунд -- вызывающему коду нужен индикатор ожидания.
+export async function editWithText(scene: Scene, instruction: string): Promise<TextEditResult> {
+  const res = await fetch(`${API_BASE}/api/edit-with-text`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scene, instruction }),
+  });
+  if (!res.ok) {
+    // FastAPI кладёт текст ошибки в {"detail": "..."} -- показываем его, а не
+    // сырое тело ответа.
+    const body = await res.json().catch(() => null);
+    const detail = typeof body?.detail === "string" ? body.detail : res.statusText;
+    throw new Error(`Не удалось применить правку (${res.status}): ${detail}`);
+  }
+  return res.json() as Promise<TextEditResult>;
+}
