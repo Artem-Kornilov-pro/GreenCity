@@ -37,8 +37,15 @@ export function PlacedObjects({
       {items.map((obj) => {
         // Подъезд встроен в стену по построению — отступ от здания к нему
         // неприменим, проверять и подсвечивать это как нарушение бессмысленно.
+        // Мощение (path_segment) по норме допускается поверх охранной зоны
+        // сети — лёгкая дорожка не мешает обслуживанию труб, в отличие от
+        // капитальной постройки или посадки с корнями (см. backend
+        // courtyard_design.py, где новая дорожка намеренно не исключает такие
+        // зоны). Подсвечивать её там как нарушение — визуальное вранье:
+        // дорожке там и правда можно быть.
+        const exemptFromViolations = obj.type === "entrance" || obj.type === "path_segment";
         const violated =
-          obj.type !== "entrance" &&
+          !exemptFromViolations &&
           checkViolations(obj.position.x, obj.position.z, restrictions, plantKindOfObjectType(obj.type)).length > 0;
         const item = resolveCatalogItem(obj, catalogById, availableModels);
         return (

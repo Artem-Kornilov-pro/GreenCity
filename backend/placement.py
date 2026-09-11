@@ -32,7 +32,7 @@ from typing import Optional
 import numpy as np
 from schemas import RestrictionZone, Scene
 from setback_norms import setback_for
-from shapely.geometry import Point, Polygon
+from shapely.geometry import MultiPoint, Point, Polygon
 from shapely.ops import nearest_points, unary_union
 from shapely.prepared import prep
 
@@ -52,6 +52,8 @@ SITE_CLEARANCE_M = 0.5  # не ставим вплотную к границе �
 REGION_EPS_M = 0.1
 
 OBJECT_CLEARANCE_M = 1.0  # минимум до любого точечного объекта
+PATH_SEGMENT_HALF_WIDTH_M = 0.7  # ширина уложенного мощения (path_segment 2x1.2 м) для его учёта как цели "pedestrian_path"
+FURNITURE_CLEARANCE_M = 0.3  # зазор МАФ и мощения от края любой зоны ограничений
 # (тип существующего объекта) -> {вид новой посадки: минимальное расстояние, м}.
 POINT_CLEARANCE_M: dict[str, dict[str, float]] = {
     # СНиП 2.07.01-89*, табл. 4: от опоры осветительной сети до дерева 4 м
@@ -62,6 +64,9 @@ POINT_CLEARANCE_M: dict[str, dict[str, float]] = {
     # Кроны соседних деревьев не должны срастаться.
     "tree": {"tree": 3.0},
 }
+# Вид посадки существующего объекта по его типу -- чтобы нормы из
+# POINT_CLEARANCE_M действовали в обе стороны (см. Placer.blocker).
+_KIND_OF_TYPE = {"tree": "tree", "bush": "bush", "hedge_segment": "bush"}
 
 # Точку, указанную моделью с нарушением, сдвигаем не дальше этого: "у входа"
 # не должно превратиться в "на другом конце двора". Меньше брать нельзя: дерево
@@ -104,7 +109,7 @@ def _geometry(points: list, single: bool = False):
     return geom
 
 
-def _polygons(geom) -> list[Polygon]:
+def polygons(geom) -> list[Polygon]:
     if geom is None or geom.is_empty:
         return []
     if geom.geom_type == "Polygon":
@@ -177,19 +182,31 @@ class Placer:
         self._targets: dict = {}
         self._free_areas: Optional[list[Polygon]] = None
         self._objects = PointIndex()
+        # Уже уложенная плитка (design_area, предыдущий place_along/add) --
+        # тоже "пешеходная дорожка" для последующих правок: без этого "добавь
+        # фонари вдоль дорожек" после того, как дорожки уже построил
+        # design_area, искало бы только исходные контуры из DXF, которых на
+        # пустых заготовках (см. локацию 6) почти нет -- крохотные огрызки у
+        # самих дверей, где физически негде поставить фонарь.
+        self._existing_paths: list[tuple[float, float]] = []
         for obj in scene.objects:
             if obj.type != "building":
                 self._objects.add(obj.id, obj.position.x, obj.position.z, obj.type)
+            if obj.type == "path_segment":
+                self._existing_paths.append((obj.position.x, obj.position.z))
 
     # --- Нормы и допустимая область ----------------------------------------
 
     @staticmethod
     def required(zone: RestrictionZone, kind: Optional[str]) -> float:
         """Нормативный отступ посадки вида kind от зоны. МАФ и мощению (kind
-        None) нормы для растений неприменимы -- им нельзя лишь попадать внутрь."""
+        None) нормы для растений неприменимы, но небольшой запас всё равно
+        нужен: раньше он проверялся с точностью до ~10 см и лавка могла
+        встать вплотную к краю дорожки или ограждению сети, визуально на них
+        заходя."""
         if kind in ("tree", "bush"):
             return setback_for(zone.type, kind, zone.minDistance)
-        return 0.0
+        return FURNITURE_CLEARANCE_M
 
     def region(self, kind: Optional[str]):
         """(область, её prepared-версия), где можно ставить объект вида kind:
@@ -211,25 +228,53 @@ class Placer:
             self._regions[kind] = (area, prep(area) if area is not None else None)
         return self._regions[kind]
 
-    def blocker(self, x: float, z: float, kind: Optional[str], clearance: float = OBJECT_CLEARANCE_M):
+    def blocker(
+        self,
+        x: float,
+        z: float,
+        kind: Optional[str],
+        clearance: float = OBJECT_CLEARANCE_M,
+        obj_type: Optional[str] = None,
+    ):
         """(id, нужное расстояние, фактическое) первого мешающего точечного
-        объекта или None."""
-        reach = max([clearance, *(norms.get(kind, 0.0) for norms in POINT_CLEARANCE_M.values())])
-        for key, obj_type, distance in self._objects.within(x, z, reach):
-            required = max(clearance, POINT_CLEARANCE_M.get(obj_type, {}).get(kind, 0.0))
+        объекта или None. obj_type -- тип нового объекта: нормы действуют в обе
+        стороны, фонарь нельзя ставить в 4 м от дерева, как и дерево у фонаря."""
+        own = POINT_CLEARANCE_M.get(obj_type, {}) if obj_type else {}
+        reach = max([clearance, *(norms.get(kind, 0.0) for norms in POINT_CLEARANCE_M.values()), *own.values()])
+        for key, other_type, distance in self._objects.within(x, z, reach):
+            required = max(
+                clearance,
+                POINT_CLEARANCE_M.get(other_type, {}).get(kind, 0.0),
+                own.get(_KIND_OF_TYPE.get(other_type), 0.0),
+            )
             if distance < required:
                 return key, required, distance
         return None
 
-    def in_region(self, x: float, z: float, kind: Optional[str]) -> bool:
-        """Точка вне зон ограничений с отступами -- без учёта точечных объектов."""
+    def region_contains(self, shape, kind: Optional[str]) -> bool:
+        """Фигура (точка ИЛИ полигон габарита объекта) целиком внутри
+        допустимой области -- без учёта точечных объектов. Полигон нужен для
+        вытянутых и широких МАФ (лавка, секция изгороди, клумба): проверка
+        одной точки-центра пропускала случаи, когда сам объект стоял
+        правильно, а его дальний край перекрывал дорожку или уходил за
+        границу участка -- центр при этом лежал в допустимой области."""
         _, prepared = self.region(kind)
-        return prepared is not None and prepared.contains(Point(x, z))
+        return prepared is not None and prepared.contains(shape)
 
-    def is_free(self, x: float, z: float, kind: Optional[str], clearance: float = OBJECT_CLEARANCE_M) -> bool:
+    def in_region(self, x: float, z: float, kind: Optional[str]) -> bool:
+        return self.region_contains(Point(x, z), kind)
+
+    def is_free(
+        self,
+        x: float,
+        z: float,
+        kind: Optional[str],
+        clearance: float = OBJECT_CLEARANCE_M,
+        obj_type: Optional[str] = None,
+    ) -> bool:
         if not self.in_region(x, z, kind):
             return False
-        return self.blocker(x, z, kind, clearance) is None
+        return self.blocker(x, z, kind, clearance, obj_type) is None
 
     def explain(self, x: float, z: float, kind: Optional[str], clearance: float = OBJECT_CLEARANCE_M) -> str:
         """Человекочитаемая причина, почему в точке ставить нельзя. Точный
@@ -312,6 +357,9 @@ class Placer:
                 geom = self.site
             else:
                 parts = [geom for _, geom in self._target_zones(target)]
+                if target == "pedestrian_path" and self._existing_paths:
+                    points = MultiPoint(self._existing_paths).buffer(PATH_SEGMENT_HALF_WIDTH_M)
+                    parts.append(points)
                 geom = unary_union(parts) if parts else None
             self._targets[target] = geom if geom is not None and not geom.is_empty else None
         return self._targets[target]
@@ -353,7 +401,7 @@ class Placer:
         band = geom.buffer(-offset) if target == "site_boundary" else geom.buffer(offset)
 
         points: list[tuple[float, float, float]] = []
-        for poly in _polygons(band):
+        for poly in polygons(band):
             for ring in (poly.exterior, *poly.interiors):
                 length = ring.length
                 if length < 1.0:
@@ -419,7 +467,7 @@ class Placer:
         адресуемые области A1, A2, ... (порядок стабилен для одной сцены)."""
         if self._free_areas is None:
             area, _ = self.region("tree")
-            parts = [poly for poly in _polygons(area) if poly.area >= min_area_m2]
+            parts = [poly for poly in polygons(area) if poly.area >= min_area_m2]
             parts.sort(key=lambda poly: -poly.area)
             self._free_areas = parts[:limit]
         return self._free_areas

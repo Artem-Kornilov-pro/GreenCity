@@ -42,6 +42,7 @@ from pathlib import Path
 from typing import Annotated, Literal, Optional
 
 import openai
+from courtyard_design import DEFAULT_ELEMENTS, DESIGN_ITEM_IDS, ELEMENTS, STYLES, CourtyardDesigner
 from dotenv import load_dotenv
 from placement import (
     FALLBACK_ROW_STEP_M,
@@ -62,7 +63,8 @@ from plant_catalog import CATALOG as BASE_CATALOG
 from plant_catalog import CatalogItem, load_catalog
 from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 from schemas import Point3, Scene, SceneObject
-from shapely.geometry import Point, Polygon
+from shapely.geometry import LineString, Point, Polygon
+from shapely.ops import nearest_points, unary_union
 
 # Локально .env лежит в корне репозитория. В Docker переменные уже приходят из
 # env_file, а load_dotenv без override существующие значения не перетирает.
@@ -196,8 +198,44 @@ class RemoveWhereOp(BaseModel):
     radius_m: Optional[float] = None
 
 
+class ConnectOp(BaseModel):
+    """Проложить дорожку между двумя точками: подъезд-подъезд, подъезд-объект
+    (например фонтан), сеть дорожек-зона (например парковка). Каждый конец --
+    id объекта, целевая зона (target) или явные координаты; ровно один из
+    трёх на каждый конец. design_area прокладывает целую сеть сама и уже
+    сама подводит дорожки к подъездам и к парковке -- эта операция нужна для
+    точечной связи, которую ни одна другая не строит: например к объекту,
+    добавленному отдельно от дизайна двора."""
+
+    op: Literal["connect"]
+    from_id: Optional[str] = None
+    from_target: Optional[Target] = None
+    from_x: Optional[float] = None
+    from_z: Optional[float] = None
+    to_id: Optional[str] = None
+    to_target: Optional[Target] = None
+    to_x: Optional[float] = None
+    to_z: Optional[float] = None
+
+
+class DesignAreaOp(BaseModel):
+    """Полный дизайн двора: каркас дорожек и благоустройство вокруг него."""
+
+    op: Literal["design_area"]
+    elements: list[str] = []  # пусто -- courtyard_design.DEFAULT_ELEMENTS
+    # courtyard_design.STYLES; неизвестное значение и null (модели иногда
+    # присылают style: null вместо того, чтобы просто не указывать поле) --
+    # тоже auto, см. design_area().
+    style: Optional[str] = "auto"
+    tree_ids: list[str] = []
+    bush_ids: list[str] = []
+    x: Optional[float] = None
+    z: Optional[float] = None
+    radius_m: Optional[float] = None
+
+
 Operation = Annotated[
-    AddOp | RemoveOp | MoveOp | RotateOp | PlaceAlongOp | PlaceInAreaOp | RemoveWhereOp,
+    AddOp | RemoveOp | MoveOp | RotateOp | PlaceAlongOp | PlaceInAreaOp | RemoveWhereOp | ConnectOp | DesignAreaOp,
     Field(discriminator="op"),
 ]
 _OPERATION = TypeAdapter(Operation)
@@ -256,16 +294,35 @@ def _editable_types(catalog: list[CatalogItem]) -> set[str]:
     return {item.object_type for item in catalog}
 
 
+def _pack_substitutes(catalog: list[CatalogItem]) -> dict[str, CatalogItem]:
+    """Базовое дерево-примитив -> модель из пака того же размера и кроны (или
+    любая из пака). Деревья сажаем только из пака; базовые -- крайний случай,
+    когда пак не сконвертирован. Пусто, если пака нет."""
+    base_ids = {item.id for item in BASE_CATALOG}
+    pack = [item for item in catalog if item.category == "tree" and item.id not in base_ids]
+    if not pack:
+        return {}
+    substitutes = {}
+    for item in catalog:
+        if item.category == "tree" and item.id in base_ids:
+            same = [p for p in pack if p.size_class == item.size_class and p.crown_class == item.crown_class]
+            substitutes[item.id] = (same or pack)[0]
+    return substitutes
+
+
 def _catalog_for_prompt(catalog: list[CatalogItem]) -> list[list]:
     """Каталог таблицей (строки-массивы, заголовок -- в catalog_columns), а не
     списком словарей: повторяющиеся ключи в 217 записях и были основным
     объёмом. Модели из пака -- выборкой по классу формы, в порядке файла, чтобы
     выборка была стабильной от запроса к запросу."""
     base_ids = {item.id for item in BASE_CATALOG}
+    hide_base_trees = bool(_pack_substitutes(catalog))
     per_class: dict[tuple, int] = {}
     rows: list[list] = []
     for item in catalog:
         is_base = item.id in base_ids
+        if is_base and item.category == "tree" and hide_base_trees:
+            continue
         if not is_base:
             key = (item.category, item.size_class, item.crown_class)
             if per_class.get(key, 0) >= MAX_PACK_ITEMS_PER_SHAPE_CLASS:
@@ -370,6 +427,10 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
   Группа посадок: с x и z — компактно вокруг точки; с area — равномерно по свободной области; без них — равномерно по всему участку.
 - {"op": "remove_where", "object_types": ["<тип из objects>"], "target": "<необязательно>", "distance_m": <необязательно>, "x": <необязательно>, "z": <необязательно>, "radius_m": <необязательно>}
   Удалить все объекты этих типов, подходящие под фильтры: у цели ближе distance_m (по умолчанию 3 м) и/или в радиусе от точки. Без фильтров — все объекты этих типов.
+- {"op": "design_area", "elements": ["paths", "flowerbeds", "fountain", "lamps", "benches", "trash", "hedge", "trees", "bushes"], "style": "<необязательно>", "tree_ids": [<необязательно>], "bush_ids": [<необязательно>], "x": <необязательно>, "z": <необязательно>, "radius_m": <необязательно>}
+  Полный дизайн двора одной операцией: планировщик сам прокладывает каркас дорожек (от подъезда к подъезду, с выходом на парковку, если она рядом), расставляет фонари и скамейки с урнами вдоль дорожек, живую изгородь по краю двора, деревья вразброс по свободной площади. В elements перечисли то, что просили: paths — дорожки (прокладываются всегда), flowerbeds — клумбы, fountain — фонтан, lamps — фонари, benches — скамейки, trash — урны, hedge — живая изгородь, trees — деревья, bushes — кусты. Если просят «дизайн», «благоустройство», «сквер», «парк» без перечня — elements не указывай (по умолчанию — всё, КРОМЕ фонтана). fountain указывай, только если фонтан просят явно: площадь для него есть не в каждом дворе, и без явной просьбы он не ставится. style — шаблон каркаса дорожек: spine (дорожки от подъезда к подъезду — по умолчанию для обычного двора), diagonal (площадь на пересечении диагоналей — только если явно просят «крест», «по диагонали»), grid (сетка дорожек, для большого двора), perimeter (дорожка по периметру, для узкого двора); без явной просьбы про форму дорожек не указывай — планировщик сам подберёт по форме двора. x, z, radius_m — только если дизайн нужен в конкретной части участка.
+- {"op": "connect", "from_id"/"from_target"/"from_x"+"from_z": "<одно из трёх>", "to_id"/"to_target"/"to_x"+"to_z": "<одно из трёх>"}
+  Проложить дорожку между двумя точками: подъезд-подъезд, подъезд или другой объект (например фонтан) — id из objects; сеть дорожек или граница участка до зоны (например парковки) — target из targets. Для "от подъезда к Х" или "соедини сеть дорожек с Y" — эта операция, а не place_along. design_area уже сама тянет дорожки к подъездам и парковке — connect нужен для точечной, дополнительной связи.
 
 Точечные операции — только для конкретных объектов или одной-двух посадок в названном месте:
 - {"op": "add", "catalog_id": "...", "x": <число>, "z": <число>, "rotation_deg": <необязательно>}
@@ -380,16 +441,20 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
 Правила:
 - catalog_id бери только из catalog_rows, id — только из objects, target — только из targets, area — только из free_areas. Не выдумывай.
 - Деревья, кустарники и МАФ — разными операциями. Кустарники — строки с category "bush" (живая изгородь — только hedge_segment), деревья — "tree".
-- В catalog_ids давай 2–4 разных вида подходящего класса: живая посадка не состоит из клонов.
+- В catalog_ids — один или несколько видов подходящего класса; одинаковые деревья сажать можно.
 - spacing_m и offset_m не указывай, если пользователь не просит гуще, реже или дальше: шаг по размеру вида планировщик возьмёт сам.
 - count и max_count — по числу из просьбы; «несколько» — 3–5. Для «вдоль», «по периметру», «засади» без числа max_count не указывай.
-- «У входа» — координаты подъезда из landmarks. «В центре двора» — center самой большой области из free_areas.
+- Если в просьбе вместе дорожки, скамейки, урны, фонари, клумбы, изгородь или «благоустрой/спроектируй двор», «сделай сквер/парк» — ОДНА операция design_area, а не отдельные посадки.
+- «У входа» — координаты подъезда из landmarks. «В центре двора» — center самой большой области из free_areas. «Вокруг фонтана» / «у скамейки» и т.п. — x, z существующего объекта нужного типа из objects (не landmark и не target).
 - Здания, подъезды, дорожки и зоны менять нельзя.
 - Если просьба невыполнима (например, нужной цели нет в targets) — пустой operations и причина в explanation.
 - explanation — одно-два предложения по-русски: что сделано. Точное количество не называй: его посчитает планировщик.
 
-Пример. Просьба: «посади кусты вдоль дорожек и два дерева у первого подъезда».
-{"operations": [{"op": "place_along", "target": "pedestrian_path", "catalog_ids": ["bush_medium", "bush_tall", "bush_short"]}, {"op": "place_in_area", "catalog_ids": ["tree_round", "tree_medium"], "count": 2, "x": 12.5, "z": -30.0, "radius_m": 10}], "explanation": "Вдоль дорожек высажены кустарники, у первого подъезда — два дерева."}"""
+Пример 1. Просьба: «посади кусты вдоль дорожек и два дерева у первого подъезда».
+{"operations": [{"op": "place_along", "target": "pedestrian_path", "catalog_ids": ["bush_medium", "bush_tall", "bush_short"]}, {"op": "place_in_area", "catalog_ids": ["<catalog_id дерева из catalog_rows>"], "count": 2, "x": 12.5, "z": -30.0, "radius_m": 10}], "explanation": "Вдоль дорожек высажены кустарники, у первого подъезда — два дерева."}
+
+Пример 2. Просьба: «добавь деревья вокруг фонтана», в objects есть {"id": "fountain_llm_a1b2c3d4", "type": "fountain", "x": 5.0, "z": -12.0, ...}.
+{"operations": [{"op": "place_in_area", "catalog_ids": ["<catalog_id дерева>"], "count": 4, "x": 5.0, "z": -12.0, "radius_m": 8}], "explanation": "Вокруг фонтана посажены четыре дерева."}"""
 
 
 # --- Вызов модели -----------------------------------------------------------
@@ -479,14 +544,19 @@ def request_plan(scene: Scene, instruction: str, catalog: list[CatalogItem], pla
 
 def _normalize(raw: dict) -> dict:
     """Мелкие вольности модели, которые проще поправить, чем отклонять
-    операцию: строка вместо списка, catalog_id вместо catalog_ids."""
-    op = dict(raw)
+    операцию: строка вместо списка, catalog_id вместо catalog_ids, null у
+    необязательного поля со значением по умолчанию (например style: null) --
+    для необязательных полей это то же самое, что их не прислать, но pydantic
+    null и "отсутствует" не путает: явный null проходит мимо default и падает
+    на полях без Optional (см. design_area: style: null отклонял всю
+    операцию, хотя auto -- и так поведение по умолчанию)."""
+    op = {k: v for k, v in raw.items() if v is not None}
     kind = op.get("op")
     if kind in ("place_along", "place_in_area") and "catalog_ids" not in op and "catalog_id" in op:
         op["catalog_ids"] = op.pop("catalog_id")
     if kind == "remove_where" and "object_types" not in op and "object_type" in op:
         op["object_types"] = op.pop("object_type")
-    for key in ("catalog_ids", "object_types"):
+    for key in ("catalog_ids", "object_types", "elements", "tree_ids", "bush_ids"):
         if isinstance(op.get(key), str):
             op[key] = [op[key]]
     return op
@@ -561,6 +631,8 @@ class _PlanApplier:
         self.scene = scene
         self.catalog = catalog
         self.by_id = {item.id: item for item in catalog}
+        # Если модель всё же назовёт базовое дерево -- сажаем похожее из пака.
+        self.by_id.update(_pack_substitutes(catalog))
         self.editable = _editable_types(catalog)
         self.placer = placer
         self.objects = {o.id: o for o in scene.objects}
@@ -577,6 +649,8 @@ class _PlanApplier:
             PlaceAlongOp: self.place_along,
             PlaceInAreaOp: self.place_in_area,
             RemoveWhereOp: self.remove_where,
+            ConnectOp: self.connect,
+            DesignAreaOp: self.design_area,
         }
         for number, raw in enumerate(plan.operations, 1):
             try:
@@ -848,6 +922,96 @@ class _PlanApplier:
                 f"при шаге {spacing:.1f} м нет"
             )
 
+    def _routable_region(self):
+        """Место, где вообще можно провести НОВУЮ дорожку для connect:
+        участок минус здания и явно непроходимые для пешехода зоны (дорога,
+        площадка, ограждённая подстанция). Коммуникации (трубы, кабели)
+        пересекать можно -- то же решение, что в courtyard_design.py (см.
+        его докстринг): лёгкое мощение не мешает их обслуживанию, в отличие
+        от капитальной постройки. Парковку намеренно не исключаем: чаще
+        всего к НЕЙ САМОЙ и нужно подвести дорожку, а не обходить её."""
+        if self.placer.site is None:
+            return None
+        blockers = [
+            geom
+            for zone, geom in self.placer.zones
+            if zone.type in ("building", "road", "playground_zone", "transformer")
+        ]
+        area = self.placer.site.buffer(-0.6)
+        return area.difference(unary_union(blockers)) if blockers else area
+
+    def _resolve_endpoint(self, obj_id: Optional[str], target: Optional[str], x: Optional[float], z: Optional[float], label: str):
+        """Точка или зона-цель для одного конца connect. Ровно один способ
+        задания должен сработать: по id объекта, по имени цели или явными
+        координатами."""
+        if obj_id is not None:
+            obj = self.objects.get(obj_id)
+            if obj is None:
+                self.rejected.append(f"connect: {label} — объекта {obj_id!r} нет")
+                return None
+            return Point(obj.position.x, obj.position.z)
+        if target is not None:
+            geom = self.placer.target_geometry(target)
+            if geom is None:
+                self.rejected.append(f"connect: {label} — на участке нет цели «{TARGET_LABELS[target]}»")
+                return None
+            return geom
+        if x is not None and z is not None:
+            return Point(x, z)
+        self.rejected.append(f"connect: не указана точка «{label}» (id, target или x/z)")
+        return None
+
+    def connect(self, op: ConnectOp) -> None:
+        """Дорожка между двумя точками/зонами: design_area строит целую сеть
+        и уже сама подводит её к подъездам и к парковке, но не умеет вести
+        дорожку к произвольному объекту (например к фонтану, добавленному
+        отдельно) или дотягивать существующую сеть до цели по отдельной
+        просьбе -- для этого и нужна эта операция."""
+        a = self._resolve_endpoint(op.from_id, op.from_target, op.from_x, op.from_z, "начало")
+        b = self._resolve_endpoint(op.to_id, op.to_target, op.to_x, op.to_z, "конец")
+        if a is None or b is None:
+            return
+        item = self.by_id.get("path_segment")
+        if item is None:
+            self.rejected.append("connect: в каталоге нет мощения (path_segment)")
+            return
+        area = self._routable_region()
+        if area is None:
+            self.rejected.append("connect: не определена граница участка")
+            return
+
+        near_a, near_b = nearest_points(a, b)
+        link = LineString([(near_a.x, near_a.y), (near_b.x, near_b.y)])
+        if link.length < 1.0:
+            self.rejected.append("connect: точки и так рядом — соединять нечего")
+            return
+        clipped = link.intersection(area)
+        pieces = [clipped] if clipped.geom_type == "LineString" else [g for g in getattr(clipped, "geoms", []) if g.geom_type == "LineString"]
+        covered = sum(p.length for p in pieces)
+        if covered < link.length - 1.0:
+            self.rejected.append("connect: прямая дорожка перекрыта зданием или дорогой — соединение недоступно")
+            return
+
+        width = item.dimensions.width or 2.0
+        placed = 0
+        for piece in pieces:
+            length = piece.length
+            if length < 0.5:
+                continue
+            count = max(1, round(length / width))
+            for i in range(count):
+                d = (i + 0.5) * length / count
+                p = piece.interpolate(d)
+                ahead = piece.interpolate(min(d + 0.5, length))
+                tx, tz = ahead.x - p.x, ahead.y - p.y
+                rotation = math.degrees(math.atan2(-tz, tx)) if (tx or tz) else 0.0
+                self._create(item, p.x, p.y, rotation)
+                placed += 1
+        if placed == 0:
+            self.rejected.append("connect: не нашлось места для мощения")
+            return
+        self.applied.append(f"проложена дорожка: {_plural(placed, _OBJECT_FORMS)}, {covered:.0f} м")
+
     def remove_where(self, op: RemoveWhereOp) -> None:
         types = list(dict.fromkeys(op.object_types))
         locked = [t for t in types if t not in self.editable]
@@ -891,6 +1055,40 @@ class _PlanApplier:
             self.rejected.append(f"удаление {', '.join(types)}{scope}: подходящих объектов нет")
             return
         self.applied.append(f"удалено {_plural(removed, _OBJECT_FORMS)} ({', '.join(types)}){scope}")
+
+    def design_area(self, op: DesignAreaOp) -> None:
+        what = "дизайн двора"
+        unknown = [e for e in op.elements if e not in ELEMENTS]
+        if unknown:
+            self.warnings.append(f"{what}: неизвестные элементы пропущены: {', '.join(unknown)}")
+        elements = [e for e in op.elements if e in ELEMENTS] or list(DEFAULT_ELEMENTS)
+        items = {catalog_id: self.by_id.get(catalog_id) for catalog_id in DESIGN_ITEM_IDS}
+        missing = [catalog_id for catalog_id, item in items.items() if item is None]
+        if missing:
+            self.rejected.append(f"{what}: в каталоге нет {', '.join(missing)}")
+            return
+
+        # Деревья по умолчанию -- из пака (средние, обычные и колонновидные).
+        substitutes = _pack_substitutes(self.catalog)
+        default_trees = list({s.id: s for s in (substitutes.get(t) for t in ("tree_medium", "tree_pine")) if s}.values())
+        trees = (self._pool(op.tree_ids, what) if op.tree_ids else None) or default_trees
+        trees = trees or [item for item in self.catalog if item.category == "tree"][:3]
+        bushes = (self._pool(op.bush_ids, what) if op.bush_ids else None) or [
+            item for item in self.catalog if item.object_type == "bush"
+        ]
+
+        style = op.style if op.style in STYLES else "auto"
+        if op.style and op.style not in STYLES:
+            self.warnings.append(f"{what}: неизвестный шаблон {op.style!r}, подобран автоматически")
+
+        radius = clamp(op.radius_m or 40.0, 5.0, MAX_AREA_RADIUS_M)
+        designer = CourtyardDesigner(self.scene, self.placer, self._create)
+        summary, notes = designer.run(elements, items, trees, bushes, op.x, op.z, radius, style)
+        if summary is None:
+            self.rejected.append(f"{what}: {'; '.join(notes)}")
+            return
+        self.applied.append(f"{what}: {summary}")
+        self.warnings.extend(f"{what}: {note}" for note in notes)
 
 
 def apply_plan(
