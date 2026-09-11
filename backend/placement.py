@@ -32,7 +32,7 @@ from typing import Optional
 import numpy as np
 from schemas import RestrictionZone, Scene
 from setback_norms import setback_for
-from shapely.geometry import MultiPoint, Point, Polygon
+from shapely.geometry import LineString, MultiPoint, Point, Polygon
 from shapely.ops import nearest_points, unary_union
 from shapely.prepared import prep
 
@@ -45,6 +45,7 @@ TARGET_LABELS = {
     "playground": "детские площадки",
     "site_boundary": "граница участка",
 }
+_FIXED_TARGETS = frozenset(TARGET_LABELS)
 
 SITE_CLEARANCE_M = 0.5  # не ставим вплотную к границе участка
 # Запас от границы допустимой области: без него точка ложится ровно на границу
@@ -340,6 +341,21 @@ class Placer:
     def release(self, key: str) -> None:
         self._objects.remove(key)
 
+    def add_zone(self, zone: RestrictionZone) -> None:
+        """Добавить зону уже ПОСЛЕ создания Placer -- define_zone в
+        llm_editor.py размечает новую зону по ходу применения плана, и
+        следующие операции того же плана (не только следующего запроса)
+        должны сразу её учитывать. Поэтому кэши (допустимые области, цели,
+        свободные участки) сбрасываются -- иначе они остались бы посчитаны
+        по старому набору зон."""
+        geom = _geometry(zone.polygon)
+        if geom is None:
+            return
+        self.zones.append((zone, geom))
+        self._regions.clear()
+        self._targets.clear()
+        self._free_areas = None
+
     # --- Цели групповых операций ------------------------------------------
 
     def _target_zones(self, target: str) -> list:
@@ -348,7 +364,15 @@ class Placer:
             # поэтому различаем по слою.
             return [(zone, geom) for zone, geom in self.zones if "PARK" in zone.name.upper()]
         zone_type = "playground_zone" if target == "playground" else target
-        return [(zone, geom) for zone, geom in self.zones if zone.type == zone_type]
+        matches = [(zone, geom) for zone, geom in self.zones if zone.type == zone_type]
+        if matches or target in _FIXED_TARGETS:
+            return matches
+        # Не встроенный тип цели -- возможно, это имя зоны, выделенной
+        # define_zone ("выдели зону «Детская», посади там кусты"), а не один
+        # из стандартных target. Сравнение без регистра: модель может не
+        # повторить регистр в точности.
+        needle = target.strip().lower()
+        return [(zone, geom) for zone, geom in self.zones if zone.name.strip().lower() == needle]
 
     def target_geometry(self, target: str):
         """Геометрия цели или None, если такой цели на участке нет."""
@@ -558,3 +582,83 @@ def pick_spread(points: list[tuple[float, float]], count: int, min_distance: flo
             break
         take(i)
     return chosen[:count]
+
+
+# --- Обход препятствий -------------------------------------------------------
+#
+# connect()/line_of() раньше проводили только прямую линию и отказывали, если
+# её перекрывало здание -- "дорожка от подъезда к скамейке за углом дома" не
+# получалась, хотя обойти угол на пару метров в сторону совершенно реально.
+# Классическое решение -- граф видимости: вершины -- начало, конец и слегка
+# расширенные наружу углы препятствий, ребро есть, если прямая между двумя
+# вершинами не проходит НАСКВОЗЬ ни через одно препятствие. Кратчайший путь по
+# такому графу (Дейкстра) не может быть короче, чем требуется, чтобы обогнуть
+# помеху -- доказанное свойство графов видимости, а не эвристика.
+PATH_CLEARANCE_M = 0.4  # запас от угла препятствия, чтобы дорожка не прижималась к стене вплотную
+MAX_OBSTACLES_FOR_ROUTING = 12  # больше -- граф видимости станет неоправданно большим для одной связи
+
+
+def _segment_visible(a: Point, b: Point, obstacles: list[Polygon]) -> bool:
+    """Прямая a-b не проходит сквозь ни одно препятствие. Линия, лишь
+    касающаяся препятствия (в общей вершине двух путей в обход), это не
+    пересечение "насквозь" -- поэтому Point/пустое пересечение пропускаем, а
+    настоящее перекрытие (общий отрезок или площадь) -- нет."""
+    if a.distance(b) < 1e-9:
+        return True
+    line = LineString([(a.x, a.y), (b.x, b.y)])
+    for obstacle in obstacles:
+        inter = line.intersection(obstacle)
+        if inter.is_empty or inter.geom_type == "Point":
+            continue
+        return False
+    return True
+
+
+def shortest_path(start: Point, end: Point, obstacles: list[Polygon]) -> Optional[LineString]:
+    """Кратчайший путь start -> end в обход obstacles, или None, если пути
+    нет вовсе (конец сам внутри препятствия и т.п.). Без препятствий или при
+    свободной прямой -- она и возвращается; иначе строится и обходится граф
+    видимости. Рассчитан на единицы-десятки препятствий (одна связь внутри
+    двора, не весь район) -- см. MAX_OBSTACLES_FOR_ROUTING."""
+    obstacles = obstacles[:MAX_OBSTACLES_FOR_ROUTING]
+    if not obstacles or _segment_visible(start, end, obstacles):
+        return LineString([(start.x, start.y), (end.x, end.y)])
+
+    nodes: list[Point] = [start, end]
+    for obstacle in obstacles:
+        widened = obstacle.buffer(PATH_CLEARANCE_M, join_style=2)  # mitre -- сохраняет острые углы
+        rings = [widened.exterior] if widened.geom_type == "Polygon" else [g.exterior for g in widened.geoms]
+        for ring in rings:
+            nodes.extend(Point(c) for c in ring.coords[:-1])
+
+    n = len(nodes)
+    adjacency: list[list[tuple[int, float]]] = [[] for _ in range(n)]
+    for i in range(n):
+        for j in range(i + 1, n):
+            if _segment_visible(nodes[i], nodes[j], obstacles):
+                d = nodes[i].distance(nodes[j])
+                adjacency[i].append((j, d))
+                adjacency[j].append((i, d))
+
+    dist = [math.inf] * n
+    prev = [-1] * n
+    dist[0] = 0.0
+    done = [False] * n
+    for _ in range(n):
+        u = min((i for i in range(n) if not done[i]), key=lambda i: dist[i], default=None)
+        if u is None or dist[u] == math.inf:
+            break
+        done[u] = True
+        if u == 1:
+            break
+        for v, w in adjacency[u]:
+            if dist[u] + w < dist[v]:
+                dist[v] = dist[u] + w
+                prev[v] = u
+
+    if dist[1] == math.inf:
+        return None
+    path = [1]
+    while path[-1] != 0:
+        path.append(prev[path[-1]])
+    return LineString([(nodes[i].x, nodes[i].y) for i in reversed(path)])

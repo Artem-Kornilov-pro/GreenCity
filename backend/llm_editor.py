@@ -57,12 +57,13 @@ from placement import (
     clamp,
     pick_near,
     pick_spread,
+    shortest_path,
     spread_subset,
 )
 from plant_catalog import CATALOG as BASE_CATALOG
 from plant_catalog import CatalogItem, load_catalog
 from pydantic import BaseModel, Field, TypeAdapter, ValidationError
-from schemas import Point3, Scene, SceneObject
+from schemas import Point2, Point3, RestrictionZone, Scene, SceneObject
 from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import nearest_points, unary_union
 
@@ -131,7 +132,14 @@ class LlmError(RuntimeError):
 
 # --- Операции, которые может вернуть модель ---------------------------------
 
-Target = Literal["pedestrian_path", "road", "building", "parking", "playground", "site_boundary"]
+# Раньше -- Literal с фиксированным набором; теперь просто str, потому что
+# помимо шести встроенных целей сюда же годится ИМЯ зоны, выделенной
+# define_zone ("выдели зону «Детская», посади там кусты вдоль её контура").
+# Правильность значения проверяется в рантайме через Placer.target_geometry
+# (см. placement.py: _target_zones ищет сперва по встроенному типу, потом по
+# имени зоны), а не на этапе валидации pydantic -- набор имён зон заранее не
+# известен.
+Target = str
 
 
 class AddOp(BaseModel):
@@ -189,10 +197,12 @@ class PlaceInAreaOp(BaseModel):
 
 
 class RemoveWhereOp(BaseModel):
-    """Удалить все объекты заданных типов, подходящие под фильтры."""
+    """Удалить все объекты заданных типов, подходящие под фильтры. Пустой
+    object_types -- все редактируемые типы: "очисти эту зону" не должно
+    требовать перечислять всё, что там может стоять."""
 
     op: Literal["remove_where"]
-    object_types: list[str]
+    object_types: list[str] = []
     target: Optional[Target] = None
     distance_m: Optional[float] = None
     x: Optional[float] = None
@@ -241,7 +251,7 @@ class ReplaceWhereOp(BaseModel):
     кусты вдоль дорожек разнообразнее"."""
 
     op: Literal["replace_where"]
-    object_types: list[str]
+    object_types: list[str] = []  # пусто -- все редактируемые типы
     catalog_ids: list[str]
     target: Optional[Target] = None
     distance_m: Optional[float] = None
@@ -256,7 +266,7 @@ class ThinOutOp(BaseModel):
     исходных данных), не убирая всё целиком."""
 
     op: Literal["thin_out"]
-    object_types: list[str]
+    object_types: list[str] = []  # пусто -- все редактируемые типы
     min_spacing_m: Optional[float] = None
     target: Optional[Target] = None
     distance_m: Optional[float] = None
@@ -270,7 +280,7 @@ class ResizeOp(BaseModel):
     визуальный акцент), не трогая расположение."""
 
     op: Literal["resize"]
-    object_types: list[str]
+    object_types: list[str] = []  # пусто -- все редактируемые типы
     scale: float
     target: Optional[Target] = None
     distance_m: Optional[float] = None
@@ -284,7 +294,7 @@ class FaceOp(BaseModel):
     цели -- "разверни лавки к фонтану", "разверни фонари к дорожке"."""
 
     op: Literal["face"]
-    object_types: list[str]
+    object_types: list[str] = []  # пусто -- все редактируемые типы
     at_id: Optional[str] = None
     at_target: Optional[Target] = None
     at_x: Optional[float] = None
@@ -368,7 +378,7 @@ class SetCountOp(BaseModel):
     catalog_ids или убирает лишние, смотря что нужно."""
 
     op: Literal["set_count"]
-    object_types: list[str]
+    object_types: list[str] = []  # пусто -- все редактируемые типы
     count: int
     catalog_ids: list[str] = []
     target: Optional[Target] = None
@@ -376,6 +386,25 @@ class SetCountOp(BaseModel):
     x: Optional[float] = None
     z: Optional[float] = None
     radius_m: Optional[float] = None
+
+
+class DefineZoneOp(BaseModel):
+    """Выделить новую именованную зону -- часть двора под конкретное
+    назначение ("детская зона", "здесь ничего не сажать", "зона под
+    цветник"). Зона сразу попадает в зоны ограничений (видна на плане, как и
+    остальные) и учитывается всеми последующими правками -- в этом же плане
+    и в будущих запросах; её можно адресовать по имени и в target
+    (place_along, remove_where, ...), и в area (place_in_area, cover_area)."""
+
+    op: Literal["define_zone"]
+    name: str
+    severity: Literal["forbidden", "warning", "allowed"] = "forbidden"
+    message: Optional[str] = None
+    x: Optional[float] = None
+    z: Optional[float] = None
+    radius_m: Optional[float] = None
+    around_id: Optional[str] = None
+    around_target: Optional[Target] = None
 
 
 class DesignAreaOp(BaseModel):
@@ -413,6 +442,7 @@ Operation = Annotated[
     | EncloseOp
     | DuplicateNearOp
     | SetCountOp
+    | DefineZoneOp
     | DesignAreaOp,
     Field(discriminator="op"),
 ]
@@ -604,11 +634,13 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
 - {"op": "place_in_area", "catalog_ids": ["..."], "count": <сколько>, "spacing_m": <необязательно>, "area": "<id из free_areas, необязательно>", "x": <необязательно>, "z": <необязательно>, "radius_m": <необязательно>}
   Группа посадок: с x и z — компактно вокруг точки; с area — равномерно по свободной области; без них — равномерно по всему участку.
 - {"op": "remove_where", "object_types": ["<тип из objects>"], "target": "<необязательно>", "distance_m": <необязательно>, "x": <необязательно>, "z": <необязательно>, "radius_m": <необязательно>}
-  Удалить все объекты этих типов, подходящие под фильтры: у цели ближе distance_m (по умолчанию 3 м) и/или в радиусе от точки. Без фильтров — все объекты этих типов.
+  Удалить все объекты этих типов, подходящие под фильтры: у цели ближе distance_m (по умолчанию 3 м) и/или в радиусе от точки. Без фильтров — все объекты этих типов. object_types можно не указывать («очисти эту зону») — тогда под фильтры проверяются все виды объектов, какие есть.
+- {"op": "define_zone", "name": "<имя>", "severity": "forbidden"/"warning"/"allowed", "message": <необязательно>, "x"+"z"/"around_id"/"around_target", "radius_m": <необязательно>}
+  Выделить именованную зону («детская зона», «здесь ничего не сажать», «зона под цветник») — круг вокруг точки, объекта или цели. Зона сразу видна на плане и учитывается всеми правками (severity "forbidden"/"warning" — туда ничего не сажать; "allowed" — просто пометить). После этого её можно называть по имени в target любой операции (place_along, remove_where, ...) и в area у place_in_area/cover_area — так и решается «посади цветы в этой зоне».
 - {"op": "design_area", "elements": ["paths", "flowerbeds", "fountain", "lamps", "benches", "trash", "hedge", "trees", "bushes"], "style": "<необязательно>", "tree_ids": [<необязательно>], "bush_ids": [<необязательно>], "x": <необязательно>, "z": <необязательно>, "radius_m": <необязательно>}
   Полный дизайн двора одной операцией: планировщик сам прокладывает каркас дорожек (от подъезда к подъезду, с выходом на парковку, если она рядом), расставляет фонари и скамейки с урнами вдоль дорожек, живую изгородь по краю двора, деревья вразброс по свободной площади. В elements перечисли то, что просили: paths — дорожки (прокладываются всегда), flowerbeds — клумбы, fountain — фонтан, lamps — фонари, benches — скамейки, trash — урны, hedge — живая изгородь, trees — деревья, bushes — кусты. Если просят «дизайн», «благоустройство», «сквер», «парк» без перечня — elements не указывай (по умолчанию — всё, КРОМЕ фонтана). fountain указывай, только если фонтан просят явно: площадь для него есть не в каждом дворе, и без явной просьбы он не ставится. style — шаблон каркаса дорожек: spine (дорожки от подъезда к подъезду — по умолчанию для обычного двора), diagonal (площадь на пересечении диагоналей — только если явно просят «крест», «по диагонали»), grid (сетка дорожек, для большого двора), perimeter (дорожка по периметру, для узкого двора); без явной просьбы про форму дорожек не указывай — планировщик сам подберёт по форме двора. x, z, radius_m — только если дизайн нужен в конкретной части участка.
 - {"op": "connect", "from_id"/"from_target"/"from_x"+"from_z": "<одно из трёх>", "to_id"/"to_target"/"to_x"+"to_z": "<одно из трёх>"}
-  Проложить дорожку между двумя точками: подъезд-подъезд, подъезд или другой объект (например фонтан) — id из objects; сеть дорожек или граница участка до зоны (например парковки) — target из targets. Для "от подъезда к Х" или "соедини сеть дорожек с Y" — эта операция, а не place_along. design_area уже сама тянет дорожки к подъездам и парковке — connect нужен для точечной, дополнительной связи.
+  Проложить дорожку между двумя точками: подъезд-подъезд, подъезд или другой объект (например фонтан) — id из objects; сеть дорожек или граница участка до зоны (например парковки) — target из targets. Для "от подъезда к Х" или "соедини сеть дорожек с Y" — эта операция, а не place_along. design_area уже сама тянет дорожки к подъездам и парковке — connect нужен для точечной, дополнительной связи. Если прямая между точками перекрыта зданием, планировщик сам обходит его по кратчайшему пути — не отказывай заранее из-за препятствия, пробуй connect.
 - {"op": "cover_area", "catalog_ids": ["<газон/цветник>"], "area"/"x"+"z"+"radius_m": <необязательно>}
   Сплошной ковёр травяного покрытия или цветника (виды с category "groundcover") по области — плитки укладываются почти встык, а не редкой россыпью, как place_in_area. Без area/x,z — по всему участку.
 - {"op": "line_of", "catalog_ids": ["..."], "from_id"/"from_target"/"from_x"+"from_z", "to_id"/"to_target"/"to_x"+"to_z", "spacing_m": <необязательно>}
@@ -637,7 +669,8 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
 - {"op": "rotate", "id": "<id из objects>", "rotation_deg": <число>}
 
 Правила:
-- catalog_id бери только из catalog_rows, id — только из objects, target — только из targets, area — только из free_areas. Не выдумывай.
+- catalog_id бери только из catalog_rows, id — только из objects, target — только из targets ИЛИ имени зоны, выделенной define_zone, area — только из free_areas ИЛИ имени такой зоны. Не выдумывай.
+- object_types (remove_where/replace_where/thin_out/resize/face/set_count) можно не указывать — тогда под фильтры проверяются все виды объектов сразу; align_along всегда требует конкретный тип (ряд из разнородных объектов не построить).
 - Деревья, кустарники, МАФ и покрытия — разными операциями. Кустарники — строки с category "bush" (живая изгородь — только hedge_segment), деревья — "tree", газон/цветник для cover_area — "groundcover".
 - В catalog_ids — один или несколько видов подходящего класса; одинаковые деревья сажать можно.
 - spacing_m и offset_m не указывай, если пользователь не просит гуще, реже или дальше: шаг по размеру вида планировщик возьмёт сам.
@@ -652,7 +685,10 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
 {"operations": [{"op": "place_along", "target": "pedestrian_path", "catalog_ids": ["bush_medium", "bush_tall", "bush_short"]}, {"op": "place_in_area", "catalog_ids": ["<catalog_id дерева из catalog_rows>"], "count": 2, "x": 12.5, "z": -30.0, "radius_m": 10}], "explanation": "Вдоль дорожек высажены кустарники, у первого подъезда — два дерева."}
 
 Пример 2. Просьба: «добавь деревья вокруг фонтана», в objects есть {"id": "fountain_llm_a1b2c3d4", "type": "fountain", "x": 5.0, "z": -12.0, ...}.
-{"operations": [{"op": "place_in_area", "catalog_ids": ["<catalog_id дерева>"], "count": 4, "x": 5.0, "z": -12.0, "radius_m": 8}], "explanation": "Вокруг фонтана посажены четыре дерева."}"""
+{"operations": [{"op": "place_in_area", "catalog_ids": ["<catalog_id дерева>"], "count": 4, "x": 5.0, "z": -12.0, "radius_m": 8}], "explanation": "Вокруг фонтана посажены четыре дерева."}
+
+Пример 3. Просьба: «выдели зону под детскую площадку у второго подъезда радиусом 10 м и посади там кусты по кругу».
+{"operations": [{"op": "define_zone", "name": "Детская площадка", "severity": "forbidden", "x": 12.5, "z": -30.0, "radius_m": 10}, {"op": "enclose", "catalog_ids": ["<catalog_id куста>"], "around_target": "Детская площадка", "offset_m": 1}], "explanation": "Выделена зона под детскую площадку, по её краю высажены кусты."}"""
 
 
 # --- Вызов модели -----------------------------------------------------------
@@ -837,6 +873,7 @@ class _PlanApplier:
         self.applied: list[str] = []
         self.rejected: list[str] = []
         self.warnings: list[str] = []
+        self.new_zones: list[RestrictionZone] = []  # define_zone -- добавляются в вывод сцены отдельно
 
     def run(self, plan: LlmPlan) -> TextEditResult:
         handlers = {
@@ -858,6 +895,7 @@ class _PlanApplier:
             EncloseOp: self.enclose,
             DuplicateNearOp: self.duplicate_near,
             SetCountOp: self.set_count,
+            DefineZoneOp: self.define_zone,
             DesignAreaOp: self.design_area,
         }
         for number, raw in enumerate(plan.operations, 1):
@@ -874,7 +912,12 @@ class _PlanApplier:
 
         # Исходную сцену не трогаем: при ошибке посередине у фронтенда
         # остаётся прежняя.
-        scene = self.scene.model_copy(update={"objects": list(self.objects.values())})
+        scene = self.scene.model_copy(
+            update={
+                "objects": list(self.objects.values()),
+                "restrictions": [*self.scene.restrictions, *self.new_zones],
+            }
+        )
         return TextEditResult(
             scene=scene,
             explanation=plan.explanation,
@@ -1000,7 +1043,7 @@ class _PlanApplier:
     # --- Групповые операции ------------------------------------------------
 
     def place_along(self, op: PlaceAlongOp) -> None:
-        what = f"вдоль: {TARGET_LABELS[op.target]}"
+        what = f"вдоль: {TARGET_LABELS.get(op.target, op.target)}"
         items = self._pool(op.catalog_ids, what)
         if items is None:
             return
@@ -1077,7 +1120,9 @@ class _PlanApplier:
         label = area_id.strip().upper()
         if label.startswith("A") and label[1:].isdigit() and 1 <= int(label[1:]) <= len(areas):
             return areas[int(label[1:]) - 1]
-        return None
+        # Не "A1"/"A2" из free_areas -- возможно, имя зоны, выделенной
+        # define_zone ("посади цветы в зоне «Клумба у входа»").
+        return self.placer.target_geometry(area_id)
 
     def place_in_area(self, op: PlaceInAreaOp) -> None:
         what = "группа посадок"
@@ -1222,7 +1267,7 @@ class _PlanApplier:
         if target is not None:
             geom = self.placer.target_geometry(target)
             if geom is None:
-                self.rejected.append(f"{what}: {label} — на участке нет цели «{TARGET_LABELS[target]}»")
+                self.rejected.append(f"{what}: {label} — на участке нет цели «{TARGET_LABELS.get(target, target)}»")
                 return None
             return geom
         if x is not None and z is not None:
@@ -1230,12 +1275,29 @@ class _PlanApplier:
         self.rejected.append(f"{what}: не указана точка «{label}» (id, target или x/z)")
         return None
 
+    def _nearby_obstacles(self, a: Point, b: Point) -> list[Polygon]:
+        """Здания и явно непроходимые зоны, которые вообще могут помешать
+        связи a-b -- дом на другом конце участка в граф видимости включать
+        незачем, только те, что рядом с этим конкретным отрезком."""
+        line = LineString([(a.x, a.y), (b.x, b.y)])
+        bbox = line.buffer(max(15.0, a.distance(b) * 0.5))
+        obstacles = [
+            geom
+            for zone, geom in self.placer.zones
+            if zone.type in ("building", "road", "playground_zone", "transformer") and geom.intersects(bbox)
+        ]
+        obstacles.sort(key=lambda g: g.distance(line))
+        return obstacles
+
     def connect(self, op: ConnectOp) -> None:
         """Дорожка между двумя точками/зонами: design_area строит целую сеть
         и уже сама подводит её к подъездам и к парковке, но не умеет вести
         дорожку к произвольному объекту (например к фонтану, добавленному
         отдельно) или дотягивать существующую сеть до цели по отдельной
-        просьбе -- для этого и нужна эта операция."""
+        просьбе -- для этого и нужна эта операция. Прямая, перекрытая
+        зданием, не отклоняется сразу: сначала планировщик пробует обойти
+        препятствие по графу видимости (placement.shortest_path) -- прямая
+        линия это лишь частный случай кратчайшего пути."""
         a = self._resolve_endpoint("connect", op.from_id, op.from_target, op.from_x, op.from_z, "начало")
         b = self._resolve_endpoint("connect", op.to_id, op.to_target, op.to_x, op.to_z, "конец")
         if a is None or b is None:
@@ -1250,15 +1312,21 @@ class _PlanApplier:
             return
 
         near_a, near_b = nearest_points(a, b)
-        link = LineString([(near_a.x, near_a.y), (near_b.x, near_b.y)])
-        if link.length < 1.0:
+        direct = near_a.distance(near_b)
+        if direct < 1.0:
             self.rejected.append("connect: точки и так рядом — соединять нечего")
             return
-        clipped = link.intersection(area)
+
+        route = shortest_path(near_a, near_b, self._nearby_obstacles(near_a, near_b))
+        if route is None:
+            self.rejected.append("connect: препятствие полностью перекрывает связь — даже в обход пути нет")
+            return
+
+        clipped = route.intersection(area)
         pieces = [clipped] if clipped.geom_type == "LineString" else [g for g in getattr(clipped, "geoms", []) if g.geom_type == "LineString"]
         covered = sum(p.length for p in pieces)
-        if covered < link.length - 1.0:
-            self.rejected.append("connect: прямая дорожка перекрыта зданием или дорогой — соединение недоступно")
+        if covered < route.length - 1.0:
+            self.rejected.append("connect: даже в обход препятствий провести дорожку не удалось")
             return
 
         width = item.dimensions.width or 2.0
@@ -1279,7 +1347,8 @@ class _PlanApplier:
         if placed == 0:
             self.rejected.append("connect: не нашлось места для мощения")
             return
-        self.applied.append(f"проложена дорожка: {_plural(placed, _OBJECT_FORMS)}, {covered:.0f} м")
+        detour = ", в обход препятствия" if route.length > direct + 0.5 else ""
+        self.applied.append(f"проложена дорожка: {_plural(placed, _OBJECT_FORMS)}, {covered:.0f} м{detour}")
 
     def _matching(
         self,
@@ -1295,25 +1364,30 @@ class _PlanApplier:
         фильтры (у цели ближе distance_m и/или в радиусе от точки) --
         (список, подпись условий отбора для сообщений) или None при жёсткой
         ошибке (тип менять нельзя, цели нет на участке). Общий отбор для
-        remove_where, replace_where, thin_out, resize, face, align_along --
-        каждая из них применяет свою правку к одному и тому же набору."""
-        types = list(dict.fromkeys(object_types))
-        locked = [t for t in types if t not in self.editable]
-        types = [t for t in types if t in self.editable]
-        if locked:
-            bucket = self.warnings if types else self.rejected
-            bucket.append(f"{what}: объекты «{', '.join(locked)}» менять нельзя")
-        if not types:
-            return None
+        remove_where, replace_where, thin_out, resize, face, align_along,
+        set_count -- каждая применяет свою правку к одному и тому же набору.
+        Пустой object_types -- все редактируемые типы сразу ("очисти эту
+        зону" не должно требовать перечислять всё, что там может стоять)."""
+        if not object_types:
+            types = sorted(self.editable)
+        else:
+            types = list(dict.fromkeys(object_types))
+            locked = [t for t in types if t not in self.editable]
+            types = [t for t in types if t in self.editable]
+            if locked:
+                bucket = self.warnings if types else self.rejected
+                bucket.append(f"{what}: объекты «{', '.join(locked)}» менять нельзя")
+            if not types:
+                return None
 
         conditions = []
         distance = None
         if target is not None:
             if self.placer.target_geometry(target) is None:
-                self.rejected.append(f"{what}: на участке нет цели «{TARGET_LABELS[target]}»")
+                self.rejected.append(f"{what}: на участке нет цели «{TARGET_LABELS.get(target, target)}»")
                 return None
             distance = clamp(distance_m if distance_m is not None else DEFAULT_REMOVE_DISTANCE_M, 0.0, MAX_AREA_RADIUS_M)
-            conditions.append(f"ближе {distance:.1f} м: {TARGET_LABELS[target]}")
+            conditions.append(f"ближе {distance:.1f} м: {TARGET_LABELS.get(target, target)}")
         circle = None
         if x is not None and z is not None:
             circle = (x, z, clamp(radius_m or DEFAULT_REMOVE_RADIUS_M, 0.5, MAX_AREA_RADIUS_M))
@@ -1337,13 +1411,14 @@ class _PlanApplier:
         if found is None:
             return
         matches, scope = found
+        types_label = ", ".join(op.object_types) if op.object_types else "все типы"
         for obj in matches:
             del self.objects[obj.id]
             self.placer.release(obj.id)
         if not matches:
-            self.rejected.append(f"удаление {', '.join(op.object_types)}{scope}: подходящих объектов нет")
+            self.rejected.append(f"удаление {types_label}{scope}: подходящих объектов нет")
             return
-        self.applied.append(f"удалено {_plural(len(matches), _OBJECT_FORMS)} ({', '.join(op.object_types)}){scope}")
+        self.applied.append(f"удалено {_plural(len(matches), _OBJECT_FORMS)} ({types_label}){scope}")
 
     def replace_where(self, op: ReplaceWhereOp) -> None:
         """Новый вид проходит ту же проверку, что и при add: другой габарит
@@ -1452,7 +1527,7 @@ class _PlanApplier:
         self.applied.append(f"{what}{scope}: {_plural(turned, _OBJECT_FORMS)}")
 
     def align_along(self, op: AlignAlongOp) -> None:
-        what = f"выравнивание вдоль: {TARGET_LABELS[op.target]}"
+        what = f"выравнивание вдоль: {TARGET_LABELS.get(op.target, op.target)}"
         if self.placer.target_geometry(op.target) is None:
             self.rejected.append(f"{what}: на участке таких объектов нет")
             return
@@ -1551,7 +1626,7 @@ class _PlanApplier:
         if op.around_target is not None:
             geom = self.placer.target_geometry(op.around_target)
             if geom is None:
-                self.rejected.append(f"{what}: на участке нет цели «{TARGET_LABELS[op.around_target]}»")
+                self.rejected.append(f"{what}: на участке нет цели «{TARGET_LABELS.get(op.around_target, op.around_target)}»")
                 return
             offset = op.offset_m if op.offset_m is not None else self.placer.min_offset(op.around_target, kind, half_depth)
         else:
@@ -1670,6 +1745,48 @@ class _PlanApplier:
         self.applied.append(f"{what}{scope}: было {current}, добавлено {_plural(len(chosen), _OBJECT_FORMS)} ({used}), стало {current + len(chosen)}")
         if len(chosen) < need:
             self.warnings.append(f"{what}: нужно было ещё {need - len(chosen)} — больше мест без нарушений норм нет")
+
+    def define_zone(self, op: DefineZoneOp) -> None:
+        """Выделить именованную зону: круг вокруг точки, объекта или цели.
+        Зона добавляется и в placer (действует уже для следующих операций
+        этого же плана), и в new_zones (попадает в возвращаемую сцену --
+        иначе она осталась бы только внутренним состоянием планировщика и
+        пропала бы после ответа)."""
+        what = f"зона «{op.name}»"
+        if not op.name.strip():
+            self.rejected.append(f"{what}: не указано имя зоны")
+            return
+
+        center = None
+        if op.around_id is not None or op.around_target is not None or (op.x is not None and op.z is not None):
+            resolved = self._resolve_endpoint(what, op.around_id, op.around_target, op.x, op.z, "центр")
+            if resolved is None:
+                return
+            center = resolved
+        else:
+            self.rejected.append(f"{what}: не указано место (x/z, around_id или around_target)")
+            return
+
+        radius = clamp(op.radius_m or 8.0, 1.0, MAX_AREA_RADIUS_M)
+        geom = center.buffer(radius) if center.geom_type == "Point" else center.buffer(radius).union(center)
+        if geom.is_empty:
+            self.rejected.append(f"{what}: не удалось построить контур")
+            return
+        if geom.geom_type != "Polygon":
+            geom = max(geom.geoms, key=lambda g: g.area)
+
+        zone = RestrictionZone(
+            id=f"zone_llm_{uuid.uuid4().hex[:8]}",
+            type="custom",
+            name=op.name,
+            polygon=[Point2(x=x, z=z) for x, z in geom.exterior.coords[:-1]],
+            severity=op.severity,
+            minDistance=0.0,
+            message=op.message or op.name,
+        )
+        self.new_zones.append(zone)
+        self.placer.add_zone(zone)
+        self.applied.append(f"{what}: выделена ({op.severity}), площадь {geom.area:.0f} м²")
 
     def design_area(self, op: DesignAreaOp) -> None:
         what = "дизайн двора"
