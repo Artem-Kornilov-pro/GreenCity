@@ -117,6 +117,8 @@ DEFAULT_REMOVE_RADIUS_M = 10.0
 # компактной группы вокруг точки.
 CANDIDATES_PER_PLACEMENT = 12
 CANDIDATES_NEAR_POINT = 2000
+ALIGN_MATCH_REACH_M = 15.0  # align_along: искать сбившиеся объекты не дальше этого от цели
+MIN_SCALE, MAX_SCALE = 0.3, 3.0
 
 
 class LlmNotConfiguredError(RuntimeError):
@@ -218,6 +220,164 @@ class ConnectOp(BaseModel):
     to_z: Optional[float] = None
 
 
+class CoverAreaOp(BaseModel):
+    """Сплошной ковёр травяного покрытия/цветника по области -- в отличие
+    от place_in_area (редкая равномерная россыпь), плитки укладываются
+    почти встык. ТЗ прямо называет травянистые покрытия отдельным видом
+    посадки наравне с деревьями и кустами -- редкая россыпь газонных плиток
+    для этого не годится."""
+
+    op: Literal["cover_area"]
+    catalog_ids: list[str]
+    area: Optional[str] = None
+    x: Optional[float] = None
+    z: Optional[float] = None
+    radius_m: Optional[float] = None
+
+
+class ReplaceWhereOp(BaseModel):
+    """Заменить вид у существующих объектов на другой, не трогая их
+    расположение и поворот: "замени низкие деревья на высокие", "сделай
+    кусты вдоль дорожек разнообразнее"."""
+
+    op: Literal["replace_where"]
+    object_types: list[str]
+    catalog_ids: list[str]
+    target: Optional[Target] = None
+    distance_m: Optional[float] = None
+    x: Optional[float] = None
+    z: Optional[float] = None
+    radius_m: Optional[float] = None
+
+
+class ThinOutOp(BaseModel):
+    """Убрать лишние объекты заданных типов там, где они стоят гуще
+    заданного шага -- проредить слишком плотную посадку (например, из
+    исходных данных), не убирая всё целиком."""
+
+    op: Literal["thin_out"]
+    object_types: list[str]
+    min_spacing_m: Optional[float] = None
+    target: Optional[Target] = None
+    distance_m: Optional[float] = None
+    x: Optional[float] = None
+    z: Optional[float] = None
+    radius_m: Optional[float] = None
+
+
+class ResizeOp(BaseModel):
+    """Изменить масштаб существующих объектов (взрослые/молодые деревья,
+    визуальный акцент), не трогая расположение."""
+
+    op: Literal["resize"]
+    object_types: list[str]
+    scale: float
+    target: Optional[Target] = None
+    distance_m: Optional[float] = None
+    x: Optional[float] = None
+    z: Optional[float] = None
+    radius_m: Optional[float] = None
+
+
+class FaceOp(BaseModel):
+    """Развернуть существующие объекты (лавки, фонари) к точке, объекту или
+    цели -- "разверни лавки к фонтану", "разверни фонари к дорожке"."""
+
+    op: Literal["face"]
+    object_types: list[str]
+    at_id: Optional[str] = None
+    at_target: Optional[Target] = None
+    at_x: Optional[float] = None
+    at_z: Optional[float] = None
+    # Фильтр "какие из объектов трогать" (как в remove_where) -- не путать с
+    # at_*, которые задают, КУДА они должны смотреть.
+    target: Optional[Target] = None
+    distance_m: Optional[float] = None
+    x: Optional[float] = None
+    z: Optional[float] = None
+    radius_m: Optional[float] = None
+
+
+class AlignAlongOp(BaseModel):
+    """Подровнять уже стоящие объекты в аккуратный ряд вдоль цели (дорожки,
+    фасада, границы участка) -- передвигает существующие объекты на
+    валидные места ряда, а не добавляет новые. Для вразнобой расставленных
+    вручную или унаследованных из DXF объектов."""
+
+    op: Literal["align_along"]
+    object_types: list[str]
+    target: Target
+    spacing_m: Optional[float] = None
+    offset_m: Optional[float] = None
+    x: Optional[float] = None
+    z: Optional[float] = None
+    radius_m: Optional[float] = None
+
+
+class LineOfOp(BaseModel):
+    """Ряд объектов (изгородь, забор из фонарей и т.п.) по прямой между
+    двумя точками -- в отличие от place_along (вдоль контура существующей
+    цели), концы линии произвольные: объект, цель или координаты."""
+
+    op: Literal["line_of"]
+    catalog_ids: list[str]
+    from_id: Optional[str] = None
+    from_target: Optional[Target] = None
+    from_x: Optional[float] = None
+    from_z: Optional[float] = None
+    to_id: Optional[str] = None
+    to_target: Optional[Target] = None
+    to_x: Optional[float] = None
+    to_z: Optional[float] = None
+    spacing_m: Optional[float] = None
+
+
+class EncloseOp(BaseModel):
+    """Кольцо объектов (изгородь, забор, фонари) вокруг существующего
+    объекта, цели или точки -- "огороди детскую площадку живой изгородью",
+    "обведи фонтан клумбами"."""
+
+    op: Literal["enclose"]
+    catalog_ids: list[str]
+    around_id: Optional[str] = None
+    around_target: Optional[Target] = None
+    around_x: Optional[float] = None
+    around_z: Optional[float] = None
+    radius_m: Optional[float] = None  # для around_id / around_x,z — радиус кольца
+    offset_m: Optional[float] = None
+    spacing_m: Optional[float] = None
+
+
+class DuplicateNearOp(BaseModel):
+    """Скопировать существующий объект (тот же вид, тот же поворот) рядом с
+    другой точкой/объектом/целью -- "сделай такую же лавку у второго
+    подъезда" без пересоздания параметров вручную."""
+
+    op: Literal["duplicate_near"]
+    id: str
+    near_id: Optional[str] = None
+    near_target: Optional[Target] = None
+    near_x: Optional[float] = None
+    near_z: Optional[float] = None
+    count: int = 1
+
+
+class SetCountOp(BaseModel):
+    """Довести суммарное число объектов заданных типов (по всему участку,
+    у цели или в области) ровно до count -- добавляет недостающие из
+    catalog_ids или убирает лишние, смотря что нужно."""
+
+    op: Literal["set_count"]
+    object_types: list[str]
+    count: int
+    catalog_ids: list[str] = []
+    target: Optional[Target] = None
+    distance_m: Optional[float] = None
+    x: Optional[float] = None
+    z: Optional[float] = None
+    radius_m: Optional[float] = None
+
+
 class DesignAreaOp(BaseModel):
     """Полный дизайн двора: каркас дорожек и благоустройство вокруг него."""
 
@@ -235,7 +395,25 @@ class DesignAreaOp(BaseModel):
 
 
 Operation = Annotated[
-    AddOp | RemoveOp | MoveOp | RotateOp | PlaceAlongOp | PlaceInAreaOp | RemoveWhereOp | ConnectOp | DesignAreaOp,
+    AddOp
+    | RemoveOp
+    | MoveOp
+    | RotateOp
+    | PlaceAlongOp
+    | PlaceInAreaOp
+    | RemoveWhereOp
+    | ConnectOp
+    | CoverAreaOp
+    | ReplaceWhereOp
+    | ThinOutOp
+    | ResizeOp
+    | FaceOp
+    | AlignAlongOp
+    | LineOfOp
+    | EncloseOp
+    | DuplicateNearOp
+    | SetCountOp
+    | DesignAreaOp,
     Field(discriminator="op"),
 ]
 _OPERATION = TypeAdapter(Operation)
@@ -431,6 +609,26 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
   Полный дизайн двора одной операцией: планировщик сам прокладывает каркас дорожек (от подъезда к подъезду, с выходом на парковку, если она рядом), расставляет фонари и скамейки с урнами вдоль дорожек, живую изгородь по краю двора, деревья вразброс по свободной площади. В elements перечисли то, что просили: paths — дорожки (прокладываются всегда), flowerbeds — клумбы, fountain — фонтан, lamps — фонари, benches — скамейки, trash — урны, hedge — живая изгородь, trees — деревья, bushes — кусты. Если просят «дизайн», «благоустройство», «сквер», «парк» без перечня — elements не указывай (по умолчанию — всё, КРОМЕ фонтана). fountain указывай, только если фонтан просят явно: площадь для него есть не в каждом дворе, и без явной просьбы он не ставится. style — шаблон каркаса дорожек: spine (дорожки от подъезда к подъезду — по умолчанию для обычного двора), diagonal (площадь на пересечении диагоналей — только если явно просят «крест», «по диагонали»), grid (сетка дорожек, для большого двора), perimeter (дорожка по периметру, для узкого двора); без явной просьбы про форму дорожек не указывай — планировщик сам подберёт по форме двора. x, z, radius_m — только если дизайн нужен в конкретной части участка.
 - {"op": "connect", "from_id"/"from_target"/"from_x"+"from_z": "<одно из трёх>", "to_id"/"to_target"/"to_x"+"to_z": "<одно из трёх>"}
   Проложить дорожку между двумя точками: подъезд-подъезд, подъезд или другой объект (например фонтан) — id из objects; сеть дорожек или граница участка до зоны (например парковки) — target из targets. Для "от подъезда к Х" или "соедини сеть дорожек с Y" — эта операция, а не place_along. design_area уже сама тянет дорожки к подъездам и парковке — connect нужен для точечной, дополнительной связи.
+- {"op": "cover_area", "catalog_ids": ["<газон/цветник>"], "area"/"x"+"z"+"radius_m": <необязательно>}
+  Сплошной ковёр травяного покрытия или цветника (виды с category "groundcover") по области — плитки укладываются почти встык, а не редкой россыпью, как place_in_area. Без area/x,z — по всему участку.
+- {"op": "line_of", "catalog_ids": ["..."], "from_id"/"from_target"/"from_x"+"from_z", "to_id"/"to_target"/"to_x"+"to_z", "spacing_m": <необязательно>}
+  Ряд объектов (изгородь, забор из фонарей) прямой линией между двумя произвольными точками/объектами/целями — не вдоль контура существующей цели (для этого place_along), а от точки А до точки Б.
+- {"op": "enclose", "catalog_ids": ["..."], "around_id"/"around_target"/"around_x"+"around_z", "radius_m": <для around_id/around_x,z>, "offset_m": <необязательно>, "spacing_m": <необязательно>}
+  Кольцо объектов (изгородь, забор, фонари) вокруг существующего объекта, цели (например playground) или точки — "огороди площадку", "обведи фонтан клумбами".
+- {"op": "replace_where", "object_types": ["<тип>"], "catalog_ids": ["<новый вид>"], "target"/"distance_m"/"x"+"z"+"radius_m": <необязательно>}
+  Заменить вид у существующих подходящих объектов (положение и поворот сохраняются) — "замени низкие деревья на высокие", "сделай кусты разнообразнее" (несколько catalog_ids вперемешку).
+- {"op": "thin_out", "object_types": ["<тип>"], "min_spacing_m": <необязательно>, "target"/"distance_m"/"x"+"z"+"radius_m": <необязательно>}
+  Убрать лишние объекты этих типов там, где они стоят гуще min_spacing_m, — "проредить кусты", "не так часто".
+- {"op": "resize", "object_types": ["<тип>"], "scale": <множитель, 1.0 = как в каталоге>, "target"/"distance_m"/"x"+"z"+"radius_m": <необязательно>}
+  Изменить масштаб существующих объектов — "сделай деревья у входа покрупнее" (scale > 1) / помельче (scale < 1).
+- {"op": "face", "object_types": ["<тип>"], "at_id"/"at_target"/"at_x"+"at_z", "target"/"distance_m"/"x"+"z"+"radius_m": <необязательно, какие именно объекты>}
+  Развернуть существующие объекты к точке/объекту/цели — "разверни лавки к фонтану", "разверни фонари к дорожке".
+- {"op": "align_along", "object_types": ["<тип>"], "target": "<target>", "spacing_m"/"offset_m": <необязательно>, "x"+"z"+"radius_m": <необязательно>}
+  Подровнять уже стоящие вразнобой объекты в аккуратный ряд вдоль цели — передвигает существующие, не добавляет новые. Для "выровняй фонари вдоль дорожки", когда они и так там стоят, но криво.
+- {"op": "duplicate_near", "id": "<id объекта>", "near_id"/"near_target"/"near_x"+"near_z", "count": <необязательно, по умолчанию 1>}
+  Скопировать существующий объект (тот же вид) рядом с другой точкой/объектом/целью — "сделай такую же лавку у второго подъезда".
+- {"op": "set_count", "object_types": ["<тип>"], "count": <нужное число>, "catalog_ids": [<необязательно, чем добавлять, если не хватает>], "target"/"distance_m"/"x"+"z"+"radius_m": <необязательно>}
+  Довести суммарное число объектов этих типов (по всему участку/у цели/в области) ровно до count — добавит недостающие или уберёт лишние.
 
 Точечные операции — только для конкретных объектов или одной-двух посадок в названном месте:
 - {"op": "add", "catalog_id": "...", "x": <число>, "z": <число>, "rotation_deg": <необязательно>}
@@ -440,7 +638,7 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
 
 Правила:
 - catalog_id бери только из catalog_rows, id — только из objects, target — только из targets, area — только из free_areas. Не выдумывай.
-- Деревья, кустарники и МАФ — разными операциями. Кустарники — строки с category "bush" (живая изгородь — только hedge_segment), деревья — "tree".
+- Деревья, кустарники, МАФ и покрытия — разными операциями. Кустарники — строки с category "bush" (живая изгородь — только hedge_segment), деревья — "tree", газон/цветник для cover_area — "groundcover".
 - В catalog_ids — один или несколько видов подходящего класса; одинаковые деревья сажать можно.
 - spacing_m и offset_m не указывай, если пользователь не просит гуще, реже или дальше: шаг по размеру вида планировщик возьмёт сам.
 - count и max_count — по числу из просьбы; «несколько» — 3–5. Для «вдоль», «по периметру», «засади» без числа max_count не указывай.
@@ -650,6 +848,16 @@ class _PlanApplier:
             PlaceInAreaOp: self.place_in_area,
             RemoveWhereOp: self.remove_where,
             ConnectOp: self.connect,
+            CoverAreaOp: self.cover_area,
+            ReplaceWhereOp: self.replace_where,
+            ThinOutOp: self.thin_out,
+            ResizeOp: self.resize,
+            FaceOp: self.face,
+            AlignAlongOp: self.align_along,
+            LineOfOp: self.line_of,
+            EncloseOp: self.enclose,
+            DuplicateNearOp: self.duplicate_near,
+            SetCountOp: self.set_count,
             DesignAreaOp: self.design_area,
         }
         for number, raw in enumerate(plan.operations, 1):
@@ -922,6 +1130,65 @@ class _PlanApplier:
                 f"при шаге {spacing:.1f} м нет"
             )
 
+    def cover_area(self, op: CoverAreaOp) -> None:
+        """Сплошной ковёр покрытия, а не редкая россыпь (см. докстринг
+        CoverAreaOp): шаг сетки берётся почти равным габариту плитки, и
+        забираются ВСЕ подошедшие места (до предела), а не спред-подвыборка."""
+        what = "ковёр покрытия"
+        items = self._pool(op.catalog_ids, what)
+        if items is None:
+            return
+        kind = _pool_kind(items)
+        width = max(item.dimensions.width or 2.0 for item in items)
+        depth = max(item.dimensions.depth or item.dimensions.width or 2.0 for item in items)
+        half_w, half_d = width / 2, depth / 2
+
+        area = None
+        where = "по всему участку"
+        if op.area is not None:
+            area = self._free_area(op.area)
+            if area is None:
+                self.rejected.append(f"{what}: нет свободной области {op.area!r}")
+                return
+            where = f"по области {op.area}"
+        elif op.x is not None and op.z is not None:
+            radius = clamp(op.radius_m or 15.0, 1.0, MAX_AREA_RADIUS_M)
+            area = Point(op.x, op.z).buffer(radius)
+            where = f"вокруг ({op.x:.1f}, {op.z:.1f}), радиус {radius:.0f} м"
+
+        candidates = self.placer.points_in_area(kind, width * 0.95, area, MAX_BULK_PLACEMENTS * 3)
+        # Проверяем весь прямоугольник плитки (4x4 м у газона), а не только
+        # её центр -- см. region_contains: центр на 2 м от края уже
+        # пропускал бы плитку, чей угол при этом торчит за границей участка
+        # или залезает на здание/трубу.
+        free = [
+            p
+            for p in candidates
+            if self.placer.region_contains(
+                Polygon(
+                    [
+                        (p[0] - half_w, p[1] - half_d),
+                        (p[0] + half_w, p[1] - half_d),
+                        (p[0] + half_w, p[1] + half_d),
+                        (p[0] - half_w, p[1] + half_d),
+                    ]
+                ),
+                kind,
+            )
+            and self.placer.blocker(p[0], p[1], kind) is None
+        ]
+        chosen = free[:MAX_BULK_PLACEMENTS]
+        if not chosen:
+            self.rejected.append(f"{what} {where}: нет места без нарушений норм")
+            return
+        for i, (x, z) in enumerate(chosen):
+            self._create(items[i % len(items)], x, z, 0.0)
+        self.applied.append(f"{what} {where}: {_plural(len(chosen), _OBJECT_FORMS)} ({_labels(items)})")
+        if len(free) > len(chosen):
+            self.warnings.append(
+                f"{what}: уложено {len(chosen)} из {len(free)} возможных — за одну операцию не больше {MAX_BULK_PLACEMENTS}"
+            )
+
     def _routable_region(self):
         """Место, где вообще можно провести НОВУЮ дорожку для connect:
         участок минус здания и явно непроходимые для пешехода зоны (дорога,
@@ -940,25 +1207,27 @@ class _PlanApplier:
         area = self.placer.site.buffer(-0.6)
         return area.difference(unary_union(blockers)) if blockers else area
 
-    def _resolve_endpoint(self, obj_id: Optional[str], target: Optional[str], x: Optional[float], z: Optional[float], label: str):
-        """Точка или зона-цель для одного конца connect. Ровно один способ
-        задания должен сработать: по id объекта, по имени цели или явными
-        координатами."""
+    def _resolve_endpoint(
+        self, what: str, obj_id: Optional[str], target: Optional[str], x: Optional[float], z: Optional[float], label: str
+    ):
+        """Точка или зона-цель для одного конца операции (connect, line_of,
+        enclose, face, duplicate_near). Ровно один способ задания должен
+        сработать: по id объекта, по имени цели или явными координатами."""
         if obj_id is not None:
             obj = self.objects.get(obj_id)
             if obj is None:
-                self.rejected.append(f"connect: {label} — объекта {obj_id!r} нет")
+                self.rejected.append(f"{what}: {label} — объекта {obj_id!r} нет")
                 return None
             return Point(obj.position.x, obj.position.z)
         if target is not None:
             geom = self.placer.target_geometry(target)
             if geom is None:
-                self.rejected.append(f"connect: {label} — на участке нет цели «{TARGET_LABELS[target]}»")
+                self.rejected.append(f"{what}: {label} — на участке нет цели «{TARGET_LABELS[target]}»")
                 return None
             return geom
         if x is not None and z is not None:
             return Point(x, z)
-        self.rejected.append(f"connect: не указана точка «{label}» (id, target или x/z)")
+        self.rejected.append(f"{what}: не указана точка «{label}» (id, target или x/z)")
         return None
 
     def connect(self, op: ConnectOp) -> None:
@@ -967,8 +1236,8 @@ class _PlanApplier:
         дорожку к произвольному объекту (например к фонтану, добавленному
         отдельно) или дотягивать существующую сеть до цели по отдельной
         просьбе -- для этого и нужна эта операция."""
-        a = self._resolve_endpoint(op.from_id, op.from_target, op.from_x, op.from_z, "начало")
-        b = self._resolve_endpoint(op.to_id, op.to_target, op.to_x, op.to_z, "конец")
+        a = self._resolve_endpoint("connect", op.from_id, op.from_target, op.from_x, op.from_z, "начало")
+        b = self._resolve_endpoint("connect", op.to_id, op.to_target, op.to_x, op.to_z, "конец")
         if a is None or b is None:
             return
         item = self.by_id.get("path_segment")
@@ -1012,49 +1281,395 @@ class _PlanApplier:
             return
         self.applied.append(f"проложена дорожка: {_plural(placed, _OBJECT_FORMS)}, {covered:.0f} м")
 
-    def remove_where(self, op: RemoveWhereOp) -> None:
-        types = list(dict.fromkeys(op.object_types))
+    def _matching(
+        self,
+        object_types: list[str],
+        target: Optional[str],
+        distance_m: Optional[float],
+        x: Optional[float],
+        z: Optional[float],
+        radius_m: Optional[float],
+        what: str,
+    ) -> Optional[tuple[list[SceneObject], str]]:
+        """Существующие объекты этих типов, попадающие под необязательные
+        фильтры (у цели ближе distance_m и/или в радиусе от точки) --
+        (список, подпись условий отбора для сообщений) или None при жёсткой
+        ошибке (тип менять нельзя, цели нет на участке). Общий отбор для
+        remove_where, replace_where, thin_out, resize, face, align_along --
+        каждая из них применяет свою правку к одному и тому же набору."""
+        types = list(dict.fromkeys(object_types))
         locked = [t for t in types if t not in self.editable]
         types = [t for t in types if t in self.editable]
         if locked:
-            target = self.warnings if types else self.rejected
-            target.append(f"удаление: объекты «{', '.join(locked)}» менять нельзя")
+            bucket = self.warnings if types else self.rejected
+            bucket.append(f"{what}: объекты «{', '.join(locked)}» менять нельзя")
         if not types:
-            return
+            return None
 
         conditions = []
         distance = None
-        if op.target is not None:
-            if self.placer.target_geometry(op.target) is None:
-                self.rejected.append(f"удаление: на участке нет цели «{TARGET_LABELS[op.target]}»")
-                return
-            distance = clamp(
-                op.distance_m if op.distance_m is not None else DEFAULT_REMOVE_DISTANCE_M, 0.0, MAX_AREA_RADIUS_M
-            )
-            conditions.append(f"ближе {distance:.1f} м: {TARGET_LABELS[op.target]}")
+        if target is not None:
+            if self.placer.target_geometry(target) is None:
+                self.rejected.append(f"{what}: на участке нет цели «{TARGET_LABELS[target]}»")
+                return None
+            distance = clamp(distance_m if distance_m is not None else DEFAULT_REMOVE_DISTANCE_M, 0.0, MAX_AREA_RADIUS_M)
+            conditions.append(f"ближе {distance:.1f} м: {TARGET_LABELS[target]}")
         circle = None
-        if op.x is not None and op.z is not None:
-            circle = (op.x, op.z, clamp(op.radius_m or DEFAULT_REMOVE_RADIUS_M, 0.5, MAX_AREA_RADIUS_M))
-            conditions.append(f"в радиусе {circle[2]:.0f} м от ({op.x:.1f}, {op.z:.1f})")
+        if x is not None and z is not None:
+            circle = (x, z, clamp(radius_m or DEFAULT_REMOVE_RADIUS_M, 0.5, MAX_AREA_RADIUS_M))
+            conditions.append(f"в радиусе {circle[2]:.0f} м от ({x:.1f}, {z:.1f})")
 
-        removed = 0
-        for obj in list(self.objects.values()):
+        matches = []
+        for obj in self.objects.values():
             if obj.type not in types:
                 continue
-            x, z = obj.position.x, obj.position.z
-            if circle is not None and math.hypot(x - circle[0], z - circle[1]) > circle[2]:
+            ox, oz = obj.position.x, obj.position.z
+            if circle is not None and math.hypot(ox - circle[0], oz - circle[1]) > circle[2]:
                 continue
-            if op.target is not None and self.placer.target_distance(op.target, x, z) > distance:
+            if target is not None and self.placer.target_distance(target, ox, oz) > distance:
                 continue
+            matches.append(obj)
+        scope = f" ({'; '.join(conditions)})" if conditions else ""
+        return matches, scope
+
+    def remove_where(self, op: RemoveWhereOp) -> None:
+        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, "удаление")
+        if found is None:
+            return
+        matches, scope = found
+        for obj in matches:
             del self.objects[obj.id]
             self.placer.release(obj.id)
-            removed += 1
-
-        scope = f" ({'; '.join(conditions)})" if conditions else ""
-        if removed == 0:
-            self.rejected.append(f"удаление {', '.join(types)}{scope}: подходящих объектов нет")
+        if not matches:
+            self.rejected.append(f"удаление {', '.join(op.object_types)}{scope}: подходящих объектов нет")
             return
-        self.applied.append(f"удалено {_plural(removed, _OBJECT_FORMS)} ({', '.join(types)}){scope}")
+        self.applied.append(f"удалено {_plural(len(matches), _OBJECT_FORMS)} ({', '.join(op.object_types)}){scope}")
+
+    def replace_where(self, op: ReplaceWhereOp) -> None:
+        """Новый вид проходит ту же проверку, что и при add: другой габарит
+        или отступ может здесь не поместиться, тогда объект остаётся как
+        был, а не пропадает и не встаёт с нарушением."""
+        what = "замена вида"
+        items = self._pool(op.catalog_ids, what)
+        if items is None:
+            return
+        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, what)
+        if found is None:
+            return
+        matches, scope = found
+        if not matches:
+            self.rejected.append(f"{what}{scope}: подходящих объектов нет")
+            return
+
+        replaced = 0
+        skipped = 0
+        for i, obj in enumerate(matches):
+            new_item = items[i % len(items)]
+            x, z = obj.position.x, obj.position.z
+            self.placer.release(obj.id)
+            if not self.placer.is_free(x, z, new_item.setback_kind, obj_type=new_item.object_type):
+                self.placer.occupy(obj.id, x, z, obj.type)
+                skipped += 1
+                continue
+            del self.objects[obj.id]
+            self._create(new_item, x, z, math.degrees(obj.rotation))
+            replaced += 1
+        if replaced == 0:
+            self.rejected.append(f"{what}{scope}: новый вид здесь не помещается (другой габарит или отступ)")
+            return
+        self.applied.append(f"{what}{scope}: {_plural(replaced, _OBJECT_FORMS)} → {_labels(items)}")
+        if skipped:
+            self.warnings.append(f"{what}: {skipped} объектов оставлено как есть — новый вид там не помещается")
+
+    def thin_out(self, op: ThinOutOp) -> None:
+        what = "прореживание"
+        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, what)
+        if found is None:
+            return
+        matches, scope = found
+        if not matches:
+            self.rejected.append(f"{what}{scope}: подходящих объектов нет")
+            return
+
+        spacing = clamp(op.min_spacing_m or 2.0, MIN_SPACING_M, MAX_SPACING_M)
+        kept = PointIndex(spacing)
+        removed = 0
+        for obj in matches:
+            x, z = obj.position.x, obj.position.z
+            if kept.has_within(x, z, spacing):
+                del self.objects[obj.id]
+                self.placer.release(obj.id)
+                removed += 1
+            else:
+                kept.add(obj.id, x, z)
+        if removed == 0:
+            self.rejected.append(f"{what}{scope}: и так реже {spacing:.1f} м — убирать нечего")
+            return
+        self.applied.append(f"{what}{scope}: убрано {_plural(removed, _OBJECT_FORMS)}, оставлено не реже {spacing:.1f} м")
+
+    def resize(self, op: ResizeOp) -> None:
+        what = "масштаб"
+        scale = clamp(op.scale, MIN_SCALE, MAX_SCALE)
+        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, what)
+        if found is None:
+            return
+        matches, scope = found
+        if not matches:
+            self.rejected.append(f"{what}{scope}: подходящих объектов нет")
+            return
+        for obj in matches:
+            self.objects[obj.id] = obj.model_copy(update={"scale": scale})
+        self.applied.append(f"{what}{scope}: {_plural(len(matches), _OBJECT_FORMS)} → ×{scale:.2f}")
+        if abs(scale - op.scale) > 1e-6:
+            self.warnings.append(f"{what}: запрошено ×{op.scale:.2f}, вне допустимого диапазона — взято ×{scale:.2f}")
+
+    def face(self, op: FaceOp) -> None:
+        what = "разворот"
+        at = self._resolve_endpoint(what, op.at_id, op.at_target, op.at_x, op.at_z, "цель")
+        if at is None:
+            return
+        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, what)
+        if found is None:
+            return
+        matches, scope = found
+        if not matches:
+            self.rejected.append(f"{what}{scope}: подходящих объектов нет")
+            return
+        turned = 0
+        for obj in matches:
+            # nearest_points(at, точка) -- для одиночной точки at это она
+            # сама, для зоны (at_target) -- ближайшая точка её контура.
+            near, _ = nearest_points(at, Point(obj.position.x, obj.position.z))
+            dx, dz = near.x - obj.position.x, near.y - obj.position.z
+            if math.hypot(dx, dz) < 1e-6:
+                continue
+            rotation = math.degrees(math.atan2(-dz, dx))
+            self.objects[obj.id] = obj.model_copy(update={"rotation": math.radians(rotation)})
+            turned += 1
+        if turned == 0:
+            self.rejected.append(f"{what}{scope}: цель совпадает с объектами — разворачивать некуда")
+            return
+        self.applied.append(f"{what}{scope}: {_plural(turned, _OBJECT_FORMS)}")
+
+    def align_along(self, op: AlignAlongOp) -> None:
+        what = f"выравнивание вдоль: {TARGET_LABELS[op.target]}"
+        if self.placer.target_geometry(op.target) is None:
+            self.rejected.append(f"{what}: на участке таких объектов нет")
+            return
+        found = self._matching(op.object_types, op.target, ALIGN_MATCH_REACH_M, op.x, op.z, op.radius_m, what)
+        if found is None:
+            return
+        matches, _ = found
+        if not matches:
+            self.rejected.append(f"{what}: подходящих объектов рядом нет")
+            return
+
+        sample = self.by_id.get(matches[0].metadata.get("catalogId"))
+        kind = sample.setback_kind if sample else None
+        spacing = clamp(op.spacing_m or (_default_spacing(sample) if sample else 3.0), MIN_SPACING_M, MAX_SPACING_M)
+        offset = self.placer.min_offset(op.target, kind, _half_depth(sample) if sample else 0.5)
+        if op.offset_m is not None:
+            offset = max(offset, op.offset_m)
+        oriented = _is_oriented(sample) if sample else False
+
+        for obj in matches:
+            self.placer.release(obj.id)
+        points = self.placer.points_along(op.target, spacing, offset)
+        used = PointIndex(spacing)
+        moved = 0
+        for obj in sorted(matches, key=lambda o: (o.position.x, o.position.z)):
+            best = None
+            for x, z, rotation in sorted(points, key=lambda p: math.hypot(p[0] - obj.position.x, p[1] - obj.position.z)):
+                if used.has_within(x, z, 0.9 * spacing):
+                    continue
+                if self.placer.is_free(x, z, self._setback_kind(obj), obj_type=obj.type):
+                    best = (x, z, rotation)
+                    break
+            if best is None:
+                self.placer.occupy(obj.id, obj.position.x, obj.position.z, obj.type)
+                continue
+            x, z, rotation = best
+            used.add(obj.id, x, z)
+            update = {"position": Point3(x=x, y=obj.position.y, z=z)}
+            if oriented:
+                update["rotation"] = math.radians(rotation)
+            self.objects[obj.id] = obj.model_copy(update=update)
+            self.placer.occupy(obj.id, x, z, obj.type)
+            moved += 1
+        if moved == 0:
+            self.rejected.append(f"{what}: не нашлось валидных мест в ряду")
+            return
+        self.applied.append(f"{what}: выровнено {_plural(moved, _OBJECT_FORMS)}, шаг {spacing:.1f} м")
+        if moved < len(matches):
+            self.warnings.append(f"{what}: {len(matches) - moved} объектов оставлено на месте — валидных мест в ряду не хватило")
+
+    def line_of(self, op: LineOfOp) -> None:
+        what = "линия"
+        items = self._pool(op.catalog_ids, what)
+        if items is None:
+            return
+        a = self._resolve_endpoint(what, op.from_id, op.from_target, op.from_x, op.from_z, "начало")
+        b = self._resolve_endpoint(what, op.to_id, op.to_target, op.to_x, op.to_z, "конец")
+        if a is None or b is None:
+            return
+        near_a, near_b = nearest_points(a, b)
+        length = near_a.distance(near_b)
+        if length < 1.0:
+            self.rejected.append(f"{what}: точки и так рядом — соединять нечего")
+            return
+
+        kind = _pool_kind(items)
+        spacing = _spacing_for(op.spacing_m, items)
+        # Вытянутые объекты (секция изгороди) проверяем и по концам: центр
+        # может стоять по норме, а край -- заходить на здание или в зону.
+        half_length = max((item.dimensions.width / 2 for item in items if _is_oriented(item)), default=0.0)
+        tx, tz = (near_b.x - near_a.x) / length, (near_b.y - near_a.y) / length
+        rotation = math.degrees(math.atan2(-tz, tx))
+        count = max(1, round(length / spacing))
+        spots = []
+        for i in range(count + 1):
+            d = i * length / count
+            x, z = near_a.x + tx * d, near_a.y + tz * d
+            if self.placer.is_free(x, z, kind) and (not half_length or self._ends_fit(x, z, rotation, half_length, kind)):
+                spots.append((x, z, rotation))
+        if not spots:
+            self.rejected.append(f"{what}: нет места без нарушений норм по всей линии")
+            return
+        used = self._plant(items, spots)
+        self.applied.append(f"{what}: {_plural(len(spots), _OBJECT_FORMS)} ({used}), {length:.0f} м")
+        if len(spots) < count + 1:
+            self.warnings.append(f"{what}: из {count + 1} точек по линии встало {len(spots)} — остальные нарушали бы нормы")
+
+    def enclose(self, op: EncloseOp) -> None:
+        what = "кольцо"
+        items = self._pool(op.catalog_ids, what)
+        if items is None:
+            return
+        kind = _pool_kind(items)
+        half_depth = max(_half_depth(item) for item in items)
+
+        if op.around_target is not None:
+            geom = self.placer.target_geometry(op.around_target)
+            if geom is None:
+                self.rejected.append(f"{what}: на участке нет цели «{TARGET_LABELS[op.around_target]}»")
+                return
+            offset = op.offset_m if op.offset_m is not None else self.placer.min_offset(op.around_target, kind, half_depth)
+        else:
+            center = self._resolve_endpoint(what, op.around_id, None, op.around_x, op.around_z, "центр")
+            if center is None:
+                return
+            radius = clamp(op.radius_m or 6.0, 1.5, MAX_AREA_RADIUS_M)
+            geom = center.buffer(radius)
+            offset = op.offset_m if op.offset_m is not None else half_depth + 0.5
+
+        spacing = _spacing_for(op.spacing_m, items)
+        # Как и в line_of: у вытянутых объектов центр может стоять по норме,
+        # а край -- нет.
+        half_length = max((item.dimensions.width / 2 for item in items if _is_oriented(item)), default=0.0)
+        band = geom.buffer(offset)
+        polys = [band] if band.geom_type == "Polygon" else [g for g in getattr(band, "geoms", []) if g.geom_type == "Polygon"]
+        rings = [r for poly in polys for r in (poly.exterior, *poly.interiors)]
+
+        accepted = []
+        for ring in rings:
+            length = ring.length
+            if length < 1.0:
+                continue
+            count = max(1, int(length // spacing))
+            for i in range(count):
+                d = i * length / count
+                p = ring.interpolate(d)
+                ahead = ring.interpolate((d + 0.5) % length)
+                tx, tz = ahead.x - p.x, ahead.y - p.y
+                rotation = math.degrees(math.atan2(-tz, tx)) if (tx or tz) else 0.0
+                if self.placer.is_free(p.x, p.y, kind) and (not half_length or self._ends_fit(p.x, p.y, rotation, half_length, kind)):
+                    accepted.append((p.x, p.y, rotation))
+        if not accepted:
+            self.rejected.append(f"{what}: нет места без нарушений норм по контуру")
+            return
+        chosen = spread_subset(accepted, min(MAX_BULK_PLACEMENTS, len(accepted)))
+        used = self._plant(items, chosen)
+        self.applied.append(f"{what}: {_plural(len(chosen), _OBJECT_FORMS)} ({used}), шаг {spacing:.1f} м")
+
+    def duplicate_near(self, op: DuplicateNearOp) -> None:
+        obj = self._editable(op.op, op.id)
+        if obj is None:
+            return
+        item = self.by_id.get(obj.metadata.get("catalogId"))
+        if item is None:
+            self.rejected.append(f"duplicate_near {op.id}: объект не из каталога, скопировать нечем")
+            return
+        what = f"копия «{item.label}»"
+        near = self._resolve_endpoint(what, op.near_id, op.near_target, op.near_x, op.near_z, "рядом с")
+        if near is None:
+            return
+
+        count = int(clamp(op.count, 1, 20))
+        kind = item.setback_kind
+        spacing = _default_spacing(item)
+        if near.geom_type == "Point":
+            within = near.buffer(max(8.0, spacing * count))
+            candidates = self.placer.points_in_area(kind, spacing / 4, within, CANDIDATES_NEAR_POINT)
+            free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind)]
+            chosen = pick_near(free, count, 0.9 * spacing, (near.x, near.y))
+        else:
+            within = near.buffer(10.0)
+            candidates = self.placer.points_in_area(kind, spacing / 4, within, CANDIDATES_NEAR_POINT)
+            free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind)]
+            chosen = pick_spread(free, count, 0.9 * spacing)
+        if not chosen:
+            self.rejected.append(f"{what}: рядом нет места без нарушений норм")
+            return
+        for x, z in chosen:
+            self._create(item, x, z, math.degrees(obj.rotation))
+        self.applied.append(f"{what}: добавлено {_plural(len(chosen), _OBJECT_FORMS)}")
+
+    def set_count(self, op: SetCountOp) -> None:
+        what = "нужное количество"
+        count = int(clamp(op.count, 0, MAX_BULK_PLACEMENTS))
+        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, what)
+        if found is None:
+            return
+        matches, scope = found
+        current = len(matches)
+        if current == count:
+            self.applied.append(f"{what}{scope}: уже {current} — без изменений")
+            return
+        if current > count:
+            for obj in matches[count:]:
+                del self.objects[obj.id]
+                self.placer.release(obj.id)
+            self.applied.append(f"{what}{scope}: было {current}, убрано {current - count}, осталось {count}")
+            return
+
+        need = count - current
+        items = self._pool(op.catalog_ids, what) if op.catalog_ids else None
+        if items is None and matches:
+            existing = self.by_id.get(matches[0].metadata.get("catalogId"))
+            items = [existing] if existing else None
+        if items is None:
+            self.rejected.append(f"{what}: не хватает {need}, но не указано, чем добавлять (catalog_ids)")
+            return
+
+        kind = _pool_kind(items)
+        spacing = _spacing_for(None, items)
+        if op.x is not None and op.z is not None:
+            radius = clamp(op.radius_m or max(10.0, 1.2 * spacing * math.sqrt(need)), 1.0, MAX_AREA_RADIUS_M)
+            within = Point(op.x, op.z).buffer(radius)
+            candidates = self.placer.points_in_area(kind, spacing / 4, within, CANDIDATES_NEAR_POINT)
+            free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind)]
+            chosen = pick_near(free, need, 0.9 * spacing, (op.x, op.z))
+        else:
+            candidates = self.placer.points_in_area(kind, spacing / 2, None, need * CANDIDATES_PER_PLACEMENT)
+            free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind)]
+            chosen = pick_spread(free, need, 0.9 * spacing)
+        if not chosen:
+            self.rejected.append(f"{what}{scope}: было {current}, добавить не удалось — нет места")
+            return
+        used = self._plant(items, chosen)
+        self.applied.append(f"{what}{scope}: было {current}, добавлено {_plural(len(chosen), _OBJECT_FORMS)} ({used}), стало {current + len(chosen)}")
+        if len(chosen) < need:
+            self.warnings.append(f"{what}: нужно было ещё {need - len(chosen)} — больше мест без нарушений норм нет")
 
     def design_area(self, op: DesignAreaOp) -> None:
         what = "дизайн двора"
