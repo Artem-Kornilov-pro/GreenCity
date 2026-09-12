@@ -3,11 +3,12 @@ PYTHON   := $(VENV)/bin/python
 PIP      := $(VENV)/bin/pip
 UVICORN  := $(VENV)/bin/uvicorn
 RUFF     := $(VENV)/bin/ruff
+PYTEST   := $(VENV)/bin/pytest
 OUT      ?= output
 CATEGORY ?= tree
 
 .PHONY: help venv backend frontend-install frontend frontend-build parse clean \
-        lint lint-py lint-web lint-fix models \
+        lint lint-py lint-web lint-fix models test test-cov \
         docker-build docker-up docker-down docker-logs
 
 help:
@@ -17,6 +18,8 @@ help:
 	@echo "make frontend          - запустить dev-сервер фронтенда (http://localhost:5173)"
 	@echo "make frontend-build    - собрать production-сборку фронтенда"
 	@echo "make parse FILE=path/to.dxf [OUT=output] - разобрать DXF в JSON парсером"
+	@echo "make test              - юнит-тесты backend/ и parser/ (pytest, без сети/докера)"
+	@echo "make test-cov          - то же самое + отчёт о покрытии (terminal + htmlcov/)"
 	@echo "make lint              - прогнать все линтеры (Python + фронтенд)"
 	@echo "make lint-py           - только Python (ruff, конфиг в pyproject.toml)"
 	@echo "make lint-web          - только фронтенд (oxlint, конфиг .oxlintrc.json)"
@@ -54,6 +57,16 @@ parse: $(VENV)/bin/activate
 		exit 1; \
 	fi
 	$(PYTHON) parser/parse_dxf.py $(FILE) --out-dir $(OUT)
+
+# Полностью офлайн: MongoDB/Redis подменены mongomock/fakeredis (см.
+# backend/tests/conftest.py), LLM не вызывается ни разу (сеть недоступна —
+# и не должна быть нужна, реальные вызовы стоят пользователю денег, см.
+# backend/tests/test_llm_editor_request.py).
+test: $(VENV)/bin/activate
+	$(PYTEST)
+
+test-cov: $(VENV)/bin/activate
+	$(PYTEST) --cov --cov-report=term-missing --cov-report=html
 
 # Оба линтера завершаются ненулевым кодом при любой находке (у oxlint для
 # этого нужен --deny-warnings) — цель годится как гейт в CI, а не только
