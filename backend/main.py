@@ -3,8 +3,12 @@
 FastAPI-бэкенд для веб-редактора озеленения. Эндпоинты:
     POST /api/parse             -- DXF -> JSON-сцена (через parser/parse_dxf.py)
     POST /api/generate-greenery -- JSON-сцена (+ опциональные query-параметры
-                                    species/grid_spacing_m/min_tree_spacing_m)
-                                    -> JSON-сцена с добавленными деревьями.
+                                    species/grid_spacing_m/min_tree_spacing_m/
+                                    include_trees/include_bushes/
+                                    bush_grid_spacing_m/min_bush_spacing_m/
+                                    include_lawn/lawn_patch_size_m)
+                                    -> JSON-сцена с добавленными деревьями,
+                                    группами кустов и газоном.
                                     Полное описание параметров и алгоритма --
                                     backend/README.md.
     POST /api/edit-with-text    -- правка плана текстом через LLM (llm_editor.py)
@@ -45,11 +49,18 @@ from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, Uploa
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from greenery_generator import (
+    DEFAULT_BUSH_GRID_SPACING_M,
     DEFAULT_GRID_SPACING_M,
+    DEFAULT_LAWN_PATCH_SIZE_M,
+    DEFAULT_MIN_BUSH_SPACING_M,
     DEFAULT_MIN_TREE_SPACING_M,
     DEFAULT_TREE_SPECIES,
     MAX_ALLOWED_GRID_SPACING_M,
+    MAX_ALLOWED_LAWN_PATCH_SIZE_M,
     MIN_ALLOWED_GRID_SPACING_M,
+    MIN_ALLOWED_LAWN_PATCH_SIZE_M,
+    generate_bushes,
+    generate_lawn,
     generate_trees,
 )
 from llm_editor import (
@@ -203,9 +214,41 @@ def generate_greenery(
             f"сгенерированных деревьев, в метрах. По умолчанию {DEFAULT_MIN_TREE_SPACING_M} м."
         ),
     ),
+    include_trees: bool = Query(default=True, description="Добавлять сгенерированные деревья."),
+    include_bushes: bool = Query(default=True, description="Добавлять сгенерированные группы кустов."),
+    bush_grid_spacing_m: Optional[float] = Query(
+        default=None,
+        ge=MIN_ALLOWED_GRID_SPACING_M,
+        le=MAX_ALLOWED_GRID_SPACING_M,
+        description=(
+            "Шаг сетки кандидатных ЦЕНТРОВ групп кустов, в метрах -- отдельно от grid_spacing_m у "
+            f"деревьев, у кустов он обычно меньше. По умолчанию {DEFAULT_BUSH_GRID_SPACING_M} м."
+        ),
+    ),
+    min_bush_spacing_m: Optional[float] = Query(
+        default=None,
+        ge=0.0,
+        description=(
+            "Минимальное расстояние между ЦЕНТРАМИ групп кустов (не между кустами внутри одной "
+            f"группы -- они специально стоят вплотную, см. generate_bushes). По умолчанию {DEFAULT_MIN_BUSH_SPACING_M} м."
+        ),
+    ),
+    include_lawn: bool = Query(default=True, description="Заполнить оставшуюся свободную площадь плиткой газона."),
+    lawn_patch_size_m: Optional[float] = Query(
+        default=None,
+        ge=MIN_ALLOWED_LAWN_PATCH_SIZE_M,
+        le=MAX_ALLOWED_LAWN_PATCH_SIZE_M,
+        description=(
+            f"Размер стороны плитки газона, в метрах. По умолчанию {DEFAULT_LAWN_PATCH_SIZE_M} м. "
+            f"Допустимый диапазон: {MIN_ALLOWED_LAWN_PATCH_SIZE_M}-{MAX_ALLOWED_LAWN_PATCH_SIZE_M} м."
+        ),
+    ),
 ):
     """
-    Автоматически расставить озеленение на сцене.
+    Автоматически расставить озеленение на сцене: деревья, группы кустов и
+    газон (ТЗ п.16-17), в этом порядке -- каждый следующий шаг видит объекты,
+    добавленные предыдущим, как уже занятое место (см. докстринг
+    greenery_generator.py про порядок вызова).
 
     Вызывается с фронтенда по кнопке "Сгенерировать растительность
     автоматически" (frontend/src/App.tsx) -- туда уходит текущая сцена
@@ -214,40 +257,52 @@ def generate_greenery(
     а фронтенд ожидает в ответ сцену той же формы обратно и полностью ею
     заменяет текущее состояние.
 
-    РЕАЛИЗОВАНО (greenery_generator.py): только деревья, детерминированным
-    demo-генератором по сетке (ТЗ п.16-17) -- см. docstring generate_trees().
-    Сажает только внутри явных зон озеленения (severity == "allowed",
-    газон), избегая forbidden И warning зон (парковка/дорожки/сети) с
-    отступом по виду посадки -- подробности и обоснование см. в
-    greenery_generator.py::_keep_out_shapes. Кустарники/газон -- TODO, см.
-    docstring greenery_generator.py.
+    Деревья -- детерминированным demo-генератором по сетке, см. docstring
+    generate_trees(). Кусты -- группами по несколько штук вплотную (п.17 ТЗ:
+    "меньшие расстояния и группировка"), см. generate_bushes(). Газон --
+    сплошными плитками на оставшейся свободной площади, см. generate_lawn().
+    Все три сажают только внутри явных зон озеленения (severity == "allowed",
+    газон из исходного DXF), избегая forbidden И warning зон (парковка/
+    дорожки/сети) с отступом по виду посадки -- подробности и обоснование см.
+    в greenery_generator.py::_keep_out_shapes/_raw_zone_shapes.
 
     Существующие объекты пользователя (здания, фонари, лавки, вручную
     расставленные деревья/кусты) не трогаем -- только добавляем новые в
     scene.objects, остальные поля сцены (boundary/restrictions/windows/
     canopies/meta) возвращаем как есть.
 
-    species/grid_spacing_m/min_tree_spacing_m -- параметры запроса (query
-    string, НЕ часть тела Scene -- контракт тела менять не хотелось, раз он
-    уже согласован с фронтендом). Не переданы -- берутся дефолты из
-    greenery_generator.py. Полное описание см. в backend/README.md.
+    include_trees/include_bushes/include_lawn позволяют сгенерировать только
+    часть озеленения за один вызов (например, добавить кустов на уже готовую
+    сцену с деревьями). Остальные параметры -- через query string, НЕ часть
+    тела Scene (контракт тела менять не хотелось, раз он уже согласован с
+    фронтендом); не переданы -- берутся дефолты из greenery_generator.py.
+    Полное описание см. в backend/README.md.
 
     ПРИМЕЧАНИЕ по контракту: раньше эндпоинт всегда возвращал None ("функция
-    ещё не готова", см. api.ts/App.tsx на фронте). Теперь для деревьев
-    алгоритм реализован, поэтому возвращаем реальную Scene всегда, даже если
-    новых деревьев добавить некуда (пустая допустимая площадь) -- это
-    легитимный результат работы, а не "не реализовано". None пока оставлен
-    в response_model на случай будущих сценариев без места для растений,
-    которые лучше явно отличать от "добавили 0 деревьев"; сейчас функция его
-    не возвращает.
+    ещё не готова", см. api.ts/App.tsx на фронте). Теперь алгоритм реализован,
+    поэтому возвращаем реальную Scene всегда, даже если новых объектов
+    добавить некуда (пустая допустимая площадь) -- это легитимный результат
+    работы, а не "не реализовано". None пока оставлен в response_model на
+    случай будущих сценариев без места для растений, которые лучше явно
+    отличать от "добавили 0 объектов"; сейчас функция его не возвращает.
     """
-    new_trees = generate_trees(
-        scene,
-        species=species,
-        grid_spacing_m=grid_spacing_m,
-        min_tree_spacing_m=min_tree_spacing_m,
-    )
-    scene.objects = [*scene.objects, *new_trees]
+    if include_trees:
+        new_trees = generate_trees(
+            scene,
+            species=species,
+            grid_spacing_m=grid_spacing_m,
+            min_tree_spacing_m=min_tree_spacing_m,
+        )
+        scene.objects = [*scene.objects, *new_trees]
+
+    if include_bushes:
+        new_bushes = generate_bushes(scene, grid_spacing_m=bush_grid_spacing_m, min_bush_spacing_m=min_bush_spacing_m)
+        scene.objects = [*scene.objects, *new_bushes]
+
+    if include_lawn:
+        new_lawn = generate_lawn(scene, patch_size_m=lawn_patch_size_m)
+        scene.objects = [*scene.objects, *new_lawn]
+
     return scene
 
 
