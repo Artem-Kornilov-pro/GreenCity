@@ -12,6 +12,7 @@ import {
   uploadDxf,
   generateGreenery,
   editWithText,
+  exportDxf,
   listProjects,
   createProject,
   loadProject,
@@ -40,6 +41,7 @@ function App() {
   const [hoveredZone, setHoveredZone] = useState<RestrictionZone | null>(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [exportingDxf, setExportingDxf] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [instruction, setInstruction] = useState("");
   const [editing, setEditing] = useState(false);
@@ -345,6 +347,25 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportDxf = useCallback(async () => {
+    if (!scene) return;
+    setExportingDxf(true);
+    setError(null);
+    try {
+      const blob = await exportDxf(scene);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "greencity_plan.dxf";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setExportingDxf(false);
+    }
+  }, [scene]);
+
   useEffect(() => {
     if (!selectedId) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -410,6 +431,11 @@ function App() {
         {scene && (
           <button className="export-btn" onClick={handleExport}>
             Экспорт JSON
+          </button>
+        )}
+        {scene && (
+          <button className="export-btn" onClick={handleExportDxf} disabled={exportingDxf}>
+            {exportingDxf ? "Экспорт..." : "Экспорт DXF"}
           </button>
         )}
 

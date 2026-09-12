@@ -8,6 +8,9 @@ FastAPI-бэкенд для веб-редактора озеленения. Эн
                                     Полное описание параметров и алгоритма --
                                     backend/README.md.
     POST /api/edit-with-text    -- правка плана текстом через LLM (llm_editor.py)
+    POST /api/export-dxf        -- JSON-сцена -> файл .dxf (export_dxf.py; ТЗ:
+                                    "итоговый план должен экспортироваться
+                                    обратно в формат DXF")
     POST /api/auth/register,
     POST /api/auth/login        -- логин/пароль, без почты (auth.py, projects.py);
                                     выдают access- и refresh-токен (см. auth.py)
@@ -25,6 +28,7 @@ FastAPI-бэкенд для веб-редактора озеленения. Эн
     uvicorn main:app --reload --port 8000
 """
 
+import io
 import logging
 import sys
 import tempfile
@@ -36,8 +40,10 @@ import cache
 import db
 import projects as projects_service
 from auth import AuthError, CurrentUser, decode_token, refresh_access_token, require_user
+from export_dxf import scene_to_dxf
 from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from greenery_generator import (
     DEFAULT_GRID_SPACING_M,
     DEFAULT_MIN_TREE_SPACING_M,
@@ -264,6 +270,29 @@ def edit_with_text(request: TextEditRequest):
         raise HTTPException(503, str(e)) from e
     except LlmError as e:
         raise HTTPException(502, str(e)) from e
+
+
+# Синхронный def -- ezdxf.write -- обычная блокирующая сборка текста в
+# памяти, ни одного await, как и у /api/parse/generate-greenery выше.
+@app.post("/api/export-dxf")
+def export_dxf_endpoint(scene: Scene):
+    """Итоговый план -> файл .dxf для скачивания (ТЗ: "итоговый план должен
+    экспортироваться обратно в формат DXF"). Тело запроса -- та же Scene, что
+    фронтенд и так держит в состоянии редактора (после парсинга/генерации/
+    правок текстом/вручную) -- ничего дополнительно спрашивать не нужно.
+
+    Слои и геометрия -- зеркало parser/parse_dxf.py, см. докстринг
+    export_dxf.py: файл открывается в любом CAD и, если нужно, читается
+    обратно тем же parse_dxf.py.
+    """
+    doc = scene_to_dxf(scene)
+    buf = io.StringIO()
+    doc.write(buf)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/dxf",
+        headers={"Content-Disposition": 'attachment; filename="greencity_plan.dxf"'},
+    )
 
 
 # --- Аккаунты и проекты (auth.py, projects.py, db.py, cache.py) --------------

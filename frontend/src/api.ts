@@ -36,6 +36,23 @@ export async function generateGreenery(scene: Scene): Promise<Scene | null> {
   return res.json() as Promise<Scene | null>;
 }
 
+// Итоговый план -> файл .dxf (backend/export_dxf.py; ТЗ: "итоговый план
+// должен экспортироваться обратно в формат DXF"). Возвращаем Blob, а не сами
+// триггерим скачивание -- так функцию можно переиспользовать (например для
+// предпросмотра), а вызывающий код (App.tsx) сам решает, что делать дальше.
+export async function exportDxf(scene: Scene): Promise<Blob> {
+  const res = await fetch(`${API_BASE}/api/export-dxf`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(scene),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Не удалось экспортировать DXF (${res.status}): ${text || res.statusText}`);
+  }
+  return res.blob();
+}
+
 export interface TextEditResult {
   scene: Scene;
   explanation: string;
