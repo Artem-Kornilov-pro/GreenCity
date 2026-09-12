@@ -27,6 +27,9 @@ FastAPI-бэкенд для веб-редактора озеленения. Эн
                                     гостевой режим работает без них: DXF/
                                     генерация/правка текстом выше эндпоинтов
                                     проектов не касаются.
+    GET  /metrics               -- метрики Prometheus (prometheus-fastapi-
+                                    instrumentator + metrics.py), см.
+                                    observability/README.md
 
 Запуск (из папки backend/, в venv с requirements.txt из корня проекта):
     uvicorn main:app --reload --port 8000
@@ -42,6 +45,7 @@ from typing import Optional
 
 import cache
 import db
+import metrics
 import projects as projects_service
 from auth import AuthError, CurrentUser, decode_token, refresh_access_token, require_user
 from export_dxf import scene_to_dxf
@@ -70,8 +74,10 @@ from llm_editor import (
     TextEditResult,
     edit_scene_with_text,
 )
+from logging_config import RequestLoggingMiddleware, configure_logging
 from plant_catalog import CatalogItem, load_catalog
 from projects import NotFoundError, ProjectsError
+from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import TypeAdapter
 from pymongo.errors import PyMongoError
 from schemas import Scene
@@ -91,10 +97,12 @@ from schemas_auth import (
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "parser"))
 from parse_dxf import parse_dxf_file  # noqa: E402
 
-# Логи приложения (например greencity.llm -- почему не сработала правка текстом)
-# в том же потоке, что и логи uvicorn. Логгеры самого uvicorn настроены с
-# propagate=False, поэтому их сообщения здесь не задвоятся.
-logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
+# Полное логирование приложения -- структурированные JSON-строки в stdout,
+# по одной на запись, с request_id и уровнем через LOG_LEVEL (см.
+# logging_config.py). Логгеры самого uvicorn (uvicorn.access/uvicorn.error)
+# настроены с propagate=False и этой конфигурацией не затрагиваются -- их
+# собственный формат вывода остаётся как есть.
+configure_logging()
 
 
 @asynccontextmanager
@@ -107,12 +115,25 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="GreenCity API", lifespan=lifespan)
 
+# Добавлен ДО CORSMiddleware намеренно: Starlette оборачивает middleware в
+# порядке добавления так, что первый добавленный оказывается САМЫМ внешним
+# слоем -- значит именно этот увидит финальный код ответа (уже после CORS) и
+# посчитает полную длительность запроса, включая работу остальных middleware.
+app.add_middleware(RequestLoggingMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # прототип: фронтенд может стучаться с любого dev-порта
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Стандартные HTTP-метрики (запросы/с, латентность по хендлеру и коду ответа,
+# запросы в процессе обработки) -- без ручной разметки каждого эндпоинта.
+# Бизнес-метрики (сколько DXF распарсено, сколько озеленения сгенерировано и
+# т.п.) -- отдельно, см. metrics.py, они увеличиваются прямо в теле нужных
+# эндпоинтов ниже. .expose(app) сам регистрирует GET /metrics.
+Instrumentator().instrument(app).expose(app)
 
 
 @app.get("/api/health")
@@ -174,7 +195,17 @@ def parse_dxf_endpoint(file: UploadFile = File(...)):
         try:
             scene = parse_dxf_file(tmp.name)
         except Exception as e:
+            metrics.dxf_parse_errors_total.inc()
+            logging.getLogger("greencity.parse").warning("не удалось разобрать %r: %s", file.filename, e)
             raise HTTPException(400, f"Не удалось разобрать DXF: {e}") from e
+
+    metrics.dxf_parses_total.inc()
+    logging.getLogger("greencity.parse").info(
+        "разобран %r: %d объектов, %d зон",
+        file.filename,
+        len(scene.get("objects", [])),
+        len(scene.get("restrictions", [])),
+    )
 
     return scene
 
@@ -286,6 +317,8 @@ def generate_greenery(
     случай будущих сценариев без места для растений, которые лучше явно
     отличать от "добавили 0 объектов"; сейчас функция его не возвращает.
     """
+    generated_count = 0
+
     if include_trees:
         new_trees = generate_trees(
             scene,
@@ -294,15 +327,22 @@ def generate_greenery(
             min_tree_spacing_m=min_tree_spacing_m,
         )
         scene.objects = [*scene.objects, *new_trees]
+        metrics.greenery_generated_total.labels(object_type="tree").inc(len(new_trees))
+        generated_count += len(new_trees)
 
     if include_bushes:
         new_bushes = generate_bushes(scene, grid_spacing_m=bush_grid_spacing_m, min_bush_spacing_m=min_bush_spacing_m)
         scene.objects = [*scene.objects, *new_bushes]
+        metrics.greenery_generated_total.labels(object_type="bush").inc(len(new_bushes))
+        generated_count += len(new_bushes)
 
     if include_lawn:
         new_lawn = generate_lawn(scene, patch_size_m=lawn_patch_size_m)
         scene.objects = [*scene.objects, *new_lawn]
+        metrics.greenery_generated_total.labels(object_type="lawn_patch").inc(len(new_lawn))
+        generated_count += len(new_lawn)
 
+    logging.getLogger("greencity.generate").info("сгенерировано озеленение: %d новых объектов", generated_count)
     return scene
 
 
@@ -320,11 +360,15 @@ def edit_with_text(request: TextEditRequest):
     почему, какие есть предупреждения.
     """
     try:
-        return edit_scene_with_text(request.scene, request.instruction)
+        result = edit_scene_with_text(request.scene, request.instruction)
     except LlmNotConfiguredError as e:
+        metrics.llm_edit_requests_total.labels(outcome="not_configured").inc()
         raise HTTPException(503, str(e)) from e
     except LlmError as e:
+        metrics.llm_edit_requests_total.labels(outcome="llm_error").inc()
         raise HTTPException(502, str(e)) from e
+    metrics.llm_edit_requests_total.labels(outcome="success").inc()
+    return result
 
 
 # Синхронный def -- ezdxf.write -- обычная блокирующая сборка текста в
@@ -343,6 +387,8 @@ def export_dxf_endpoint(scene: Scene):
     doc = scene_to_dxf(scene)
     buf = io.StringIO()
     doc.write(buf)
+    metrics.dxf_exports_total.inc()
+    logging.getLogger("greencity.export").info("экспортирована сцена: %d объектов", len(scene.objects))
     return Response(
         content=buf.getvalue(),
         media_type="application/dxf",
@@ -368,6 +414,9 @@ def export_dxf_endpoint(scene: Scene):
 # недоступность LLM выше.
 
 
+_auth_logger = logging.getLogger("greencity.auth")
+
+
 def _mongo_unavailable(e: PyMongoError) -> HTTPException:
     logging.getLogger("greencity.db").warning("MongoDB недоступна на запросе: %s", e)
     return HTTPException(503, "Хранилище аккаунтов и проектов сейчас недоступно, попробуйте позже")
@@ -391,28 +440,45 @@ async def register(request: RegisterRequest, http_request: Request):
     """Регистрация: только имя пользователя и пароль, без почты и её
     подтверждения. Сразу возвращает access- и refresh-токен -- отдельный
     вход после регистрации не нужен."""
-    if not await cache.check_rate_limit(f"rl:register:{_client_ip(http_request)}", REGISTER_MAX_ATTEMPTS, REGISTER_WINDOW_S):
+    client_ip = _client_ip(http_request)
+    if not await cache.check_rate_limit(f"rl:register:{client_ip}", REGISTER_MAX_ATTEMPTS, REGISTER_WINDOW_S):
+        metrics.auth_registrations_total.labels(outcome="rate_limited").inc()
+        metrics.rate_limit_blocks_total.labels(endpoint="register").inc()
+        _auth_logger.warning("регистрация отклонена лимитом частоты", extra={"client_ip": client_ip})
         raise HTTPException(429, "Слишком много регистраций с этого адреса, попробуйте позже")
     try:
-        return await projects_service.register(request.username, request.password)
+        result = await projects_service.register(request.username, request.password)
     except ProjectsError as e:
+        metrics.auth_registrations_total.labels(outcome="rejected").inc()
+        _auth_logger.info("регистрация отклонена: %s", e, extra={"client_ip": client_ip, "username": request.username})
         raise HTTPException(400, str(e)) from e
     except PyMongoError as e:
         raise _mongo_unavailable(e) from e
+    metrics.auth_registrations_total.labels(outcome="success").inc()
+    _auth_logger.info("зарегистрирован новый пользователь", extra={"client_ip": client_ip, "username": request.username})
+    return result
 
 
 @app.post("/api/auth/login", response_model=AuthResponse)
 async def login(request: LoginRequest, http_request: Request):
-    rate_key = f"rl:login:{_client_ip(http_request)}"
+    client_ip = _client_ip(http_request)
+    rate_key = f"rl:login:{client_ip}"
     if not await cache.check_rate_limit(rate_key, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_S):
+        metrics.auth_logins_total.labels(outcome="rate_limited").inc()
+        metrics.rate_limit_blocks_total.labels(endpoint="login").inc()
+        _auth_logger.warning("вход отклонён лимитом частоты", extra={"client_ip": client_ip})
         raise HTTPException(429, "Слишком много попыток входа с этого адреса, попробуйте позже")
     try:
         result = await projects_service.login(request.username, request.password)
     except ProjectsError as e:
+        metrics.auth_logins_total.labels(outcome="rejected").inc()
+        _auth_logger.info("вход отклонён: %s", e, extra={"client_ip": client_ip, "username": request.username})
         raise HTTPException(401, str(e)) from e
     except PyMongoError as e:
         raise _mongo_unavailable(e) from e
     await cache.reset_rate_limit(rate_key)  # успешный вход -- не копить неудачные попытки на будущее
+    metrics.auth_logins_total.labels(outcome="success").inc()
+    _auth_logger.info("успешный вход", extra={"client_ip": client_ip, "username": request.username})
     return result
 
 
@@ -440,6 +506,7 @@ async def logout(request: RefreshRequest):
     sid = payload.get("sid") if payload else None
     if sid:
         await cache.revoke_session(sid)
+        _auth_logger.info("выход, сессия отозвана", extra={"username": payload.get("username")})
     return {"status": "ok"}
 
 

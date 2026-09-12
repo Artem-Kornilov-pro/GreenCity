@@ -1,0 +1,15 @@
+# Говорит Grafana читать готовые дашборды из /etc/grafana/dashboards (см.
+# docker-compose.yml: туда смонтирована observability/grafana/dashboards) --
+# они появляются в UI сразу при первом старте, без ручного импорта JSON.
+apiVersion: 1
+
+providers:
+  - name: GreenCity
+    orgId: 1
+    folder: GreenCity
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/dashboards

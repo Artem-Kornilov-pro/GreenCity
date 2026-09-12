@@ -1,0 +1,78 @@
+{
+  "title": "GreenCity — логи",
+  "uid": "greencity-logs",
+  "tags": ["greencity"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Объём логов backend по уровню",
+      "description": "level -- метка Loki, проставленная promtail из JSON-поля level (см. observability/promtail/promtail-config.yml)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki_ds" },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "bars", "stacking": { "mode": "normal" }, "fillOpacity": 40 } }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "loki_ds" },
+          "expr": "sum by (level) (count_over_time({compose_service=\"backend\"}[1m]))",
+          "legendFormat": "{{level}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "logs",
+      "title": "Предупреждения и ошибки",
+      "description": "{compose_service=\"backend\", level=~\"WARNING|ERROR|CRITICAL\"} | json",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 8 },
+      "datasource": { "type": "loki", "uid": "loki_ds" },
+      "options": { "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "loki_ds" },
+          "expr": "{compose_service=\"backend\", level=~\"WARNING|ERROR|CRITICAL\"} | json",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "logs",
+      "title": "События аккаунтов (greencity.auth)",
+      "description": "регистрации/входы/выходы, включая отклонённые лимитом частоты -- см. backend/main.py, _auth_logger",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 18 },
+      "datasource": { "type": "loki", "uid": "loki_ds" },
+      "options": { "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "loki_ds" },
+          "expr": "{compose_service=\"backend\"} | json | logger=\"greencity.auth\"",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "logs",
+      "title": "Журнал доступа (все запросы)",
+      "description": "RequestLoggingMiddleware -- метод/путь/код ответа/длительность/IP на каждый HTTP-запрос",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 18 },
+      "datasource": { "type": "loki", "uid": "loki_ds" },
+      "options": { "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "loki_ds" },
+          "expr": "{compose_service=\"backend\"} | json | logger=\"greencity.access\"",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

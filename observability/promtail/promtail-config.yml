@@ -1,0 +1,45 @@
+# Собирает логи ВСЕХ контейнеров compose (backend, frontend, mongo, redis,
+# prometheus, grafana, сам loki) через Docker API -- не нужно ничего менять в
+# самих сервисах (никакого logging-драйвера в docker-compose.yml), Promtail
+# сам находит контейнеры по сокету докера и следит за новыми/остановленными.
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      - source_labels: ["__meta_docker_container_name"]
+        regex: "/(.*)"
+        target_label: "container"
+      - source_labels: ["__meta_docker_container_log_stream"]
+        target_label: "stream"
+      - source_labels: ["__meta_docker_container_label_com_docker_compose_service"]
+        target_label: "compose_service"
+    pipeline_stages:
+      # Логи backend -- JSON (см. backend/logging_config.py). "level" -- в
+      # метку: значений всего пять (DEBUG/INFO/WARNING/ERROR/CRITICAL), это
+      # ровно тот случай, когда метка Loki оправдана (низкая кардинальность,
+      # нужна для быстрого фильтра "покажи только ошибки"). Остальные поля
+      # (request_id, username, client_ip и т.п.) НЕ становятся метками --
+      # у них высокая кардинальность, для Loki это стало бы описанной в его
+      # документации анти-практикой ("label cardinality explosion"); их
+      # разбирает сам Grafana-дашборд через `| json` прямо в запросе LogQL,
+      # без потери данных.
+      - match:
+          selector: '{compose_service="backend"}'
+          stages:
+            - json:
+                expressions:
+                  level: level
+            - labels:
+                level:
