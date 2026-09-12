@@ -31,3 +31,41 @@ ignore = [
 # FastAPI-идиома `param: T = File(...)`/`Query(...)` -- не мутируемый
 # дефолт-баг, а штатный способ декларации параметров запроса.
 extend-immutable-calls = ["fastapi.File", "fastapi.Query", "fastapi.Depends", "fastapi.Body"]
+
+[tool.pytest.ini_options]
+# backend/ и parser/ -- не пакеты (нет __init__.py, модули импортируются по
+# плоским именам вроде `import cache`, `from schemas import Scene`, как и
+# делает сам backend/main.py через sys.path). pythonpath добавляет обе папки
+# в sys.path на время тестового прогона -- тестам не нужно повторять этот
+# трюк вручную в каждом файле.
+pythonpath = ["backend", "parser", "backend/tests"]
+testpaths = ["backend/tests", "parser/tests"]
+addopts = "-ra"
+# Весь стек асинхронный (AsyncMongoClient, redis.asyncio) -- auto-режим
+# запускает `async def test_...` без маркера @pytest.mark.asyncio на каждом.
+asyncio_mode = "auto"
+filterwarnings = [
+    # shapely/GEOS: minimum_rotated_rectangle (courtyard_design._rect_sides)
+    # на уже осепараллельном прямоугольнике задевает вырожденный случай во
+    # внутренних C-вычислениях -- сам результат при этом верный, предупреждение
+    # чисто косметическое и не зависит от наших тестов (воспроизводится и на
+    # голом shapely.Polygon(...).minimum_rotated_rectangle без единой строчки
+    # проекта).
+    "ignore:divide by zero encountered in oriented_envelope:RuntimeWarning",
+    "ignore:invalid value encountered in oriented_envelope:RuntimeWarning",
+    # starlette.testclient использует устаревший алиас anyio.abc.BlockingPortal
+    # -- предупреждение из самой starlette, не из нашего кода.
+    "ignore:The anyio.abc.BlockingPortal alias is deprecated.*:DeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["backend", "parser"]
+omit = [
+    "*/tests/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+]
