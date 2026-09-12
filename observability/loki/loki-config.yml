@@ -1,0 +1,46 @@
+# Минимальная однопроцессная конфигурация Loki (без кластера, без S3/GCS) --
+# для одного бэкенда прототипа этого достаточно, а разворачивать реальное
+# объектное хранилище ради демо-логов было бы избыточно. Хранилище -- локальная
+# файловая система в volume loki_data (см. docker-compose.yml), переживает
+# перезапуск контейнера.
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+common:
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  # Логи бэкенда -- JSON-строки (см. backend/logging_config.py), Grafana сама
+  # разбирает их через `| json` в запросе LogQL -- отдельные "структурные
+  # метаданные" Loki (structured metadata) для этого не нужны.
+  allow_structured_metadata: false
+  # Демо-стенд не должен упасть от одного всплеска логов (например, полный
+  # дизайн двора на большой сцене пишет тысячи строк ezdxf при экспорте) --
+  # лимиты по умолчанию для одного пользователя рассчитаны на прод-нагрузку
+  # с многими тенантами, здесь один tenant ("fake").
+  ingestion_rate_mb: 16
+  ingestion_burst_size_mb: 32
+
+compactor:
+  working_directory: /loki/compactor

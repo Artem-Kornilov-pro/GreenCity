@@ -28,7 +28,7 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Поднимет четыре сервиса: backend (`http://localhost:8000`), frontend (`http://localhost:5173`), MongoDB (аккаунты и проекты, `backend/db.py`) и Redis (ограничение частоты входа, кэш каталога, сессии по refresh-токенам, `backend/cache.py`). Код смонтирован volume'ами — правки в `backend/`, `parser/`, `frontend/` подхватываются на лету (uvicorn `--reload`, vite dev server), без пересборки образа. Это касается только кода: **новые зависимости** в `requirements.txt` так не подхватываются — после их изменения нужен `docker compose up -d --build backend`, иначе бэкенд упадёт на импорте.
+Поднимет восемь сервисов: backend (`http://localhost:8000`), frontend (`http://localhost:5173`), MongoDB (аккаунты и проекты, `backend/db.py`), Redis (ограничение частоты входа, кэш каталога, сессии по refresh-токенам, `backend/cache.py`) и стек наблюдаемости — Prometheus, Loki, Promtail и Grafana (`http://localhost:3001`, логин/пароль `admin`/`admin`) с готовыми дашбордами метрик и логов, подробности — `observability/README.md`. Код смонтирован volume'ами — правки в `backend/`, `parser/`, `frontend/` подхватываются на лету (uvicorn `--reload`, vite dev server), без пересборки образа. Это касается только кода: **новые зависимости** в `requirements.txt` так не подхватываются — после их изменения нужен `docker compose up -d --build backend`, иначе бэкенд упадёт на импорте.
 
 ### Вариант B: локально
 
@@ -95,6 +95,7 @@ make lint-fix    # автоисправление того, что чинитс�
 
   Модель по умолчанию — `yandexgpt` (переменная `YANDEX_CLOUD_MODEL` в `.env`), ответ приходит за несколько секунд
 - Запуск в Docker (`docker compose up`)
+- Наблюдаемость: метрики Prometheus (стандартные HTTP + бизнес-метрики — сколько распарсено/сгенерировано/экспортировано, исходы правки текстом и входа/регистрации) и структурированные JSON-логи с request_id, дашборды Grafana готовы из коробки — `observability/README.md`
 
 ## Дальше
 

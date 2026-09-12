@@ -1,0 +1,16 @@
+# Единственная цель -- сам бэкенд: GET /metrics регистрирует
+# prometheus-fastapi-instrumentator (стандартные HTTP-метрики) вместе с
+# бизнес-метриками из backend/metrics.py (см. backend/main.py).
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: greencity-backend
+    metrics_path: /metrics
+    static_configs:
+      # "backend" резолвится только внутри сети docker-compose -- см.
+      # docker-compose.yml, сервис prometheus в той же сети, что и backend.
+      - targets: ["backend:8000"]
+        labels:
+          service: greencity-backend
