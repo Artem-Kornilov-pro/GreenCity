@@ -8,11 +8,26 @@ import {
   type CatalogCategory,
   type CatalogItem,
 } from "./catalog";
-import { uploadDxf, generateGreenery, editWithText, type TextEditResult } from "./api";
+import {
+  uploadDxf,
+  generateGreenery,
+  editWithText,
+  listProjects,
+  createProject,
+  loadProject,
+  saveProject,
+  renameProject,
+  deleteProject,
+  type TextEditResult,
+  type ProjectSummary,
+} from "./api";
+import { loadSession, clearSession, login as apiLogin, register as apiRegister, logout as apiLogout, whoAmI, type Session } from "./auth";
 import { checkViolations, computeSceneBounds } from "./geometry";
 import { plantKindOfObjectType } from "./setbackNorms";
 import type { RestrictionZone, Scene, SceneObject } from "./types";
 import "./App.css";
+
+const MAX_PROJECTS = 3; // держим в паре с backend/projects.py::MAX_PROJECTS_PER_USER -- лимит проверяет бэкенд, тут только для подсказки в интерфейсе
 
 function App() {
   const [scene, setScene] = useState<Scene | null>(null);
@@ -31,6 +46,24 @@ function App() {
   const [editResult, setEditResult] = useState<TextEditResult | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
 
+  // Аккаунт: логин/пароль, гостевой режим -- это просто session === null,
+  // редактор выше от него не зависит вовсе (см. api.ts/auth.ts).
+  const [session, setSession] = useState<Session | null>(null);
+  const [authMode, setAuthMode] = useState<"login" | "register" | null>(null);
+  const [authUsername, setAuthUsername] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  // Проекты (backend/projects.py) -- до трёх на аккаунт.
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [projectBusy, setProjectBusy] = useState(false);
+  const [projectError, setProjectError] = useState<string | null>(null);
+
   // Каталог -- источник правды по видам посадок (backend/plant_catalog.py).
   // Манифест перечисляет реально имеющиеся .glb; нет манифеста -- рисуем
   // примитивами, это штатный режим до того, как положили модели.
@@ -43,6 +76,140 @@ function App() {
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
     fetchModelManifest().then(setAvailableModels);
   }, []);
+
+  const refreshProjects = useCallback((session: Session) => {
+    listProjects(session)
+      .then(setProjects)
+      .catch((e) => setProjectError(e instanceof Error ? e.message : String(e)));
+  }, []);
+
+  // Сохранённый refresh-токен переживает перезагрузку страницы, но мог
+  // истечь за 30 дней или быть отозван (logout в другой вкладке) -- whoAmI
+  // проверяет его перед тем, как показать интерфейс как "вошёл", а не
+  // просто верит localStorage.
+  useEffect(() => {
+    const saved = loadSession();
+    if (!saved) return;
+    whoAmI(saved.refreshToken).then((username) => {
+      if (username) {
+        setSession(saved);
+        refreshProjects(saved);
+      } else {
+        clearSession();
+      }
+    });
+  }, [refreshProjects]);
+
+  const handleAuthSubmit = useCallback(async () => {
+    if (!authMode || !authUsername.trim() || !authPassword) return;
+    setAuthBusy(true);
+    setAuthError(null);
+    try {
+      const result = authMode === "login" ? await apiLogin(authUsername.trim(), authPassword) : await apiRegister(authUsername.trim(), authPassword);
+      setSession(result);
+      refreshProjects(result);
+      setAuthMode(null);
+      setAuthUsername("");
+      setAuthPassword("");
+    } catch (e) {
+      setAuthError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAuthBusy(false);
+    }
+  }, [authMode, authUsername, authPassword, refreshProjects]);
+
+  const handleLogout = useCallback(() => {
+    if (session) apiLogout(session.refreshToken); // отозвать сессию на сервере -- не дожидаемся ответа, локальный выход не должен от него зависеть
+    clearSession();
+    setSession(null);
+    setProjects([]);
+    setCurrentProjectId(null);
+  }, [session]);
+
+  const handleSaveAsNewProject = useCallback(async () => {
+    if (!session || !scene || !newProjectName.trim()) return;
+    setProjectBusy(true);
+    setProjectError(null);
+    try {
+      const created = await createProject(session, newProjectName.trim(), scene);
+      setNewProjectName("");
+      setCurrentProjectId(created.id);
+      refreshProjects(session);
+    } catch (e) {
+      setProjectError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setProjectBusy(false);
+    }
+  }, [session, scene, newProjectName, refreshProjects]);
+
+  const handleSaveCurrentProject = useCallback(async () => {
+    if (!session || !scene || !currentProjectId) return;
+    setProjectBusy(true);
+    setProjectError(null);
+    try {
+      await saveProject(session, currentProjectId, scene);
+      refreshProjects(session);
+    } catch (e) {
+      setProjectError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setProjectBusy(false);
+    }
+  }, [session, scene, currentProjectId, refreshProjects]);
+
+  const handleLoadProject = useCallback(
+    async (id: string) => {
+      if (!session) return;
+      setProjectBusy(true);
+      setProjectError(null);
+      try {
+        const project = await loadProject(session, id);
+        setScene(project.scene);
+        setCurrentProjectId(project.id);
+        setSelectedId(null);
+      } catch (e) {
+        setProjectError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setProjectBusy(false);
+      }
+    },
+    [session]
+  );
+
+  const handleRenameProject = useCallback(
+    async (id: string) => {
+      if (!session || !renameValue.trim()) return;
+      setProjectBusy(true);
+      setProjectError(null);
+      try {
+        await renameProject(session, id, renameValue.trim());
+        setRenamingId(null);
+        refreshProjects(session);
+      } catch (e) {
+        setProjectError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setProjectBusy(false);
+      }
+    },
+    [session, renameValue, refreshProjects]
+  );
+
+  const handleDeleteProject = useCallback(
+    async (id: string) => {
+      if (!session) return;
+      setProjectBusy(true);
+      setProjectError(null);
+      try {
+        await deleteProject(session, id);
+        if (currentProjectId === id) setCurrentProjectId(null);
+        refreshProjects(session);
+      } catch (e) {
+        setProjectError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setProjectBusy(false);
+      }
+    },
+    [session, currentProjectId, refreshProjects]
+  );
 
   const handleSelect = useCallback((id: string | null) => {
     setSelectedId(id);
@@ -245,7 +412,68 @@ function App() {
             Экспорт JSON
           </button>
         )}
+
+        <div className="auth-bar">
+          {session ? (
+            <>
+              <span className="auth-username">{session.username}</span>
+              <button className="auth-link" onClick={handleLogout}>
+                Выйти
+              </button>
+            </>
+          ) : authMode ? (
+            <form
+              className="auth-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAuthSubmit();
+              }}
+            >
+              <input
+                placeholder="Имя пользователя"
+                value={authUsername}
+                disabled={authBusy}
+                onChange={(e) => setAuthUsername(e.target.value)}
+                autoFocus
+              />
+              <input
+                type="password"
+                placeholder="Пароль"
+                value={authPassword}
+                disabled={authBusy}
+                onChange={(e) => setAuthPassword(e.target.value)}
+              />
+              <button type="submit" disabled={authBusy || !authUsername.trim() || !authPassword}>
+                {authBusy ? "..." : authMode === "login" ? "Войти" : "Создать аккаунт"}
+              </button>
+              <button type="button" className="auth-link" onClick={() => setAuthMode(authMode === "login" ? "register" : "login")}>
+                {authMode === "login" ? "Регистрация" : "Уже есть аккаунт"}
+              </button>
+              <button
+                type="button"
+                className="auth-link"
+                onClick={() => {
+                  setAuthMode(null);
+                  setAuthError(null);
+                }}
+              >
+                Отмена
+              </button>
+            </form>
+          ) : (
+            <>
+              <span className="auth-username muted">Гость</span>
+              <button className="auth-link" onClick={() => setAuthMode("login")}>
+                Войти
+              </button>
+              <button className="auth-link" onClick={() => setAuthMode("register")}>
+                Регистрация
+              </button>
+            </>
+          )}
+        </div>
       </header>
+      {authError && <div className="error-banner">{authError}</div>}
 
       {error && <div className="error-banner">{error}</div>}
 
@@ -267,6 +495,77 @@ function App() {
         )}
 
         <aside className="sidebar">
+          {session && (
+            <div className="panel projects-panel">
+              <strong>Мои проекты ({projects.length}/{MAX_PROJECTS})</strong>
+              {projectError && <div className="edit-result rejected-item">✕ {projectError}</div>}
+              {projects.length === 0 && <p className="muted hint">Проектов пока нет.</p>}
+              {projects.map((p) => (
+                <div key={p.id} className={p.id === currentProjectId ? "project-row current" : "project-row"}>
+                  {renamingId === p.id ? (
+                    <>
+                      <input
+                        className="rename-input"
+                        value={renameValue}
+                        autoFocus
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleRenameProject(p.id)}
+                      />
+                      <button disabled={projectBusy} onClick={() => handleRenameProject(p.id)}>
+                        ✓
+                      </button>
+                      <button disabled={projectBusy} onClick={() => setRenamingId(null)}>
+                        ✕
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="project-name" title={p.name} onClick={() => handleLoadProject(p.id)}>
+                        {p.id === currentProjectId ? "▶ " : ""}
+                        {p.name}
+                      </span>
+                      <button
+                        className="icon-btn"
+                        title="Переименовать"
+                        disabled={projectBusy}
+                        onClick={() => {
+                          setRenamingId(p.id);
+                          setRenameValue(p.name);
+                        }}
+                      >
+                        ✎
+                      </button>
+                      <button className="icon-btn" title="Удалить" disabled={projectBusy} onClick={() => handleDeleteProject(p.id)}>
+                        🗑
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))}
+              {scene && currentProjectId && (
+                <button className="apply-btn" disabled={projectBusy} onClick={handleSaveCurrentProject}>
+                  Сохранить в «{projects.find((p) => p.id === currentProjectId)?.name}»
+                </button>
+              )}
+              {scene && projects.length < MAX_PROJECTS && (
+                <div className="add-row">
+                  <input
+                    placeholder="Название нового проекта"
+                    value={newProjectName}
+                    onChange={(e) => setNewProjectName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSaveAsNewProject()}
+                  />
+                  <button disabled={projectBusy || !newProjectName.trim()} onClick={handleSaveAsNewProject}>
+                    Сохранить как новый
+                  </button>
+                </div>
+              )}
+              {scene && projects.length >= MAX_PROJECTS && (
+                <p className="muted hint">Достигнут лимит {MAX_PROJECTS} проектов — удалите один, чтобы сохранить новый.</p>
+              )}
+            </div>
+          )}
+
           {scene && (
             <div className="panel text-edit-panel">
               <strong>Правка текстом (ИИ)</strong>

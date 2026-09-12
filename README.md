@@ -20,7 +20,7 @@ frontend/     React + TypeScript + react-three-fiber: 3D-просмотр и р�
 cp .env.example .env
 ```
 
-Без `.env` всё остальное работает, а правка текстом отвечает понятной ошибкой.
+Без `.env` всё остальное работает, а правка текстом отвечает понятной ошибкой. То же самое с аккаунтами: без MongoDB/Redis (см. ниже) регистрация и вход отвечают понятной ошибкой, а не роняют бэкенд — сам редактор (DXF, генерация, правка текстом) от них не зависит вовсе.
 
 ### Вариант A: Docker
 
@@ -28,7 +28,7 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Поднимет оба сервиса: backend на `http://localhost:8000`, frontend на `http://localhost:5173`. Код смонтирован volume'ами — правки в `backend/`, `parser/`, `frontend/` подхватываются на лету (uvicorn `--reload`, vite dev server), без пересборки образа. Это касается только кода: **новые зависимости** в `requirements.txt` так не подхватываются — после их изменения нужен `docker compose up -d --build backend`, иначе бэкенд упадёт на импорте.
+Поднимет четыре сервиса: backend (`http://localhost:8000`), frontend (`http://localhost:5173`), MongoDB (аккаунты и проекты, `backend/db.py`) и Redis (ограничение частоты входа, кэш каталога, сессии по refresh-токенам, `backend/cache.py`). Код смонтирован volume'ами — правки в `backend/`, `parser/`, `frontend/` подхватываются на лету (uvicorn `--reload`, vite dev server), без пересборки образа. Это касается только кода: **новые зависимости** в `requirements.txt` так не подхватываются — после их изменения нужен `docker compose up -d --build backend`, иначе бэкенд упадёт на импорте.
 
 ### Вариант B: локально
 

@@ -8,11 +8,43 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./parser:/app/parser
-    # Ключи LLM. required: false -- без .env сервис всё равно поднимется, просто
-    # текстовое редактирование ответит понятной ошибкой, а не упадёт весь compose.
+    environment:
+      # Имена сервисов ниже ("mongo", "redis") резолвятся только внутри сети
+      # compose -- в контейнере backend это правильные адреса, снаружи они
+      # были бы недоступны.
+      - MONGO_URI=mongodb://mongo:27017
+      - REDIS_URL=redis://redis:6379/0
+    # Ключи LLM и (опционально) свой JWT_SECRET -- см. .env.example.
+    # required: false -- без .env сервис всё равно поднимется: текстовое
+    # редактирование ответит понятной ошибкой, а не упадёт весь compose;
+    # JWT_SECRET без .env возьмёт дев-заглушку из auth.py (не для реального
+    # многопользовательского запуска, но регистрация/вход при этом работают).
     env_file:
       - path: .env
         required: false
+    depends_on:
+      - mongo
+      - redis
+    restart: unless-stopped
+
+  # Аккаунты и проекты пользователей (db.py, projects.py) -- по условию
+  # задачи. Сам редактор (DXF/генерация/правка текстом) от неё не зависит и
+  # продолжает работать, даже если этот сервис не поднят (см. db.py: ошибка
+  # подключения не роняет backend, только эндпоинты /api/auth и /api/projects).
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  # Ограничение частоты входа/регистрации, кэш каталога и реестр активных
+  # сессий по refresh-токенам (cache.py) -- тоже необязателен для запуска:
+  # без него аккаунты работают как раньше, просто без лимита на попытки
+  # входа, без кэша каталога и без мгновенного отзыва сессии при logout
+  # (см. cache.py -- сессия в этом случае считается активной по одной лишь
+  # подписи JWT).
+  redis:
+    image: redis:7-alpine
     restart: unless-stopped
 
   frontend:
@@ -31,3 +63,6 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+
+volumes:
+  mongo_data:

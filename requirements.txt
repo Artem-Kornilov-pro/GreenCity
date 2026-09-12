@@ -1,9 +1,12 @@
+PyJWT==2.14.0
 PyYAML==6.0.3
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.15.1
+bcrypt==5.0.0
 certifi==2026.7.22
 click==8.5.0
+dnspython==2.8.0
 ezdxf==1.4.4
 fastapi==0.141.1
 fonttools==4.64.0
@@ -14,11 +17,13 @@ numpy==2.5.3
 openai==3.11.0
 pydantic==2.13.5
 pydantic_core==2.46.5
+pymongo==4.18.1
 pyparsing==3.3.2
 pyproj==3.8.0
 pyshp==3.1.6
 python-dotenv==1.2.3
 python-multipart==0.0.32
+redis==8.1.0
 shapely==2.1.2
 starlette==1.6.0
 typing-inspection==0.4.4

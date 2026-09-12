@@ -274,3 +274,136 @@
 .edit-result .warning-item {
   color: #9a6700;
 }
+
+/* --- Аккаунт (шапка) ------------------------------------------------------ */
+
+.auth-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-username {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.auth-link {
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: #bcd4ff;
+  font-size: 12px;
+  padding: 4px 6px;
+  text-decoration: underline;
+}
+
+.auth-link:hover {
+  color: #fff;
+}
+
+.auth-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.auth-form input {
+  border-radius: 6px;
+  border: 1px solid #cfd8e3;
+  padding: 5px 8px;
+  font-size: 12px;
+  width: 120px;
+}
+
+.auth-form button[type="submit"] {
+  cursor: pointer;
+  background: #3d7a4a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+/* --- Проекты (сайдбар) ----------------------------------------------------- */
+
+.projects-panel .project-row {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.projects-panel .project-row.current .project-name {
+  font-weight: 600;
+  color: #2f5aa8;
+}
+
+.project-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.project-name:hover {
+  text-decoration: underline;
+}
+
+.icon-btn {
+  cursor: pointer;
+  background: none;
+  border: 1px solid #dfe3e7;
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.icon-btn:hover {
+  background: #f2f4f6;
+}
+
+.rename-input {
+  flex: 1;
+  min-width: 0;
+  border-radius: 6px;
+  border: 1px solid #cfd8e3;
+  padding: 3px 6px;
+  font-size: 12px;
+}
+
+.projects-panel .add-row {
+  display: flex;
+  gap: 6px;
+}
+
+.projects-panel .add-row input {
+  flex: 1;
+  min-width: 0;
+  border-radius: 6px;
+  border: 1px solid #cfe0cf;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.projects-panel .apply-btn {
+  margin-top: 8px;
+  width: 100%;
+  cursor: pointer;
+  background: #2f5aa8;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 12px;
+}
+
+.projects-panel .apply-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
