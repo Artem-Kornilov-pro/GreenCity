@@ -23,8 +23,23 @@ services:
       - path: .env
         required: false
     depends_on:
-      - mongo
-      - redis
+      # service_healthy, а не просто "контейнер запущен": даёт mongo/redis
+      # реальный шанс принять первое подключение до первого запроса к
+      # backend, а не полагается сразу на fail-open деградацию (db.py/
+      # cache.py) -- та остаётся страховкой на случай, если mongo/redis
+      # упадут уже ПОСЛЕ старта, а не заменяет нормальный порядок запуска.
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # Без внешних утилит (curl/wget нет в python:3.12-slim) -- достаточно
+      # самого Python из образа.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
 
   # Аккаунты и проекты пользователей (db.py, projects.py) -- по условию
@@ -35,6 +50,12 @@ services:
     image: mongo:7
     volumes:
       - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     restart: unless-stopped
 
   # Ограничение частоты входа/регистрации, кэш каталога и реестр активных
@@ -45,6 +66,12 @@ services:
   # подписи JWT).
   redis:
     image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
     restart: unless-stopped
 
   frontend:
@@ -62,13 +89,26 @@ services:
       - VITE_API_BASE=http://localhost:8000
     depends_on:
       - backend
+    healthcheck:
+      # 127.0.0.1, а не localhost -- у wget в этом образе localhost сначала
+      # резолвится в ::1, а vite dev server даже с --host 0.0.0.0 не всегда
+      # слушает IPv6-loopback (проверено вручную: обращение к localhost внутри
+      # контейнера получало "connection refused", хотя сам сервер уже поднят
+      # и снаружи доступен нормально).
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:5173"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s  # npm install уже сделан в образе, но vite dev server поднимается не мгновенно
     restart: unless-stopped
 
   # --- Наблюдаемость (метрики + логи) -----------------------------------
-  # Полностью необязательны для работы самого редактора -- backend отдаёт
-  # GET /metrics и пишет JSON-логи в stdout независимо от того, подняты ли
-  # эти четыре сервиса. Подробности и как этим пользоваться --
-  # observability/README.md.
+  # По требованию проекта поднимаются вместе со всем остальным одной и той
+  # же командой `docker compose up --build` -- не отдельным профилем.
+  # backend работает независимо от них (GET /metrics и JSON-логи в stdout
+  # пишутся в любом случае, см. observability/README.md), поэтому падение
+  # или временная недоступность одного из этих четырёх сервисов не мешает
+  # редактору, но по умолчанию поднимается весь проект целиком.
 
   # Собирает GET /metrics с backend (стандартные HTTP-метрики +
   # бизнес-метрики из backend/metrics.py, см. observability/prometheus/).
@@ -80,7 +120,14 @@ services:
     ports:
       - "9090:9090"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
 
   # Хранилище логов -- backend пишет структурированные JSON-строки в stdout
@@ -93,6 +140,16 @@ services:
       - loki_data:/loki
     ports:
       - "3100:3100"
+    healthcheck:
+      # /ready отвечает 503, пока однобинарный instance не присоединится к
+      # своему (in-memory) ring'у -- на практике занимает ~15-20 с, отсюда
+      # длинный start_period: без него healthcheck пометил бы контейнер
+      # unhealthy ещё до того, как Loki реально успел бы стать готовым.
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3100/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 40s
     restart: unless-stopped
 
   # Собирает логи ВСЕХ контейнеров compose через Docker API и отправляет в
@@ -108,7 +165,18 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     depends_on:
-      - loki
+      loki:
+        condition: service_healthy
+    healthcheck:
+      # Ни wget, ни curl в этом образе нет (в отличие от остальных трёх) --
+      # достаточно самого TCP-подключения к его же HTTP-порту (server.http_
+      # listen_port в promtail-config.yml): открывается только после того,
+      # как процесс реально поднял сервер, bash с /dev/tcp есть в образе.
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/127.0.0.1/9080"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
 
   # Дашборды -- источники данных (Prometheus + Loki) и сами дашборды
@@ -128,8 +196,16 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
     depends_on:
-      - prometheus
-      - loki
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     restart: unless-stopped
 
 volumes:
