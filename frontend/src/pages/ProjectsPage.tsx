@@ -83,7 +83,7 @@ export default function ProjectsPage() {
   return (
     <PageTransition>
       <div className="min-h-full bg-ink-50">
-        <header className="border-b border-ink-200/60 bg-white">
+        <header className="sticky top-0 z-40 border-b border-white/60 bg-white/55 shadow-sm backdrop-blur-xl backdrop-saturate-150">
           <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
             <Link to="/" className="flex items-center gap-2 font-semibold text-ink-900">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white">

@@ -292,7 +292,7 @@ export default function EditorPage() {
     <PageTransition>
       <div className="flex h-screen flex-col overflow-hidden bg-ink-50">
         {/* Топбар */}
-        <header className="flex h-14 shrink-0 items-center gap-3 border-b border-ink-200/70 bg-white px-4">
+        <header className="flex h-14 shrink-0 items-center gap-3 border-b border-white/60 bg-white/55 px-4 shadow-sm backdrop-blur-xl backdrop-saturate-150">
           <Link to="/" className="flex shrink-0 items-center gap-2 font-semibold text-ink-900">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600 text-white">
               <Leaf className="h-4 w-4" />
