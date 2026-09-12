@@ -1,0 +1,54 @@
+name: Publish Docker images
+
+# Только после мержа в main (не на каждый PR -- иначе Packages засорялись бы
+# промежуточными образами из веток, которые никто разворачивать не будет).
+# CI (ci.yml) на самом PR уже проверяет, что оба образа вообще собираются --
+# здесь их же собираем заново и публикуем, раз проверка была зелёной.
+on:
+  push:
+    branches: [main]
+
+# packages: write -- без этого GITHUB_TOKEN не может публиковать в
+# ghcr.io этого репозитория (contents: read достаточно для checkout).
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # backend собирается из корня репозитория (context: .), не из
+          # backend/ -- см. комментарий в самом backend/Dockerfile: main.py
+          # импортирует parser/parse_dxf.py по относительному пути, оба
+          # каталога должны попасть в контекст сборки одним и тем же образом.
+          - image: backend
+            context: .
+            dockerfile: backend/Dockerfile
+          - image: frontend
+            context: ./frontend
+            dockerfile: frontend/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+
+      # ghcr.io не принимает заглавные буквы в имени образа, а репозиторий
+      # называется "GreenCity" -- без этого шага push просто откажет по имени тега.
+      - name: Имя репозитория в нижнем регистре
+        run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ghcr.io/${{ env.REPO_LC }}-${{ matrix.image }}:latest
+            ghcr.io/${{ env.REPO_LC }}-${{ matrix.image }}:${{ github.sha }}

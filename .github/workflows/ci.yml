@@ -1,0 +1,102 @@
+name: CI
+
+# На каждый PR в main и на сам main после мержа -- вместе с branch protection
+# (Settings -> Branches -> main: "Require a pull request before merging" +
+# "Require status checks to pass" с этими джобами) это и даёт "коммиты в main
+# только через PR с зелёным CI".
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      # requirements-dev.txt сам подключает requirements.txt (-r requirements.txt)
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+
+  lint-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - working-directory: frontend
+        run: npm ci
+      - working-directory: frontend
+        run: npx oxlint --deny-warnings
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      # Полностью офлайн (MongoDB/Redis подменены mongomock/fakeredis, LLM не
+      # вызывается ни разу -- см. backend/tests/conftest.py и
+      # test_llm_editor_request.py) -- секреты в этой джобе не нужны и не
+      # передаются, тесты идут одинаково и для форков, и для PR из них.
+      - run: pytest --cov --cov-report=term-missing
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Только backend и frontend собираются из исходников (Dockerfile) --
+      # mongo/redis/prometheus/loki/promtail/grafana берутся готовыми
+      # образами, docker compose build их не трогает вовсе.
+      - name: Собрать образы backend и frontend
+        run: docker compose build
+
+      # Полная проверка: реально поднять весь стек (все восемь сервисов, тот
+      # же docker-compose.yml, что и у разработчика) и дождаться, что каждый
+      # прошёл свой healthcheck -- не только "образ собрался", а "проект
+      # реально стартует и работает". .env не нужен: JWT_SECRET берёт
+      # дев-заглушку (auth.py), LLM недоступна и отвечает понятной ошибкой --
+      # оба случая уже штатно обработаны кодом, не CI-специфичный костыль.
+      - name: Поднять весь стек
+        run: docker compose up -d
+
+      - name: Дождаться healthy всех сервисов
+        run: |
+          for i in $(seq 1 40); do
+            unhealthy=0
+            for c in $(docker compose ps -q); do
+              h=$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$c")
+              if [ "$h" != "healthy" ] && [ "$h" != "none" ]; then
+                unhealthy=1
+              fi
+            done
+            if [ "$unhealthy" -eq 0 ]; then
+              echo "Все сервисы healthy"
+              docker compose ps
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Не все сервисы стали healthy за отведённое время"
+          docker compose ps
+          docker compose logs
+          exit 1
+
+      - name: Логи (для разбора при падении джобы)
+        if: failure()
+        run: docker compose logs
+
+      - name: Остановить стек
+        if: always()
+        run: docker compose down -v

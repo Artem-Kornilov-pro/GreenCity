@@ -178,11 +178,27 @@ def test_pack_substitutes_empty_without_a_generated_pack():
     assert _pack_substitutes(BASE_CATALOG) == {}
 
 
+def _fake_pack_item(id: str, size_class: str, crown_class: str) -> CatalogItem:
+    return CatalogItem(
+        id=id, category="tree", label=id, size_class=size_class, crown_class=crown_class,
+        setback_kind="tree", object_type="tree", model=f"/models/{id}.glb",
+        dimensions=CatalogItemDimensions(height=3.0, radius=1.0), render=CatalogItemRender(shape="cluster", color="#2e7d3a"),
+    )
+
+
 def test_pack_substitutes_maps_base_trees_to_matching_pack_item():
-    substitutes = _pack_substitutes(CATALOG)  # реальный пак подключён в этом репозитории
-    assert substitutes  # непусто -- пак реально есть (catalog_generated.json)
+    # Пак не гарантированно подключён в окружении (catalog_generated.json
+    # генерируется отдельно, tools/convert_models.mjs, и не лежит в git --
+    # см. .gitignore) -- строим свой минимальный пак, а не полагаемся на
+    # файловую систему конкретной машины/CI.
+    from plant_catalog import CATALOG as BASE_CATALOG
+
+    pack_item = _fake_pack_item("pack_tree_1", size_class="medium", crown_class="regular")
+    fake_catalog = [*BASE_CATALOG, pack_item]
+    substitutes = _pack_substitutes(fake_catalog)
+    assert substitutes
     for base_id, sub in substitutes.items():
-        assert sub.id not in {i.id for i in load_catalog() if i.id == base_id}
+        assert sub.id not in {i.id for i in BASE_CATALOG if i.id == base_id}
 
 
 # =============================================================================
@@ -738,12 +754,17 @@ def test_inner_center_falls_back_to_representative_point_for_u_shape():
 
 
 def test_catalog_for_prompt_hides_base_trees_when_pack_is_available():
-    rows = _catalog_for_prompt(CATALOG)
-    ids_in_prompt = {row[0] for row in rows}
+    # Как и в _pack_substitutes выше -- пак не гарантирован в окружении
+    # (catalog_generated.json не в git), строим свой минимальный.
     from plant_catalog import CATALOG as BASE_CATALOG
 
+    pack_item = _fake_pack_item("pack_tree_1", size_class="medium", crown_class="regular")
+    fake_catalog = [*BASE_CATALOG, pack_item]
+    rows = _catalog_for_prompt(fake_catalog)
+    ids_in_prompt = {row[0] for row in rows}
     base_tree_ids = {item.id for item in BASE_CATALOG if item.category == "tree"}
-    assert base_tree_ids.isdisjoint(ids_in_prompt)  # реальный пак подключён -- базовые деревья скрыты
+    assert base_tree_ids.isdisjoint(ids_in_prompt)  # пак подключён -- базовые деревья скрыты
+    assert "pack_tree_1" in ids_in_prompt
 
 
 def test_catalog_for_prompt_keeps_base_non_tree_items():
@@ -755,20 +776,26 @@ def test_catalog_for_prompt_keeps_base_non_tree_items():
 
 def test_catalog_for_prompt_limits_pack_items_per_shape_class():
     from llm_editor import MAX_PACK_ITEMS_PER_SHAPE_CLASS
+    from plant_catalog import CATALOG as BASE_CATALOG
 
-    rows = _catalog_for_prompt(CATALOG)
+    # Заведомо больше лимита одинаковых (category, size_class, crown_class) --
+    # без явно построенного пака (вместо реального catalog_generated.json,
+    # которого может не быть в окружении) проверка обрезания была бы
+    # вырожденно истинной на пустом множестве, ничего не проверяя.
+    pack_items = [_fake_pack_item(f"pack_tree_{i}", size_class="medium", crown_class="regular") for i in range(MAX_PACK_ITEMS_PER_SHAPE_CLASS + 5)]
+    fake_catalog = [*BASE_CATALOG, *pack_items]
+    rows = _catalog_for_prompt(fake_catalog)
+
     from collections import Counter
 
     per_class = Counter()
-    from plant_catalog import CATALOG as BASE_CATALOG
-
     base_ids = {item.id for item in BASE_CATALOG}
-    by_id = catalog_by_id()
+    by_id = {item.id: item for item in fake_catalog}
     for row in rows:
         item = by_id[row[0]]
         if item.id not in base_ids:
             per_class[(item.category, item.size_class, item.crown_class)] += 1
-    assert all(count <= MAX_PACK_ITEMS_PER_SHAPE_CLASS for count in per_class.values())
+    assert per_class[("tree", "medium", "regular")] == MAX_PACK_ITEMS_PER_SHAPE_CLASS
 
 
 def test_catalog_for_prompt_without_pack_shows_base_trees(monkeypatch):
