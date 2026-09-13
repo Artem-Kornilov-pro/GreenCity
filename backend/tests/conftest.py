@@ -49,6 +49,29 @@ def _location_path(number: int) -> str:
     return matches[0]
 
 
+@pytest.fixture(autouse=True)
+def _clean_llm_env(monkeypatch):
+    """llm_editor.py грузит настоящий .env этой машины при импорте (load_dotenv)
+    -- если он настроен на реального провайдера (например LLM_PROVIDER=gemini
+    для ручного тестирования из редактора), эти переменные утекают в процесс
+    pytest и остаются там до конца сессии. Тест, который чистит только
+    YANDEX_CLOUD_* (полагая, что это единственный сконфигурированный
+    провайдер), в такой момент вместо LlmNotConfiguredError МОЛЧА сделает
+    настоящий платный запрос к живому API -- ровно так один раз уже
+    случилось. Автоприменяемая фикстура держит окружение чистым перед каждым
+    тестом; кому нужен сконфигурированный провайдер -- включает его явно
+    через monkeypatch.setenv в самом тесте."""
+    for key in (
+        "LLM_PROVIDER",
+        "YANDEX_CLOUD_API_KEY",
+        "YANDEX_CLOUD_FOLDER",
+        "YANDEX_CLOUD_MODEL",
+        "GEMINI_API_KEY",
+        "GEMINI_MODEL",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+
 @pytest.fixture(scope="session")
 def catalog():
     return load_catalog()
