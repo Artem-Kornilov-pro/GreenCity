@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import type { RestrictionZone, Scene } from "../types";
+import type { Point2, RestrictionZone, Scene } from "../types";
 import type { CatalogItem } from "../catalog";
 import { computeSceneBounds } from "../geometry";
 import { Ground } from "./Ground";
@@ -11,6 +11,7 @@ import { PlacedObjects, type TransformMode } from "./PlacedObjects";
 import { FitCamera } from "./FitCamera";
 import { computeBuildingSetbackZones } from "./buildingSetbacks";
 import { Windows, Canopies } from "./FacadeFeatures";
+import { AreaSelectionDraw } from "./AreaSelectionDraw";
 
 export function SceneView({
   scene,
@@ -18,20 +19,24 @@ export function SceneView({
   availableModels,
   selectedId,
   transformMode,
+  selectionMode,
   onSelect,
   onMove,
   onRotate,
   onHoverZone,
+  onAreaSelected,
 }: {
   scene: Scene;
   catalogById: Map<string, CatalogItem>;
   availableModels: Set<string>;
   selectedId: string | null;
   transformMode: TransformMode;
+  selectionMode: boolean;
   onSelect: (id: string | null) => void;
   onMove: (id: string, x: number, z: number) => void;
   onRotate: (id: string, rotationY: number) => void;
   onHoverZone: (zone: RestrictionZone | null) => void;
+  onAreaSelected: (polygon: Point2[]) => void;
 }) {
   const bounds = useMemo(() => computeSceneBounds(scene), [scene]);
   const width = bounds.maxX - bounds.minX;
@@ -85,7 +90,10 @@ export function SceneView({
         args={[gridSize, gridDivisions, "#8fa6b3", "#b9cdd6"]}
         position={[(bounds.minX + bounds.maxX) / 2, -0.01, (bounds.minZ + bounds.maxZ) / 2]}
       />
-      <OrbitControls makeDefault />
+      <AreaSelectionDraw active={selectionMode} onComplete={onAreaSelected} />
+      {/* В режиме выделения drag должен обводить участок, а не крутить
+          камеру -- поэтому OrbitControls на это время выключены. */}
+      <OrbitControls makeDefault enabled={!selectionMode} />
     </Canvas>
   );
 }
