@@ -393,6 +393,28 @@ def test_place_in_area_named_zone_from_define_zone(scene1):
     assert any("Тестовая зона" in a for a in result.applied)
 
 
+def test_place_in_area_named_zone_keeps_full_crown_inside_not_just_center(scene1):
+    """Раньше проверялась только точка-центр посадки, а не крона: дерево с
+    центром у самого края маленькой именованной зоны (define_zone или
+    выделение мышкой -- сырой полигон без единого отступа, в отличие от
+    free_areas) визуально вылезало за её границу."""
+    item = catalog_by_id()["tree_medium"]
+    crown_radius = item.dimensions.radius
+    zone_center = Point(30.0, 0.0)
+    zone_radius = 6.0
+    result = run(
+        scene1,
+        {"op": "define_zone", "name": "Маленькая зона", "x": 30.0, "z": 0.0, "radius_m": zone_radius, "severity": "allowed"},
+        {"op": "place_in_area", "catalog_ids": ["tree_medium"], "count": 30, "area": "Маленькая зона"},
+    )
+    zone_poly = zone_center.buffer(zone_radius)
+    new_trees = [o for o in result.scene.objects if o.metadata.get("source") == "llm"]
+    assert new_trees
+    for tree in new_trees:
+        crown = Point(tree.position.x, tree.position.z).buffer(crown_radius)
+        assert crown.within(zone_poly), f"крона дерева в ({tree.position.x}, {tree.position.z}) выходит за зону"
+
+
 # =============================================================================
 # cover_area
 # =============================================================================
@@ -814,11 +836,37 @@ def test_build_context_is_valid_json_with_expected_top_level_keys(scene1):
     context = json.loads(_build_context(scene1, CATALOG, placer))
     assert set(context.keys()) == {
         "coordinates", "site_outline", "buildings", "buildings_not_shown", "landmarks", "landmarks_not_shown",
-        "targets", "free_areas", "restriction_zones", "objects", "objects_not_shown", "object_counts",
-        "catalog_columns", "catalog_rows",
+        "targets", "free_areas", "selected_areas", "restriction_zones", "objects", "objects_not_shown",
+        "object_counts", "catalog_columns", "catalog_rows",
     }
     assert context["site_outline"] is not None
     assert context["object_counts"]
+
+
+def test_build_context_includes_a_manually_selected_area_by_name(scene1):
+    from schemas import Point2, RestrictionZone
+
+    zone = RestrictionZone(
+        id="selection_1",
+        type="selection",
+        name="Выделение",
+        polygon=[Point2(x=0, z=0), Point2(x=5, z=0), Point2(x=5, z=5), Point2(x=0, z=5)],
+        severity="allowed",
+        minDistance=0,
+        message="Зона, выделенная вручную",
+    )
+    scene = scene1.model_copy(update={"restrictions": [*scene1.restrictions, zone]})
+    placer = Placer(scene)
+    context = json.loads(_build_context(scene, CATALOG, placer))
+    assert context["selected_areas"] == [{"name": "Выделение", "outline": [[0.0, 0.0], [5.0, 0.0], [5.0, 5.0], [0.0, 5.0]]}]
+    # severity "allowed" -- просто маркер, в restriction_zones (только не-allowed) не попадает.
+    assert "selection" not in context["restriction_zones"]
+
+
+def test_build_context_selected_areas_empty_without_allowed_zones(scene1):
+    placer = Placer(scene1)
+    context = json.loads(_build_context(scene1, CATALOG, placer))
+    assert context["selected_areas"] == []
 
 
 def test_build_context_includes_entrances_as_landmarks(scene1):

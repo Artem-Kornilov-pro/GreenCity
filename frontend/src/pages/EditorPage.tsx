@@ -18,6 +18,7 @@ import {
   X,
   Send,
   ChevronLeft,
+  LassoSelect,
 } from "lucide-react";
 import { SceneView } from "../scene/SceneView";
 import type { TransformMode } from "../scene/PlacedObjects";
@@ -32,7 +33,7 @@ import {
 } from "../api";
 import { checkViolations, computeSceneBounds } from "../geometry";
 import { plantKindOfObjectType } from "../setbackNorms";
-import type { RestrictionZone, Scene, SceneObject } from "../types";
+import type { Point2, RestrictionZone, Scene, SceneObject } from "../types";
 import { useAuth } from "../context/useAuth";
 import { PageTransition } from "../components/PageTransition";
 import { Button } from "../components/ui/button";
@@ -52,6 +53,14 @@ import {
 function makeId(): string {
   return crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
 }
+
+// Зона выделения мышкой (issue "Выделение участка карты мышкой") -- тип
+// строго "selection", это то, по чему backend/llm_editor.py::_build_context
+// узнаёт её в scene.restrictions и отдаёт модели как selected_areas, отдельно
+// от обычных зон плана. severity "allowed" -- сама по себе ничего не
+// запрещает (Placer.region() её игнорирует), это просто именованный маркер.
+const SELECTION_ZONE_TYPE = "selection";
+const SELECTION_ZONE_NAME = "Выделение";
 
 interface ChatMessage {
   id: string;
@@ -83,6 +92,8 @@ export default function EditorPage() {
   const [editing, setEditing] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
+
+  const [selectionMode, setSelectionMode] = useState(false);
 
   const [projectName, setProjectName] = useState<string | null>(null);
   const [projectBusy, setProjectBusy] = useState(false);
@@ -173,6 +184,30 @@ export default function EditorPage() {
 
   const handleRotate = useCallback((id: string, rotationY: number) => {
     setScene((prev) => (prev ? { ...prev, objects: prev.objects.map((o) => (o.id === id ? { ...o, rotation: rotationY } : o)) } : prev));
+  }, []);
+
+  const handleAreaSelected = useCallback((polygon: Point2[]) => {
+    setScene((prev) => {
+      if (!prev) return prev;
+      const zone: RestrictionZone = {
+        id: `selection_${makeId()}`,
+        type: SELECTION_ZONE_TYPE,
+        name: SELECTION_ZONE_NAME,
+        polygon,
+        severity: "allowed",
+        minDistance: 0,
+        message: "Зона, выделенная вручную для правки текстом",
+      };
+      // Одно активное выделение за раз -- новое заменяет предыдущее, а не
+      // накапливается рядом с ним.
+      const withoutOldSelection = prev.restrictions.filter((z) => z.type !== SELECTION_ZONE_TYPE);
+      return { ...prev, restrictions: [...withoutOldSelection, zone] };
+    });
+    setSelectionMode(false);
+  }, []);
+
+  const handleClearSelection = useCallback(() => {
+    setScene((prev) => (prev ? { ...prev, restrictions: prev.restrictions.filter((z) => z.type !== SELECTION_ZONE_TYPE) } : prev));
   }, []);
 
   const handleTextEdit = useCallback(async () => {
@@ -285,6 +320,8 @@ export default function EditorPage() {
   const effectiveItemId = filteredCatalog.some((i) => i.id === selectedItemId) ? selectedItemId : (filteredCatalog[0]?.id ?? "");
   const selectedItem = catalogById.get(effectiveItemId);
 
+  const selectedArea = scene?.restrictions.find((z) => z.type === SELECTION_ZONE_TYPE) ?? null;
+
   const selectedObj = scene?.objects.find((o) => o.id === selectedId) ?? null;
   const selectedViolations = selectedObj
     ? checkViolations(selectedObj.position.x, selectedObj.position.z, scene?.restrictions ?? [], plantKindOfObjectType(selectedObj.type))
@@ -322,6 +359,15 @@ export default function EditorPage() {
 
             {scene && (
               <>
+                <Button
+                  size="sm"
+                  variant={selectionMode ? "primary" : "outline"}
+                  onClick={() => setSelectionMode((v) => !v)}
+                  title="Обвести участок на плане мышкой -- потом можно сослаться на него в правке текстом («посади здесь кусты»)"
+                >
+                  <LassoSelect className="h-3.5 w-3.5" />
+                  {selectionMode ? "Обводите на плане…" : "Выделить зону"}
+                </Button>
                 <Button
                   size="sm"
                   variant={aiPanelOpen ? "outline" : "primary"}
@@ -410,10 +456,12 @@ export default function EditorPage() {
               availableModels={availableModels}
               selectedId={selectedId}
               transformMode={transformMode}
+              selectionMode={selectionMode}
               onSelect={handleSelect}
               onMove={handleMove}
               onRotate={handleRotate}
               onHoverZone={setHoveredZone}
+              onAreaSelected={handleAreaSelected}
             />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-ink-400">
@@ -459,6 +507,23 @@ export default function EditorPage() {
                 <p className="mt-2 text-xs text-ink-400">
                   {catalogFilter ? `${filteredCatalog.length} из ${catalog.length}` : `${catalog.length} видов`} в каталоге
                   {availableModels.size > 0 ? `, 3D-моделей: ${availableModels.size}` : ", модели не подключены — рисуются заглушки"}
+                </p>
+              </Card>
+            )}
+
+            {selectedArea && (
+              <Card className="border-white/30 bg-white/25 p-4 backdrop-blur-md">
+                <div className="flex items-center justify-between">
+                  <h3 className="flex items-center gap-1.5 text-sm font-semibold text-ink-900">
+                    <LassoSelect className="h-3.5 w-3.5 text-success-500" />
+                    {selectedArea.name}
+                  </h3>
+                  <Button size="icon" variant="ghost" title="Снять выделение" onClick={handleClearSelection}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <p className="mt-1 text-xs text-ink-400">
+                  Можно сослаться на неё в правке текстом: «посади здесь кусты», «убери отсюда лавки».
                 </p>
               </Card>
             )}

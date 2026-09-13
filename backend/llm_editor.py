@@ -606,6 +606,21 @@ def _build_context(scene: Scene, catalog: list[CatalogItem], placer: Placer) -> 
         for o in editable_objects[:MAX_OBJECTS_IN_PROMPT]
     ]
 
+    # Зоны, которые пользователь выделил вручную мышкой на плане (фронтенд
+    # помечает их type="selection", severity "allowed" -- сам факт выделения
+    # ничего не запрещает, см. Placer.region()). Фильтр именно по type, а не по
+    # одной только severity "allowed": в реальных участках (locations/) уже
+    # встречаются свои "allowed"-зоны из DXF (например GRASS) -- это разметка
+    # исходного плана, а не то, что пользователь только что выделил в
+    # редакторе, и путать их в контексте для модели нельзя. Без этого поля
+    # модель не может понять, что такое "здесь"/"в выделении" в просьбе
+    # пользователя -- имя зоны нигде не появлялось в разговоре.
+    selected_areas = [
+        {"name": zone.name, "outline": _outline([(p.x, p.z) for p in zone.polygon])}
+        for zone in scene.restrictions
+        if zone.type == "selection" and len(zone.polygon) >= 3
+    ]
+
     context = {
         "coordinates": "метры; X — запад→восток, Z — юг→север, начало — центр участка; контуры — точки [x, z]",
         "site_outline": _outline([(p.x, p.z) for p in scene.boundary.polygon]) if scene.boundary else None,
@@ -615,6 +630,7 @@ def _build_context(scene: Scene, catalog: list[CatalogItem], placer: Placer) -> 
         "landmarks_not_shown": max(0, len(all_landmarks) - MAX_LANDMARKS_IN_PROMPT),
         "targets": targets,
         "free_areas": free_areas,
+        "selected_areas": selected_areas,
         "restriction_zones": dict(Counter(z.type for z in scene.restrictions if z.severity != "allowed")),
         "objects": objects,
         "objects_not_shown": max(0, len(editable_objects) - MAX_OBJECTS_IN_PROMPT),
@@ -629,7 +645,7 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
 
 Координаты групповых посадок считает геометрический планировщик: он сам соблюдает нормативные отступы от зданий, подземных сетей, дорожек, парковок, площадок, фонарей и подъездов, выдерживает шаг посадки и не выходит за участок. Твоя задача — понять намерение и выбрать операции, виды из каталога и параметры. Координаты рядов и групп сам не считай.
 
-Контекст (JSON): контур участка, здания, ориентиры (landmarks: подъезды, площадки), цели для рядов (targets), свободные для посадки области (free_areas), текущие объекты (objects) и каталог (catalog_rows, колонки описаны в catalog_columns). Координаты в метрах, контуры — точки [x, z].
+Контекст (JSON): контур участка, здания, ориентиры (landmarks: подъезды, площадки), цели для рядов (targets), свободные для посадки области (free_areas), выделенные пользователем мышкой участки (selected_areas: {"name", "outline"}), текущие объекты (objects) и каталог (catalog_rows, колонки описаны в catalog_columns). Координаты в метрах, контуры — точки [x, z].
 
 Верни ТОЛЬКО валидный JSON без markdown, строго такой формы:
 {"operations": [...], "explanation": "..."}
@@ -682,7 +698,7 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
 - spacing_m и offset_m не указывай, если пользователь не просит гуще, реже или дальше: шаг по размеру вида планировщик возьмёт сам.
 - count и max_count — по числу из просьбы; «несколько» — 3–5. Для «вдоль», «по периметру», «засади» без числа max_count не указывай.
 - Если в просьбе вместе дорожки, скамейки, урны, фонари, клумбы, изгородь или «благоустрой/спроектируй двор», «сделай сквер/парк» — ОДНА операция design_area, а не отдельные посадки.
-- «У входа» — координаты подъезда из landmarks. «В центре двора» — center самой большой области из free_areas. «Вокруг фонтана» / «у скамейки» и т.п. — x, z существующего объекта нужного типа из objects (не landmark и не target).
+- «У входа» — координаты подъезда из landmarks. «В центре двора» — center самой большой области из free_areas. «Вокруг фонтана» / «у скамейки» и т.п. — x, z существующего объекта нужного типа из objects (не landmark и не target). «Здесь» / «в этой области» / «в выделении» / просьба без явного места, когда selected_areas не пуст, — это выделенный пользователем участок: используй его name как target (place_along/remove_where/...) или area (place_in_area/cover_area).
 - Здания, подъезды, дорожки и зоны менять нельзя.
 - Если просьба невыполнима (например, нужной цели нет в targets) — пустой operations и причина в explanation.
 - explanation — одно-два предложения по-русски: что сделано. Точное количество не называй: его посчитает планировщик.
@@ -1199,6 +1215,17 @@ class _PlanApplier:
                 self.rejected.append(f"{what}: нет свободной области {op.area!r}")
                 return
             where = f"по области {op.area}"
+            # Проверяется точка-центр посадки, а не её крона/габарит. Для
+            # free_areas это не страшно -- они сами уже вырезаны из допустимой
+            # области с запасом (region()). А вот именованная зона (define_zone
+            # или выделенная мышкой вручную) -- сырой полигон без единого
+            # отступа, и дерево с центром у самого её края визуально вылезает
+            # за границу, хотя формально "за границы" никто не просил. Отступаем
+            # внутрь на радиус посадки; если зона меньше отступа целиком --
+            # сажаем как есть, лучше по центру мелкой зоны, чем нигде.
+            inset = area.buffer(-spacing / 2)
+            if not inset.is_empty:
+                area = inset
 
         if op.x is None or op.z is None:
             candidates = self.placer.points_in_area(kind, spacing / 2, area, count * CANDIDATES_PER_PLACEMENT)

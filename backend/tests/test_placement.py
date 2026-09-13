@@ -380,6 +380,28 @@ def test_target_zones_custom_named_zone_matched_case_insensitively():
     assert placer.target_geometry("no such zone") is None
 
 
+def test_target_zones_allowed_zone_matched_by_name_like_a_manual_selection():
+    """severity "allowed" -- ровно то, чем становится зона, которую пользователь
+    выделяет мышкой на плане (см. issue "Выделение участка карты мышкой"):
+    просто маркер с именем, а не запрет. Должна находиться по имени наравне с
+    forbidden/warning-зонами от define_zone."""
+    selection = make_zone(id="sel1", type="selection", name="Выделение", severity="allowed", min_distance=0.0, polygon=[
+        Point2(x=10, z=10), Point2(x=20, z=10), Point2(x=20, z=20)
+    ])
+    placer = Placer(make_scene(restrictions=[selection]))
+    assert placer.target_geometry("Выделение") is not None
+    assert placer.target_geometry("выделение") is not None
+
+
+def test_region_ignores_allowed_zone_it_does_not_block_placement():
+    allowed = make_zone(id="a1", type="selection", name="Выделение", severity="allowed", min_distance=0.0, polygon=[
+        Point2(x=-5, z=-5), Point2(x=5, z=-5), Point2(x=5, z=5), Point2(x=-5, z=5)
+    ])
+    with_zone = Placer(make_scene(restrictions=[allowed])).region("tree")[0]
+    without_zone = Placer(make_scene(restrictions=[])).region("tree")[0]
+    assert with_zone.equals(without_zone)
+
+
 def test_target_geometry_site_boundary_is_the_site_polygon():
     placer = Placer(make_scene())
     assert placer.target_geometry("site_boundary") is placer.site
