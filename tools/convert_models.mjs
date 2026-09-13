@@ -21,6 +21,14 @@
  * FBX не конвертируется этим скриптом: для него нужен отдельный бинарь
  * FBX2glTF. Если в паке есть и OBJ, и FBX -- берите OBJ, он проще и его
  * достаточно.
+ *
+ * Разные виды МАФ в одной папке (лавка, стол, стул, шезлонг...) --
+ * object_type/label/render одинаковы для всей категории по умолчанию, а этого
+ * не всегда достаточно (шезлонг и табурет -- оба "furniture", но точно не одно
+ * и то же). Если рядом с .obj лежит overrides.json вида
+ * {"<id-файла>": {"object_type": "...", "label": "...", "shape": "...", "color": "..."}},
+ * поля из него точечно перекрывают то, что вывел бы CATEGORY_DEFAULTS -- id
+ * берётся из имени файла (см. toId), не указанные в overrides поля не трогаются.
  */
 
 import { execFile } from "node:child_process";
@@ -174,7 +182,34 @@ async function main() {
   }
   console.log(`Найдено .obj: ${objFiles.length}`);
 
+  let overrides = {};
+  try {
+    overrides = JSON.parse(await readFile(join(source, "overrides.json"), "utf8"));
+    console.log(`Найден overrides.json: точечные поля для ${Object.keys(overrides).length} id`);
+  } catch {
+    // необязательный файл -- без него всё работает как раньше
+  }
+
   await mkdir(MODELS_DIR, { recursive: true });
+
+  // Дополняем уже существующий пак, а не затираем его: второй запуск скрипта
+  // (например деревья, потом отдельно МАФ) раньше стирал из manifest.json и
+  // catalog_generated.json всё, что записал предыдущий запуск, хотя сами .glb
+  // на диске оставались -- фронтенд просто переставал их видеть. Прежние
+  // записи с тем же id, что и в этом запуске, заменяются (пересобрали модель
+  // -- взяли свежую), остальные остаются как были.
+  let existingModels = [];
+  let existingCatalog = [];
+  try {
+    existingModels = JSON.parse(await readFile(MANIFEST_PATH, "utf8")).models ?? [];
+  } catch {
+    // манифеста ещё нет -- первый запуск
+  }
+  try {
+    existingCatalog = JSON.parse(await readFile(GENERATED_CATALOG_PATH, "utf8"));
+  } catch {
+    // каталога ещё нет -- первый запуск
+  }
 
   const defaults = CATEGORY_DEFAULTS[category];
   const models = [];
@@ -207,15 +242,16 @@ async function main() {
     const measured = await measureObj(objPath);
     const classes = classify(measured);
     const url = `/models/${id}.glb`;
+    const override = overrides[id] ?? {};
     models.push(url);
     catalogEntries.push({
       id,
-      category,
-      label: toLabel(id, category, measured, classes),
+      category: override.category ?? category,
+      label: override.label ?? toLabel(id, category, measured, classes),
       size_class: classes.size_class,
       crown_class: classes.crown_class,
       setback_kind: defaults.setback_kind,
-      object_type: defaults.object_type,
+      object_type: override.object_type ?? defaults.object_type,
       model: url,
       dimensions: {
         height: measured?.height ?? defaults.height,
@@ -227,14 +263,19 @@ async function main() {
         width: null,
         depth: null,
       },
-      render: { shape: defaults.shape, color: defaults.color },
+      render: { shape: override.shape ?? defaults.shape, color: override.color ?? defaults.color },
     });
 
     if ((index + 1) % 25 === 0) console.log(`  ...${index + 1}/${objFiles.length}`);
   }
 
-  await writeFile(MANIFEST_PATH, JSON.stringify({ models }, null, 2), "utf8");
-  await writeFile(GENERATED_CATALOG_PATH, JSON.stringify(catalogEntries, null, 2), "utf8");
+  const newUrls = new Set(models);
+  const mergedModels = [...existingModels.filter((u) => !newUrls.has(u)), ...models];
+  const newIds = new Set(catalogEntries.map((e) => e.id));
+  const mergedCatalog = [...existingCatalog.filter((e) => !newIds.has(e.id)), ...catalogEntries];
+
+  await writeFile(MANIFEST_PATH, JSON.stringify({ models: mergedModels }, null, 2), "utf8");
+  await writeFile(GENERATED_CATALOG_PATH, JSON.stringify(mergedCatalog, null, 2), "utf8");
 
   console.log(`\nГотово: ${models.length} моделей${failed ? `, не удалось: ${failed}` : ""}`);
   console.log(`  .glb            -> ${MODELS_DIR}`);
