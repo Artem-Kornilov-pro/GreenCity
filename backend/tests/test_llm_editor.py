@@ -374,6 +374,17 @@ def test_place_in_area_spread_over_whole_site(scene1):
     assert result.applied
 
 
+def test_place_in_area_defaults_count_to_five_when_model_omits_it(scene1):
+    """Просьба вида "посади разные виды деревьев" называет только
+    разнообразие, без числа -- модель иногда пропускает count целиком, и
+    раньше вся операция отклонялась с "count: Field required", хотя
+    explanation модель всё равно писала так, будто посадка удалась."""
+    result = run(scene1, {"op": "place_in_area", "catalog_ids": ["tree_medium", "tree_tall"]})
+    assert not result.rejected
+    new_trees = [o for o in result.scene.objects if o.metadata.get("source") == "llm"]
+    assert 0 < len(new_trees) <= 5
+
+
 def test_place_in_area_count_below_one_is_rejected(scene1):
     result = run(scene1, {"op": "place_in_area", "catalog_ids": ["bush_medium"], "count": 0})
     assert "count" in result.rejected[0]
