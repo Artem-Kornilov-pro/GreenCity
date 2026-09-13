@@ -62,11 +62,14 @@ parse: $(VENV)/bin/activate
 # backend/tests/conftest.py), LLM не вызывается ни разу (сеть недоступна —
 # и не должна быть нужна, реальные вызовы стоят пользователю денег, см.
 # backend/tests/test_llm_editor_request.py).
+# -n auto -- по числу ядер, не одним процессом (542+ тестов и на слабой
+# машине быстрее в разы); для отладки одного теста с pdb/-s это не нужно --
+# запускайте $(PYTEST) конкретный_файл.py::тест напрямую, без make.
 test: $(VENV)/bin/activate
-	$(PYTEST)
+	$(PYTEST) -n auto
 
 test-cov: $(VENV)/bin/activate
-	$(PYTEST) --cov --cov-report=term-missing --cov-report=html
+	$(PYTEST) -n auto --cov --cov-report=term-missing --cov-report=html
 
 # Оба линтера завершаются ненулевым кодом при любой находке (у oxlint для
 # этого нужен --deny-warnings) — цель годится как гейт в CI, а не только

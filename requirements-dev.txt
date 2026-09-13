@@ -15,6 +15,9 @@ ruff==0.16.6
 pytest==9.1.1
 pytest-asyncio==1.4.0
 pytest-cov==7.1.0
+# -n auto ниже в pyproject.toml -- 542+ тестов гоняются по всем ядрам сразу,
+# а не один процессом; ускорение на многоядерной машине в разы.
+pytest-xdist==3.8.0
 httpx==0.28.1
 mongomock==4.3.0
 mongomock-motor==0.0.36
