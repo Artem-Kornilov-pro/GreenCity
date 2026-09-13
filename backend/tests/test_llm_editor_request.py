@@ -1,9 +1,10 @@
 """llm_editor.py -- слой вызова LLM (_client_and_model/request_plan/
 edit_scene_with_text). НИ ОДИН тест здесь не должен коснуться настоящей сети:
-живой вызов Yandex Cloud стоит пользователю реальных денег (см. memory
-feedback-llm-api-cost) -- клиент openai подменяется фальшивым объектом с тем
-же интерфейсом (.responses.create(...)), _client_and_model мокается напрямую
-там, где нужен весь путь целиком (edit_scene_with_text)."""
+живой вызов Yandex Cloud или Gemini стоит пользователю реальных денег (см.
+memory feedback-llm-api-cost) -- клиент openai подменяется фальшивым объектом
+с тем же интерфейсом (.responses.create(...) для yandex, .chat.completions.
+create(...) для gemini), _client_and_model мокается напрямую там, где нужен
+весь путь целиком (edit_scene_with_text)."""
 
 from types import SimpleNamespace
 
@@ -33,6 +34,7 @@ def scene1(location_scene):
 
 
 def test_client_and_model_raises_when_not_configured(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "yandex")
     monkeypatch.delenv("YANDEX_CLOUD_API_KEY", raising=False)
     monkeypatch.delenv("YANDEX_CLOUD_FOLDER", raising=False)
     with pytest.raises(LlmNotConfiguredError):
@@ -40,6 +42,7 @@ def test_client_and_model_raises_when_not_configured(monkeypatch):
 
 
 def test_client_and_model_raises_when_only_api_key_set(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "yandex")
     monkeypatch.setenv("YANDEX_CLOUD_API_KEY", "fake-key")
     monkeypatch.delenv("YANDEX_CLOUD_FOLDER", raising=False)
     with pytest.raises(LlmNotConfiguredError):
@@ -47,6 +50,7 @@ def test_client_and_model_raises_when_only_api_key_set(monkeypatch):
 
 
 def test_client_and_model_builds_model_uri_from_folder_and_model_env(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "yandex")
     monkeypatch.setenv("YANDEX_CLOUD_API_KEY", "fake-key")
     monkeypatch.setenv("YANDEX_CLOUD_FOLDER", "folder123")
     monkeypatch.setenv("YANDEX_CLOUD_MODEL", "yandexgpt/rc")
@@ -55,11 +59,44 @@ def test_client_and_model_builds_model_uri_from_folder_and_model_env(monkeypatch
 
 
 def test_client_and_model_defaults_model_when_env_var_missing(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "yandex")
     monkeypatch.setenv("YANDEX_CLOUD_API_KEY", "fake-key")
     monkeypatch.setenv("YANDEX_CLOUD_FOLDER", "folder123")
     monkeypatch.delenv("YANDEX_CLOUD_MODEL", raising=False)
     _client, model = _client_and_model()
     assert model == "gpt://folder123/yandexgpt/latest"
+
+
+def test_client_and_model_defaults_to_gemini_when_provider_env_var_missing(monkeypatch):
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    monkeypatch.setenv("GEMINI_API_KEY", "fake-gemini-key")
+    client, model = _client_and_model()
+    assert model == "gemini-3.6-flash"
+    assert str(client.base_url).startswith("https://generativelanguage.googleapis.com")
+
+
+def test_client_and_model_raises_when_gemini_selected_without_key(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "gemini")
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    with pytest.raises(LlmNotConfiguredError):
+        _client_and_model()
+
+
+def test_client_and_model_uses_gemini_when_selected(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "gemini")
+    monkeypatch.setenv("GEMINI_API_KEY", "fake-gemini-key")
+    monkeypatch.setenv("GEMINI_MODEL", "gemini-3.1-pro")
+    client, model = _client_and_model()
+    assert model == "gemini-3.1-pro"
+    assert str(client.base_url).startswith("https://generativelanguage.googleapis.com")
+
+
+def test_client_and_model_defaults_gemini_model_when_env_var_missing(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "gemini")
+    monkeypatch.setenv("GEMINI_API_KEY", "fake-gemini-key")
+    monkeypatch.delenv("GEMINI_MODEL", raising=False)
+    _client, model = _client_and_model()
+    assert model == "gemini-3.6-flash"
 
 
 # --- _extract_json ---------------------------------------------------------
@@ -111,6 +148,7 @@ def _ok_response(output_text: str, input_tokens=100, output_tokens=50):
 
 
 def test_request_plan_parses_a_valid_response(monkeypatch, scene1):
+    monkeypatch.setenv("LLM_PROVIDER", "yandex")
     response = _ok_response('{"operations": [{"op": "remove", "id": "lamp_001"}], "explanation": "убрал фонарь"}')
     monkeypatch.setattr(llm_editor, "_client_and_model", lambda: (_FakeClient(response), "fake-model"))
     placer = Placer(scene1)
@@ -120,6 +158,7 @@ def test_request_plan_parses_a_valid_response(monkeypatch, scene1):
 
 
 def test_request_plan_raises_llm_error_when_client_raises_openai_error(monkeypatch, scene1):
+    monkeypatch.setenv("LLM_PROVIDER", "yandex")
     import openai
 
     class _RaisingResponses:
@@ -136,6 +175,7 @@ def test_request_plan_raises_llm_error_when_client_raises_openai_error(monkeypat
 
 
 def test_request_plan_raises_when_response_incomplete_due_to_token_limit(monkeypatch, scene1):
+    monkeypatch.setenv("LLM_PROVIDER", "yandex")
     response = SimpleNamespace(
         status="incomplete",
         usage=SimpleNamespace(input_tokens=10, output_tokens=8000),
@@ -149,6 +189,7 @@ def test_request_plan_raises_when_response_incomplete_due_to_token_limit(monkeyp
 
 
 def test_request_plan_raises_when_response_incomplete_for_other_reason(monkeypatch, scene1):
+    monkeypatch.setenv("LLM_PROVIDER", "yandex")
     response = SimpleNamespace(
         status="incomplete",
         usage=SimpleNamespace(input_tokens=10, output_tokens=20),
@@ -162,6 +203,7 @@ def test_request_plan_raises_when_response_incomplete_for_other_reason(monkeypat
 
 
 def test_request_plan_raises_when_output_is_not_json(monkeypatch, scene1):
+    monkeypatch.setenv("LLM_PROVIDER", "yandex")
     response = _ok_response("извините, не могу помочь")
     monkeypatch.setattr(llm_editor, "_client_and_model", lambda: (_FakeClient(response), "fake-model"))
     placer = Placer(scene1)
@@ -170,11 +212,52 @@ def test_request_plan_raises_when_output_is_not_json(monkeypatch, scene1):
 
 
 def test_request_plan_raises_when_json_does_not_match_plan_schema(monkeypatch, scene1):
+    monkeypatch.setenv("LLM_PROVIDER", "yandex")
     # Валидный JSON, но "operations" -- не список (не подходит под LlmPlan).
     response = _ok_response('{"operations": "not-a-list"}')
     monkeypatch.setattr(llm_editor, "_client_and_model", lambda: (_FakeClient(response), "fake-model"))
     placer = Placer(scene1)
     with pytest.raises(LlmError, match="неожиданном формате"):
+        request_plan(scene1, "что угодно", CATALOG, placer)
+
+
+class _FakeChatCompletions:
+    def __init__(self, response):
+        self._response = response
+
+    def create(self, **kwargs):
+        self.last_kwargs = kwargs
+        return self._response
+
+
+class _FakeChatClient:
+    def __init__(self, response):
+        self.chat = SimpleNamespace(completions=_FakeChatCompletions(response))
+
+
+def _ok_chat_response(content: str, prompt_tokens=100, completion_tokens=50, finish_reason="stop"):
+    return SimpleNamespace(
+        choices=[SimpleNamespace(message=SimpleNamespace(content=content), finish_reason=finish_reason)],
+        usage=SimpleNamespace(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens),
+    )
+
+
+def test_request_plan_parses_a_valid_response_from_gemini(monkeypatch, scene1):
+    monkeypatch.setenv("LLM_PROVIDER", "gemini")
+    response = _ok_chat_response('{"operations": [{"op": "remove", "id": "lamp_001"}], "explanation": "убрал фонарь"}')
+    monkeypatch.setattr(llm_editor, "_client_and_model", lambda: (_FakeChatClient(response), "gemini-3.6-flash"))
+    placer = Placer(scene1)
+    plan = request_plan(scene1, "убери фонарь", CATALOG, placer)
+    assert plan.explanation == "убрал фонарь"
+    assert plan.operations == [{"op": "remove", "id": "lamp_001"}]
+
+
+def test_request_plan_raises_when_gemini_response_hits_token_limit(monkeypatch, scene1):
+    monkeypatch.setenv("LLM_PROVIDER", "gemini")
+    response = _ok_chat_response("", finish_reason="length")
+    monkeypatch.setattr(llm_editor, "_client_and_model", lambda: (_FakeChatClient(response), "gemini-3.6-flash"))
+    placer = Placer(scene1)
+    with pytest.raises(LlmError, match="не уложилась в лимит"):
         request_plan(scene1, "что угодно", CATALOG, placer)
 
 

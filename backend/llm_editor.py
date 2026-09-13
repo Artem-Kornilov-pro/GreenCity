@@ -25,8 +25,13 @@ LLM НЕ возвращает сцену целиком: сцена бывает
 не для языковой модели.
 
 Настройки берутся из переменных окружения (.env в корне репозитория локально,
-env_file в docker-compose): YANDEX_CLOUD_API_KEY, YANDEX_CLOUD_FOLDER,
-YANDEX_CLOUD_MODEL.
+env_file в docker-compose): LLM_PROVIDER выбирает поставщика ("gemini" по
+умолчанию или "yandex"). Для yandex: YANDEX_CLOUD_API_KEY, YANDEX_CLOUD_FOLDER,
+YANDEX_CLOUD_MODEL. Для gemini: GEMINI_API_KEY, GEMINI_MODEL. Оба провайдера
+доступны через OpenAI-совместимый API (openai-клиент с другим base_url), но
+Gemini поддерживает только Chat Completions, а не Responses API, которым уже
+пользуется yandex-путь -- поэтому запрос к модели устроен как два отдельных
+метода (_call_responses/_call_chat_completions) под одной _client_and_model.
 """
 
 from __future__ import annotations
@@ -76,6 +81,7 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 logger = logging.getLogger("greencity.llm")
 
 YANDEX_BASE_URL = "https://ai.api.cloud.yandex.net/v1"
+GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 TEMPERATURE = 0.3
 # С запасом под рассуждающие модели. Текущая yandexgpt не рассуждает и тратит на
 # ответ ~150-250 токенов -- лимит её не замедляет. Но если переключить
@@ -694,7 +700,22 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
 # --- Вызов модели -----------------------------------------------------------
 
 
+def _llm_provider() -> str:
+    return os.environ.get("LLM_PROVIDER", "gemini").strip().lower()
+
+
 def _client_and_model() -> tuple[openai.OpenAI, str]:
+    if _llm_provider() == "gemini":
+        api_key = os.environ.get("GEMINI_API_KEY")
+        model = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+        if not api_key:
+            logger.warning("не задан GEMINI_API_KEY")
+            raise LlmNotConfiguredError(
+                "Текстовое редактирование не настроено: задайте GEMINI_API_KEY (см. .env.example)."
+            )
+        client = openai.OpenAI(api_key=api_key, base_url=GEMINI_BASE_URL)
+        return client, model
+
     api_key = os.environ.get("YANDEX_CLOUD_API_KEY")
     folder = os.environ.get("YANDEX_CLOUD_FOLDER")
     model = os.environ.get("YANDEX_CLOUD_MODEL", "yandexgpt/latest")
@@ -723,35 +744,15 @@ def _extract_json(text: str) -> dict:
         raise LlmError(f"Модель вернула некорректный JSON: {e}") from e
 
 
-def request_plan(scene: Scene, instruction: str, catalog: list[CatalogItem], placer: Placer) -> LlmPlan:
-    client, model = _client_and_model()
-    context = _build_context(scene, catalog, placer)
-    user_input = f"Контекст:\n{context}\n\nПросьба пользователя:\n{instruction}"
-    logger.info("запрос: %r | контекст %d симв.", instruction[:200], len(context))
-
-    started = time.monotonic()
-    try:
-        response = client.responses.create(
-            model=model,
-            temperature=TEMPERATURE,
-            instructions=INSTRUCTIONS,
-            input=user_input,
-            max_output_tokens=MAX_OUTPUT_TOKENS,
-        )
-    except openai.OpenAIError as e:
-        logger.warning("LLM недоступна через %.1f с: %s", time.monotonic() - started, e)
-        raise LlmError(f"LLM недоступна: {e}") from e
-
-    usage = response.usage
-    logger.info(
-        "ответ: status=%s за %.1f с | токены: вход %s, выход %s (лимит %d)",
-        response.status,
-        time.monotonic() - started,
-        getattr(usage, "input_tokens", "?"),
-        getattr(usage, "output_tokens", "?"),
-        MAX_OUTPUT_TOKENS,
+def _call_responses(client: openai.OpenAI, model: str, user_input: str) -> tuple[str, object, object]:
+    """Yandex Cloud -- OpenAI Responses API (client.responses.create)."""
+    response = client.responses.create(
+        model=model,
+        temperature=TEMPERATURE,
+        instructions=INSTRUCTIONS,
+        input=user_input,
+        max_output_tokens=MAX_OUTPUT_TOKENS,
     )
-
     if response.status == "incomplete":
         reason = getattr(response.incomplete_details, "reason", None)
         logger.warning("ответ оборван: %s", reason)
@@ -761,8 +762,62 @@ def request_plan(scene: Scene, instruction: str, catalog: list[CatalogItem], pla
                 "Попробуйте сформулировать просьбу проще или разбить на части."
             )
         raise LlmError(f"Модель не завершила ответ ({reason or 'причина неизвестна'})")
+    usage = response.usage
+    return response.output_text or "", getattr(usage, "input_tokens", "?"), getattr(usage, "output_tokens", "?")
 
-    text = response.output_text or ""
+
+def _call_chat_completions(client: openai.OpenAI, model: str, user_input: str) -> tuple[str, object, object]:
+    """Gemini -- поддерживает только Chat Completions, не Responses API
+    (см. https://ai.google.dev/gemini-api/docs/openai)."""
+    response = client.chat.completions.create(
+        model=model,
+        temperature=TEMPERATURE,
+        max_tokens=MAX_OUTPUT_TOKENS,
+        messages=[
+            {"role": "system", "content": INSTRUCTIONS},
+            {"role": "user", "content": user_input},
+        ],
+    )
+    choice = response.choices[0]
+    if choice.finish_reason == "length":
+        logger.warning("ответ оборван: превышен лимит токенов")
+        raise LlmError(
+            "Модель не уложилась в лимит ответа -- рассуждала слишком долго. "
+            "Попробуйте сформулировать просьбу проще или разбить на части."
+        )
+    usage = response.usage
+    return (
+        choice.message.content or "",
+        getattr(usage, "prompt_tokens", "?"),
+        getattr(usage, "completion_tokens", "?"),
+    )
+
+
+def request_plan(scene: Scene, instruction: str, catalog: list[CatalogItem], placer: Placer) -> LlmPlan:
+    client, model = _client_and_model()
+    provider = _llm_provider()
+    context = _build_context(scene, catalog, placer)
+    user_input = f"Контекст:\n{context}\n\nПросьба пользователя:\n{instruction}"
+    logger.info("запрос (%s): %r | контекст %d симв.", provider, instruction[:200], len(context))
+
+    started = time.monotonic()
+    try:
+        if provider == "gemini":
+            text, input_tokens, output_tokens = _call_chat_completions(client, model, user_input)
+        else:
+            text, input_tokens, output_tokens = _call_responses(client, model, user_input)
+    except openai.OpenAIError as e:
+        logger.warning("LLM недоступна через %.1f с: %s", time.monotonic() - started, e)
+        raise LlmError(f"LLM недоступна: {e}") from e
+
+    logger.info(
+        "ответ за %.1f с | токены: вход %s, выход %s (лимит %d)",
+        time.monotonic() - started,
+        input_tokens,
+        output_tokens,
+        MAX_OUTPUT_TOKENS,
+    )
+
     try:
         return LlmPlan.model_validate(_extract_json(text))
     except LlmError:
