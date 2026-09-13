@@ -123,11 +123,11 @@ export default function LandingPage() {
 
   return (
     <PageTransition>
-    <div className="min-h-full bg-ink-50">
+    <div className="h-screen snap-y snap-mandatory overflow-y-scroll scroll-smooth bg-ink-50">
       <Header />
 
       {/* Hero */}
-      <section className="relative overflow-hidden">
+      <section className="relative flex min-h-screen scroll-mt-20 snap-start flex-col justify-start overflow-hidden">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_50%_at_50%_-10%,theme(colors.brand.100),transparent)]"
@@ -217,7 +217,7 @@ export default function LandingPage() {
       </section>
 
       {/* Как это работает */}
-      <section className="mx-auto max-w-6xl px-6 py-24">
+      <section className="mx-auto flex min-h-screen max-w-6xl scroll-mt-20 snap-start flex-col justify-start px-6 py-24">
         <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }} className="text-center">
           <motion.h2 variants={fadeUp} className="text-4xl font-bold text-ink-900 md:text-5xl">
             Как это работает
@@ -229,18 +229,20 @@ export default function LandingPage() {
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.2 }}
-          className="mt-16 grid gap-10 md:grid-cols-3"
+          className="mt-20 grid gap-10 md:grid-cols-3"
         >
           {STEPS.map((step, i) => (
             <motion.div key={step.title} variants={fadeUp} className="relative flex flex-col items-center text-center">
-              <motion.div
-                variants={popIn}
-                whileHover={{ scale: 1.12, rotate: 8 }}
-                transition={{ type: "spring", stiffness: 260, damping: 14 }}
-                className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-soft"
-              >
-                <step.icon className="h-8 w-8" />
-              </motion.div>
+              <div className="flex h-28 items-center justify-center">
+                <motion.div
+                  variants={popIn}
+                  whileHover={{ scale: 1.12, rotate: 8 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 14 }}
+                  className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-soft"
+                >
+                  <step.icon className="h-8 w-8" />
+                </motion.div>
+              </div>
               <div className="mt-3 text-sm font-semibold text-brand-600">Шаг {i + 1}</div>
               <h3 className="mt-1 text-xl font-semibold text-ink-900">{step.title}</h3>
               <p className="mt-2 text-base text-ink-500">{step.text}</p>
@@ -250,7 +252,7 @@ export default function LandingPage() {
       </section>
 
       {/* Возможности */}
-      <section className="border-y border-ink-200/60 bg-white py-24">
+      <section className="flex min-h-screen scroll-mt-20 snap-start flex-col justify-start border-y border-ink-200/60 bg-white py-24">
         <div className="mx-auto max-w-6xl px-6">
           <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }} className="text-center">
             <motion.h2 variants={fadeUp} className="text-4xl font-bold text-ink-900 md:text-5xl">
@@ -287,40 +289,42 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="relative mx-auto max-w-4xl px-6 py-28 text-center">
-        <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.4 }} variants={fadeUp}>
-          <h2 className="text-4xl font-bold text-ink-900 md:text-5xl">Готовы озеленить свой двор?</h2>
-          <p className="mx-auto mt-4 max-w-lg text-lg text-ink-500">
-            Аккаунт бесплатный, почта не нужна — только имя пользователя и пароль.
-          </p>
-          <div className="relative mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <motion.span
-              aria-hidden
-              className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-24 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-300/40 blur-2xl sm:w-40"
-              animate={{ scale: [1, 1.25, 1], opacity: [0.5, 0.9, 0.5] }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <Button asChild size="lg" className="group h-14 px-8 text-lg transition-transform hover:scale-105 active:scale-95">
-              <Link to={session ? "/projects" : "/register"}>
-                {session ? "Мои проекты" : "Создать аккаунт"}
-                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              variant="ghost"
-              size="lg"
-              className="h-14 px-8 text-lg transition-transform hover:scale-105 active:scale-95"
-            >
-              <Link to="/editor">Или сразу в редактор</Link>
-            </Button>
-          </div>
-        </motion.div>
-      </section>
+      <section className="relative flex min-h-screen scroll-mt-20 snap-start flex-col">
+        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center px-6 text-center">
+          <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.4 }} variants={fadeUp}>
+            <h2 className="text-4xl font-bold text-ink-900 md:text-5xl">Готовы озеленить свой двор?</h2>
+            <p className="mx-auto mt-4 max-w-lg text-lg text-ink-500">
+              Аккаунт бесплатный, почта не нужна — только имя пользователя и пароль.
+            </p>
+            <div className="relative mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+              <motion.span
+                aria-hidden
+                className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-24 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-300/40 blur-2xl sm:w-40"
+                animate={{ scale: [1, 1.25, 1], opacity: [0.5, 0.9, 0.5] }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <Button asChild size="lg" className="group h-14 px-8 text-lg transition-transform hover:scale-105 active:scale-95">
+                <Link to={session ? "/projects" : "/register"}>
+                  {session ? "Мои проекты" : "Создать аккаунт"}
+                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="ghost"
+                size="lg"
+                className="h-14 px-8 text-lg transition-transform hover:scale-105 active:scale-95"
+              >
+                <Link to="/editor">Или сразу в редактор</Link>
+              </Button>
+            </div>
+          </motion.div>
+        </div>
 
-      <footer className="border-t border-ink-200/60 py-8 text-center text-base text-ink-400">
-        GreenCity — инструмент генеративного озеленения дворов.
-      </footer>
+        <footer className="border-t border-ink-200/60 py-8 text-center text-base text-ink-400">
+          GreenCity — инструмент генеративного озеленения дворов.
+        </footer>
+      </section>
     </div>
     </PageTransition>
   );

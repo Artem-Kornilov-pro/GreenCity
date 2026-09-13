@@ -118,9 +118,9 @@ export default function ProjectsPage() {
           {error && <p className="mt-4 rounded-xl bg-danger-500/10 px-4 py-3 text-sm text-danger-500">{error}</p>}
 
           {loading ? (
-            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-40 animate-pulse rounded-2xl bg-ink-100" />
+            <div className="mt-10 grid gap-6 sm:grid-cols-2">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="h-64 animate-pulse rounded-2xl bg-ink-100" />
               ))}
             </div>
           ) : projects.length === 0 ? (
@@ -133,7 +133,7 @@ export default function ProjectsPage() {
               </Button>
             </div>
           ) : (
-            <motion.div layout className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <motion.div layout className="mt-8 grid gap-6 sm:grid-cols-2">
               <AnimatePresence>
                 {projects.map((p) => (
                   <motion.div
@@ -144,20 +144,20 @@ export default function ProjectsPage() {
                     exit={{ opacity: 0, scale: 0.96 }}
                     transition={{ duration: 0.18 }}
                   >
-                    <Card className="group flex h-full flex-col justify-between p-5 transition-shadow hover:shadow-soft-lg">
+                    <Card className="group flex h-full min-h-64 flex-col justify-between p-8 transition-shadow hover:shadow-soft-lg">
                       <div>
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-100 text-brand-700">
-                          <FolderKanban className="h-4.5 w-4.5" />
+                        <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-brand-100 text-brand-700">
+                          <FolderKanban className="h-7 w-7" />
                         </div>
-                        <h3 className="mt-3 truncate font-semibold text-ink-900" title={p.name}>
+                        <h3 className="mt-5 truncate text-xl font-semibold text-ink-900" title={p.name}>
                           {p.name}
                         </h3>
-                        <p className="mt-1 text-xs text-ink-400">Изменено {formatDate(p.updated_at)}</p>
+                        <p className="mt-1.5 text-sm text-ink-400">Изменено {formatDate(p.updated_at)}</p>
                       </div>
-                      <div className="mt-4 flex items-center gap-1.5">
-                        <Button size="sm" className="flex-1" onClick={() => navigate(`/editor/${p.id}`)}>
+                      <div className="mt-6 flex items-center gap-2">
+                        <Button className="flex-1" onClick={() => navigate(`/editor/${p.id}`)}>
                           Открыть
-                          <ArrowRight className="h-3.5 w-3.5" />
+                          <ArrowRight className="h-4 w-4" />
                         </Button>
                         <Button
                           size="icon"
@@ -169,10 +169,10 @@ export default function ProjectsPage() {
                             setRenameValue(p.name);
                           }}
                         >
-                          <Pencil className="h-3.5 w-3.5" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button size="icon" variant="danger" title="Удалить" disabled={busyId === p.id} onClick={() => setDeleting(p)}>
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </Card>

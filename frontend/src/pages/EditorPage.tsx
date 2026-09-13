@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   Leaf,
   UploadCloud,
@@ -14,19 +15,20 @@ import {
   Move,
   RotateCw,
   Plus,
+  X,
+  Send,
+  ChevronLeft,
 } from "lucide-react";
 import { SceneView } from "../scene/SceneView";
 import type { TransformMode } from "../scene/PlacedObjects";
 import { CATEGORY_LABELS, fetchCatalog, fetchModelManifest, type CatalogCategory, type CatalogItem } from "../catalog";
 import {
   uploadDxf,
-  generateGreenery,
   editWithText,
   exportDxf,
   createProject,
   loadProject,
   saveProject,
-  type TextEditResult,
 } from "../api";
 import { checkViolations, computeSceneBounds } from "../geometry";
 import { plantKindOfObjectType } from "../setbackNorms";
@@ -37,13 +39,7 @@ import { Button } from "../components/ui/button";
 import { Input, Textarea } from "../components/ui/input";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "../components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +48,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
+
+function makeId(): string {
+  return crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+}
+
+interface ChatMessage {
+  id: string;
+  role: "user" | "assistant" | "error";
+  text: string;
+  applied?: string[];
+  rejected?: string[];
+  warnings?: string[];
+}
 
 export default function EditorPage() {
   const { projectId } = useParams<{ projectId?: string }>();
@@ -67,15 +76,13 @@ export default function EditorPage() {
   const [catalogFilter, setCatalogFilter] = useState("");
   const [hoveredZone, setHoveredZone] = useState<RestrictionZone | null>(null);
   const [loading, setLoading] = useState(false);
-  const [generating, setGenerating] = useState(false);
   const [exportingDxf, setExportingDxf] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [instruction, setInstruction] = useState("");
   const [editing, setEditing] = useState(false);
-  const [editResult, setEditResult] = useState<TextEditResult | null>(null);
-  const [editError, setEditError] = useState<string | null>(null);
-  const [aiDialogOpen, setAiDialogOpen] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
   const [projectName, setProjectName] = useState<string | null>(null);
   const [projectBusy, setProjectBusy] = useState(false);
@@ -168,34 +175,29 @@ export default function EditorPage() {
     setScene((prev) => (prev ? { ...prev, objects: prev.objects.map((o) => (o.id === id ? { ...o, rotation: rotationY } : o)) } : prev));
   }, []);
 
-  const handleGenerateGreenery = useCallback(async () => {
-    if (!scene) return;
-    setGenerating(true);
-    setError(null);
-    try {
-      const updated = await generateGreenery(scene);
-      if (updated) setScene(updated);
-      else setError("Автогенерация растительности пока не реализована на бэкенде.");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setGenerating(false);
-    }
-  }, [scene]);
-
   const handleTextEdit = useCallback(async () => {
     if (!scene || !instruction.trim()) return;
+    const text = instruction.trim();
+    setMessages((prev) => [...prev, { id: makeId(), role: "user", text }]);
+    setInstruction("");
     setEditing(true);
-    setEditError(null);
-    setEditResult(null);
     try {
-      const result = await editWithText(scene, instruction.trim());
+      const result = await editWithText(scene, text);
       setScene(result.scene);
-      setEditResult(result);
-      setInstruction("");
       setSelectedId((prev) => (prev && result.scene.objects.some((o) => o.id === prev) ? prev : null));
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: makeId(),
+          role: "assistant",
+          text: result.explanation || `Применено изменений: ${result.applied.length}`,
+          applied: result.applied,
+          rejected: result.rejected,
+          warnings: result.warnings,
+        },
+      ]);
     } catch (e) {
-      setEditError(e instanceof Error ? e.message : String(e));
+      setMessages((prev) => [...prev, { id: makeId(), role: "error", text: e instanceof Error ? e.message : String(e) }]);
     } finally {
       setEditing(false);
     }
@@ -290,9 +292,12 @@ export default function EditorPage() {
 
   return (
     <PageTransition>
-      <div className="flex h-screen flex-col overflow-hidden bg-ink-50">
-        {/* Топбар */}
-        <header className="flex h-14 shrink-0 items-center gap-3 border-b border-white/60 bg-white/55 px-4 shadow-sm backdrop-blur-xl backdrop-saturate-150">
+      <div className="relative flex h-screen flex-col overflow-hidden bg-ink-50">
+        {/* Топбар -- плавает поверх сцены (не занимает место в потоке), поэтому
+            сквозь него видна и блюрится сама 3D-сцена, а не плоский фон
+            страницы -- без этого эффект "жидкого стекла" на однотонном фоне
+            почти не заметен. */}
+        <header className="absolute inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-white/20 bg-white/10 px-4 shadow-sm backdrop-blur-2xl backdrop-saturate-150">
           <Link to="/" className="flex shrink-0 items-center gap-2 font-semibold text-ink-900">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600 text-white">
               <Leaf className="h-4 w-4" />
@@ -317,13 +322,13 @@ export default function EditorPage() {
 
             {scene && (
               <>
-                <Button variant="outline" size="sm" onClick={handleGenerateGreenery} disabled={generating}>
-                  {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                  Сгенерировать
-                </Button>
-                <Button size="sm" onClick={() => setAiDialogOpen(true)}>
+                <Button
+                  size="sm"
+                  variant={aiPanelOpen ? "outline" : "primary"}
+                  onClick={() => setAiPanelOpen((v) => !v)}
+                >
                   <Sparkles className="h-3.5 w-3.5" />
-                  Правка ИИ
+                  Ассистент
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -389,35 +394,37 @@ export default function EditorPage() {
         </header>
 
         {(error || projectError) && (
-          <div className="border-b border-danger-500/20 bg-danger-500/10 px-4 py-2 text-sm text-danger-500">{error ?? projectError}</div>
+          <div className="absolute inset-x-0 top-14 z-30 border-b border-danger-500/20 bg-danger-500/90 px-4 py-2 text-sm text-white backdrop-blur-sm">
+            {error ?? projectError}
+          </div>
         )}
 
-        {/* Контент */}
-        <div className="flex flex-1 overflow-hidden">
-          <main className="relative flex-1">
-            {scene ? (
-              <SceneView
-                scene={scene}
-                catalogById={catalogById}
-                availableModels={availableModels}
-                selectedId={selectedId}
-                transformMode={transformMode}
-                onSelect={handleSelect}
-                onMove={handleMove}
-                onRotate={handleRotate}
-                onHoverZone={setHoveredZone}
-              />
-            ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-3 text-ink-400">
-                <UploadCloud className="h-10 w-10" />
-                <p>Загрузите DXF-файл, чтобы увидеть сцену</p>
-              </div>
-            )}
-          </main>
+        {/* Контент -- обе боковые панели плавают поверх сцены (как и топбар),
+            иначе сквозь них нечего блюрить, кроме однотонного фона страницы,
+            и эффект стекла не виден. */}
+        <main className="relative flex-1 overflow-hidden">
+          {scene ? (
+            <SceneView
+              scene={scene}
+              catalogById={catalogById}
+              availableModels={availableModels}
+              selectedId={selectedId}
+              transformMode={transformMode}
+              onSelect={handleSelect}
+              onMove={handleMove}
+              onRotate={handleRotate}
+              onHoverZone={setHoveredZone}
+            />
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center gap-3 text-ink-400">
+              <UploadCloud className="h-10 w-10" />
+              <p>Загрузите DXF-файл, чтобы увидеть сцену</p>
+            </div>
+          )}
 
-          <aside className="scrollbar-thin flex w-80 shrink-0 flex-col gap-3 overflow-y-auto border-l border-ink-200/70 bg-ink-50 p-3">
+          <aside className="scrollbar-thin absolute left-0 top-0 z-20 flex h-full w-80 flex-col gap-3 overflow-y-auto border-r border-white/20 bg-white/10 px-3 pb-3 pt-16 shadow-sm backdrop-blur-2xl backdrop-saturate-150">
             {scene && (
-              <Card className="p-4">
+              <Card className="border-white/30 bg-white/25 p-4 backdrop-blur-md">
                 <h3 className="text-sm font-semibold text-ink-900">Добавить объект</h3>
                 <Input
                   className="mt-3"
@@ -457,7 +464,7 @@ export default function EditorPage() {
             )}
 
             {hoveredZone && (
-              <Card className="p-4">
+              <Card className="border-white/30 bg-white/25 p-4 backdrop-blur-md">
                 <h3 className="text-sm font-semibold text-ink-900">{hoveredZone.name}</h3>
                 <p className="mt-1 text-sm text-ink-500">{hoveredZone.message}</p>
                 <p className="mt-2 text-xs text-ink-400">
@@ -467,7 +474,7 @@ export default function EditorPage() {
             )}
 
             {selectedObj && (
-              <Card className="p-4">
+              <Card className="border-white/30 bg-white/25 p-4 backdrop-blur-md">
                 <h3 className="text-sm font-semibold text-ink-900">
                   {selectedObj.type} <span className="font-normal text-ink-400">({selectedObj.id})</span>
                 </h3>
@@ -506,7 +513,7 @@ export default function EditorPage() {
             )}
 
             {scene && (
-              <Card className="p-4 text-xs text-ink-500">
+              <Card className="border-white/30 bg-white/25 p-4 text-xs text-ink-500 backdrop-blur-md">
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-danger-500" /> запрещено
@@ -525,64 +532,104 @@ export default function EditorPage() {
               </Card>
             )}
           </aside>
-        </div>
-      </div>
 
-      {/* Правка текстом через ИИ — выпадающее модальное окно, а не постоянная панель */}
-      <Dialog open={aiDialogOpen} onOpenChange={setAiDialogOpen}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="h-4.5 w-4.5 text-brand-600" />
-              Правка плана текстом
-            </DialogTitle>
-            <DialogDescription>Опишите на русском, что изменить — планировщик сам посчитает координаты и проверит нормы.</DialogDescription>
-          </DialogHeader>
-          <Textarea
-            rows={4}
-            placeholder="Например: посади 5 раскидистых деревьев вдоль южного дома, убери лавки у парковки"
-            value={instruction}
-            disabled={editing}
-            onChange={(e) => setInstruction(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                handleTextEdit();
-              }
-            }}
-          />
-          <Button className="mt-3 w-full" disabled={editing || !instruction.trim()} onClick={handleTextEdit}>
-            {editing ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Модель думает…
-              </>
-            ) : (
-              "Применить (Ctrl/⌘ + Enter)"
-            )}
-          </Button>
-          {editError && <p className="mt-3 rounded-lg bg-danger-500/10 px-3 py-2 text-sm text-danger-500">{editError}</p>}
-          {editResult && (
-            <div className="mt-3 flex flex-col gap-1.5 rounded-lg bg-ink-50 p-3 text-sm">
-              {editResult.explanation && <p className="text-ink-700">{editResult.explanation}</p>}
-              <p className="text-xs text-ink-400">
-                Применено: {editResult.applied.length}
-                {editResult.rejected.length > 0 && `, отклонено: ${editResult.rejected.length}`}
-              </p>
-              {editResult.rejected.map((r, i) => (
-                <p key={`rejected-${i}`} className="text-xs text-danger-500">
-                  ✕ {r}
-                </p>
-              ))}
-              {editResult.warnings.map((w, i) => (
-                <p key={`warning-${i}`} className="text-xs text-ink-500">
-                  ⚠ {w}
-                </p>
-              ))}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          {/* Ассистент -- выезжающая справа панель, а не модальное окно */}
+            <motion.aside
+              initial={false}
+              animate={{ x: aiPanelOpen ? 0 : "100%" }}
+              transition={{ type: "spring", stiffness: 320, damping: 34 }}
+              className="absolute right-0 top-14 z-30 flex h-[calc(100%-3.5rem)] w-full max-w-md flex-col border-l border-white/30 bg-white/20 shadow-soft-lg backdrop-blur-xl backdrop-saturate-150"
+            >
+              {/* Ручка-выдвигалка -- прикреплена к левому краю панели, поэтому
+                  когда панель уезжает вправо (закрыта), ручка выезжает вместе с
+                  ней и в итоге остаётся видна у самого края экрана. */}
+              <button
+                type="button"
+                onClick={() => setAiPanelOpen((v) => !v)}
+                aria-label={aiPanelOpen ? "Свернуть ассистента" : "Развернуть ассистента"}
+                className="absolute -left-8 top-1/2 flex h-16 w-8 -translate-y-1/2 items-center justify-center rounded-l-xl border border-r-0 border-white/30 bg-white/20 text-brand-600 shadow-soft backdrop-blur-xl backdrop-saturate-150 transition-colors hover:bg-white/40"
+              >
+                <motion.span animate={{ rotate: aiPanelOpen ? 180 : 0 }} transition={{ duration: 0.25 }}>
+                  <ChevronLeft className="h-4 w-4" />
+                </motion.span>
+              </button>
+
+              <div className="flex items-center justify-between border-b border-ink-200/70 px-4 py-3">
+                <div className="flex items-center gap-2 font-semibold text-ink-900">
+                  <Sparkles className="h-4.5 w-4.5 text-brand-600" />
+                  Ассистент
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setAiPanelOpen(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="scrollbar-thin flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4">
+                {messages.length === 0 && (
+                  <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center text-sm text-ink-400">
+                    <Sparkles className="h-8 w-8 text-brand-300" />
+                    <p>Опишите на русском, что изменить в плане — например «посади 5 деревьев вдоль южного дома».</p>
+                  </div>
+                )}
+                {messages.map((m) => (
+                  <div
+                    key={m.id}
+                    className={
+                      m.role === "user"
+                        ? "max-w-[85%] self-end rounded-2xl rounded-br-sm bg-brand-600 px-3.5 py-2 text-sm text-white"
+                        : m.role === "error"
+                          ? "max-w-[85%] self-start rounded-2xl rounded-bl-sm bg-danger-500/10 px-3.5 py-2 text-sm text-danger-500"
+                          : "max-w-[85%] self-start rounded-2xl rounded-bl-sm bg-ink-100 px-3.5 py-2 text-sm text-ink-800"
+                    }
+                  >
+                    <p>{m.text}</p>
+                    {((m.rejected && m.rejected.length > 0) || (m.warnings && m.warnings.length > 0)) && (
+                      <div className="mt-1.5 flex flex-col gap-1 border-t border-ink-900/10 pt-1.5 text-xs opacity-80">
+                        {m.rejected?.map((r, i) => (
+                          <p key={`r-${i}`}>✕ {r}</p>
+                        ))}
+                        {m.warnings?.map((w, i) => (
+                          <p key={`w-${i}`}>⚠ {w}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {editing && (
+                  <div className="max-w-[85%] self-start rounded-2xl rounded-bl-sm bg-ink-100 px-3.5 py-2 text-sm text-ink-500">
+                    Думаю…
+                  </div>
+                )}
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleTextEdit();
+                }}
+                className="flex items-end gap-2 border-t border-ink-200/70 p-3"
+              >
+                <Textarea
+                  rows={2}
+                  placeholder="Например: убери лавки у парковки"
+                  value={instruction}
+                  disabled={editing || !scene}
+                  onChange={(e) => setInstruction(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleTextEdit();
+                    }
+                  }}
+                  className="flex-1 resize-none"
+                />
+                <Button type="submit" size="icon" disabled={editing || !scene || !instruction.trim()}>
+                  {editing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
+              </form>
+            </motion.aside>
+        </main>
+      </div>
 
       {/* Сохранить как новый проект */}
       <Dialog open={saveAsOpen} onOpenChange={setSaveAsOpen}>
