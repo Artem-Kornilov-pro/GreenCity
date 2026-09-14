@@ -136,8 +136,17 @@ app.add_middleware(
 Instrumentator().instrument(app).expose(app)
 
 
+# async def, хотя внутри нечего ждать: синхронный обработчик FastAPI уводит в
+# пул потоков, а тот под нагрузкой занят геометрией (/api/parse,
+# /api/generate-greenery, /api/export-dxf -- все синхронные и надолго). В
+# нагрузочном тесте на 100 пользователей этот эндпоинт отвечал в среднем 25 с
+# при максимуме в 113 с -- не потому, что "status: ok" долго считается, а
+# потому что запрос стоял в очереди за свободным потоком. Здесь это особенно
+# больно: docker-compose healthcheck дёргает именно /api/health с таймаутом 3 с,
+# то есть backend помечался бы нездоровым ровно в пик нагрузки, когда он на
+# самом деле жив и работает.
 @app.get("/api/health")
-def health():
+async def health():
     return {"status": "ok"}
 
 
@@ -511,7 +520,7 @@ async def logout(request: RefreshRequest):
 
 
 @app.get("/api/auth/me", response_model=MeResponse)
-def whoami(user: CurrentUser = Depends(require_user)):
+async def whoami(user: CurrentUser = Depends(require_user)):
     """Проверить access-токен и узнать, под кем он выдан -- фронтенд дёргает
     это при загрузке страницы, чтобы решить, показывать вход или уже
     авторизованный вид."""

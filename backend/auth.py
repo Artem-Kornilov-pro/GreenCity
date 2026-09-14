@@ -154,11 +154,20 @@ class CurrentUser:
         self.username = username
 
 
-def require_user(authorization: Optional[str] = Header(default=None)) -> CurrentUser:
+async def require_user(authorization: Optional[str] = Header(default=None)) -> CurrentUser:
     """FastAPI-зависимость для эндпоинтов, которым нужен вошедший
     пользователь (проекты). Остальные эндпоинты (DXF, генерация, правка
     текстом) эту зависимость не используют -- гостевой режим не требует
-    отдельного флага, он просто не ходит в эндпоинты с этой зависимостью."""
+    отдельного флага, он просто не ходит в эндпоинты с этой зависимостью.
+
+    async def без единого await внутри -- намеренно, не забытый рефакторинг.
+    Синхронную зависимость FastAPI уводит в пул потоков, а здесь работы на
+    микросекунды и без всякого I/O (декодирование JWT в памяти, см. docstring
+    CurrentUser). Пока пул занят долгой геометрией из /api/generate-greenery,
+    синхронная версия заставляла КАЖДЫЙ авторизованный запрос ждать свободный
+    поток только ради проверки токена: под нагрузкой в 100 пользователей даже
+    async-эндпоинт /api/projects отвечал в среднем 22 с, тогда как /api/catalog
+    без этой зависимости укладывался в 14 мс."""
     token = _bearer_token(authorization)
     payload = decode_token(token) if token else None
     if payload is None or payload.get("type") != "access":
