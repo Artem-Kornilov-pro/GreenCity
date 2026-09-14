@@ -143,26 +143,26 @@ async def test_refresh_access_token_fails_open_when_redis_unavailable(monkeypatc
 # --- require_user (FastAPI-зависимость) --------------------------------------
 
 
-def test_require_user_accepts_valid_bearer_access_token():
+async def test_require_user_accepts_valid_bearer_access_token():
     token = auth.create_access_token("user-1", "alice")
-    user = auth.require_user(authorization=f"Bearer {token}")
+    user = await auth.require_user(authorization=f"Bearer {token}")
     assert user.id == "user-1"
     assert user.username == "alice"
 
 
-def test_require_user_rejects_missing_header():
+async def test_require_user_rejects_missing_header():
     with pytest.raises(HTTPException) as exc_info:
-        auth.require_user(authorization=None)
+        await auth.require_user(authorization=None)
     assert exc_info.value.status_code == 401
 
 
-def test_require_user_rejects_malformed_header():
+async def test_require_user_rejects_malformed_header():
     with pytest.raises(HTTPException):
-        auth.require_user(authorization="NotBearer abc")
+        await auth.require_user(authorization="NotBearer abc")
 
 
-def test_require_user_rejects_refresh_token_used_as_access():
+async def test_require_user_rejects_refresh_token_used_as_access():
     refresh_token, _sid = auth.create_refresh_token("user-1", "alice")
     with pytest.raises(HTTPException) as exc_info:
-        auth.require_user(authorization=f"Bearer {refresh_token}")
+        await auth.require_user(authorization=f"Bearer {refresh_token}")
     assert exc_info.value.status_code == 401
