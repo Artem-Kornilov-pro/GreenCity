@@ -59,6 +59,117 @@ export function checkViolations(
   return result;
 }
 
+// Наибольшее значение в таблице норм (building/tree). setbackFor для зоны без
+// табличного значения возвращает её собственный minDistance, поэтому реально
+// применённый отступ никогда не превышает max(zone.minDistance, этой величины) --
+// на столько и нужно расширять габарит зоны в индексе, чтобы не потерять
+// нарушение у точки за её границей.
+const MAX_TABLE_SETBACK_M = 5.0;
+
+// Сетка не длиннее этого по стороне: 256x256 ячеек -- потолок памяти индекса,
+// дальше выгоднее проверять чуть больше зон в ячейке, чем держать сетку.
+const MAX_GRID_SIDE = 256;
+
+interface IndexedZone {
+  zone: RestrictionZone;
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+}
+
+export interface ZoneIndex {
+  originX: number;
+  originZ: number;
+  cell: number;
+  cols: number;
+  rows: number;
+  buckets: IndexedZone[][];
+}
+
+// Проверка "нарушает ли точка зону" в лоб -- это перебор всех зон на каждый
+// объект: на реальном файле из 20 улиц (1625 зон) и сцене в пару тысяч посадок
+// выходит под 200 млн операций, причём на каждый рендер. Сеточный индекс
+// сводит это к нескольким зонам в ячейке точки.
+export function buildZoneIndex(zones: RestrictionZone[]): ZoneIndex {
+  const items: IndexedZone[] = [];
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+
+  for (const zone of zones) {
+    // Те же отсечки, что и в checkViolations: allowed ничего не запрещает,
+    // вырожденный полигон нечем нарушать.
+    if (zone.severity === "allowed" || zone.polygon.length < 3) continue;
+    let zMinX = Infinity, zMaxX = -Infinity, zMinZ = Infinity, zMaxZ = -Infinity;
+    for (const p of zone.polygon) {
+      if (p.x < zMinX) zMinX = p.x;
+      if (p.x > zMaxX) zMaxX = p.x;
+      if (p.z < zMinZ) zMinZ = p.z;
+      if (p.z > zMaxZ) zMaxZ = p.z;
+    }
+    const pad = Math.max(zone.minDistance, MAX_TABLE_SETBACK_M);
+    const item = { zone, minX: zMinX - pad, maxX: zMaxX + pad, minZ: zMinZ - pad, maxZ: zMaxZ + pad };
+    items.push(item);
+    if (item.minX < minX) minX = item.minX;
+    if (item.maxX > maxX) maxX = item.maxX;
+    if (item.minZ < minZ) minZ = item.minZ;
+    if (item.maxZ > maxZ) maxZ = item.maxZ;
+  }
+
+  if (!items.length || !Number.isFinite(minX)) {
+    return { originX: 0, originZ: 0, cell: 1, cols: 0, rows: 0, buckets: [] };
+  }
+
+  // Ячейка по медианному размеру зоны: у коридоров сетей габариты на порядки
+  // разные (короткий отвод против магистрали через весь квартал), и среднее
+  // тут увело бы сетку в крупную клетку из-за нескольких гигантов.
+  const spans = items.map((i) => Math.max(i.maxX - i.minX, i.maxZ - i.minZ)).sort((a, b) => a - b);
+  const median = spans[Math.floor(spans.length / 2)] || 1;
+  const width = maxX - minX;
+  const depth = maxZ - minZ;
+  const cell = Math.max(median, width / MAX_GRID_SIDE, depth / MAX_GRID_SIDE, 0.5);
+  const cols = Math.max(1, Math.ceil(width / cell));
+  const rows = Math.max(1, Math.ceil(depth / cell));
+
+  const buckets: IndexedZone[][] = Array.from({ length: cols * rows }, () => []);
+  for (const item of items) {
+    const c0 = Math.max(0, Math.floor((item.minX - minX) / cell));
+    const c1 = Math.min(cols - 1, Math.floor((item.maxX - minX) / cell));
+    const r0 = Math.max(0, Math.floor((item.minZ - minZ) / cell));
+    const r1 = Math.min(rows - 1, Math.floor((item.maxZ - minZ) / cell));
+    for (let r = r0; r <= r1; r++) {
+      for (let c = c0; c <= c1; c++) buckets[r * cols + c].push(item);
+    }
+  }
+
+  return { originX: minX, originZ: minZ, cell, cols, rows, buckets };
+}
+
+// Возвращает только факт нарушения: вызывающему коду (подсветка объекта в
+// сцене) нужен именно он, а собирать список зон на каждый из тысяч объектов --
+// лишние аллокации. Разбор, ЧЕМ именно нарушено, делается через checkViolations
+// для одного выделенного объекта.
+export function violatesAt(
+  px: number,
+  pz: number,
+  index: ZoneIndex,
+  plantKind?: PlantKind
+): boolean {
+  if (!index.cols) return false;
+  const c = Math.floor((px - index.originX) / index.cell);
+  const r = Math.floor((pz - index.originZ) / index.cell);
+  if (c < 0 || r < 0 || c >= index.cols || r >= index.rows) return false;
+
+  for (const item of index.buckets[r * index.cols + c]) {
+    if (px < item.minX || px > item.maxX || pz < item.minZ || pz > item.maxZ) continue;
+    const zone = item.zone;
+    const minDistance = plantKind ? setbackFor(zone.type, plantKind, zone.minDistance) : zone.minDistance;
+    if (pointInPolygon(px, pz, zone.polygon) || distanceToPolygonEdge(px, pz, zone.polygon) < minDistance) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export interface SceneBounds {
   minX: number;
   maxX: number;

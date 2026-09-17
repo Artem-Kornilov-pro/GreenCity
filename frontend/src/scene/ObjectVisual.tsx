@@ -6,7 +6,7 @@
 // Поэтому добавление пака готовых моделей не требует правок этого файла:
 // положили .glb, прогнали конвертацию -- объекты начали рисоваться моделями.
 
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
 import type { CatalogItem } from "../catalog";
 
@@ -26,7 +26,14 @@ function GltfModel({ url }: { url: string }) {
   // Клон обязателен: загруженный glTF переиспользуется всеми экземплярами
   // этого вида, а один и тот же Object3D нельзя вставить в несколько мест
   // графа сцены -- он "переедет" в последнее.
-  return <primitive object={scene.clone()} />;
+  //
+  // useMemo здесь не косметика: без него clone() выполняется на КАЖДЫЙ рендер
+  // компонента, а рендерятся все объекты сцены разом (см. React.memo в
+  // PlacedObjects). На сцене в пару тысяч деревьев один клик по объекту
+  // означал тысячи глубоких клонов графа glTF, которые никто не освобождает --
+  // именно так браузер и не укладывался в 64 ГБ.
+  const object = useMemo(() => scene.clone(), [scene]);
+  return <primitive object={object} />;
 }
 
 function Trunk({ height }: { height: number }) {

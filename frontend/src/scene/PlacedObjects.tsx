@@ -1,10 +1,10 @@
-import { useRef, type RefObject } from "react";
+import { memo, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import { TransformControls } from "@react-three/drei";
 import type { RestrictionZone, SceneObject } from "../types";
 import type { CatalogItem } from "../catalog";
 import { resolveCatalogItem } from "../catalog";
-import { checkViolations } from "../geometry";
+import { buildZoneIndex, violatesAt } from "../geometry";
 import { plantKindOfObjectType } from "../setbackNorms";
 import { ObjectVisual } from "./ObjectVisual";
 
@@ -31,10 +31,15 @@ export function PlacedObjects({
   onMove: (id: string, x: number, z: number) => void;
   onRotate: (id: string, rotationY: number) => void;
 }) {
-  const items = objects.filter((o) => o.type !== "building");
-  return (
-    <>
-      {items.map((obj) => {
+  // Всё, что не зависит от выделения, считается один раз на изменение сцены, а
+  // не на каждый рендер: выделение объекта меняет selectedId, и без этого
+  // мемо весь список (включая проверку нарушений по всем зонам и разбор
+  // каталога) пересчитывался бы на каждый клик.
+  const rows = useMemo(() => {
+    const index = buildZoneIndex(restrictions);
+    return objects
+      .filter((o) => o.type !== "building")
+      .map((obj) => {
         // Подъезд встроен в стену по построению — отступ от здания к нему
         // неприменим, проверять и подсвечивать это как нарушение бессмысленно.
         // Мощение (path_segment) по норме допускается поверх охранной зоны
@@ -44,30 +49,44 @@ export function PlacedObjects({
         // зоны). Подсвечивать её там как нарушение — визуальное вранье:
         // дорожке там и правда можно быть.
         const exemptFromViolations = obj.type === "entrance" || obj.type === "path_segment";
-        const violated =
-          !exemptFromViolations &&
-          checkViolations(obj.position.x, obj.position.z, restrictions, plantKindOfObjectType(obj.type)).length > 0;
         const item = resolveCatalogItem(obj, catalogById, availableModels);
-        return (
-          <PlacedObjectItem
-            key={obj.id}
-            obj={obj}
-            item={item}
-            hasModel={item ? availableModels.has(item.model) : false}
-            violated={violated}
-            selected={obj.id === selectedId}
-            transformMode={transformMode}
-            onSelect={onSelect}
-            onMove={onMove}
-            onRotate={onRotate}
-          />
-        );
-      })}
+        return {
+          obj,
+          item,
+          hasModel: item ? availableModels.has(item.model) : false,
+          violated:
+            !exemptFromViolations &&
+            violatesAt(obj.position.x, obj.position.z, index, plantKindOfObjectType(obj.type)),
+        };
+      });
+  }, [objects, restrictions, catalogById, availableModels]);
+
+  return (
+    <>
+      {rows.map(({ obj, item, hasModel, violated }) => (
+        <PlacedObjectItem
+          key={obj.id}
+          obj={obj}
+          item={item}
+          hasModel={hasModel}
+          violated={violated}
+          selected={obj.id === selectedId}
+          transformMode={transformMode}
+          onSelect={onSelect}
+          onMove={onMove}
+          onRotate={onRotate}
+        />
+      ))}
     </>
   );
 }
 
-function PlacedObjectItem({
+// memo обязателен, а не "на всякий случай": без него смена selectedId
+// перерисовывает каждый объект сцены, а каждая такая перерисовка у объекта с
+// моделью означала новый клон графа glTF (см. GltfModel). Колбэки приходят из
+// EditorPage через useCallback, объект строки -- из useMemo выше, поэтому
+// сравнение пропсов действительно отсекает лишнее, а не проходит впустую.
+const PlacedObjectItem = memo(function PlacedObjectItem({
   obj,
   item,
   hasModel,
@@ -135,4 +154,4 @@ function PlacedObjectItem({
       {body}
     </TransformControls>
   );
-}
+});
