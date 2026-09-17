@@ -48,6 +48,7 @@ import db
 import metrics
 import projects as projects_service
 from auth import AuthError, CurrentUser, decode_token, refresh_access_token, require_user
+from building_setbacks import compute_building_setbacks
 from export_dxf import scene_to_dxf
 from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -207,6 +208,8 @@ def parse_dxf_endpoint(file: UploadFile = File(...)):
             metrics.dxf_parse_errors_total.inc()
             logging.getLogger("greencity.parse").warning("не удалось разобрать %r: %s", file.filename, e)
             raise HTTPException(400, f"Не удалось разобрать DXF: {e}") from e
+
+    scene["buildingSetbacks"] = compute_building_setbacks(scene.get("objects", []))
 
     metrics.dxf_parses_total.inc()
     logging.getLogger("greencity.parse").info(
