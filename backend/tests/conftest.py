@@ -42,10 +42,15 @@ from plant_catalog import load_catalog  # noqa: E402
 from schemas import Scene  # noqa: E402
 
 
+# Шесть исходных тестовых участков лежат в locations/location_old/ -- туда их
+# сдвинули, когда в locations/ появились настоящие конвертированные локации с
+# другой нумерацией (02_peschany_pereulok и т.д.). Искать по короткому пути
+# нельзя: номера пересекаются, и "02_*" нашёл бы уже другой участок, под
+# который эти тесты не писались.
 def _location_path(number: int) -> str:
-    matches = glob.glob(str(ROOT / "locations" / f"{number:02d}_*" / "*.dxf"))
+    matches = glob.glob(str(ROOT / "locations" / "location_old" / f"{number:02d}_*" / "*.dxf"))
     if not matches:
-        raise FileNotFoundError(f"нет фикстуры locations/{number:02d}_*/*.dxf")
+        raise FileNotFoundError(f"нет фикстуры locations/location_old/{number:02d}_*/*.dxf")
     return matches[0]
 
 

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import type { FacadeQuad } from "../types";
 
@@ -25,8 +25,15 @@ function mergeQuads(quads: FacadeQuad[]): THREE.BufferGeometry | null {
   return geo;
 }
 
+// Слитая геометрия держит буферы в памяти GPU, и React их сам не освобождает:
+// без dispose каждая загрузка следующей сцены оставляла бы предыдущую висеть.
+function useDisposed(geometry: THREE.BufferGeometry | null) {
+  useEffect(() => () => geometry?.dispose(), [geometry]);
+}
+
 export function Windows({ quads }: { quads: FacadeQuad[] }) {
   const geometry = useMemo(() => mergeQuads(quads), [quads]);
+  useDisposed(geometry);
   if (!geometry) return null;
   return (
     <mesh geometry={geometry}>
@@ -44,6 +51,7 @@ export function Windows({ quads }: { quads: FacadeQuad[] }) {
 
 export function Canopies({ quads }: { quads: FacadeQuad[] }) {
   const geometry = useMemo(() => mergeQuads(quads), [quads]);
+  useDisposed(geometry);
   if (!geometry) return null;
   return (
     <mesh geometry={geometry} castShadow>

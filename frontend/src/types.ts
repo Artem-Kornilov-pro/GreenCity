@@ -64,5 +64,10 @@ export interface Scene {
   windows: FacadeQuad[];
   canopies: FacadeQuad[];
   curbs: CurbPolyline[];
+  // Кольца нормативных отступов вокруг зданий, считает backend
+  // (building_setbacks.py) -- только для отображения, в проверку нарушений не
+  // идут: она применяет нормы к зоне "building" из restrictions сама.
+  // Опционально -- у сцен, сохранённых до появления поля, его нет.
+  buildingSetbacks?: RestrictionZone[];
   meta: SceneMeta;
 }

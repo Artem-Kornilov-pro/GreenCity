@@ -62,4 +62,9 @@ class Scene(BaseModel):
     windows: list[list[Point3]] = []
     canopies: list[list[Point3]] = []
     curbs: list[list[Point2]] = []
+    # Кольца нормативных отступов вокруг зданий (building_setbacks.py) -- только
+    # для отображения, отдельным полем от restrictions намеренно: проверка
+    # нарушений применяет нормы к настоящей зоне "building" сама, и попади эти
+    # кольца в restrictions, каждое нарушение у дома считалось бы дважды.
+    buildingSetbacks: list[RestrictionZone] = []
     meta: SceneMeta

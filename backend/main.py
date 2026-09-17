@@ -48,6 +48,7 @@ import db
 import metrics
 import projects as projects_service
 from auth import AuthError, CurrentUser, decode_token, refresh_access_token, require_user
+from building_setbacks import compute_building_setbacks
 from export_dxf import scene_to_dxf
 from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -202,7 +203,9 @@ def parse_dxf_endpoint(file: UploadFile = File(...)):
     # открытый через NamedTemporaryFile, залочен для повторного открытия по
     # имени, пока не закрыт хендл -- ezdxf.readfile(tmp.name) ниже падал бы с
     # PermissionError. На Linux/Mac (delete=True) работало без этой возни.
-    tmp = tempfile.NamedTemporaryFile(suffix=".dxf", delete=False)
+    # noqa SIM115: контекстный менеджер здесь и не нужен -- закрыть файл до
+    # чтения обязательно (см. выше про Windows), а удаление делает finally ниже.
+    tmp = tempfile.NamedTemporaryFile(suffix=".dxf", delete=False)  # noqa: SIM115
     try:
         tmp.write(data)
         tmp.close()
@@ -214,6 +217,8 @@ def parse_dxf_endpoint(file: UploadFile = File(...)):
             raise HTTPException(400, f"Не удалось разобрать DXF: {e}") from e
     finally:
         Path(tmp.name).unlink(missing_ok=True)
+
+    scene["buildingSetbacks"] = compute_building_setbacks(scene.get("objects", []))
 
     metrics.dxf_parses_total.inc()
     logging.getLogger("greencity.parse").info(

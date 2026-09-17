@@ -9,7 +9,6 @@ import { RestrictionZones } from "./RestrictionZones";
 import { Buildings } from "./Buildings";
 import { PlacedObjects, type TransformMode } from "./PlacedObjects";
 import { FitCamera } from "./FitCamera";
-import { computeBuildingSetbackZones } from "./buildingSetbacks";
 import { Windows, Canopies } from "./FacadeFeatures";
 import { Curbs } from "./CurbStrips";
 import { AreaSelectionDraw } from "./AreaSelectionDraw";
@@ -45,16 +44,13 @@ export function SceneView({
   const gridSize = Math.max(width, depth, 20) * 1.3;
   const gridDivisions = Math.min(120, Math.max(10, Math.round(gridSize / 15)));
 
-  // Здания не двигаются при редактировании (перетаскивать можно только
-  // деревья/кусты/лавки/фонари), поэтому кольца отступов достаточно
-  // пересчитывать только при загрузке новой сцены — держим их на `boundary`,
-  // а не на `scene.objects`, иначе каждый drag-move дерева гонял бы offset по
-  // всем зданиям заново (в локации 5 их 264).
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const buildingSetbackZones = useMemo(() => computeBuildingSetbackZones(scene.objects), [scene.boundary]);
+  // Кольца отступов приходят готовыми с бэкенда (building_setbacks.py): там
+  // буфер считает shapely, который корректно разрешает самопересечения на
+  // сложных контурах -- прежний самописный обход вершин на фронте портил их у
+  // части домов.
   const displayZones = useMemo(
-    () => [...scene.restrictions, ...buildingSetbackZones],
-    [scene.restrictions, buildingSetbackZones]
+    () => [...scene.restrictions, ...(scene.buildingSetbacks ?? [])],
+    [scene.restrictions, scene.buildingSetbacks]
   );
 
   return (

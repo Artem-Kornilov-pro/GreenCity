@@ -11,10 +11,13 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path[:0] = [str(ROOT / "parser")]
 
 
+# См. тот же комментарий в backend/tests/conftest.py: исходные шесть участков
+# переехали в locations/location_old/, а короткий путь теперь указывал бы на
+# другие, настоящие локации с пересекающейся нумерацией.
 def _location_path(number: int) -> str:
-    matches = glob.glob(str(ROOT / "locations" / f"{number:02d}_*" / "*.dxf"))
+    matches = glob.glob(str(ROOT / "locations" / "location_old" / f"{number:02d}_*" / "*.dxf"))
     if not matches:
-        raise FileNotFoundError(f"нет фикстуры locations/{number:02d}_*/*.dxf")
+        raise FileNotFoundError(f"нет фикстуры locations/location_old/{number:02d}_*/*.dxf")
     return matches[0]
 
 

@@ -19,6 +19,7 @@ from collections import Counter
 from pathlib import Path
 
 import ezdxf
+import shapely
 from shapely.geometry import LineString
 
 # ---------------------------------------------------------------------------
@@ -168,31 +169,6 @@ def buffer_segment(x1, y1, x2, y2, half_width):
             (x2 - nx, y2 - ny, 0.0), (x1 - nx, y1 - ny, 0.0)]
 
 
-def buffer_polyline(pts, half_width):
-    """Открытая ломаная (труба/кабель с несколькими изгибами) -> ОДИН
-    буферизованный коридор вдоль всей трассы шириной 2*half_width, а не
-    прямоугольник на каждый отдельный сегмент. На плотно оцифрованных сетях
-    (сотни точек на трассу) сегмент-за-сегментом даёт десятки тысяч мелких
-    зон вместо одной — не только медленнее (unary_union в generate-greenery),
-    но и геометрически хуже (щели/наслоения на изгибах вместо гладкого
-    коридора). Возвращает список (x, y, 0.0) точек контура или None."""
-    cleaned = []
-    for x, y, *_ in pts:
-        if cleaned and math.hypot(x - cleaned[-1][0], y - cleaned[-1][1]) < 1e-6:
-            continue  # дубли подряд и чисто вертикальные стояки (Z меняется, XY нет)
-        cleaned.append((x, y))
-    if len(cleaned) < 2:
-        return None
-    buffered = LineString(cleaned).buffer(half_width, cap_style=2, join_style=2)
-    if buffered.is_empty:
-        return None
-    if buffered.geom_type == "MultiPolygon":
-        buffered = max(buffered.geoms, key=lambda g: g.area)
-    if buffered.geom_type != "Polygon":
-        return None
-    return [(x, y, 0.0) for x, y in list(buffered.exterior.coords)[:-1]]
-
-
 class Transform:
     """DXF (x, y, z) -> Three.js (x, y=высота, z), с опциональным сдвигом origin."""
 
@@ -268,21 +244,87 @@ def _add_zone(zones, idx_by_type, cfg, layer, pts_xyz, tf):
     zones.append(zone)
 
 
+# Трассы сетей приходят из DXF раздробленными: одна линия кабеля -- это сотни
+# отдельных LINE и незамкнутых полилиний (в реальном файле на 20 улиц: 73881
+# LINE + 88369 сегментов полилиний). Раздувать каждый отрезок в собственную
+# зону -- это 150 тысяч зон вместо нескольких сотен: 41 МБ JSON и примерно
+# 450 тысяч объектов three.js на фронте, на которых браузер не укладывался и в
+# 64 ГБ. Объединяем ПЕРЕД раздуванием, по слоям (слой = один тип сети с одними
+# и теми же параметрами охранной зоны, их всего десяток на файл).
+#
+# Побочно это ещё и точнее: раздельные прямоугольники не накрывали клин на
+# изломе трассы, а буфер цельной ломаной накрывает.
+def _merge_corridors(zones, idx_by_type, corridors, tf):
+    for layer, (cfg, lines) in corridors.items():
+        if not lines:
+            continue
+        # Раздуваем каждую линию по отдельности и объединяем результат, а НЕ
+        # буферизуем одну общую MultiLineString: на слое из 31820 кабельных
+        # отрезков первое занимает 0.8 с, второе -- 8.7 с при том же итоге
+        # (замерено). Векторизованный shapely.buffer обрабатывает массив
+        # геометрий разом, а union_all внутри делает каскадное объединение,
+        # тогда как буфер общей MultiLineString заставляет GEOS считать все
+        # самопересечения трассы в одном проходе.
+        #
+        # quad_segs=2 вместо стандартных 8: скругление на изломе трассы -- деталь
+        # порядка сантиметров на фоне охранной зоны в 2-3 метра, а вершин
+        # экономит вчетверо.
+        merged = shapely.union_all(
+            shapely.buffer([LineString(c) for c in lines], cfg["minDistance"], cap_style=2, quad_segs=2)
+        )
+        if merged.is_empty:
+            continue
+        polys = merged.geoms if merged.geom_type == "MultiPolygon" else [merged]
+        for poly in polys:
+            # Дырки теряются: схема зоны -- плоский список точек без внутренних
+            # контуров. Для запрета посадки это безопасная сторона ошибки
+            # (закрытая дырка = чуть строже, чем есть на самом деле).
+            # [:-1] -- shapely замыкает кольцо повтором первой точки, а в схеме
+            # зоны полигон хранится незамкнутым (так же, как его отдаёт
+            # polygon_points для обычных контуров).
+            pts = list(poly.exterior.coords)[:-1]
+            if len(pts) >= 3:
+                _add_zone(zones, idx_by_type, cfg, layer, pts, tf)
+
+
 def extract_restrictions(msp, tf):
     """Закрытые LWPOLYLINE/POLYLINE -> зона-полигон как есть.
-    Открытые (не замкнутые) LWPOLYLINE/POLYLINE -> трасса трубы/кабеля, вся
-    целиком раздувается в ОДИН коридор шириной 2*minDistance (buffer_polyline)
-    -- не по сегменту на каждое звено ломаной: на плотно оцифрованных сетях
-    (сотни вершин на трассу) сегмент-за-сегментом давал десятки тысяч мелких
-    зон вместо одной, что на реальных данных (не только тестовых локациях)
-    оказалось непрактично медленным для generate-greenery (unary_union). LINE
-    -- отдельная сущность без соседей, буферизуется поштучно (buffer_segment).
+
+    LINE и открытые (не замкнутые) POLYLINE -> трасса трубы/кабеля. Все трассы
+    ОДНОГО СЛОЯ собираются вместе и раздуваются в коридоры шириной 2*minDistance
+    одним буфером с объединением (см. _merge_corridors), а не по зоне на
+    сущность и тем более не по зоне на звено ломаной.
+
+    Дробление тут било дважды. По звену ломаной -- это десятки тысяч мелких зон
+    на плотно оцифрованной сети, непрактично медленно для unary_union в
+    generate-greenery, плюс щели и наслоения на изгибах вместо гладкого
+    коридора. По сущности -- уже лучше, но конвертер выдаёт трассу разрезанной
+    на сотни отдельных полилиний (17745 штук на участок в 20 улиц), и зон всё
+    равно оставались тысячи. Объединение по слою закрывает оба случая разом:
+    слой -- это один тип сети с одними и теми же параметрами охранной зоны.
+
     Строго вертикальные участки (стояки-подключения к зданию, где меняется
-    только Z) выпадают уже на этапе дедупликации точек по XY внутри
-    buffer_polyline/сравнения координат LINE -- это не горизонтальное
-    ограничение в плане XZ."""
+    только Z) пропускаются -- это не горизонтальное ограничение в плане XZ."""
     zones = []
     idx_by_type = Counter()
+    corridors = {}
+
+    def add_line(layer, cfg, coords):
+        if len(coords) < 2:
+            return
+        # Здания из слияния исключены намеренно. Оно рассчитано на сети --
+        # непрерывные трассы, которые и в реальности одна сущность. Здания же
+        # дискретны, а extract_buildings ниже строит объекты сцены ИЗ этих зон:
+        # два соседних дома ближе 2*minDistance слиплись бы в один полигон и
+        # дальше в одно здание. Отрезок на слое здания остаётся отдельной зоной,
+        # как было до слияния.
+        if cfg["type"] == "building":
+            for a, b in zip(coords, coords[1:]):
+                seg = buffer_segment(a[0], a[1], b[0], b[1], cfg["minDistance"])
+                if seg:
+                    _add_zone(zones, idx_by_type, cfg, layer, seg, tf)
+            return
+        corridors.setdefault(layer, (cfg, []))[1].append(coords)
 
     for e in msp.query("LWPOLYLINE POLYLINE"):
         layer = e.dxf.layer
@@ -297,9 +339,20 @@ def extract_restrictions(msp, tf):
             if len(pts) >= 3:
                 _add_zone(zones, idx_by_type, cfg, layer, pts, tf)
         else:
-            corridor = buffer_polyline(pts, cfg["minDistance"])
-            if corridor:
-                _add_zone(zones, idx_by_type, cfg, layer, corridor, tf)
+            # Ломаная режется на куски только там, где идёт чисто вертикальный
+            # стояк: он не ограничение в плане, но и склеивать через него
+            # соседние участки в одну прямую нельзя -- получилась бы трасса,
+            # которой нет.
+            run = []
+            for (x1, y1, _z1), (x2, y2, _z2) in zip(pts, pts[1:]):
+                if math.hypot(x2 - x1, y2 - y1) < 1e-6:
+                    add_line(layer, cfg, run)
+                    run = []
+                    continue
+                if not run:
+                    run.append((x1, y1))
+                run.append((x2, y2))
+            add_line(layer, cfg, run)
 
     for e in msp.query("LINE"):
         layer = e.dxf.layer
@@ -311,10 +364,9 @@ def extract_restrictions(msp, tf):
         s, en = e.dxf.start, e.dxf.end
         if math.hypot(en.x - s.x, en.y - s.y) < 1e-6:
             continue
-        seg = buffer_segment(s.x, s.y, en.x, en.y, cfg["minDistance"])
-        if seg:
-            _add_zone(zones, idx_by_type, cfg, layer, seg, tf)
+        add_line(layer, cfg, [(s.x, s.y), (en.x, en.y)])
 
+    _merge_corridors(zones, idx_by_type, corridors, tf)
     return zones
 
 

@@ -14,7 +14,10 @@ from fastapi.testclient import TestClient
 from llm_editor import LlmError, LlmNotConfiguredError, TextEditResult
 from main import app
 
-ROOT_LOCATIONS = glob.glob(str(Path(__file__).resolve().parent.parent.parent / "locations" / "01_*" / "*.dxf"))
+# locations/location_old/ -- см. комментарий у _location_path в conftest.py.
+ROOT_LOCATIONS = glob.glob(
+    str(Path(__file__).resolve().parent.parent.parent / "locations" / "location_old" / "01_*" / "*.dxf")
+)
 
 
 @pytest.fixture

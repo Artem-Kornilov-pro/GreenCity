@@ -261,7 +261,7 @@ class _ZoneIndex:
         self.tree = STRtree(self.polys) if self.polys else None
 
 
-def _placement_reason(x: float, z: float, zone_index: "_ZoneIndex") -> list[str]:
+def _placement_reason(x: float, z: float, zone_index: _ZoneIndex) -> list[str]:
     """Человекочитаемое объяснение размещения для metadata.reason -- формат
     из ТЗ п.17 (пример: "внутри зоны озеленения", "4.2 м до водопровода").
     """
