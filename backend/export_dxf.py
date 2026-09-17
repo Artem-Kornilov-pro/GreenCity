@@ -225,6 +225,18 @@ def _write_facade(doc, msp, quads: list, layer_name: str, color: int) -> None:
         msp.add_3dface(verts, dxfattribs={"layer": layer_name})
 
 
+def _write_curbs(doc, msp, polylines: list, layer_name: str, color: int) -> None:
+    if not polylines:
+        return
+    _ensure_layer(doc, layer_name, color)
+    for pl in polylines:
+        if len(pl) < 2:
+            continue
+        points = [(p.x, p.z) for p in pl]
+        # Бордюр -- открытая линия (не замкнутый контур), в отличие от границ/зон.
+        msp.add_lwpolyline(points, close=False, dxfattribs={"layer": layer_name})
+
+
 def scene_to_dxf(scene: Scene) -> ezdxf.document.Drawing:
     """JSON-сцена -> открытый ezdxf-документ, готовый к doc.write(...)."""
     doc = ezdxf.new(DXF_VERSION, setup=False)
@@ -246,5 +258,6 @@ def scene_to_dxf(scene: Scene) -> ezdxf.document.Drawing:
 
     _write_facade(doc, msp, scene.windows, "WINDOWS", 5)
     _write_facade(doc, msp, scene.canopies, "CANOPIES", 6)
+    _write_curbs(doc, msp, scene.curbs, "CURBS", 9)
 
     return doc

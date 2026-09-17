@@ -412,7 +412,7 @@ def test_parse_dxf_doc_returns_expected_top_level_shape(empty_doc):
     msp = empty_doc.modelspace()
     msp.add_lwpolyline([(0, 0), (10, 0), (10, 10), (0, 10)], close=True, dxfattribs={"layer": "TERRITORY_BOUNDARY"})
     result = parse_dxf_doc(empty_doc)
-    assert set(result.keys()) == {"boundary", "restrictions", "objects", "windows", "canopies", "meta"}
+    assert set(result.keys()) == {"boundary", "restrictions", "objects", "windows", "canopies", "curbs", "meta"}
     assert result["boundary"]["sourceLayer"] == "TERRITORY_BOUNDARY"
 
 

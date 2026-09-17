@@ -11,6 +11,7 @@ import { PlacedObjects, type TransformMode } from "./PlacedObjects";
 import { FitCamera } from "./FitCamera";
 import { computeBuildingSetbackZones } from "./buildingSetbacks";
 import { Windows, Canopies } from "./FacadeFeatures";
+import { Curbs } from "./CurbStrips";
 import { AreaSelectionDraw } from "./AreaSelectionDraw";
 
 export function SceneView({
@@ -75,6 +76,7 @@ export function SceneView({
       <Buildings objects={scene.objects} />
       <Windows quads={scene.windows ?? []} />
       <Canopies quads={scene.canopies ?? []} />
+      <Curbs polylines={scene.curbs ?? []} />
       <PlacedObjects
         objects={scene.objects}
         restrictions={scene.restrictions}

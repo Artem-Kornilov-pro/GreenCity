@@ -162,6 +162,16 @@ CATALOG: list[CatalogItem] = [
         dimensions=CatalogItemDimensions(height=0.06, width=2.0, depth=1.2),
         render=CatalogItemRender(shape="patch", color="#b7ada0"),
     ),
+    # Точка разметки пешеходного перехода (ГОСТ Р 51256, разметка 1.14.1
+    # "зебра") -- из DXF приходит как одиночная точка (см.
+    # parser.POINT_LAYER_RULES "CROSSWALK"), без модели .glb рисуется плоским
+    # примитивом-заглушкой (shape="patch", штатный режим -- см. README проекта).
+    CatalogItem(
+        id="crosswalk", category="paving", label="Пешеходный переход (разметка)",
+        setback_kind=None, object_type="crosswalk", model="/models/crosswalk.glb",
+        dimensions=CatalogItemDimensions(height=0.02, width=4.0, depth=2.0),
+        render=CatalogItemRender(shape="patch", color="#e8e8e0"),
+    ),
     # --- МАФ ---------------------------------------------------------------
     CatalogItem(
         id="bench", category="furniture", label="Лавка",

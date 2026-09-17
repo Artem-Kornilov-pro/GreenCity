@@ -89,6 +89,7 @@ const DEFAULT_ITEM_BY_TYPE: Record<string, string> = {
   hedge_segment: "hedge_segment",
   lawn_patch: "lawn_patch",
   flowerbed_patch: "flowerbed_patch",
+  crosswalk: "crosswalk",
 };
 
 // Стабильный хеш строки: нужен, чтобы у объекта без явного вида модель была

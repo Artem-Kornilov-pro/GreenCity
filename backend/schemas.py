@@ -61,4 +61,5 @@ class Scene(BaseModel):
     objects: list[SceneObject]
     windows: list[list[Point3]] = []
     canopies: list[list[Point3]] = []
+    curbs: list[list[Point2]] = []
     meta: SceneMeta

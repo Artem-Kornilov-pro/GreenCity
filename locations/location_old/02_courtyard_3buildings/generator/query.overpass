@@ -1,0 +1,8 @@
+[out:json][timeout:25];
+(
+  way["building"](55.6715,37.5680,55.6760,37.5760);
+  relation["building"](55.6715,37.5680,55.6760,37.5760);
+);
+out body;
+>;
+out skel qt;

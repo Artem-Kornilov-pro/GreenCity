@@ -96,13 +96,13 @@ def test_existing_object_shapes_uses_custom_clearance():
 
 def test_placement_reason_mentions_nearest_zone_and_distance():
     zone = make_zone(type="building", name="BUILDING_1")
-    reasons = gg._placement_reason(10, 0, [zone])
+    reasons = gg._placement_reason(10, 0, gg._ZoneIndex([zone]))
     assert "внутри допустимой зоны озеленения" in reasons[0]
     assert any("BUILDING_1" in r for r in reasons)
 
 
 def test_placement_reason_handles_no_zones_at_all():
-    reasons = gg._placement_reason(0, 0, [])
+    reasons = gg._placement_reason(0, 0, gg._ZoneIndex([]))
     assert reasons == ["внутри допустимой зоны озеленения"]
 
 
@@ -112,7 +112,7 @@ def test_placement_reason_skips_degenerate_and_invalid_zones():
         Point2(x=0, z=0), Point2(x=10, z=10), Point2(x=10, z=0), Point2(x=0, z=10)
     ])
     good = make_zone(type="building", name="GOOD")
-    reasons = gg._placement_reason(20, 0, [too_few_points, self_intersecting, good])
+    reasons = gg._placement_reason(20, 0, gg._ZoneIndex([too_few_points, self_intersecting, good]))
     assert any("GOOD" in r for r in reasons)
     assert not any("BAD1" in r or "BAD2" in r for r in reasons)
 

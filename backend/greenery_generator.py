@@ -39,6 +39,8 @@ from schemas import Point3, RestrictionZone, Scene, SceneObject
 from setback_norms import DEFAULT_TREE_SPECIES, PlantKind, setback_for
 from shapely.geometry import Point, Polygon, box
 from shapely.ops import unary_union
+from shapely.prepared import prep
+from shapely.strtree import STRtree
 
 # Дефолты шага сетки кандидатных точек и минимального расстояния между
 # стволами -- используются, когда вызывающий код (main.py) не передал свои
@@ -47,6 +49,18 @@ from shapely.ops import unary_union
 # переопределяются per-request -- см. README.md ("Настраиваемые параметры").
 DEFAULT_GRID_SPACING_M = 4.0
 DEFAULT_MIN_TREE_SPACING_M = 4.0
+
+# Та же защита, что у MAX_GENERATED_BUSH_CLUSTERS/MAX_GENERATED_LAWN_PATCHES
+# ниже, изначально была только у них: на сцене без размеченных зон газона
+# (severity == "allowed") генератор откатывается сажать по всей площади
+# участка (см. planting_zones ниже) -- на реальных крупных участках (гектары,
+# не тестовые дворы) сеткой по 4м это тысячи-десятки тысяч деревьев сплошным
+# ковром на весь boundary, что и не похоже на продуманное благоустройство, и
+# не годится для 3D-показа (десятки тысяч мешей). Как и у кустов/газона --
+# после сбора всех геометрически годных мест берём не больше этого числа,
+# равномерно раскиданных по площади (pick_spread), а не первые по порядку
+# обхода сетки.
+MAX_GENERATED_TREES = 400
 
 # Разумные границы на присланные параметры -- защита от вырожденных запросов
 # (слишком маленький шаг -- тысячи точек и зависание на клике "Сгенерировать").
@@ -100,6 +114,40 @@ LAWN_EXISTING_CLEARANCE_M = 0.5  # маленький -- плитка газон
 # Та же защита от вырожденно большого результата, что и у кустов выше --
 # на большом открытом газоне плиток 4x4 м может набраться на сотни.
 MAX_GENERATED_LAWN_PATCHES = 150
+
+
+class _SpacingGrid:
+    """Пространственная хеш-сетка для проверки min_spacing между уже
+    выбранными точками при обходе сетки кандидатов -- замена линейному
+    перебору `any(... for sx, sz in selected)`. На плотных реальных данных
+    (большой участок, тысячи кандидатов и тысячи уже выбранных деревьев --
+    без явных зон газона в сцене кандидаты идут по всей площади участка, а
+    не только по узким полосам вдоль дорожек) линейный перебор давал
+    квадратичный рост и был главным узким местом generate-greenery (не
+    сами shapely-операции над зонами ограничений -- те быстрые и без этой
+    правки, см. историю правок). Ячейка размером с min_spacing -- тогда все
+    точки, которые могут оказаться ближе min_spacing, лежат в одной из 9
+    соседних ячеек (текущая + 8 вокруг)."""
+
+    def __init__(self, min_spacing: float):
+        self._cell = max(min_spacing, 1e-6)
+        self._buckets: dict[tuple[int, int], list[tuple[float, float]]] = {}
+
+    def _key(self, x: float, z: float) -> tuple[int, int]:
+        return (int(x // self._cell), int(z // self._cell))
+
+    def is_far_enough(self, x: float, z: float, min_spacing: float) -> bool:
+        cx, cz = self._key(x, z)
+        min_sq = min_spacing * min_spacing
+        for dx in (-1, 0, 1):
+            for dz in (-1, 0, 1):
+                for sx, sz in self._buckets.get((cx + dx, cz + dz), ()):
+                    if (x - sx) ** 2 + (z - sz) ** 2 < min_sq:
+                        return False
+        return True
+
+    def add(self, x: float, z: float) -> None:
+        self._buckets.setdefault(self._key(x, z), []).append((x, z))
 
 
 def _keep_out_shapes(
@@ -188,24 +236,42 @@ def _existing_object_shapes(objects: list[SceneObject], clearance: float = EXIST
     ]
 
 
-def _placement_reason(x: float, z: float, restrictions: list[RestrictionZone]) -> list[str]:
+class _ZoneIndex:
+    """Полигоны зон ограничений + STRtree для _placement_reason, построенные
+    ОДИН РАЗ на вызов generate_trees/generate_bushes/generate_lawn, а не на
+    каждую принятую точку. Раньше _placement_reason пересобирала Polygon для
+    ВСЕХ зон заново на каждый вызов -- при тысячах принятых деревьев и
+    десятках тысяч зон (плотные реальные данные, не тестовые локации) это
+    было на порядок дороже, чем сами keep_out/allowed_area вычисления, и
+    было главной причиной, почему generate-greenery не укладывался в разумное
+    время. STRtree.nearest() -- O(log N) вместо линейного перебора всех зон
+    на каждую точку."""
+
+    def __init__(self, restrictions: list[RestrictionZone]):
+        self.polys: list[Polygon] = []
+        self.zones: list[RestrictionZone] = []
+        for zone in restrictions:
+            if len(zone.polygon) < 3:
+                continue
+            poly = Polygon([(p.x, p.z) for p in zone.polygon])
+            if not poly.is_valid:
+                continue
+            self.polys.append(poly)
+            self.zones.append(zone)
+        self.tree = STRtree(self.polys) if self.polys else None
+
+
+def _placement_reason(x: float, z: float, zone_index: "_ZoneIndex") -> list[str]:
     """Человекочитаемое объяснение размещения для metadata.reason -- формат
     из ТЗ п.17 (пример: "внутри зоны озеленения", "4.2 м до водопровода").
     """
     reasons = ["внутри допустимой зоны озеленения"]
-    nearest: tuple[float, RestrictionZone] | None = None
-    for zone in restrictions:
-        if len(zone.polygon) < 3:
-            continue
-        poly = Polygon([(p.x, p.z) for p in zone.polygon])
-        if not poly.is_valid:
-            continue
+    if zone_index.tree is not None:
         pt = Point(x, z)
+        idx = int(zone_index.tree.nearest(pt))
+        poly = zone_index.polys[idx]
+        zone = zone_index.zones[idx]
         distance = 0.0 if poly.contains(pt) else poly.exterior.distance(pt)
-        if nearest is None or distance < nearest[0]:
-            nearest = (distance, zone)
-    if nearest is not None:
-        distance, zone = nearest
         reasons.append(f"{distance:.1f} м до ближайшего ограничения ({zone.name})")
     return reasons
 
@@ -263,6 +329,15 @@ def generate_trees(
 
     min_x, min_z, max_x, max_z = boundary_poly.bounds
 
+    # allowed_area на плотных реальных данных (тысячи зон ограничений) -- это
+    # MultiPolygon с десятками тысяч вершин после unary_union/difference. Без
+    # prepared-геометрии КАЖДЫЙ .contains(point) ниже перебирал бы все её
+    # кольца заново -- на сетке кандидатов в тысячи точек по большому участку
+    # это давало генерацию по 2+ минуты (не укладывалось в таймаут). prep()
+    # строит пространственный индекс один раз для этой же геометрии -- тот же
+    # результат contains(), на порядки быстрее при повторных запросах.
+    allowed_area_ready = prep(allowed_area)
+
     # Регулярная сетка кандидатов -- детерминированно (ТЗ п.16: "deterministic
     # demo generator"), без случайности, чтобы результат был воспроизводим.
     candidates: list[tuple[float, float]] = []
@@ -274,21 +349,26 @@ def generate_trees(
             z += grid_spacing
         x += grid_spacing
 
+    selected_grid = _SpacingGrid(min_spacing)
     selected: list[tuple[float, float]] = []
-    new_objects: list[SceneObject] = []
-    existing_tree_count = sum(1 for o in scene.objects if o.type == "tree")
 
     for cx, cz in candidates:
         point = Point(cx, cz)
-        if not allowed_area.contains(point):
+        if not allowed_area_ready.contains(point):
             continue
-        too_close = any(
-            (cx - sx) ** 2 + (cz - sz) ** 2 < min_spacing**2 for sx, sz in selected
-        )
-        if too_close:
+        if not selected_grid.is_far_enough(cx, cz, min_spacing):
             continue
-
+        selected_grid.add(cx, cz)
         selected.append((cx, cz))
+
+    if len(selected) > MAX_GENERATED_TREES:
+        selected = pick_spread(selected, MAX_GENERATED_TREES, min_spacing)
+
+    new_objects: list[SceneObject] = []
+    existing_tree_count = sum(1 for o in scene.objects if o.type == "tree")
+    zone_index = _ZoneIndex(scene.restrictions)
+
+    for cx, cz in selected:
         index = existing_tree_count + len(new_objects) + 1
         new_objects.append(
             SceneObject(
@@ -302,7 +382,7 @@ def generate_trees(
                     "species": species,
                     "category": "vegetation",
                     "generated": True,
-                    "reason": _placement_reason(cx, cz, scene.restrictions),
+                    "reason": _placement_reason(cx, cz, zone_index),
                 },
             )
         )
@@ -354,6 +434,11 @@ def generate_bushes(
     if allowed_area.is_empty:
         return []
 
+    # см. комментарий у prep() в generate_trees -- тот же приём, нужен здесь
+    # по той же причине (плотные реальные данные -> тысячи проверок contains()
+    # против сложной геометрии).
+    allowed_area_ready = prep(allowed_area)
+
     min_x, min_z, max_x, max_z = boundary_poly.bounds
 
     candidates: list[tuple[float, float]] = []
@@ -376,16 +461,15 @@ def generate_bushes(
     ]
 
     selected_centers: list[tuple[float, float]] = []
+    selected_grid = _SpacingGrid(min_spacing)
     for cx, cz in candidates:
-        too_close = any(
-            (cx - sx) ** 2 + (cz - sz) ** 2 < min_spacing**2 for sx, sz in selected_centers
-        )
-        if too_close:
+        if not selected_grid.is_far_enough(cx, cz, min_spacing):
             continue
         members = [(cx + dx, cz + dz) for dx, dz in member_offsets]
-        if not all(allowed_area.contains(Point(mx, mz)) for mx, mz in members):
+        if not all(allowed_area_ready.contains(Point(mx, mz)) for mx, mz in members):
             continue
         selected_centers.append((cx, cz))
+        selected_grid.add(cx, cz)
 
     # Геометрически годных мест обычно намного больше, чем стоит реально
     # занять кустами (см. докстринг MAX_GENERATED_BUSH_CLUSTERS) -- берём
@@ -396,6 +480,7 @@ def generate_bushes(
 
     new_objects: list[SceneObject] = []
     existing_bush_count = sum(1 for o in scene.objects if o.type == "bush")
+    zone_index = _ZoneIndex(scene.restrictions)
     for cx, cz in selected_centers:
         for dx, dz in member_offsets:
             mx, mz = cx + dx, cz + dz
@@ -411,7 +496,7 @@ def generate_bushes(
                     metadata={
                         "category": "vegetation",
                         "generated": True,
-                        "reason": _placement_reason(mx, mz, scene.restrictions),
+                        "reason": _placement_reason(mx, mz, zone_index),
                     },
                 )
             )
@@ -456,6 +541,9 @@ def generate_lawn(scene: Scene, patch_size_m: Optional[float] = None) -> list[Sc
     if allowed_area.is_empty:
         return []
 
+    # см. комментарий у prep() в generate_trees.
+    allowed_area_ready = prep(allowed_area)
+
     min_x, min_z, max_x, max_z = boundary_poly.bounds
 
     candidates: list[tuple[float, float]] = []
@@ -473,7 +561,7 @@ def generate_lawn(scene: Scene, patch_size_m: Optional[float] = None) -> list[Sc
         # Полное вхождение плитки, а не пересечение -- та же логика, что и у
         # Placer.region_contains в placement.py: частично торчащая за край
         # плитка хуже, чем пропущенное место у самой границы.
-        if allowed_area.contains(tile):
+        if allowed_area_ready.contains(tile):
             fitting.append((cx, cz))
 
     # Та же защита от вырожденно большого результата, что и у кустов выше.
@@ -482,6 +570,7 @@ def generate_lawn(scene: Scene, patch_size_m: Optional[float] = None) -> list[Sc
 
     new_objects: list[SceneObject] = []
     existing_lawn_count = sum(1 for o in scene.objects if o.type == "lawn_patch")
+    zone_index = _ZoneIndex(scene.restrictions)
 
     for cx, cz in fitting:
         index = existing_lawn_count + len(new_objects) + 1
@@ -496,7 +585,7 @@ def generate_lawn(scene: Scene, patch_size_m: Optional[float] = None) -> list[Sc
                 metadata={
                     "category": "groundcover",
                     "generated": True,
-                    "reason": _placement_reason(cx, cz, scene.restrictions),
+                    "reason": _placement_reason(cx, cz, zone_index),
                 },
             )
         )

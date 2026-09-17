@@ -198,15 +198,22 @@ def parse_dxf_endpoint(file: UploadFile = File(...)):
         raise HTTPException(400, "Ожидается файл .dxf")
 
     data = file.file.read()
-    with tempfile.NamedTemporaryFile(suffix=".dxf", delete=True) as tmp:
+    # delete=False + ручной unlink в finally, а не delete=True: на Windows файл,
+    # открытый через NamedTemporaryFile, залочен для повторного открытия по
+    # имени, пока не закрыт хендл -- ezdxf.readfile(tmp.name) ниже падал бы с
+    # PermissionError. На Linux/Mac (delete=True) работало без этой возни.
+    tmp = tempfile.NamedTemporaryFile(suffix=".dxf", delete=False)
+    try:
         tmp.write(data)
-        tmp.flush()
+        tmp.close()
         try:
             scene = parse_dxf_file(tmp.name)
         except Exception as e:
             metrics.dxf_parse_errors_total.inc()
             logging.getLogger("greencity.parse").warning("не удалось разобрать %r: %s", file.filename, e)
             raise HTTPException(400, f"Не удалось разобрать DXF: {e}") from e
+    finally:
+        Path(tmp.name).unlink(missing_ok=True)
 
     metrics.dxf_parses_total.inc()
     logging.getLogger("greencity.parse").info(

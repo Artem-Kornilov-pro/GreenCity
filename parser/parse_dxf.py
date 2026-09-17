@@ -7,7 +7,7 @@
     python3 parse_dxf.py input.dxf --summary
     python3 parse_dxf.py input.dxf --out-dir output
 
-Требуется: pip install ezdxf
+Требуется: pip install ezdxf shapely
 """
 
 import argparse
@@ -19,6 +19,7 @@ from collections import Counter
 from pathlib import Path
 
 import ezdxf
+from shapely.geometry import LineString
 
 # ---------------------------------------------------------------------------
 # КОНФИГУРАЦИЯ — правьте под слои своего конкретного DXF-файла.
@@ -59,6 +60,19 @@ POLYGON_RULES = [
     ("PROTECT",     dict(type="protected_zone",       severity="forbidden", minDistance=1.0, message="Охраняемая зона")),
     ("GRASS",       dict(type="protected_zone",       severity="allowed",   minDistance=0.0, message="Газон — допустимая зона озеленения")),
     ("LAWN",        dict(type="protected_zone",       severity="allowed",   minDistance=0.0, message="Газон — допустимая зона озеленения")),
+    # Открытая земля -- НЕ из плана покрытий (того может не быть вовсе), а
+    # вычислена при склейке DXF как граница участка минус здания/дорога/
+    # тротуар (см. convert_dtset/convert_generic.py::add_ground_zone). Без
+    # неё генератор либо сажал по ВСЕЙ площади границы, включая непокрытые
+    # места без данных (если нет GRASS вообще), либо не сажал нигде за
+    # пределами явно размеченного газона (если план покрытий есть, но
+    # покрывает не весь участок) -- см. историю правок и DWG_TO_DXF_
+    # INTEGRATION_GUIDE.md. severity=allowed, как у газона -- generate-
+    # greenery уже трактует любую allowed-зону как площадку под посадку
+    # (_planting_zone_shapes в backend/greenery_generator.py фильтрует по
+    # severity, не по типу), отдельной правки бэкенда не потребовалось.
+    ("GROUND",      dict(type="protected_zone",       severity="allowed",   minDistance=0.0,
+                          message="Открытая земля — вычислено как участок минус здания/дорога/тротуар")),
 ]
 
 # Слои, задающие границу участка (не ограничение, а boundary для генератора посадок)
@@ -77,6 +91,7 @@ POINT_LAYER_RULES = [
     ("LAMP",       dict(type="lamp",       model="/models/lamp.glb")),
     ("PLAYGROUND", dict(type="playground", model="/models/playground.glb")),
     ("ENTRANCE",   dict(type="entrance",   model="/models/entrance.glb")),
+    ("CROSSWALK",  dict(type="crosswalk",  model="/models/crosswalk.glb")),
 ]
 
 # Слой с 3D-мешами зданий (используется только для высоты)
@@ -88,6 +103,12 @@ FACADE_LAYER_KEYWORDS = {
     "windows": ["WINDOW"],
     "canopies": ["CANOPIES", "CANOPY"],
 }
+
+# Слои с бордюрами -- тоже не самостоятельные объекты (их сотни отрезков на
+# участок, не переставляются), а линии для схематичной отрисовки прямо на
+# земле (см. extract_curb_polylines). Тот же принцип, что у FACADE_LAYER_KEYWORDS
+# выше, только 2D-полилинии вместо 3D-квадов.
+CURB_LAYER_KEYWORDS = ["CURB", "KERB", "BORDER_STONE"]
 
 # Единицы DXF ($INSUNITS) -> метры
 INSUNITS_TO_METERS = {0: 1.0, 1: 0.0254, 2: 0.3048, 4: 0.001, 5: 0.01, 6: 1.0, 8: 0.9144}
@@ -145,6 +166,31 @@ def buffer_segment(x1, y1, x2, y2, half_width):
     nx, ny = -dy / length * half_width, dx / length * half_width
     return [(x1 + nx, y1 + ny, 0.0), (x2 + nx, y2 + ny, 0.0),
             (x2 - nx, y2 - ny, 0.0), (x1 - nx, y1 - ny, 0.0)]
+
+
+def buffer_polyline(pts, half_width):
+    """Открытая ломаная (труба/кабель с несколькими изгибами) -> ОДИН
+    буферизованный коридор вдоль всей трассы шириной 2*half_width, а не
+    прямоугольник на каждый отдельный сегмент. На плотно оцифрованных сетях
+    (сотни точек на трассу) сегмент-за-сегментом даёт десятки тысяч мелких
+    зон вместо одной — не только медленнее (unary_union в generate-greenery),
+    но и геометрически хуже (щели/наслоения на изгибах вместо гладкого
+    коридора). Возвращает список (x, y, 0.0) точек контура или None."""
+    cleaned = []
+    for x, y, *_ in pts:
+        if cleaned and math.hypot(x - cleaned[-1][0], y - cleaned[-1][1]) < 1e-6:
+            continue  # дубли подряд и чисто вертикальные стояки (Z меняется, XY нет)
+        cleaned.append((x, y))
+    if len(cleaned) < 2:
+        return None
+    buffered = LineString(cleaned).buffer(half_width, cap_style=2, join_style=2)
+    if buffered.is_empty:
+        return None
+    if buffered.geom_type == "MultiPolygon":
+        buffered = max(buffered.geoms, key=lambda g: g.area)
+    if buffered.geom_type != "Polygon":
+        return None
+    return [(x, y, 0.0) for x, y in list(buffered.exterior.coords)[:-1]]
 
 
 class Transform:
@@ -224,10 +270,17 @@ def _add_zone(zones, idx_by_type, cfg, layer, pts_xyz, tf):
 
 def extract_restrictions(msp, tf):
     """Закрытые LWPOLYLINE/POLYLINE -> зона-полигон как есть.
-    LINE и открытые (не замкнутые) POLYLINE -> трактуются как трасса трубы/кабеля
-    и раздуваются в прямоугольный коридор шириной 2*minDistance. Строго вертикальные
-    участки (стояки-подключения к зданию, где меняется только Z) пропускаются —
-    это не горизонтальное ограничение в плане XZ."""
+    Открытые (не замкнутые) LWPOLYLINE/POLYLINE -> трасса трубы/кабеля, вся
+    целиком раздувается в ОДИН коридор шириной 2*minDistance (buffer_polyline)
+    -- не по сегменту на каждое звено ломаной: на плотно оцифрованных сетях
+    (сотни вершин на трассу) сегмент-за-сегментом давал десятки тысяч мелких
+    зон вместо одной, что на реальных данных (не только тестовых локациях)
+    оказалось непрактично медленным для generate-greenery (unary_union). LINE
+    -- отдельная сущность без соседей, буферизуется поштучно (buffer_segment).
+    Строго вертикальные участки (стояки-подключения к зданию, где меняется
+    только Z) выпадают уже на этапе дедупликации точек по XY внутри
+    buffer_polyline/сравнения координат LINE -- это не горизонтальное
+    ограничение в плане XZ."""
     zones = []
     idx_by_type = Counter()
 
@@ -244,12 +297,9 @@ def extract_restrictions(msp, tf):
             if len(pts) >= 3:
                 _add_zone(zones, idx_by_type, cfg, layer, pts, tf)
         else:
-            for (x1, y1, _z1), (x2, y2, _z2) in zip(pts, pts[1:]):
-                if math.hypot(x2 - x1, y2 - y1) < 1e-6:
-                    continue  # чисто вертикальный стояк — не ограничение в плане
-                seg = buffer_segment(x1, y1, x2, y2, cfg["minDistance"])
-                if seg:
-                    _add_zone(zones, idx_by_type, cfg, layer, seg, tf)
+            corridor = buffer_polyline(pts, cfg["minDistance"])
+            if corridor:
+                _add_zone(zones, idx_by_type, cfg, layer, corridor, tf)
 
     for e in msp.query("LINE"):
         layer = e.dxf.layer
@@ -426,6 +476,28 @@ def extract_facade_quads(msp, tf):
     return result
 
 
+def extract_curb_polylines(msp, tf):
+    """LWPOLYLINE/POLYLINE/LINE на слоях-бордюрах -- не зона ограничения и не
+    самостоятельный объект, а линии для схематичной ribbon-отрисовки прямо на
+    земле (см. frontend CurbStrips.tsx). Каждая полилиния -- список 2D-точек
+    (в отличие от фасадных квадов: бордюр лежит на земле, высота не нужна)."""
+    result = []
+    for e in msp.query("LWPOLYLINE POLYLINE"):
+        if not layer_matches(e.dxf.layer, CURB_LAYER_KEYWORDS):
+            continue
+        pts = polygon_points(e)
+        if len(pts) >= 2:
+            result.append(tf.polygon(pts))
+    for e in msp.query("LINE"):
+        if not layer_matches(e.dxf.layer, CURB_LAYER_KEYWORDS):
+            continue
+        s, en = e.dxf.start, e.dxf.end
+        if math.hypot(en.x - s.x, en.y - s.y) < 1e-6:
+            continue
+        result.append(tf.polygon([(s.x, s.y, 0.0), (en.x, en.y, 0.0)]))
+    return result
+
+
 # ---------------------------------------------------------------------------
 
 def parse_dxf_doc(doc, scale=None, center=True):
@@ -453,6 +525,7 @@ def parse_dxf_doc(doc, scale=None, center=True):
     points = extract_point_objects(msp, tf)
     objects = buildings + points
     facade = extract_facade_quads(msp, tf)
+    curbs = extract_curb_polylines(msp, tf)
 
     return {
         "boundary": boundary,
@@ -460,6 +533,7 @@ def parse_dxf_doc(doc, scale=None, center=True):
         "objects": objects,
         "windows": facade["windows"],
         "canopies": facade["canopies"],
+        "curbs": curbs,
         "meta": {
             "scale": resolved_scale,
             "insunits": insunits,
@@ -513,6 +587,8 @@ def main():
     (out_dir / "facade.json").write_text(
         json.dumps({"windows": result["windows"], "canopies": result["canopies"]},
                     ensure_ascii=False, indent=2), encoding="utf-8")
+    (out_dir / "curbs.json").write_text(
+        json.dumps(result["curbs"], ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"Масштаб: {meta['scale']} м/ед. (INSUNITS={meta['insunits']}), "
           f"origin=({meta['origin']['x']:.2f}, {meta['origin']['y']:.2f})")
@@ -520,6 +596,7 @@ def main():
     print(f"restrictions.json  — {len(restrictions)} зон")
     print(f"objects.json       — {len(objects)} объектов ({len(buildings)} зданий, {len(points)} точечных)")
     print(f"facade.json        — {len(result['windows'])} окон, {len(result['canopies'])} граней козырьков")
+    print(f"curbs.json         — {len(result['curbs'])} бордюров")
     print(f"\nЗаписано в {out_dir.resolve()}")
 
 

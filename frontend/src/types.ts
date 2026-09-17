@@ -53,11 +53,16 @@ export interface SceneMeta {
 // перетаскиваются), рисуются напрямую как геометрия на фасаде здания.
 export type FacadeQuad = Point3[];
 
+// Бордюр — ломаная линия по земле (2D, без высоты). Тот же принцип, что у
+// FacadeQuad: не самостоятельный объект, схематичная ribbon-геометрия.
+export type CurbPolyline = Point2[];
+
 export interface Scene {
   boundary: Boundary | null;
   restrictions: RestrictionZone[];
   objects: SceneObject[];
   windows: FacadeQuad[];
   canopies: FacadeQuad[];
+  curbs: CurbPolyline[];
   meta: SceneMeta;
 }
