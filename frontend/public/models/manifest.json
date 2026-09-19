@@ -63,6 +63,12 @@
     "/models/mountainpine_1.glb",
     "/models/coniferlow_1.glb",
     "/models/tallshrub_1.glb",
-    "/models/archingshrub_1.glb"
+    "/models/archingshrub_1.glb",
+    "/models/weepingtree_1.glb",
+    "/models/dogwoodshrub_1.glb",
+    "/models/silvershrub_1.glb",
+    "/models/vineclematis_1.glb",
+    "/models/vineclimbing_1.glb",
+    "/models/vinelargeleaf_1.glb"
   ]
 }
