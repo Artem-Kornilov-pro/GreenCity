@@ -68,8 +68,26 @@ jobs:
       # реально стартует и работает". .env не нужен: JWT_SECRET берёт
       # дев-заглушку (auth.py), LLM недоступна и отвечает понятной ошибкой --
       # оба случая уже штатно обработаны кодом, не CI-специфичный костыль.
+      # docker compose up сам по себе не повторяет попытку -- если реестр
+      # образов (Docker Hub) на секунду оборвал соединение при скачивании
+      # готового образа (mongo/redis/prometheus/loki/promtail/grafana), вся
+      # джоба падает, хотя к коду PR это отношения не имеет (см. README про
+      # authentication required/toomanyrequests -- тот же класс временного
+      # сбоя реестра, здесь просто connection reset). docker compose down -v
+      # между попытками -- чтобы повтор стартовал с чистого состояния, а не
+      # наткнулся на уже частично поднятые контейнеры прошлой попытки.
       - name: Поднять весь стек
-        run: docker compose up -d
+        run: |
+          for attempt in 1 2 3; do
+            if docker compose up -d; then
+              exit 0
+            fi
+            echo "::warning::docker compose up упал (попытка $attempt/3) -- похоже на временный сбой реестра образов, не код проекта"
+            docker compose down -v || true
+            sleep 15
+          done
+          echo "::error::docker compose up не поднялся за 3 попытки"
+          exit 1
 
       - name: Дождаться healthy всех сервисов
         run: |
