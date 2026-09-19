@@ -77,3 +77,19 @@ def test_multiple_objects_and_zones_find_exactly_the_real_violations():
     scene = make_scene(restrictions=[building, road], objects=[close_to_building, far_from_everything, close_to_road])
     violations = {v.object_id for v in find_violations(scene)}
     assert violations == {"t1", "t3"}
+
+
+def test_finds_all_zones_within_reach_not_just_the_nearest():
+    # Регрессия на выбор STRtree.query() вместо .nearest() (см. докстринг
+    # модуля про _build_zone_index): точка ровно между двумя зданиями,
+    # в 1 м от края каждого -- норма для дерева 5 м, значит нарушает ОБЕ
+    # зоны одновременно, а не только ближайшую из них.
+    building_a = make_zone(id="a", type="building", min_distance=1.5)  # [-5,5]x[-5,5]
+    building_b = make_zone(
+        id="b", type="building", min_distance=1.5,
+        polygon=[Point2(x=7, z=-5), Point2(x=17, z=-5), Point2(x=17, z=5), Point2(x=7, z=5)],
+    )
+    tree = make_object("t1", "tree", 6, 0)  # 1 м от края обоих зданий
+    scene = make_scene(restrictions=[building_a, building_b], objects=[tree])
+    zone_ids = {v.zone_id for v in find_violations(scene)}
+    assert zone_ids == {"a", "b"}

@@ -15,6 +15,15 @@ FastAPI-бэкенд для веб-редактора озеленения. Эн
     POST /api/export-dxf        -- JSON-сцена -> файл .dxf (export_dxf.py; ТЗ:
                                     "итоговый план должен экспортироваться
                                     обратно в формат DXF")
+    POST /api/greenplan/generate -- автоозеленение по прошлым проектам
+                                    (GreenPlan, issue #23): сцена -> сцена с
+                                    новыми объектами + решения по зонам +
+                                    список нарушений норм + ассортимент.
+                                    Быстро (доли секунды) и без LLM.
+    POST /api/greenplan/report  -- текст-объяснение решений (Этап 6) по
+                                    списку из /api/greenplan/generate, через
+                                    локальную LLM (mistral:7b/Ollama, ~30 с,
+                                    отдельно, чтобы не блокировать генерацию)
     POST /api/auth/register,
     POST /api/auth/login        -- логин/пароль, без почты (auth.py, projects.py);
                                     выдают access- и refresh-токен (см. auth.py)
@@ -47,8 +56,11 @@ import cache
 import db
 import metrics
 import projects as projects_service
+from assortment_report import AssortmentRow, summarize_assortment
 from auth import AuthError, CurrentUser, decode_token, refresh_access_token, require_user
 from building_setbacks import compute_building_setbacks
+from decision_report import DecisionReportUnavailable, generate_report
+from deterministic_placement import generate_for_scene
 from export_dxf import scene_to_dxf
 from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -76,10 +88,11 @@ from llm_editor import (
     edit_scene_with_text,
 )
 from logging_config import RequestLoggingMiddleware, configure_logging
-from plant_catalog import CatalogItem, load_catalog
+from pattern_assignment import ZoneAssignment
+from plant_catalog import CatalogItem, catalog_by_id, load_catalog
 from projects import NotFoundError, ProjectsError
 from prometheus_fastapi_instrumentator import Instrumentator
-from pydantic import TypeAdapter
+from pydantic import BaseModel, TypeAdapter
 from pymongo.errors import PyMongoError
 from schemas import Scene
 from schemas_auth import (
@@ -94,6 +107,7 @@ from schemas_auth import (
     RefreshRequest,
     RegisterRequest,
 )
+from violation_report import Violation, find_violations
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "parser"))
 from parse_dxf import parse_dxf_file  # noqa: E402
@@ -365,6 +379,82 @@ def generate_greenery(
 
     logging.getLogger("greencity.generate").info("сгенерировано озеленение: %d новых объектов", generated_count)
     return scene
+
+
+class GreenPlanGenerateResult(BaseModel):
+    scene: Scene
+    assignments: list[ZoneAssignment]
+    violations: list[Violation]
+    assortment: list[AssortmentRow]
+
+
+# Синхронный def -- то же обоснование, что и у generate_greenery выше:
+# deterministic_placement/violation_report/assortment_report -- чистая
+# CPU-геометрия, ни одного await. НАМЕРЕННО без текста-отчёта (LLM) -- тот
+# вынесен в отдельный /api/greenplan/report ниже: расстановка/нарушения/
+# ведомость считаются за доли секунды (find_violations -- через STRtree,
+# см. violation_report.py), а вызов Ollama занимает ~30 секунд сам по себе.
+# Раньше оба шага были одним запросом, и фронтенд ждал уже готовый результат
+# все эти 30 секунд ради текста, который к самой расстановке не относится.
+@app.post("/api/greenplan/generate", response_model=GreenPlanGenerateResult)
+def greenplan_generate(scene: Scene, k: int = Query(default=3, ge=1, le=9, description="Число ближайших проектов-соседей для retrieval.")):
+    """Автоозеленение по прошлым проектам (GreenPlan, issue #23, Этапы 3-6) --
+    в отличие от /api/generate-greenery (сетка без понимания похожих
+    проектов), здесь паттерн для каждой геометрической зоны участка выбирается
+    по тому, что реально делали архитекторы на похожих участках из
+    retrieval-корпуса (backend/pattern_corpus.py), расстановка полностью
+    детерминирована (backend/deterministic_placement.py).
+
+    Каталог видов не параметризуется с фронта -- берутся все деревья/кусты
+    базового каталога (backend/plant_catalog.py) по категории.
+
+    Текст-объяснение -- отдельным запросом, см. /api/greenplan/report ниже:
+    он занимает ~30 секунд (локальная LLM) и не должен блокировать уже
+    готовый детерминированный результат.
+    """
+    catalog = load_catalog()
+    trees = [c for c in catalog if c.category == "tree"]
+    bushes = [c for c in catalog if c.category == "bush" and c.object_type == "bush"]
+
+    new_objects, assignments = generate_for_scene(scene, trees, bushes, k)
+    scene.objects = [*scene.objects, *new_objects]
+
+    logging.getLogger("greencity.greenplan").info(
+        "GreenPlan: %d новых объектов, %d зон", len(new_objects), len(assignments)
+    )
+
+    return GreenPlanGenerateResult(
+        scene=scene,
+        assignments=assignments,
+        violations=find_violations(scene),
+        assortment=summarize_assortment(new_objects, catalog_by_id()),
+    )
+
+
+class GreenPlanReportResult(BaseModel):
+    report: Optional[str]
+    report_error: Optional[str]
+
+
+# Синхронный def -- клиент openai блокирующий (как и у /api/edit-with-text
+# ниже), FastAPI уводит в пул потоков; сам вызов -- ~30 секунд (mistral:7b
+# локально), поэтому отдельный от /api/greenplan/generate эндпоинт: фронтенд
+# показывает уже готовую расстановку сразу и дотягивает текст в фоне, не
+# блокируя ничего остальным ожиданием LLM.
+@app.post("/api/greenplan/report", response_model=GreenPlanReportResult)
+def greenplan_report(assignments: list[ZoneAssignment]):
+    """Текст-объяснение решений GreenPlan (Этап 6) через локальную LLM
+    (mistral:7b/Ollama, backend/decision_report.py) -- по списку решений,
+    уже посчитанному /api/greenplan/generate (передаётся сюда как есть, не
+    пересчитывается). Недоступность Ollama -- не ошибка запроса: 200 с
+    report=None и понятной report_error, а не 500."""
+    try:
+        report = generate_report(assignments)
+        metrics.greenplan_generate_total.labels(report_outcome="success").inc()
+        return GreenPlanReportResult(report=report, report_error=None)
+    except DecisionReportUnavailable as e:
+        metrics.greenplan_generate_total.labels(report_outcome="unavailable").inc()
+        return GreenPlanReportResult(report=None, report_error=str(e))
 
 
 # Синхронный def, а не async: клиент openai блокирующий, и FastAPI сам уводит

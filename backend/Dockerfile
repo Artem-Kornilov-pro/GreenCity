@@ -11,6 +11,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY parser/ ./parser/
 COPY backend/ ./backend/
+# GreenPlan retrieval-корпус (backend/pattern_corpus.py читает
+# locations/<slug>/<slug>.dxf и data/pattern_corpus.yaml по относительному от
+# backend/ пути) -- в dev-режиме (docker-compose, --reload) эти же два
+# каталога приходят volume-мountом поверх этой COPY, здесь она нужна для
+# продакшен-сборки (UVICORN_WORKERS>1, без volume'ов вовсе).
+COPY locations/ ./locations/
+COPY data/ ./data/
 
 WORKDIR /app/backend
 EXPOSE 8000
