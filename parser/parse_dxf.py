@@ -20,7 +20,7 @@ from pathlib import Path
 
 import ezdxf
 import shapely
-from shapely.geometry import LineString
+from shapely.geometry import LineString, Polygon
 
 # ---------------------------------------------------------------------------
 # КОНФИГУРАЦИЯ — правьте под слои своего конкретного DXF-файла.
@@ -45,6 +45,19 @@ POLYGON_RULES = [
     ("GAS",         dict(type="gas_pipeline",         severity="forbidden", minDistance=2.0, message="Охранная зона газопровода")),
     ("SEWER",       dict(type="sewer",                severity="forbidden", minDistance=3.0, message="Охранная зона канализации")),
     ("WATER",       dict(type="water_pipeline",       severity="forbidden", minDistance=3.0, message="Охранная зона водопровода")),
+    # Слаботочка (связь/телефон/оптика) -- НЕ то же самое ограничение, что
+    # силовой кабель: тонкий кабель без высокого напряжения, повреждение
+    # корнями/при раскопке не несёт той же опасности (нет риска поражения
+    # током/пожара), поэтому нормы дают заметно меньший отступ, не как у
+    # силовых линий. Проверяется ДО общего "ELECTR"/"CABLE" ниже — иначе те
+    # перехватят совпадение первыми (слой называется "ELECTR_CABLE_COMM",
+    # содержит подстроку "ELECTR"). severity=warning (не блокирует посадку
+    # как таковую), а не forbidden, как у силовой сети. Найдено на проекте
+    # 11 (Фрунзенская набережная, см. DWG_TO_DXF_INTEGRATION_GUIDE.md п.11.1):
+    # тип "electrical" в одиночку перекрывал 83% площади участка из-за
+    # смешения силового кабеля и кабеля связи в один и тот же forbidden-тип.
+    ("CABLE_COMM",  dict(type="signal_cable",         severity="warning",   minDistance=0.5,
+                          message="Кабель связи — слаботочная сеть, отступ меньше, чем у силового кабеля")),
     ("ELECTR",      dict(type="electrical",           severity="forbidden", minDistance=2.0, message="Охранная зона электросети")),
     # Наземные ЛЭП (провода подвешены на опорах, ~9м над землёй) -- это НЕ то же
     # самое ограничение, что подземный кабель: под ними можно копать/сажать,
@@ -287,27 +300,175 @@ def _merge_corridors(zones, idx_by_type, corridors, tf):
                 _add_zone(zones, idx_by_type, cfg, layer, pts, tf)
 
 
-def extract_restrictions(msp, tf):
-    """Закрытые LWPOLYLINE/POLYLINE -> зона-полигон как есть.
+# То же дробление, что чинит _merge_corridors выше, но для УЖЕ ЗАМКНУТЫХ
+# контуров (газон, тротуарная плитка, дорожное полотно) -- рукописные
+# тестовые DXF (locations/location_old/) отдавали такие слои одним
+# полигоном на весь участок, поэтому раньше _add_zone вызывался прямо на
+# каждый замкнутый контур без объединения. Реальные конвертированные файлы
+# (locations/, issue #23) это предположение ломают: на 06_kamchatskaya_ulitsa
+# один слой GRASS -- это 5751 отдельный контур (по куску газона на каждый
+# фрагмент благоустройства в исходных данных), и после Этап 3/4 (см.
+# site_characterization.py/zone_partitioning.py) с россыпью зон такого
+# размера тем более не сработать: retrieval и разбиение на geometric-type
+# зоны считают на ОДНОЙ объединённой площади, а не на тысяче стыкующихся
+# осколков.
+#
+# Ту же порцию данных портит и низкое качество самой конвертации: заметная
+# часть контуров на GRASS оказывается самопересекающейся или вырожденной
+# (нулевая площадь) -- на 06_kamchatskaya_ulitsa валидных контуров с ненулевой
+# площадью среди 5751 меньше 600. poly.buffer(0) чинит самопересечения тем же
+# приёмом, что и building_setbacks.py; неисправимо вырожденные (buffer(0)
+# всё равно пуст) отбрасываются молча -- это не потерянные данные, а
+# нулевая площадь, вносить в JSON нечего.
+#
+# Простой union_all соседних кусков не склеивает: соседние плитки/сегменты
+# дороги в исходнике сходятся не край-в-край, а с зазором в доли сантиметра
+# (артефакт конвертации, не реальный разрыв) -- на слое ROAD того же файла
+# 1630 валидных контуров, а после union_all остаётся 908, вместо ожидаемых
+# нескольких десятков связных проездов. "Замыкание" (buffer наружу на
+# _POLYGON_CLOSING_GAP_M, union, buffer обратно внутрь на ту же величину)
+# перекрывает такие зазоры и даёт 134 -- при росте суммарной площади всего на
+# 0.9% (замерено на том же файле/слое). Величина зазора -- сантиметр, на
+# порядок меньше любого нормативного отступа в setback_norms.py, поэтому
+# приклеить два физически разных объекта эта операция не может.
+#
+# quad_segs=4 (не дефолтные 8) -- та же экономия, что и в _merge_corridors,
+# и тем более нужна здесь: слоёв тут сотни-тысячи полигонов (GRASS на
+# 06_kamchatskaya_ulitsa -- 5751), и unary_union после buffer(quad_segs=8)
+# на них уходил в 5-10 раз дольше при не сильно лучшем результате (замерено:
+# quad_segs=8 -- 433 итоговых полигона за 5.7с, quad_segs=4 -- 608 за 0.65с
+# на том же слое). Буферим ВЕКТОРИЗОВАННЫМ shapely.buffer(list, ...), а не
+# циклом p.buffer(...) -- тот же приём, что в _merge_corridors, там же и
+# объяснение, почему это быстрее.
+_POLYGON_CLOSING_GAP_M = 0.01
+_POLYGON_CLOSING_QUAD_SEGS = 4
+
+
+def _merge_polygon_zones(zones, idx_by_type, polygon_zones, tf):
+    for layer, (cfg, polys) in polygon_zones.items():
+        if not polys:
+            continue
+        buffered = shapely.buffer(polys, _POLYGON_CLOSING_GAP_M, quad_segs=_POLYGON_CLOSING_QUAD_SEGS)
+        merged = shapely.union_all(buffered).buffer(
+            -_POLYGON_CLOSING_GAP_M, quad_segs=_POLYGON_CLOSING_QUAD_SEGS
+        )
+        if merged.is_empty:
+            continue
+        result_polys = merged.geoms if merged.geom_type == "MultiPolygon" else [merged]
+        for poly in result_polys:
+            # Дырки теряются -- тот же компромисс, что в _merge_corridors, и по
+            # той же причине (схема зоны не хранит внутренние контуры).
+            pts = list(poly.exterior.coords)[:-1]
+            if len(pts) >= 3:
+                _add_zone(zones, idx_by_type, cfg, layer, pts, tf)
+
+
+# Максимальная суммарная "дальнобойность" зоны от её собственной геометрии:
+# minDistance при разметке (максимум в POLYGON_RULES -- 3.0, sewer/water) +
+# отступ по виду посадки, добавляемый ПОЗЖЕ генератором (максимум в
+# setback_norms.SETBACK_NORMS -- 5.0, building/tree) = 8.0 м в худшем случае.
+# Дальше зона участка вообще не касается ни при какой посадке. Берём с
+# запасом в 2.5 раза, а не впритык -- граница не всегда идеально ровная
+# (углы, выступы), и обрезка не обязана быть хирургически точной, ей важно
+# отсечь именно общегородскую подложку в сотнях метров, а не сэкономить
+# сантиметры у самого края.
+_RESTRICTION_RELEVANCE_MARGIN_M = 20.0
+
+
+def _clip_offsite_zones(zones, boundary):
+    """Обрезает зоны по _RESTRICTION_RELEVANCE_MARGIN_M от границы участка --
+    см. докстринг boundary в extract_restrictions про то, откуда берётся
+    посторонняя геометрия. Здания не трогаем: см. там же.
+
+    ОБРЕЗАЕТ, а не просто отбрасывает целиком: сеть на общегородской
+    подложке -- это один непрерывный коридор в сотни метров, который своим
+    небольшим куском всё же заходит в разрешённую область (иначе не было бы
+    смысла его вообще учитывать) -- intersects() на всей зоне был бы True, и
+    ничего бы не отсеялось, хотя 95% её площади к участку отношения не
+    имеет. intersection() с регионом оставляет только релевantный кусок,
+    остальное просто не входит в результат."""
+    if boundary is None or len(boundary["polygon"]) < 3:
+        return zones
+    site = Polygon([(p["x"], p["z"]) for p in boundary["polygon"]])
+    if not site.is_valid or site.area == 0:
+        return zones
+    region = site.buffer(_RESTRICTION_RELEVANCE_MARGIN_M)
+
+    result = []
+    for zone in zones:
+        if zone["type"] == "building" or len(zone["polygon"]) < 3:
+            result.append(zone)
+            continue
+        poly = Polygon([(p["x"], p["z"]) for p in zone["polygon"]])
+        if not poly.is_valid or region.contains(poly):
+            result.append(zone)
+            continue
+        clipped = poly.intersection(region)
+        if clipped.is_empty:
+            continue
+        parts = clipped.geoms if clipped.geom_type == "MultiPolygon" else [clipped]
+        for part in parts:
+            pts = list(part.exterior.coords)[:-1]
+            if len(pts) < 3:
+                continue
+            new_zone = dict(zone)
+            new_zone["polygon"] = [{"x": round(x, 3), "z": round(z, 3)} for x, z in pts]
+            result.append(new_zone)
+
+    # Переприсваиваем id заново по типу -- клип мог развалить одну зону на
+    # несколько кусков (MultiPolygon), старые id из _add_zone на них не
+    # годятся (либо дубли, либо пропуски).
+    idx_by_type = Counter()
+    for zone in result:
+        idx_by_type[zone["type"]] += 1
+        zone["id"] = f"{zone['type']}_{idx_by_type[zone['type']]:03d}"
+    return result
+
+
+def extract_restrictions(msp, tf, boundary=None):
+    """Закрытые LWPOLYLINE/POLYLINE -> зона-полигон, объединённая по слою
+    (см. _merge_polygon_zones) -- НЕ как есть по одной сущности, вопреки тому,
+    что можно было бы предположить по рукописным тестовым файлам
+    (locations/location_old/), где такой слой всегда ровно один полигон на
+    весь участок. Реальные конвертированные DXF (locations/) это ломают:
+    один слой газона может прийти тысячами мелких кусков.
 
     LINE и открытые (не замкнутые) POLYLINE -> трасса трубы/кабеля. Все трассы
     ОДНОГО СЛОЯ собираются вместе и раздуваются в коридоры шириной 2*minDistance
     одним буфером с объединением (см. _merge_corridors), а не по зоне на
     сущность и тем более не по зоне на звено ломаной.
 
-    Дробление тут било дважды. По звену ломаной -- это десятки тысяч мелких зон
+    Дробление тут било трижды. По звену ломаной -- это десятки тысяч мелких зон
     на плотно оцифрованной сети, непрактично медленно для unary_union в
     generate-greenery, плюс щели и наслоения на изгибах вместо гладкого
     коридора. По сущности -- уже лучше, но конвертер выдаёт трассу разрезанной
     на сотни отдельных полилиний (17745 штук на участок в 20 улиц), и зон всё
-    равно оставались тысячи. Объединение по слою закрывает оба случая разом:
-    слой -- это один тип сети с одними и теми же параметрами охранной зоны.
+    равно оставались тысячи. По уже ЗАМКНУТОМУ контуру (газон, плитка, дорога)
+    -- третий случай, тот же симптом на других слоях (см. _merge_polygon_zones).
+    Объединение по слою закрывает все три случая разом: слой -- это один тип
+    зоны с одними и теми же параметрами охранной зоны.
 
     Строго вертикальные участки (стояки-подключения к зданию, где меняется
-    только Z) пропускаются -- это не горизонтальное ограничение в плане XZ."""
+    только Z) пропускаются -- это не горизонтальное ограничение в плане XZ.
+
+    boundary -- уже посчитанная extract_boundary() граница участка (в
+    масштабе сцены, тем же tf). Если передана, зоны обрезаются по
+    _RESTRICTION_RELEVANCE_MARGIN_M от неё в самом конце (см.
+    _clip_offsite_zones) -- реальные конвертированные файлы (не рукописные
+    тестовые) тянут инженерные сети из общегородской подложки без обрезки по
+    границе: на 11_frunzenskaya_naberezhnaya и 13_kharkovsky_proezd (оба --
+    узкие вытянутые участки, набережная и проезд) сети покрывают полосу в
+    сотни метров ПО ОБЕ СТОРОНЫ от участка, и из-за узкой формы самого
+    участка их отступы перекрывают его насквозь -- generate_trees находил
+    место для 2 и 0 деревьев соответственно на гектарах площади. Здания в
+    фильтр не попадают: сколько бы сеть ни простиралась за границу, здание
+    вне участка -- это не полезная зона ограничения, а посторонний объект,
+    filtering для них не нужен (в этих файлах их и не оказалось за
+    границей)."""
     zones = []
     idx_by_type = Counter()
     corridors = {}
+    polygon_zones = {}
 
     def add_line(layer, cfg, coords):
         if len(coords) < 2:
@@ -326,6 +487,20 @@ def extract_restrictions(msp, tf):
             return
         corridors.setdefault(layer, (cfg, []))[1].append(coords)
 
+    def add_closed_polygon(layer, cfg, pts):
+        # Здания -- та же причина, что и в add_line: по одному объекту сцены
+        # на здание (extract_buildings), слияние соседних домов в один
+        # полигон превратило бы два дома в один.
+        if cfg["type"] == "building":
+            _add_zone(zones, idx_by_type, cfg, layer, pts, tf)
+            return
+        poly = Polygon([(x, y) for x, y, *_ in pts])
+        if not poly.is_valid:
+            poly = poly.buffer(0)
+        if poly.is_empty or poly.area <= 0:
+            return
+        polygon_zones.setdefault(layer, (cfg, []))[1].append(poly)
+
     for e in msp.query("LWPOLYLINE POLYLINE"):
         layer = e.dxf.layer
         if layer_matches(layer, BOUNDARY_LAYER_KEYWORDS) or layer_matches(layer, SKIP_LAYER_KEYWORDS):
@@ -337,7 +512,7 @@ def extract_restrictions(msp, tf):
         pts = polygon_points(e)
         if is_closed:
             if len(pts) >= 3:
-                _add_zone(zones, idx_by_type, cfg, layer, pts, tf)
+                add_closed_polygon(layer, cfg, pts)
         else:
             # Ломаная режется на куски только там, где идёт чисто вертикальный
             # стояк: он не ограничение в плане, но и склеивать через него
@@ -367,7 +542,8 @@ def extract_restrictions(msp, tf):
         add_line(layer, cfg, [(s.x, s.y), (en.x, en.y)])
 
     _merge_corridors(zones, idx_by_type, corridors, tf)
-    return zones
+    _merge_polygon_zones(zones, idx_by_type, polygon_zones, tf)
+    return _clip_offsite_zones(zones, boundary)
 
 
 def nearest_text(x, y, texts):
@@ -471,8 +647,15 @@ def extract_point_objects(msp, tf):
                 "metadata": {"blockName": getattr(e.dxf, "name", None), "sourceLayer": e.dxf.layer},
             })
 
-        # LINE (столб от земли вверх) + CIRCLE (плафон на верхушке) в одном месте -> один объект
-        if lines and circles and not inserts_or_points:
+        # LINE (столб от земли вверх) + CIRCLE (плафон на верхушке) в одном месте -> один объект.
+        # НЕ требуем "and not inserts_or_points": это разные сущности одного
+        # DXF-типа (LINE/CIRCLE против INSERT/POINT), а не альтернативные
+        # прочтения одних и тех же данных -- на одном слое может быть и то,
+        # и другое одновременно (19_2ya_pryadilnaya: 443 "голых" CIRCLE-дерева
+        # из исходной топосъёмки + INSERT-деревья, добавленные поверх). Раньше
+        # с "and not inserts_or_points" появление хотя бы одного INSERT на
+        # слое молча выбрасывало ВСЕ CIRCLE-объекты того же слоя.
+        if lines and circles:
             seen = set()
             for ln in lines:
                 x, y = round(ln.dxf.start.x, 3), round(ln.dxf.start.y, 3)
@@ -497,8 +680,9 @@ def extract_point_objects(msp, tf):
                 })
 
         # Одиночные CIRCLE без пары LINE -- просто маркер точки (напр. дверь
-        # подъезда на слое ENTRANCES), а не фонарный столб.
-        elif circles and not lines and not inserts_or_points:
+        # подъезда на слое ENTRANCES), а не фонарный столб. Та же правка, что
+        # и выше: не требуем "and not inserts_or_points".
+        elif circles and not lines:
             for c in circles:
                 counters[cfg["type"]] += 1
                 objects.append({
@@ -572,7 +756,7 @@ def parse_dxf_doc(doc, scale=None, center=True):
     tf = Transform(scale=resolved_scale, origin_x=origin_x, origin_y=origin_y)
 
     boundary = extract_boundary(msp, tf)
-    restrictions = extract_restrictions(msp, tf)
+    restrictions = extract_restrictions(msp, tf, boundary)
     buildings = extract_buildings(msp, tf, restrictions)
     points = extract_point_objects(msp, tf)
     objects = buildings + points

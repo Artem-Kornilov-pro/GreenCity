@@ -31,6 +31,7 @@ from parse_dxf import (
     polygon_points,
     print_summary,
 )
+from shapely.geometry import Polygon
 
 # --- layer_matches / match_rule ------------------------------------------
 
@@ -181,6 +182,151 @@ def test_extract_restrictions_closed_polygon_becomes_one_zone(empty_doc):
     assert len(zones) == 1
     assert zones[0]["type"] == "building"
     assert zones[0]["severity"] == "forbidden"
+
+
+def test_extract_restrictions_single_non_building_closed_polygon_becomes_one_zone(empty_doc):
+    # Здание идёт напрямую в _add_zone (см. тест выше) -- не-здание проходит
+    # через _merge_polygon_zones даже когда оно единственное на слое; на
+    # тривиальном случае (один контур) объединение должно быть no-op.
+    msp = empty_doc.modelspace()
+    msp.add_lwpolyline([(0, 0), (10, 0), (10, 10), (0, 10)], close=True, dxfattribs={"layer": "GRASS"})
+    zones = extract_restrictions(msp, Transform())
+    assert len(zones) == 1
+    assert zones[0]["type"] == "protected_zone"
+
+
+def test_extract_restrictions_merges_touching_closed_polygons_on_same_layer(empty_doc):
+    # Реальные конвертированные DXF (в отличие от рукописных locations/
+    # location_old/) отдают газон/тротуар/дорогу не одним контуром на слой, а
+    # россыпью примыкающих кусков -- на 06_kamchatskaya_ulitsa один слой
+    # GRASS -- это 5751 отдельный контур. Два квадрата встык по общему ребру
+    # должны слиться в один прямоугольник, а не остаться двумя зонами.
+
+    msp = empty_doc.modelspace()
+    msp.add_lwpolyline([(0, 0), (10, 0), (10, 10), (0, 10)], close=True, dxfattribs={"layer": "GRASS"})
+    msp.add_lwpolyline([(10, 0), (20, 0), (20, 10), (10, 10)], close=True, dxfattribs={"layer": "GRASS"})
+    zones = extract_restrictions(msp, Transform())
+    assert len(zones) == 1
+    poly = Polygon([(p["x"], p["z"]) for p in zones[0]["polygon"]])
+    assert poly.is_valid
+    assert poly.area == pytest.approx(200.0, abs=1.0)
+    assert poly.bounds == pytest.approx((0.0, 0.0, 20.0, 10.0), abs=0.1)
+
+
+def test_extract_restrictions_closes_submillimeter_conversion_gap(empty_doc):
+    # Тот же случай, что и выше, но со стыком не край-в-край, а с зазором в
+    # 5 мм -- артефакт конвертации DWG->DXF (см. _POLYGON_CLOSING_GAP_M),
+    # а не два физически разных объекта. Должны слиться в одну зону.
+
+    msp = empty_doc.modelspace()
+    msp.add_lwpolyline([(0, 0), (10, 0), (10, 10), (0, 10)], close=True, dxfattribs={"layer": "GRASS"})
+    msp.add_lwpolyline(
+        [(10.005, 0), (20.005, 0), (20.005, 10), (10.005, 10)], close=True, dxfattribs={"layer": "GRASS"}
+    )
+    zones = extract_restrictions(msp, Transform())
+    assert len(zones) == 1
+    poly = Polygon([(p["x"], p["z"]) for p in zones[0]["polygon"]])
+    assert poly.area == pytest.approx(200.0, rel=0.05)
+
+
+def test_extract_restrictions_does_not_bridge_a_real_gap(empty_doc):
+    # Контрольный случай к предыдущему тесту: зазор намного больше
+    # _POLYGON_CLOSING_GAP_M (1 м, не миллиметры) -- это два разных газона,
+    # не должны слипнуться в один.
+    msp = empty_doc.modelspace()
+    msp.add_lwpolyline([(0, 0), (10, 0), (10, 10), (0, 10)], close=True, dxfattribs={"layer": "GRASS"})
+    msp.add_lwpolyline([(11, 0), (21, 0), (21, 10), (11, 10)], close=True, dxfattribs={"layer": "GRASS"})
+    zones = extract_restrictions(msp, Transform())
+    assert len(zones) == 2
+    assert all(z["type"] == "protected_zone" for z in zones)
+
+
+def test_extract_restrictions_repairs_self_intersecting_non_building_polygon(empty_doc):
+    # "Бабочка" на не-здании -- та же проблема, что чинит building_setbacks.py
+    # для зданий (poly.buffer(0)), только здесь она в самом парсере: заметная
+    # доля контуров у реальных конвертированных файлов самопересекающаяся
+    # (артефакт конвертации, см. _merge_polygon_zones).
+
+    msp = empty_doc.modelspace()
+    msp.add_lwpolyline([(0, 0), (10, 10), (10, 0), (0, 10)], close=True, dxfattribs={"layer": "GRASS"})
+    zones = extract_restrictions(msp, Transform())
+    assert zones
+    total_area = 0.0
+    for z in zones:
+        poly = Polygon([(p["x"], p["z"]) for p in z["polygon"]])
+        assert poly.is_valid
+        total_area += poly.area
+    # buffer(0) разрешает самопересечение по правилу чётности обхода: две
+    # половины "бабочки" намотаны в противоположных направлениях, поэтому
+    # одна гасит другую как дырку, и остаётся один треугольник (area=25), а
+    # не оба (50) -- это корректное поведение shapely, а не половинчатая
+    # починка.
+    assert total_area == pytest.approx(25.0, rel=0.05)
+
+
+def test_extract_restrictions_drops_degenerate_zero_area_closed_polygon(empty_doc):
+    # Три коллинеарные точки -- формально "замкнутый контур" с >=3 точками,
+    # но нулевой площади (артефакт конвертации). Не должен породить зону.
+    msp = empty_doc.modelspace()
+    msp.add_lwpolyline([(0, 0), (5, 0), (10, 0)], close=True, dxfattribs={"layer": "GRASS"})
+    assert extract_restrictions(msp, Transform()) == []
+
+
+def _boundary10(empty_doc):
+    msp = empty_doc.modelspace()
+    msp.add_lwpolyline([(0, 0), (10, 0), (10, 10), (0, 10)], close=True, dxfattribs={"layer": "SITE_BOUNDARY"})
+    return msp, extract_boundary(msp, Transform())
+
+
+def test_extract_restrictions_without_boundary_does_not_clip(empty_doc):
+    # boundary=None (значение по умолчанию) -- обрезка выключена целиком,
+    # старое поведение без понятия "участок" не меняется.
+    msp = empty_doc.modelspace()
+    msp.add_lwpolyline([(1000, 1000), (1010, 1000), (1010, 1010), (1000, 1010)], close=True, dxfattribs={"layer": "GRASS"})
+    assert len(extract_restrictions(msp, Transform())) == 1
+
+
+def test_extract_restrictions_drops_zone_far_outside_relevance_margin(empty_doc):
+    # Зона в 1000 м от участка размером 10x10 -- заведомо дальше
+    # _RESTRICTION_RELEVANCE_MARGIN_M (20 м), должна пропасть целиком.
+    msp, boundary = _boundary10(empty_doc)
+    msp.add_lwpolyline([(1000, 1000), (1010, 1000), (1010, 1010), (1000, 1010)], close=True, dxfattribs={"layer": "GRASS"})
+    assert extract_restrictions(msp, Transform(), boundary) == []
+
+
+def test_extract_restrictions_clips_zone_straddling_the_relevance_margin(empty_doc):
+    # Полоса газона 200x10 м, проходящая через участок 10x10 -- реалистичная
+    # модель общегородской подложки, которая тянется далеко за пределы
+    # участка (см. докстринг extract_restrictions, 11_frunzenskaya_naberezhnaya/
+    # 13_kharkovsky_proezd). Должна обрезаться до куска у самого участка, а
+    # не остаться зоной на все 2000 м^2.
+    msp, boundary = _boundary10(empty_doc)
+    msp.add_lwpolyline([(-100, 0), (100, 0), (100, 10), (-100, 10)], close=True, dxfattribs={"layer": "GRASS"})
+    zones = extract_restrictions(msp, Transform(), boundary)
+    assert len(zones) == 1
+    poly = Polygon([(p["x"], p["z"]) for p in zones[0]["polygon"]])
+    assert 0 < poly.area < 700  # << исходных 2000 м^2, но не пусто
+
+
+def test_extract_restrictions_keeps_zone_fully_inside_relevance_margin(empty_doc):
+    # Контрольный случай: зона внутри участка обрезкой не задета вовсе.
+    msp, boundary = _boundary10(empty_doc)
+    msp.add_lwpolyline([(2, 2), (8, 2), (8, 8), (2, 8)], close=True, dxfattribs={"layer": "GRASS"})
+    zones = extract_restrictions(msp, Transform(), boundary)
+    assert len(zones) == 1
+    poly = Polygon([(p["x"], p["z"]) for p in zones[0]["polygon"]])
+    assert poly.area == pytest.approx(36.0)
+
+
+def test_extract_restrictions_relevance_margin_does_not_drop_far_building(empty_doc):
+    # Здания -- исключение из обрезки (см. докстринг _clip_offsite_zones):
+    # обрезка касается инженерных сетей/газона с общегородской подложки, а не
+    # зданий, которые extract_buildings превращает в объекты сцены поштучно.
+    msp, boundary = _boundary10(empty_doc)
+    msp.add_lwpolyline([(1000, 1000), (1010, 1000), (1010, 1010), (1000, 1010)], close=True, dxfattribs={"layer": "BUILDING_FAR"})
+    zones = extract_restrictions(msp, Transform(), boundary)
+    assert len(zones) == 1
+    assert zones[0]["type"] == "building"
 
 
 def test_extract_restrictions_skips_boundary_and_skip_layers(empty_doc):
@@ -366,6 +512,26 @@ def test_extract_point_objects_lone_circle_without_line_is_a_marker(empty_doc):
     assert len(objects) == 1
     assert objects[0]["type"] == "entrance"
     assert "height" not in objects[0]["metadata"]
+
+
+def test_extract_point_objects_bare_circles_and_inserts_coexist_on_same_layer(empty_doc):
+    # Баг, найденный на реальном файле (19_2ya_pryadilnaya): 443 дерева на
+    # слое TREE -- голые CIRCLE без INSERT/POINT (топосъёмка). При попытке
+    # добавить дерево через add_blockref на тот же слой ветка "одиночный
+    # CIRCLE-маркер" требовала "and not inserts_or_points" и молча теряла
+    # все 443 существующих дерева, как только на слое появлялся хоть один
+    # INSERT. CIRCLE и INSERT -- разные сущности одних и тех же данных, а не
+    # альтернативные прочтения, оба должны попасть в объекты.
+    empty_doc.blocks.new(name="tree_block")
+    msp = empty_doc.modelspace()
+    msp.add_circle((1, 1, 0), radius=0.5, dxfattribs={"layer": "TREE"})
+    msp.add_circle((2, 2, 0), radius=0.5, dxfattribs={"layer": "TREE"})
+    msp.add_blockref("tree_block", insert=(9, 9, 0), dxfattribs={"layer": "TREE"})
+    objects = extract_point_objects(msp, Transform())
+    assert len(objects) == 3
+    assert sum(1 for o in objects if o["type"] == "tree") == 3
+    positions = {(o["position"]["x"], o["position"]["z"]) for o in objects}
+    assert positions == {(1.0, 1.0), (2.0, 2.0), (9.0, 9.0)}
 
 
 def test_extract_point_objects_ignores_unmatched_layers(empty_doc):
