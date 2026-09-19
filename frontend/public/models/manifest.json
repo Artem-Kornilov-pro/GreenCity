@@ -45,6 +45,24 @@
     "/models/bench_b.glb",
     "/models/bench_c.glb",
     "/models/bench_d.glb",
-    "/models/bench_e.glb"
+    "/models/bench_e.glb",
+    "/models/spruce_1.glb",
+    "/models/fir_1.glb",
+    "/models/larch_1.glb",
+    "/models/columnartree_1.glb",
+    "/models/poplartree_1.glb",
+    "/models/thuja_1.glb",
+    "/models/smallornamentaltree_1.glb",
+    "/models/rhododendronshrub_1.glb",
+    "/models/multistemshrub_1.glb",
+    "/models/hydrangeashrub_1.glb",
+    "/models/lowspreadingshrub_1.glb",
+    "/models/roseshrub_1.glb",
+    "/models/juniperupright_1.glb",
+    "/models/juniperspreading_1.glb",
+    "/models/mountainpine_1.glb",
+    "/models/coniferlow_1.glb",
+    "/models/tallshrub_1.glb",
+    "/models/archingshrub_1.glb"
   ]
 }

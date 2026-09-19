@@ -964,5 +964,383 @@
       "shape": "bench",
       "color": "#7a5230"
     }
+  },
+  {
+    "id": "spruce_1",
+    "category": "tree",
+    "label": "Ель (дерево, высокое, обычная крона, 7.32 м)",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/spruce_1.glb",
+    "dimensions": {
+      "height": 7.32,
+      "radius": 2.47,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "fir_1",
+    "category": "tree",
+    "label": "Пихта (дерево, высокое, обычная крона, 7.39 м)",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/fir_1.glb",
+    "dimensions": {
+      "height": 7.39,
+      "radius": 2.0,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "larch_1",
+    "category": "tree",
+    "label": "Лиственница (дерево, высокое, обычная крона, 8.72 м)",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/larch_1.glb",
+    "dimensions": {
+      "height": 8.72,
+      "radius": 3.21,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "columnartree_1",
+    "category": "tree",
+    "label": "Дерево колонновидное (дерево, среднее, колонновидное, 6.0 м)",
+    "size_class": "medium",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/columnartree_1.glb",
+    "dimensions": {
+      "height": 6.0,
+      "radius": 0.81,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "poplartree_1",
+    "category": "tree",
+    "label": "Тополь (дерево, высокое, колонновидное, 8.0 м)",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/poplartree_1.glb",
+    "dimensions": {
+      "height": 8.0,
+      "radius": 1.09,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "thuja_1",
+    "category": "tree",
+    "label": "Туя (дерево, низкое, колонновидное, 2.0 м)",
+    "size_class": "low",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/thuja_1.glb",
+    "dimensions": {
+      "height": 2.0,
+      "radius": 0.37,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "smallornamentaltree_1",
+    "category": "tree",
+    "label": "Малое декоративное дерево (дерево, среднее, раскидистое, 3.59 м)",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 3.59,
+      "radius": 1.39,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "rhododendronshrub_1",
+    "category": "bush",
+    "label": "Рододендрон (кустарник, низкое, раскидистое, 1.58 м)",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/rhododendronshrub_1.glb",
+    "dimensions": {
+      "height": 1.58,
+      "radius": 0.98,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "multistemshrub_1",
+    "category": "bush",
+    "label": "Крупный многоствольный куст (кустарник, среднее, раскидистое, 3.0 м)",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/multistemshrub_1.glb",
+    "dimensions": {
+      "height": 3.0,
+      "radius": 1.21,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "hydrangeashrub_1",
+    "category": "bush",
+    "label": "Гортензия (кустарник, низкое, раскидистое, 0.76 м)",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/hydrangeashrub_1.glb",
+    "dimensions": {
+      "height": 0.76,
+      "radius": 0.56,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "lowspreadingshrub_1",
+    "category": "bush",
+    "label": "Низкий стелющийся куст (кустарник, низкое, раскидистое, 0.78 м)",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/lowspreadingshrub_1.glb",
+    "dimensions": {
+      "height": 0.78,
+      "radius": 0.95,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "roseshrub_1",
+    "category": "bush",
+    "label": "Роза (шиповник) (кустарник, низкое, раскидистое, 1.18 м)",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/roseshrub_1.glb",
+    "dimensions": {
+      "height": 1.18,
+      "radius": 0.77,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "juniperupright_1",
+    "category": "bush",
+    "label": "Можжевельник вертикальный (кустарник, низкое, колонновидное, 1.8 м)",
+    "size_class": "low",
+    "crown_class": "columnar",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/juniperupright_1.glb",
+    "dimensions": {
+      "height": 1.8,
+      "radius": 0.31,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "juniperspreading_1",
+    "category": "bush",
+    "label": "Можжевельник раскидистый (кустарник, низкое, раскидистое, 0.4 м)",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/juniperspreading_1.glb",
+    "dimensions": {
+      "height": 0.4,
+      "radius": 0.56,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "mountainpine_1",
+    "category": "bush",
+    "label": "Сосна горная (кустарник, низкое, обычная крона, 0.91 м)",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/mountainpine_1.glb",
+    "dimensions": {
+      "height": 0.91,
+      "radius": 0.28,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "coniferlow_1",
+    "category": "bush",
+    "label": "Низкий хвойный куст (кустарник, низкое, раскидистое, 0.4 м)",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/coniferlow_1.glb",
+    "dimensions": {
+      "height": 0.4,
+      "radius": 0.37,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "tallshrub_1",
+    "category": "bush",
+    "label": "Высокий куст (сирень/чубушник) (кустарник, низкое, обычная крона, 2.5 м)",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/tallshrub_1.glb",
+    "dimensions": {
+      "height": 2.5,
+      "radius": 0.7,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "archingshrub_1",
+    "category": "bush",
+    "label": "Дугообразная спирея (кустарник, низкое, раскидистое, 0.48 м)",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/archingshrub_1.glb",
+    "dimensions": {
+      "height": 0.48,
+      "radius": 0.8,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
   }
 ]
