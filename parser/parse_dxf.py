@@ -647,8 +647,15 @@ def extract_point_objects(msp, tf):
                 "metadata": {"blockName": getattr(e.dxf, "name", None), "sourceLayer": e.dxf.layer},
             })
 
-        # LINE (столб от земли вверх) + CIRCLE (плафон на верхушке) в одном месте -> один объект
-        if lines and circles and not inserts_or_points:
+        # LINE (столб от земли вверх) + CIRCLE (плафон на верхушке) в одном месте -> один объект.
+        # НЕ требуем "and not inserts_or_points": это разные сущности одного
+        # DXF-типа (LINE/CIRCLE против INSERT/POINT), а не альтернативные
+        # прочтения одних и тех же данных -- на одном слое может быть и то,
+        # и другое одновременно (19_2ya_pryadilnaya: 443 "голых" CIRCLE-дерева
+        # из исходной топосъёмки + INSERT-деревья, добавленные поверх). Раньше
+        # с "and not inserts_or_points" появление хотя бы одного INSERT на
+        # слое молча выбрасывало ВСЕ CIRCLE-объекты того же слоя.
+        if lines and circles:
             seen = set()
             for ln in lines:
                 x, y = round(ln.dxf.start.x, 3), round(ln.dxf.start.y, 3)
@@ -673,8 +680,9 @@ def extract_point_objects(msp, tf):
                 })
 
         # Одиночные CIRCLE без пары LINE -- просто маркер точки (напр. дверь
-        # подъезда на слое ENTRANCES), а не фонарный столб.
-        elif circles and not lines and not inserts_or_points:
+        # подъезда на слое ENTRANCES), а не фонарный столб. Та же правка, что
+        # и выше: не требуем "and not inserts_or_points".
+        elif circles and not lines:
             for c in circles:
                 counters[cfg["type"]] += 1
                 objects.append({

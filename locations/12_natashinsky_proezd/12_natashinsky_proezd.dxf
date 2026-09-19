@@ -489,7 +489,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461302.8633333333
+2461303.4431018517
   9
 $TDUCREATE
  40
@@ -497,7 +497,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461302.8633333333
+2461303.443217593
   9
 $TDUUPDATE
  40
@@ -549,7 +549,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-861
+13EF
   9
 $SURFTAB1
  70
@@ -933,7 +933,7 @@ $FINGERPRINTGUID
   9
 $VERSIONGUID
   2
-{58F0597C-692E-4314-9889-111D90B03821}
+{8BE99E55-6751-405A-9EE5-6E7A523644AC}
   9
 $EXTNAMES
 290
@@ -5089,7 +5089,7 @@ BLOCK_RECORD
 100
 AcDbSymbolTable
  70
-5
+11
   0
 BLOCK_RECORD
   5
@@ -5182,6 +5182,126 @@ AcDbSymbolTableRecord
 AcDbBlockTableRecord
   2
 _CLOSEDBLANK
+340
+0
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+861
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+ЛИПА
+340
+0
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+865
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+ТОПОЛЬ
+340
+0
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+869
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+КЛЕН
+340
+0
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+86D
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+ЯБЛОНЯ
+340
+0
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+871
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+СОСНА
+340
+0
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+875
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
 340
 0
  70
@@ -5484,6 +5604,354 @@ ENDBLK
 86
 330
 84
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+862
+330
+861
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+ЛИПА
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+ЛИПА
+  1
+
+  0
+CIRCLE
+  5
+864
+330
+861
+100
+AcDbEntity
+  8
+0
+100
+AcDbCircle
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+0.2
+  0
+ENDBLK
+  5
+863
+330
+861
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+866
+330
+865
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+ТОПОЛЬ
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+ТОПОЛЬ
+  1
+
+  0
+CIRCLE
+  5
+868
+330
+865
+100
+AcDbEntity
+  8
+0
+100
+AcDbCircle
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+0.2
+  0
+ENDBLK
+  5
+867
+330
+865
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+86A
+330
+869
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+КЛЕН
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+КЛЕН
+  1
+
+  0
+CIRCLE
+  5
+86C
+330
+869
+100
+AcDbEntity
+  8
+0
+100
+AcDbCircle
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+0.2
+  0
+ENDBLK
+  5
+86B
+330
+869
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+86E
+330
+86D
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+ЯБЛОНЯ
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+ЯБЛОНЯ
+  1
+
+  0
+CIRCLE
+  5
+870
+330
+86D
+100
+AcDbEntity
+  8
+0
+100
+AcDbCircle
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+0.2
+  0
+ENDBLK
+  5
+86F
+330
+86D
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+872
+330
+871
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+СОСНА
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+СОСНА
+  1
+
+  0
+CIRCLE
+  5
+874
+330
+871
+100
+AcDbEntity
+  8
+0
+100
+AcDbCircle
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+0.2
+  0
+ENDBLK
+  5
+873
+330
+871
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+876
+330
+875
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+  1
+
+  0
+CIRCLE
+  5
+878
+330
+875
+100
+AcDbEntity
+  8
+0
+100
+AcDbCircle
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+0.2
+  0
+ENDBLK
+  5
+877
+330
+875
 100
 AcDbEntity
   8
@@ -137861,6 +138329,10266 @@ AcDbPolyline
  20
 253.20103056624262
   0
+INSERT
+  5
+9EA
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЛИПА
+ 10
+202.15909677617586
+ 20
+136.69212607052933
+ 30
+0.0
+  0
+INSERT
+  5
+9EC
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЛИПА
+ 10
+200.1662735996446
+ 20
+133.5107488411087
+ 30
+0.0
+  0
+INSERT
+  5
+9EE
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ТОПОЛЬ
+ 10
+492.82446866468507
+ 20
+183.91993372710323
+ 30
+0.0
+  0
+INSERT
+  5
+9F0
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ТОПОЛЬ
+ 10
+490.365692236615
+ 20
+180.1755299507913
+ 30
+0.0
+  0
+INSERT
+  5
+9F2
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+КЛЕН
+ 10
+172.68009421096014
+ 20
+73.01343223366052
+ 30
+0.0
+  0
+INSERT
+  5
+9F4
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+КЛЕН
+ 10
+172.65817983130702
+ 20
+69.61345950413629
+ 30
+0.0
+  0
+INSERT
+  5
+9F6
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+КЛЕН
+ 10
+175.90058967537348
+ 20
+71.27814468629448
+ 30
+0.0
+  0
+INSERT
+  5
+9F8
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+КЛЕН
+ 10
+169.14797270517155
+ 20
+72.76158104504437
+ 30
+0.0
+  0
+INSERT
+  5
+9FA
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЯБЛОНЯ
+ 10
+216.8787271103885
+ 20
+78.87740580120355
+ 30
+0.0
+  0
+INSERT
+  5
+9FC
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЯБЛОНЯ
+ 10
+213.70922763580987
+ 20
+77.09449542386929
+ 30
+0.0
+  0
+INSERT
+  5
+9FE
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЯБЛОНЯ
+ 10
+216.88554368773686
+ 20
+82.16099441873915
+ 30
+0.0
+  0
+INSERT
+  5
+A00
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+СОСНА
+ 10
+216.29753280432396
+ 20
+73.36654124042519
+ 30
+0.0
+  0
+INSERT
+  5
+A02
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+СОСНА
+ 10
+213.06831836361772
+ 20
+73.3744180022432
+ 30
+0.0
+  0
+INSERT
+  5
+A04
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЛИПА
+ 10
+444.2674962631664
+ 20
+231.1052404127792
+ 30
+0.0
+  0
+INSERT
+  5
+A06
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЛИПА
+ 10
+448.50447541429463
+ 20
+231.81940757272417
+ 30
+0.0
+  0
+INSERT
+  5
+A08
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЛИПА
+ 10
+446.6421209167454
+ 20
+228.8712816903482
+ 30
+0.0
+  0
+INSERT
+  5
+A0A
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ТОПОЛЬ
+ 10
+467.2092867171423
+ 20
+232.88230214747904
+ 30
+0.0
+  0
+INSERT
+  5
+A0C
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ТОПОЛЬ
+ 10
+474.00646691399595
+ 20
+233.9280852472973
+ 30
+0.0
+  0
+INSERT
+  5
+A0E
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ТОПОЛЬ
+ 10
+470.8924722456852
+ 20
+233.2947145158018
+ 30
+0.0
+  0
+INSERT
+  5
+A10
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+КЛЕН
+ 10
+254.70063346532683
+ 20
+177.25648256725896
+ 30
+0.0
+  0
+INSERT
+  5
+A12
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+КЛЕН
+ 10
+254.6210655692335
+ 20
+172.70782976073508
+ 30
+0.0
+  0
+INSERT
+  5
+A14
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+КЛЕН
+ 10
+251.43689696356998
+ 20
+174.98260472138583
+ 30
+0.0
+  0
+INSERT
+  5
+A16
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+КЛЕН
+ 10
+257.113048771142
+ 20
+174.77993375133659
+ 30
+0.0
+  0
+INSERT
+  5
+A18
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЯБЛОНЯ
+ 10
+493.7230236021233
+ 20
+178.97385450267723
+ 30
+0.0
+  0
+INSERT
+  5
+A1A
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЯБЛОНЯ
+ 10
+491.08432876667797
+ 20
+176.96912369996724
+ 30
+0.0
+  0
+INSERT
+  5
+A1C
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+СОСНА
+ 10
+250.2119835587932
+ 20
+189.73108547383222
+ 30
+0.0
+  0
+INSERT
+  5
+A1E
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+СОСНА
+ 10
+250.18459590806242
+ 20
+184.88177703265302
+ 30
+0.0
+  0
+INSERT
+  5
+A20
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+СОСНА
+ 10
+247.7757988051398
+ 20
+186.87219141976615
+ 30
+0.0
+  0
+INSERT
+  5
+A22
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+СОСНА
+ 10
+245.76728827398404
+ 20
+190.6623228180773
+ 30
+0.0
+  0
+INSERT
+  5
+A24
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЛИПА
+ 10
+213.28168788596327
+ 20
+217.47078291413405
+ 30
+0.0
+  0
+INSERT
+  5
+A26
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЛИПА
+ 10
+212.44597590912713
+ 20
+220.39069947777793
+ 30
+0.0
+  0
+INSERT
+  5
+A28
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ТОПОЛЬ
+ 10
+240.94897802189718
+ 20
+125.7643315907631
+ 30
+0.0
+  0
+INSERT
+  5
+A2A
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ТОПОЛЬ
+ 10
+236.62215863277768
+ 20
+127.89520396518715
+ 30
+0.0
+  0
+INSERT
+  5
+A2C
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ТОПОЛЬ
+ 10
+239.541912740588
+ 20
+129.5576413201077
+ 30
+0.0
+  0
+INSERT
+  5
+A2E
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+КЛЕН
+ 10
+233.26010339856222
+ 20
+110.16228452665264
+ 30
+0.0
+  0
+INSERT
+  5
+A30
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+КЛЕН
+ 10
+233.59924138856312
+ 20
+113.14322587932683
+ 30
+0.0
+  0
+INSERT
+  5
+A32
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+КЛЕН
+ 10
+230.2349653300383
+ 20
+110.8945218792931
+ 30
+0.0
+  0
+INSERT
+  5
+A34
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЯБЛОНЯ
+ 10
+243.47484085501907
+ 20
+186.06521983444875
+ 30
+0.0
+  0
+INSERT
+  5
+A36
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЯБЛОНЯ
+ 10
+245.57117597151728
+ 20
+183.06846716857476
+ 30
+0.0
+  0
+INSERT
+  5
+A38
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+СОСНА
+ 10
+169.51040747743258
+ 20
+225.35806422375683
+ 30
+0.0
+  0
+INSERT
+  5
+A3A
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+СОСНА
+ 10
+171.46648137945928
+ 20
+230.62435641690718
+ 30
+0.0
+  0
+INSERT
+  5
+A3C
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+СОСНА
+ 10
+171.89397920830584
+ 20
+227.50502493388805
+ 30
+0.0
+  0
+INSERT
+  5
+A3E
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЛИПА
+ 10
+239.19921434564722
+ 20
+113.40817822618386
+ 30
+0.0
+  0
+INSERT
+  5
+A40
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЛИПА
+ 10
+238.55173190444953
+ 20
+117.26699567063615
+ 30
+0.0
+  0
+INSERT
+  5
+A42
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЛИПА
+ 10
+243.2176462767507
+ 20
+113.2315938008847
+ 30
+0.0
+  0
+INSERT
+  5
+A44
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЛИПА
+ 10
+243.05385709604337
+ 20
+117.28362362350663
+ 30
+0.0
+  0
+INSERT
+  5
+A46
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ТОПОЛЬ
+ 10
+231.42104535850817
+ 20
+97.42178453517805
+ 30
+0.0
+  0
+INSERT
+  5
+A48
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ТОПОЛЬ
+ 10
+230.71408458355322
+ 20
+100.57811179773427
+ 30
+0.0
+  0
+INSERT
+  5
+A4A
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ТОПОЛЬ
+ 10
+227.9316580080752
+ 20
+98.28079881325132
+ 30
+0.0
+  0
+INSERT
+  5
+A4C
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ТОПОЛЬ
+ 10
+227.97495344992092
+ 20
+102.16564150542679
+ 30
+0.0
+  0
+INSERT
+  5
+A4E
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЯБЛОНЯ
+ 10
+541.4248072289653
+ 20
+165.88315485304923
+ 30
+0.0
+  0
+INSERT
+  5
+A50
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЯБЛОНЯ
+ 10
+541.7020428719823
+ 20
+169.22872134103727
+ 30
+0.0
+  0
+INSERT
+  5
+A52
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЯБЛОНЯ
+ 10
+544.2252796392144
+ 20
+164.09579025512417
+ 30
+0.0
+  0
+INSERT
+  5
+A54
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+СОСНА
+ 10
+379.74133869529453
+ 20
+228.82779912549637
+ 30
+0.0
+  0
+INSERT
+  5
+A56
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+СОСНА
+ 10
+376.25757534092503
+ 20
+230.41229797038346
+ 30
+0.0
+  0
+INSERT
+  5
+A58
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЛИПА
+ 10
+257.8174040163755
+ 20
+145.40386663729052
+ 30
+0.0
+  0
+INSERT
+  5
+A5A
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЛИПА
+ 10
+254.95390914773043
+ 20
+147.01510831988347
+ 30
+0.0
+  0
+INSERT
+  5
+A5C
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЛИПА
+ 10
+258.0819500650983
+ 20
+148.55338423392263
+ 30
+0.0
+  0
+INSERT
+  5
+A5E
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ТОПОЛЬ
+ 10
+235.2745723514232
+ 20
+139.78416515809013
+ 30
+0.0
+  0
+INSERT
+  5
+A60
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ТОПОЛЬ
+ 10
+238.99759500520176
+ 20
+141.79872429298243
+ 30
+0.0
+  0
+INSERT
+  5
+A62
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ТОПОЛЬ
+ 10
+239.3914086262717
+ 20
+145.50005847829107
+ 30
+0.0
+  0
+INSERT
+  5
+A64
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ТОПОЛЬ
+ 10
+235.67561372313202
+ 20
+144.73489335826213
+ 30
+0.0
+  0
+INSERT
+  5
+A66
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+КЛЕН
+ 10
+325.39216989485584
+ 20
+244.65045249613036
+ 30
+0.0
+  0
+INSERT
+  5
+A68
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+КЛЕН
+ 10
+322.2893975395911
+ 20
+243.61531145140526
+ 30
+0.0
+  0
+INSERT
+  5
+A6A
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЯБЛОНЯ
+ 10
+234.204230960901
+ 20
+61.677553306558465
+ 30
+0.0
+  0
+INSERT
+  5
+A6C
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЯБЛОНЯ
+ 10
+235.53766553263878
+ 20
+65.08259446662048
+ 30
+0.0
+  0
+INSERT
+  5
+A6E
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+ЯБЛОНЯ
+ 10
+230.92798523852977
+ 20
+64.10059074736577
+ 30
+0.0
+  0
+INSERT
+  5
+A70
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+СОСНА
+ 10
+371.3475016697138
+ 20
+231.49776648345895
+ 30
+0.0
+  0
+INSERT
+  5
+A72
+330
+17
+100
+AcDbEntity
+  8
+TREE
+100
+AcDbBlockReference
+  2
+СОСНА
+ 10
+367.47361884753246
+ 20
+232.06682104840996
+ 30
+0.0
+  0
+INSERT
+  5
+A74
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+216.71321188965965
+ 20
+96.74808973376787
+ 30
+0.0
+  0
+INSERT
+  5
+A76
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+218.04225767221692
+ 20
+96.55494832701311
+ 30
+0.0
+  0
+INSERT
+  5
+A78
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+216.96691251365917
+ 20
+95.15364544648696
+ 30
+0.0
+  0
+INSERT
+  5
+A7A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+219.89470505284504
+ 20
+97.21175736717099
+ 30
+0.0
+  0
+INSERT
+  5
+A7C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+219.08490029799773
+ 20
+98.14749106257864
+ 30
+0.0
+  0
+INSERT
+  5
+A7E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+219.71813857161192
+ 20
+95.58026278445915
+ 30
+0.0
+  0
+INSERT
+  5
+A80
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+217.1714858189549
+ 20
+94.54675187420047
+ 30
+0.0
+  0
+INSERT
+  5
+A82
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+218.03830841644515
+ 20
+97.4006145638876
+ 30
+0.0
+  0
+INSERT
+  5
+A84
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+217.873191983542
+ 20
+98.07681562868429
+ 30
+0.0
+  0
+INSERT
+  5
+A86
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+217.57521540057593
+ 20
+95.40144607557879
+ 30
+0.0
+  0
+INSERT
+  5
+A88
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+217.19618155479876
+ 20
+97.62147896058599
+ 30
+0.0
+  0
+INSERT
+  5
+A8A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+217.38112399482148
+ 20
+96.31533820669772
+ 30
+0.0
+  0
+INSERT
+  5
+A8C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+219.11601868916924
+ 20
+97.14108096148611
+ 30
+0.0
+  0
+INSERT
+  5
+A8E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+218.63351985260704
+ 20
+94.64512597581752
+ 30
+0.0
+  0
+INSERT
+  5
+A90
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+218.8558356657134
+ 20
+96.25708522565057
+ 30
+0.0
+  0
+INSERT
+  5
+A92
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+354.91598608579164
+ 20
+186.8098792050673
+ 30
+0.0
+  0
+INSERT
+  5
+A94
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+356.1727558805833
+ 20
+188.31100284241708
+ 30
+0.0
+  0
+INSERT
+  5
+A96
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+353.3545138078708
+ 20
+188.38499955918155
+ 30
+0.0
+  0
+INSERT
+  5
+A98
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+355.065466866044
+ 20
+187.63832106739622
+ 30
+0.0
+  0
+INSERT
+  5
+A9A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+354.41444490551874
+ 20
+188.56764692253714
+ 30
+0.0
+  0
+INSERT
+  5
+A9C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+355.25925976044425
+ 20
+185.2421816988622
+ 30
+0.0
+  0
+INSERT
+  5
+A9E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+352.54013399715996
+ 20
+187.84807248513343
+ 30
+0.0
+  0
+INSERT
+  5
+AA0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+354.30680511496683
+ 20
+187.74584518781313
+ 30
+0.0
+  0
+INSERT
+  5
+AA2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+353.40365872830057
+ 20
+187.58562287964892
+ 30
+0.0
+  0
+INSERT
+  5
+AA4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+352.87937881319095
+ 20
+185.22280027816754
+ 30
+0.0
+  0
+INSERT
+  5
+AA6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+417.9684222534708
+ 20
+228.62052869915496
+ 30
+0.0
+  0
+INSERT
+  5
+AA8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+418.00303809407706
+ 20
+227.9348553187194
+ 30
+0.0
+  0
+INSERT
+  5
+AAA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+414.1988272695044
+ 20
+228.58255001882054
+ 30
+0.0
+  0
+INSERT
+  5
+AAC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+420.1415483223093
+ 20
+230.12839723746407
+ 30
+0.0
+  0
+INSERT
+  5
+AAE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+417.31909197450403
+ 20
+227.2704316172128
+ 30
+0.0
+  0
+INSERT
+  5
+AB0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+419.122111545379
+ 20
+229.51656812134584
+ 30
+0.0
+  0
+INSERT
+  5
+AB2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+417.06986670750456
+ 20
+228.7652960900993
+ 30
+0.0
+  0
+INSERT
+  5
+AB4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+413.8811433897596
+ 20
+228.00433645038328
+ 30
+0.0
+  0
+INSERT
+  5
+AB6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+416.09849834879867
+ 20
+229.7337509778034
+ 30
+0.0
+  0
+INSERT
+  5
+AB8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+417.33014134146873
+ 20
+228.22168359374373
+ 30
+0.0
+  0
+INSERT
+  5
+ABA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+415.1736944909689
+ 20
+227.39604484683952
+ 30
+0.0
+  0
+INSERT
+  5
+ABC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+416.7277939494519
+ 20
+229.63216382061592
+ 30
+0.0
+  0
+INSERT
+  5
+ABE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+419.4249924822484
+ 20
+227.66084124521103
+ 30
+0.0
+  0
+INSERT
+  5
+AC0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+416.345790565326
+ 20
+227.44897580254326
+ 30
+0.0
+  0
+INSERT
+  5
+AC2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+229.75780695855283
+ 20
+67.44761608934238
+ 30
+0.0
+  0
+INSERT
+  5
+AC4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+229.3049364109191
+ 20
+71.76292962231291
+ 30
+0.0
+  0
+INSERT
+  5
+AC6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.07469896047408
+ 20
+70.53174417098376
+ 30
+0.0
+  0
+INSERT
+  5
+AC8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+231.32636950941807
+ 20
+69.64338001639257
+ 30
+0.0
+  0
+INSERT
+  5
+ACA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.0864686600531
+ 20
+68.62930420181789
+ 30
+0.0
+  0
+INSERT
+  5
+ACC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.61876072436314
+ 20
+69.6135392615772
+ 30
+0.0
+  0
+INSERT
+  5
+ACE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.20172314208543
+ 20
+71.43769682880746
+ 30
+0.0
+  0
+INSERT
+  5
+AD0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+229.86882674659768
+ 20
+71.3538551357107
+ 30
+0.0
+  0
+INSERT
+  5
+AD2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+229.46199366548393
+ 20
+68.71527876599453
+ 30
+0.0
+  0
+INSERT
+  5
+AD4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+225.15790697680913
+ 20
+70.77260455434865
+ 30
+0.0
+  0
+INSERT
+  5
+AD6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+225.8256014539286
+ 20
+71.3604884975094
+ 30
+0.0
+  0
+INSERT
+  5
+AD8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+229.17837393069263
+ 20
+70.01698345421892
+ 30
+0.0
+  0
+INSERT
+  5
+ADA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+225.7462046473199
+ 20
+70.04572788571231
+ 30
+0.0
+  0
+INSERT
+  5
+ADC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.6163604295344
+ 20
+72.73598853513627
+ 30
+0.0
+  0
+INSERT
+  5
+ADE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.72972681447112
+ 20
+68.4269381529881
+ 30
+0.0
+  0
+INSERT
+  5
+AE0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.94253720316564
+ 20
+72.3209198177866
+ 30
+0.0
+  0
+INSERT
+  5
+AE2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.22959585195153
+ 20
+70.91157350222556
+ 30
+0.0
+  0
+INSERT
+  5
+AE4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+226.8353386308133
+ 20
+67.39735813269114
+ 30
+0.0
+  0
+INSERT
+  5
+AE6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+229.79337365272193
+ 20
+72.45945161258095
+ 30
+0.0
+  0
+INSERT
+  5
+AE8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+250.4488245403038
+ 20
+152.3150001336985
+ 30
+0.0
+  0
+INSERT
+  5
+AEA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+249.31712089136397
+ 20
+153.46822086106295
+ 30
+0.0
+  0
+INSERT
+  5
+AEC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+251.47829342722167
+ 20
+149.30425183143436
+ 30
+0.0
+  0
+INSERT
+  5
+AEE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+250.04625720134737
+ 20
+151.7810486056906
+ 30
+0.0
+  0
+INSERT
+  5
+AF0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+251.16845225320222
+ 20
+152.0292566031904
+ 30
+0.0
+  0
+INSERT
+  5
+AF2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+250.52416870867626
+ 20
+151.30319537506878
+ 30
+0.0
+  0
+INSERT
+  5
+AF4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+249.75170171533608
+ 20
+152.38393720518076
+ 30
+0.0
+  0
+INSERT
+  5
+AF6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+250.09048507446363
+ 20
+155.30788407091617
+ 30
+0.0
+  0
+INSERT
+  5
+AF8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+249.43362245960893
+ 20
+149.31519276054283
+ 30
+0.0
+  0
+INSERT
+  5
+AFA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+247.90805945304868
+ 20
+154.52898526305438
+ 30
+0.0
+  0
+INSERT
+  5
+AFC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+328.170830477463
+ 20
+242.23914923899497
+ 30
+0.0
+  0
+INSERT
+  5
+AFE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+330.5118596108937
+ 20
+243.41150373718997
+ 30
+0.0
+  0
+INSERT
+  5
+B00
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+325.68549010814274
+ 20
+243.09424574999431
+ 30
+0.0
+  0
+INSERT
+  5
+B02
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+331.5532105384736
+ 20
+242.80773454563106
+ 30
+0.0
+  0
+INSERT
+  5
+B04
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+328.59293213140467
+ 20
+242.7506768546272
+ 30
+0.0
+  0
+INSERT
+  5
+B06
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+329.6557612343648
+ 20
+242.43389382086238
+ 30
+0.0
+  0
+INSERT
+  5
+B08
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+328.9498425814378
+ 20
+240.96651734439584
+ 30
+0.0
+  0
+INSERT
+  5
+B0A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+326.8574352926988
+ 20
+242.973634943422
+ 30
+0.0
+  0
+INSERT
+  5
+B0C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+331.2426983875778
+ 20
+241.40627207086627
+ 30
+0.0
+  0
+INSERT
+  5
+B0E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+326.3435082722179
+ 20
+244.674781899082
+ 30
+0.0
+  0
+INSERT
+  5
+B10
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+329.2483372335284
+ 20
+243.92686710875603
+ 30
+0.0
+  0
+INSERT
+  5
+B12
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+326.87879885094225
+ 20
+243.73135509622546
+ 30
+0.0
+  0
+INSERT
+  5
+B14
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+326.2509326008117
+ 20
+241.9291509299064
+ 30
+0.0
+  0
+INSERT
+  5
+B16
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+327.45671811479343
+ 20
+242.2844633522608
+ 30
+0.0
+  0
+INSERT
+  5
+B18
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+327.93308120967237
+ 20
+244.16897448848863
+ 30
+0.0
+  0
+INSERT
+  5
+B1A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+328.1003790922585
+ 20
+243.44819268283845
+ 30
+0.0
+  0
+INSERT
+  5
+B1C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+327.6943257626122
+ 20
+241.71280794784457
+ 30
+0.0
+  0
+INSERT
+  5
+B1E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+329.45513759486323
+ 20
+243.11385695930105
+ 30
+0.0
+  0
+INSERT
+  5
+B20
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+328.9957305721077
+ 20
+241.7759246736959
+ 30
+0.0
+  0
+INSERT
+  5
+B22
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+251.8274582302073
+ 20
+171.19230179455556
+ 30
+0.0
+  0
+INSERT
+  5
+B24
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+246.63429760788102
+ 20
+169.82080983078913
+ 30
+0.0
+  0
+INSERT
+  5
+B26
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+249.6436744611718
+ 20
+170.11004025161438
+ 30
+0.0
+  0
+INSERT
+  5
+B28
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+251.69145138351485
+ 20
+168.68644229025804
+ 30
+0.0
+  0
+INSERT
+  5
+B2A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+249.74439627630028
+ 20
+172.455869028785
+ 30
+0.0
+  0
+INSERT
+  5
+B2C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+248.88032724694312
+ 20
+169.79620979252167
+ 30
+0.0
+  0
+INSERT
+  5
+B2E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+250.35397409432835
+ 20
+171.07876816447092
+ 30
+0.0
+  0
+INSERT
+  5
+B30
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+249.6477707333043
+ 20
+167.6614164043994
+ 30
+0.0
+  0
+INSERT
+  5
+B32
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+247.05571482200736
+ 20
+172.132856976469
+ 30
+0.0
+  0
+INSERT
+  5
+B34
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+246.41830231987618
+ 20
+168.80005300095414
+ 30
+0.0
+  0
+INSERT
+  5
+B36
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+247.75030330920123
+ 20
+168.23377964888687
+ 30
+0.0
+  0
+INSERT
+  5
+B38
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+248.95930619484
+ 20
+167.8943450588529
+ 30
+0.0
+  0
+INSERT
+  5
+B3A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+250.85698499581315
+ 20
+170.62245242918388
+ 30
+0.0
+  0
+INSERT
+  5
+B3C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+251.64984138754994
+ 20
+167.5210096342721
+ 30
+0.0
+  0
+INSERT
+  5
+B3E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+247.01572857579623
+ 20
+167.99669233032955
+ 30
+0.0
+  0
+INSERT
+  5
+B40
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+223.52495485973498
+ 20
+94.32992255919113
+ 30
+0.0
+  0
+INSERT
+  5
+B42
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+226.43239655973898
+ 20
+96.65380860655088
+ 30
+0.0
+  0
+INSERT
+  5
+B44
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+226.75978512921662
+ 20
+97.41047162461648
+ 30
+0.0
+  0
+INSERT
+  5
+B46
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.11400335080015
+ 20
+95.80591704815589
+ 30
+0.0
+  0
+INSERT
+  5
+B48
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+225.90690405627308
+ 20
+96.04070150184805
+ 30
+0.0
+  0
+INSERT
+  5
+B4A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+224.00626178620095
+ 20
+98.86607041013812
+ 30
+0.0
+  0
+INSERT
+  5
+B4C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+225.0274226237007
+ 20
+99.1135717378776
+ 30
+0.0
+  0
+INSERT
+  5
+B4E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+223.84986089220246
+ 20
+95.3101268023328
+ 30
+0.0
+  0
+INSERT
+  5
+B50
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.01934133292104
+ 20
+96.5237335346599
+ 30
+0.0
+  0
+INSERT
+  5
+B52
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+225.0875408947225
+ 20
+100.09236794302721
+ 30
+0.0
+  0
+INSERT
+  5
+B54
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+223.54147161487447
+ 20
+96.87290905654521
+ 30
+0.0
+  0
+INSERT
+  5
+B56
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+224.97134193927144
+ 20
+97.26498114233613
+ 30
+0.0
+  0
+INSERT
+  5
+B58
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.44099706035757
+ 20
+96.476683866068
+ 30
+0.0
+  0
+INSERT
+  5
+B5A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+224.44459940337973
+ 20
+94.38551741279795
+ 30
+0.0
+  0
+INSERT
+  5
+B5C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+226.19465289359505
+ 20
+98.37081041637943
+ 30
+0.0
+  0
+INSERT
+  5
+B5E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+213.65639639556937
+ 20
+66.83081916596812
+ 30
+0.0
+  0
+INSERT
+  5
+B60
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+213.5880300731535
+ 20
+68.1213641940834
+ 30
+0.0
+  0
+INSERT
+  5
+B62
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+215.29213554862798
+ 20
+70.20422817076145
+ 30
+0.0
+  0
+INSERT
+  5
+B64
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+214.47997519247104
+ 20
+70.40332515583769
+ 30
+0.0
+  0
+INSERT
+  5
+B66
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+212.8465944100996
+ 20
+69.52735786693964
+ 30
+0.0
+  0
+INSERT
+  5
+B68
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+213.16317003003184
+ 20
+71.7394615206185
+ 30
+0.0
+  0
+INSERT
+  5
+B6A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+212.93613994539814
+ 20
+67.59319238629631
+ 30
+0.0
+  0
+INSERT
+  5
+B6C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+213.67836127900242
+ 20
+69.54211636686475
+ 30
+0.0
+  0
+INSERT
+  5
+B6E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+212.90197984172264
+ 20
+66.08041843440664
+ 30
+0.0
+  0
+INSERT
+  5
+B70
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+212.7276549629936
+ 20
+68.4970008928244
+ 30
+0.0
+  0
+INSERT
+  5
+B72
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+226.5901790550972
+ 20
+49.66574819577154
+ 30
+0.0
+  0
+INSERT
+  5
+B74
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+224.56173725218275
+ 20
+53.15322815584812
+ 30
+0.0
+  0
+INSERT
+  5
+B76
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+224.18276808269678
+ 20
+50.713080108209226
+ 30
+0.0
+  0
+INSERT
+  5
+B78
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+225.561524770446
+ 20
+50.14737628477848
+ 30
+0.0
+  0
+INSERT
+  5
+B7A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+223.7147391631604
+ 20
+51.69243429672914
+ 30
+0.0
+  0
+INSERT
+  5
+B7C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+224.81347718767435
+ 20
+48.54971824688827
+ 30
+0.0
+  0
+INSERT
+  5
+B7E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.21576146383606
+ 20
+50.55397223251524
+ 30
+0.0
+  0
+INSERT
+  5
+B80
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+221.62536040871368
+ 20
+50.24000755942655
+ 30
+0.0
+  0
+INSERT
+  5
+B82
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+222.88288252348949
+ 20
+48.03288974828537
+ 30
+0.0
+  0
+INSERT
+  5
+B84
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+226.59782128847684
+ 20
+51.19298202905526
+ 30
+0.0
+  0
+INSERT
+  5
+B86
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+224.4334205347143
+ 20
+50.12258428590396
+ 30
+0.0
+  0
+INSERT
+  5
+B88
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+225.73572086633231
+ 20
+48.59557744358553
+ 30
+0.0
+  0
+INSERT
+  5
+B8A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+222.9734536472352
+ 20
+48.90499125471181
+ 30
+0.0
+  0
+INSERT
+  5
+B8C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+223.5821485611818
+ 20
+48.89706596444942
+ 30
+0.0
+  0
+INSERT
+  5
+B8E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+223.615751323589
+ 20
+47.4516208374326
+ 30
+0.0
+  0
+INSERT
+  5
+B90
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+223.26846312910297
+ 20
+52.59353316018503
+ 30
+0.0
+  0
+INSERT
+  5
+B92
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+225.08439845975977
+ 20
+49.26603739191979
+ 30
+0.0
+  0
+INSERT
+  5
+B94
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+324.8412738438071
+ 20
+244.28681735609163
+ 30
+0.0
+  0
+INSERT
+  5
+B96
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+323.3115908241941
+ 20
+245.09979914358067
+ 30
+0.0
+  0
+INSERT
+  5
+B98
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+324.15254372518046
+ 20
+243.9526266075892
+ 30
+0.0
+  0
+INSERT
+  5
+B9A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+322.8294155222168
+ 20
+244.43983142094808
+ 30
+0.0
+  0
+INSERT
+  5
+B9C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+323.77202696587386
+ 20
+242.84875738082707
+ 30
+0.0
+  0
+INSERT
+  5
+B9E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+321.4109749720831
+ 20
+243.80513347078855
+ 30
+0.0
+  0
+INSERT
+  5
+BA0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+324.9002527980108
+ 20
+244.8841304930216
+ 30
+0.0
+  0
+INSERT
+  5
+BA2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+325.57689898291864
+ 20
+243.75108036561284
+ 30
+0.0
+  0
+INSERT
+  5
+BA4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+324.2298066663643
+ 20
+242.40394841939658
+ 30
+0.0
+  0
+INSERT
+  5
+BA6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+322.9219190846475
+ 20
+243.53573178408044
+ 30
+0.0
+  0
+INSERT
+  5
+BA8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+322.28347131221005
+ 20
+245.4336286571637
+ 30
+0.0
+  0
+INSERT
+  5
+BAA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+323.40977712486284
+ 20
+244.1835554611738
+ 30
+0.0
+  0
+INSERT
+  5
+BAC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+325.14982103245563
+ 20
+242.20531618935883
+ 30
+0.0
+  0
+INSERT
+  5
+BAE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+322.29265093618363
+ 20
+243.60155723003626
+ 30
+0.0
+  0
+INSERT
+  5
+BB0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+321.5254747059269
+ 20
+245.72939418523373
+ 30
+0.0
+  0
+INSERT
+  5
+BB2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+263.0583603548851
+ 20
+177.89585687642935
+ 30
+0.0
+  0
+INSERT
+  5
+BB4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+264.9868448189961
+ 20
+179.29554686428386
+ 30
+0.0
+  0
+INSERT
+  5
+BB6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+264.1393064511312
+ 20
+178.47175714122997
+ 30
+0.0
+  0
+INSERT
+  5
+BB8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+264.7870031849036
+ 20
+176.40642198486037
+ 30
+0.0
+  0
+INSERT
+  5
+BBA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+265.158951445571
+ 20
+177.3574230445365
+ 30
+0.0
+  0
+INSERT
+  5
+BBC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+262.45025940607286
+ 20
+178.61298948380917
+ 30
+0.0
+  0
+INSERT
+  5
+BBE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+264.9119820837378
+ 20
+177.9485477283202
+ 30
+0.0
+  0
+INSERT
+  5
+BC0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+262.8143259104222
+ 20
+179.49805781743328
+ 30
+0.0
+  0
+INSERT
+  5
+BC2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+264.83328257295824
+ 20
+175.5919584494555
+ 30
+0.0
+  0
+INSERT
+  5
+BC4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+262.58673094848183
+ 20
+177.50119984056562
+ 30
+0.0
+  0
+INSERT
+  5
+BC6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+263.5498195810319
+ 20
+179.2383659792876
+ 30
+0.0
+  0
+INSERT
+  5
+BC8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+263.95047629088504
+ 20
+177.8281605923831
+ 30
+0.0
+  0
+INSERT
+  5
+BCA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+219.91686835719688
+ 20
+52.39689426788752
+ 30
+0.0
+  0
+INSERT
+  5
+BCC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+217.42150571993227
+ 20
+52.90951813508051
+ 30
+0.0
+  0
+INSERT
+  5
+BCE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+219.27963159922416
+ 20
+53.87810714603415
+ 30
+0.0
+  0
+INSERT
+  5
+BD0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+220.20071492595955
+ 20
+52.935067607368445
+ 30
+0.0
+  0
+INSERT
+  5
+BD2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+218.8562460467921
+ 20
+51.26454843459194
+ 30
+0.0
+  0
+INSERT
+  5
+BD4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+221.04258004836151
+ 20
+51.44104002188514
+ 30
+0.0
+  0
+INSERT
+  5
+BD6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+218.58412067593437
+ 20
+51.98746453863122
+ 30
+0.0
+  0
+INSERT
+  5
+BD8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+217.6939691217019
+ 20
+51.98175365502112
+ 30
+0.0
+  0
+INSERT
+  5
+BDA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+217.38141304119046
+ 20
+51.05623049084188
+ 30
+0.0
+  0
+INSERT
+  5
+BDC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+219.07010974688845
+ 20
+52.59569999766292
+ 30
+0.0
+  0
+INSERT
+  5
+BDE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+220.3788595603036
+ 20
+51.39818039159207
+ 30
+0.0
+  0
+INSERT
+  5
+BE0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+220.72929244363183
+ 20
+53.314429571072836
+ 30
+0.0
+  0
+INSERT
+  5
+BE2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+219.32987091288473
+ 20
+49.244293687382104
+ 30
+0.0
+  0
+INSERT
+  5
+BE4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+216.65862103789348
+ 20
+52.31691555359231
+ 30
+0.0
+  0
+INSERT
+  5
+BE6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+224.20039395644255
+ 20
+129.27664845499686
+ 30
+0.0
+  0
+INSERT
+  5
+BE8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.24056615536335
+ 20
+129.67174246000397
+ 30
+0.0
+  0
+INSERT
+  5
+BEA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.29354848311985
+ 20
+128.6034092732405
+ 30
+0.0
+  0
+INSERT
+  5
+BEC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+226.3298649733182
+ 20
+127.18442358882957
+ 30
+0.0
+  0
+INSERT
+  5
+BEE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+226.20917056873057
+ 20
+130.7706551335449
+ 30
+0.0
+  0
+INSERT
+  5
+BF0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+230.35400571165445
+ 20
+129.82379697854745
+ 30
+0.0
+  0
+INSERT
+  5
+BF2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.31745482644723
+ 20
+131.46251326750095
+ 30
+0.0
+  0
+INSERT
+  5
+BF4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+226.81368261372776
+ 20
+132.83344707450723
+ 30
+0.0
+  0
+INSERT
+  5
+BF6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+230.2390922753422
+ 20
+128.5191803860688
+ 30
+0.0
+  0
+INSERT
+  5
+BF8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+224.74198745801834
+ 20
+130.15571712511795
+ 30
+0.0
+  0
+INSERT
+  5
+BFA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.98170572135322
+ 20
+129.04357424611698
+ 30
+0.0
+  0
+INSERT
+  5
+BFC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+207.24718758700445
+ 20
+165.13659706476554
+ 30
+0.0
+  0
+INSERT
+  5
+BFE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+207.2959567775055
+ 20
+164.10368466328075
+ 30
+0.0
+  0
+INSERT
+  5
+C00
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+205.61329441065678
+ 20
+162.96253694217694
+ 30
+0.0
+  0
+INSERT
+  5
+C02
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+204.7506669774375
+ 20
+166.43466728572955
+ 30
+0.0
+  0
+INSERT
+  5
+C04
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+207.97848546650388
+ 20
+164.62996359294246
+ 30
+0.0
+  0
+INSERT
+  5
+C06
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+205.4435048773672
+ 20
+166.56272093580316
+ 30
+0.0
+  0
+INSERT
+  5
+C08
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+207.59150857386203
+ 20
+163.060431305727
+ 30
+0.0
+  0
+INSERT
+  5
+C0A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+207.79044080469964
+ 20
+166.0214300057271
+ 30
+0.0
+  0
+INSERT
+  5
+C0C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+207.23708808244996
+ 20
+166.80517818573762
+ 30
+0.0
+  0
+INSERT
+  5
+C0E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+205.66799681872607
+ 20
+165.20385805523782
+ 30
+0.0
+  0
+INSERT
+  5
+C10
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+209.10230213605212
+ 20
+163.01187513529754
+ 30
+0.0
+  0
+INSERT
+  5
+C12
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+209.070083199701
+ 20
+192.5302240779786
+ 30
+0.0
+  0
+INSERT
+  5
+C14
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+209.74700970967115
+ 20
+192.32639200626758
+ 30
+0.0
+  0
+INSERT
+  5
+C16
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+210.58997881656074
+ 20
+195.10212925260365
+ 30
+0.0
+  0
+INSERT
+  5
+C18
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+210.25921640851385
+ 20
+196.3064166708309
+ 30
+0.0
+  0
+INSERT
+  5
+C1A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+209.9192036076679
+ 20
+193.54368487375254
+ 30
+0.0
+  0
+INSERT
+  5
+C1C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+209.26701882435876
+ 20
+194.3258477143549
+ 30
+0.0
+  0
+INSERT
+  5
+C1E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+208.23173828798522
+ 20
+193.4444796705438
+ 30
+0.0
+  0
+INSERT
+  5
+C20
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+208.46497833272502
+ 20
+192.58669690061325
+ 30
+0.0
+  0
+INSERT
+  5
+C22
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+208.68857461046198
+ 20
+196.33041095818237
+ 30
+0.0
+  0
+INSERT
+  5
+C24
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+207.26319006081988
+ 20
+193.31885626720117
+ 30
+0.0
+  0
+INSERT
+  5
+C26
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+210.93783581654242
+ 20
+193.83532161340403
+ 30
+0.0
+  0
+INSERT
+  5
+C28
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+209.0295993382787
+ 20
+193.50453612477165
+ 30
+0.0
+  0
+INSERT
+  5
+C2A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+210.53456962590587
+ 20
+192.66619078126416
+ 30
+0.0
+  0
+INSERT
+  5
+C2C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+211.49586011235178
+ 20
+192.24436374610133
+ 30
+0.0
+  0
+INSERT
+  5
+C2E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+208.16788114468045
+ 20
+194.04623997406733
+ 30
+0.0
+  0
+INSERT
+  5
+C30
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+207.56889567553426
+ 20
+193.93487939794514
+ 30
+0.0
+  0
+INSERT
+  5
+C32
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+251.99412911236792
+ 20
+211.52175362788176
+ 30
+0.0
+  0
+INSERT
+  5
+C34
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+254.49575795738718
+ 20
+209.2103887276611
+ 30
+0.0
+  0
+INSERT
+  5
+C36
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+255.26096590597314
+ 20
+213.14882590950066
+ 30
+0.0
+  0
+INSERT
+  5
+C38
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+253.7408459265969
+ 20
+210.9137220051466
+ 30
+0.0
+  0
+INSERT
+  5
+C3A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+253.07108589748964
+ 20
+212.19718820113815
+ 30
+0.0
+  0
+INSERT
+  5
+C3C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+252.86736607331002
+ 20
+212.83820450844115
+ 30
+0.0
+  0
+INSERT
+  5
+C3E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+251.4116754203452
+ 20
+214.3425352967008
+ 30
+0.0
+  0
+INSERT
+  5
+C40
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+251.7858305025922
+ 20
+209.66672728992273
+ 30
+0.0
+  0
+INSERT
+  5
+C42
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+250.80083478962985
+ 20
+212.23720654524794
+ 30
+0.0
+  0
+INSERT
+  5
+C44
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+254.44303645541208
+ 20
+213.32881351353853
+ 30
+0.0
+  0
+INSERT
+  5
+C46
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+372.7177930490847
+ 20
+231.71708329452343
+ 30
+0.0
+  0
+INSERT
+  5
+C48
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+373.4541111168891
+ 20
+231.62702673262328
+ 30
+0.0
+  0
+INSERT
+  5
+C4A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+374.46654182205486
+ 20
+229.7567676541181
+ 30
+0.0
+  0
+INSERT
+  5
+C4C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+370.88372788116504
+ 20
+231.66479264540928
+ 30
+0.0
+  0
+INSERT
+  5
+C4E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+370.9947217234429
+ 20
+231.05810768054585
+ 30
+0.0
+  0
+INSERT
+  5
+C50
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+372.5144774810385
+ 20
+229.9484183576272
+ 30
+0.0
+  0
+INSERT
+  5
+C52
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+371.15673586251614
+ 20
+232.59198985211555
+ 30
+0.0
+  0
+INSERT
+  5
+C54
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+376.2039904904094
+ 20
+231.83011109114761
+ 30
+0.0
+  0
+INSERT
+  5
+C56
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+375.96726579204426
+ 20
+230.8501207066476
+ 30
+0.0
+  0
+INSERT
+  5
+C58
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+371.0151290321401
+ 20
+230.1794326761164
+ 30
+0.0
+  0
+INSERT
+  5
+C5A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+373.2916126239174
+ 20
+230.25066628995606
+ 30
+0.0
+  0
+INSERT
+  5
+C5C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+374.5390493000122
+ 20
+231.59621727660956
+ 30
+0.0
+  0
+INSERT
+  5
+C5E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+372.1143788093888
+ 20
+232.06209879284333
+ 30
+0.0
+  0
+INSERT
+  5
+C60
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+373.9799421461144
+ 20
+230.6389060696606
+ 30
+0.0
+  0
+INSERT
+  5
+C62
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+375.61572885666226
+ 20
+229.13529089228288
+ 30
+0.0
+  0
+INSERT
+  5
+C64
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+371.80787711811905
+ 20
+230.54157950215344
+ 30
+0.0
+  0
+INSERT
+  5
+C66
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+212.6836582999975
+ 20
+79.40746489158573
+ 30
+0.0
+  0
+INSERT
+  5
+C68
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+214.21183649853415
+ 20
+78.7044210675101
+ 30
+0.0
+  0
+INSERT
+  5
+C6A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+213.38847144780323
+ 20
+77.37556833704329
+ 30
+0.0
+  0
+INSERT
+  5
+C6C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+213.47446707644556
+ 20
+75.635034402541
+ 30
+0.0
+  0
+INSERT
+  5
+C6E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+215.39205500151246
+ 20
+78.78261914751455
+ 30
+0.0
+  0
+INSERT
+  5
+C70
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+214.807608704655
+ 20
+76.48678563106405
+ 30
+0.0
+  0
+INSERT
+  5
+C72
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+212.5344541060435
+ 20
+77.6504227127556
+ 30
+0.0
+  0
+INSERT
+  5
+C74
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+212.66074635471512
+ 20
+78.28617795492275
+ 30
+0.0
+  0
+INSERT
+  5
+C76
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+213.99892172276287
+ 20
+77.23525474987363
+ 30
+0.0
+  0
+INSERT
+  5
+C78
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+213.1206834353063
+ 20
+80.45820646308033
+ 30
+0.0
+  0
+INSERT
+  5
+C7A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+214.12203294100348
+ 20
+79.79294031962378
+ 30
+0.0
+  0
+INSERT
+  5
+C7C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+214.40336298250278
+ 20
+78.13402137000783
+ 30
+0.0
+  0
+INSERT
+  5
+C7E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+215.3134543563734
+ 20
+79.37858109717786
+ 30
+0.0
+  0
+INSERT
+  5
+C80
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+212.18560533151017
+ 20
+77.06727994083367
+ 30
+0.0
+  0
+INSERT
+  5
+C82
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+215.0514903983049
+ 20
+81.0224034462904
+ 30
+0.0
+  0
+INSERT
+  5
+C84
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+214.10008333855427
+ 20
+80.44172395421276
+ 30
+0.0
+  0
+INSERT
+  5
+C86
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+479.00568961323296
+ 20
+171.39666138616724
+ 30
+0.0
+  0
+INSERT
+  5
+C88
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+478.06198483356206
+ 20
+170.2088460729011
+ 30
+0.0
+  0
+INSERT
+  5
+C8A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+478.03929197166633
+ 20
+167.9308138083535
+ 30
+0.0
+  0
+INSERT
+  5
+C8C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+477.8870768738592
+ 20
+171.27231985369176
+ 30
+0.0
+  0
+INSERT
+  5
+C8E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+477.8602394084084
+ 20
+172.10047531253946
+ 30
+0.0
+  0
+INSERT
+  5
+C90
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+476.8079852681436
+ 20
+171.9463711591663
+ 30
+0.0
+  0
+INSERT
+  5
+C92
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+479.3107948377997
+ 20
+168.284086516495
+ 30
+0.0
+  0
+INSERT
+  5
+C94
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+479.6058977149878
+ 20
+167.61377362940254
+ 30
+0.0
+  0
+INSERT
+  5
+C96
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+477.77511286465676
+ 20
+173.43359666589419
+ 30
+0.0
+  0
+INSERT
+  5
+C98
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+478.60814348494654
+ 20
+171.9043682074135
+ 30
+0.0
+  0
+INSERT
+  5
+C9A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+476.25934678571065
+ 20
+172.78632324356033
+ 30
+0.0
+  0
+INSERT
+  5
+C9C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+476.5624078433559
+ 20
+169.5651988938068
+ 30
+0.0
+  0
+INSERT
+  5
+C9E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+474.80536739398866
+ 20
+170.99202239643859
+ 30
+0.0
+  0
+INSERT
+  5
+CA0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+475.6448200963147
+ 20
+170.78572052832024
+ 30
+0.0
+  0
+INSERT
+  5
+CA2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+477.55879477764256
+ 20
+169.54642042414994
+ 30
+0.0
+  0
+INSERT
+  5
+CA4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+476.634318548502
+ 20
+168.21954375134285
+ 30
+0.0
+  0
+INSERT
+  5
+CA6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+479.2038200751661
+ 20
+168.9754553574819
+ 30
+0.0
+  0
+INSERT
+  5
+CA8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+473.0283006087968
+ 20
+171.01375999107378
+ 30
+0.0
+  0
+INSERT
+  5
+CAA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+472.39881820608025
+ 20
+171.49419360428388
+ 30
+0.0
+  0
+INSERT
+  5
+CAC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+471.6676556554998
+ 20
+170.70217458352215
+ 30
+0.0
+  0
+INSERT
+  5
+CAE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+472.25672879861844
+ 20
+169.6173300882223
+ 30
+0.0
+  0
+INSERT
+  5
+CB0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+469.11797010135746
+ 20
+173.05055038804178
+ 30
+0.0
+  0
+INSERT
+  5
+CB2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+471.0134848640308
+ 20
+169.3351455717995
+ 30
+0.0
+  0
+INSERT
+  5
+CB4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+472.38966820420956
+ 20
+170.85260213083347
+ 30
+0.0
+  0
+INSERT
+  5
+CB6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+474.01528722395517
+ 20
+170.18847443634547
+ 30
+0.0
+  0
+INSERT
+  5
+CB8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+469.7712818367084
+ 20
+171.56524723488502
+ 30
+0.0
+  0
+INSERT
+  5
+CBA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+473.20310306128164
+ 20
+169.8346091681795
+ 30
+0.0
+  0
+INSERT
+  5
+CBC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+471.9701702839611
+ 20
+173.25537025555906
+ 30
+0.0
+  0
+INSERT
+  5
+CBE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+474.45601231546465
+ 20
+172.62255077360908
+ 30
+0.0
+  0
+INSERT
+  5
+CC0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+469.2336375942074
+ 20
+171.8774371951509
+ 30
+0.0
+  0
+INSERT
+  5
+CC2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+471.88326887581746
+ 20
+172.56164048628844
+ 30
+0.0
+  0
+INSERT
+  5
+CC4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+470.7409752200871
+ 20
+170.55706349261473
+ 30
+0.0
+  0
+INSERT
+  5
+CC6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+473.9722678212459
+ 20
+171.90361122102544
+ 30
+0.0
+  0
+INSERT
+  5
+CC8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+470.160866671252
+ 20
+173.72029992657139
+ 30
+0.0
+  0
+INSERT
+  5
+CCA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+471.00134667174586
+ 20
+173.4502982555909
+ 30
+0.0
+  0
+INSERT
+  5
+CCC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+469.4519881854617
+ 20
+169.95454783008475
+ 30
+0.0
+  0
+INSERT
+  5
+CCE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+540.8035542786149
+ 20
+229.5271884068004
+ 30
+0.0
+  0
+INSERT
+  5
+CD0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+539.6062014734263
+ 20
+227.85377112447205
+ 30
+0.0
+  0
+INSERT
+  5
+CD2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+543.8159230813127
+ 20
+229.24216336413988
+ 30
+0.0
+  0
+INSERT
+  5
+CD4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+540.6786415273476
+ 20
+228.43981403224015
+ 30
+0.0
+  0
+INSERT
+  5
+CD6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+544.4344043501027
+ 20
+229.946542599431
+ 30
+0.0
+  0
+INSERT
+  5
+CD8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+538.0714258976399
+ 20
+227.7211756079835
+ 30
+0.0
+  0
+INSERT
+  5
+CDA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+540.2562196836317
+ 20
+229.91801754978263
+ 30
+0.0
+  0
+INSERT
+  5
+CDC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+541.5059298975157
+ 20
+229.73893641244248
+ 30
+0.0
+  0
+INSERT
+  5
+CDE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+541.7777541093702
+ 20
+231.05827148052234
+ 30
+0.0
+  0
+INSERT
+  5
+CE0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+541.1085221665091
+ 20
+228.91995749557682
+ 30
+0.0
+  0
+INSERT
+  5
+CE2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+540.3295964519622
+ 20
+228.94204717609935
+ 30
+0.0
+  0
+INSERT
+  5
+CE4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+542.662360535133
+ 20
+229.42922329984427
+ 30
+0.0
+  0
+INSERT
+  5
+CE6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+538.7997410682409
+ 20
+228.85388623416677
+ 30
+0.0
+  0
+INSERT
+  5
+CE8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+541.124104192431
+ 20
+230.3758318173882
+ 30
+0.0
+  0
+INSERT
+  5
+CEA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+539.4626272355292
+ 20
+229.09447365661657
+ 30
+0.0
+  0
+INSERT
+  5
+CEC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+538.1591516560668
+ 20
+228.71942755296578
+ 30
+0.0
+  0
+INSERT
+  5
+CEE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+542.2457721636017
+ 20
+228.85591812496938
+ 30
+0.0
+  0
+INSERT
+  5
+CF0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+543.0771883827841
+ 20
+230.43616173653376
+ 30
+0.0
+  0
+INSERT
+  5
+CF2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+543.9996285937624
+ 20
+228.59396656663685
+ 30
+0.0
+  0
+INSERT
+  5
+CF4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+521.0803843749056
+ 20
+197.3713923619112
+ 30
+0.0
+  0
+INSERT
+  5
+CF6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+519.3478280418826
+ 20
+194.6096425859824
+ 30
+0.0
+  0
+INSERT
+  5
+CF8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+518.6459456678185
+ 20
+195.00984596848136
+ 30
+0.0
+  0
+INSERT
+  5
+CFA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+521.5551623909978
+ 20
+196.6965845880116
+ 30
+0.0
+  0
+INSERT
+  5
+CFC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+518.4943301350053
+ 20
+193.5139351518868
+ 30
+0.0
+  0
+INSERT
+  5
+CFE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+520.5472053459265
+ 20
+194.14150253182535
+ 30
+0.0
+  0
+INSERT
+  5
+D00
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+519.6728381031007
+ 20
+193.53178504796637
+ 30
+0.0
+  0
+INSERT
+  5
+D02
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+517.9299636272143
+ 20
+197.21014672163525
+ 30
+0.0
+  0
+INSERT
+  5
+D04
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+516.3714706017556
+ 20
+194.7464072087724
+ 30
+0.0
+  0
+INSERT
+  5
+D06
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+519.0243756027251
+ 20
+195.88708468833914
+ 30
+0.0
+  0
+INSERT
+  5
+D08
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+519.0340994458959
+ 20
+198.00190662192108
+ 30
+0.0
+  0
+INSERT
+  5
+D0A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+518.2598005288887
+ 20
+194.36277025242333
+ 30
+0.0
+  0
+INSERT
+  5
+D0C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+518.7308642776659
+ 20
+197.2237333296505
+ 30
+0.0
+  0
+INSERT
+  5
+D0E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+517.7874628443919
+ 20
+195.79200380691435
+ 30
+0.0
+  0
+INSERT
+  5
+D10
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+521.821090815093
+ 20
+192.8731406491311
+ 30
+0.0
+  0
+INSERT
+  5
+D12
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+220.3280223765662
+ 20
+94.02766401678208
+ 30
+0.0
+  0
+INSERT
+  5
+D14
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+217.90071473346666
+ 20
+93.92064152824321
+ 30
+0.0
+  0
+INSERT
+  5
+D16
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+219.7584029188405
+ 20
+93.69691008815813
+ 30
+0.0
+  0
+INSERT
+  5
+D18
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+219.36153013644025
+ 20
+94.98319257415979
+ 30
+0.0
+  0
+INSERT
+  5
+D1A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+218.49293952157382
+ 20
+92.72303019036336
+ 30
+0.0
+  0
+INSERT
+  5
+D1C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+218.17387591048262
+ 20
+95.15502355249951
+ 30
+0.0
+  0
+INSERT
+  5
+D1E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+220.80818449442464
+ 20
+94.73019612259017
+ 30
+0.0
+  0
+INSERT
+  5
+D20
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+219.069666328587
+ 20
+93.57036742150379
+ 30
+0.0
+  0
+INSERT
+  5
+D22
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+220.98514304096184
+ 20
+96.73659490882137
+ 30
+0.0
+  0
+INSERT
+  5
+D24
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+220.9137291988648
+ 20
+91.33548437237462
+ 30
+0.0
+  0
+INSERT
+  5
+D26
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+219.69190760334382
+ 20
+96.37439459069009
+ 30
+0.0
+  0
+INSERT
+  5
+D28
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+221.76960440155028
+ 20
+96.65572201091528
+ 30
+0.0
+  0
+INSERT
+  5
+D2A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+219.1556895585667
+ 20
+91.40410406600445
+ 30
+0.0
+  0
+INSERT
+  5
+D2C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+221.35894326509313
+ 20
+93.95209446694876
+ 30
+0.0
+  0
+INSERT
+  5
+D2E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+221.66636034964617
+ 20
+95.04962855345606
+ 30
+0.0
+  0
+INSERT
+  5
+D30
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+220.72746396705452
+ 20
+92.98165357262435
+ 30
+0.0
+  0
+INSERT
+  5
+D32
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+262.953055838198
+ 20
+175.83256336254183
+ 30
+0.0
+  0
+INSERT
+  5
+D34
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+261.70782077537325
+ 20
+176.99615818225408
+ 30
+0.0
+  0
+INSERT
+  5
+D36
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+261.95892225412064
+ 20
+175.8420196384303
+ 30
+0.0
+  0
+INSERT
+  5
+D38
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+265.7320068037
+ 20
+177.08098273300945
+ 30
+0.0
+  0
+INSERT
+  5
+D3A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+264.27723769500585
+ 20
+176.03941805450623
+ 30
+0.0
+  0
+INSERT
+  5
+D3C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+264.3417343959919
+ 20
+177.3363391558573
+ 30
+0.0
+  0
+INSERT
+  5
+D3E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+263.9852412908697
+ 20
+173.68154418152753
+ 30
+0.0
+  0
+INSERT
+  5
+D40
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+263.3822866566952
+ 20
+174.2972125594047
+ 30
+0.0
+  0
+INSERT
+  5
+D42
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+264.0586099208342
+ 20
+174.82686546695365
+ 30
+0.0
+  0
+INSERT
+  5
+D44
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+262.4959210640352
+ 20
+176.29693406199962
+ 30
+0.0
+  0
+INSERT
+  5
+D46
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+265.8800053275313
+ 20
+178.33481902940406
+ 30
+0.0
+  0
+INSERT
+  5
+D48
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+263.60331326470714
+ 20
+176.01223894941134
+ 30
+0.0
+  0
+INSERT
+  5
+D4A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+264.3256892417576
+ 20
+179.43532648846934
+ 30
+0.0
+  0
+INSERT
+  5
+D4C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+265.1597171442262
+ 20
+180.35543089939986
+ 30
+0.0
+  0
+INSERT
+  5
+D4E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+265.14867605131434
+ 20
+178.61689324539122
+ 30
+0.0
+  0
+INSERT
+  5
+D50
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.76835596932335
+ 20
+84.15719309385699
+ 30
+0.0
+  0
+INSERT
+  5
+D52
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.55007505253226
+ 20
+87.8765925553108
+ 30
+0.0
+  0
+INSERT
+  5
+D54
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.30740561445873
+ 20
+85.40381493249157
+ 30
+0.0
+  0
+INSERT
+  5
+D56
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+231.15373658541745
+ 20
+88.19981784413216
+ 30
+0.0
+  0
+INSERT
+  5
+D58
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+231.0525717596149
+ 20
+87.32943597895206
+ 30
+0.0
+  0
+INSERT
+  5
+D5A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+230.4448463828622
+ 20
+88.35790159018322
+ 30
+0.0
+  0
+INSERT
+  5
+D5C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+229.50902470593368
+ 20
+88.71008367093158
+ 30
+0.0
+  0
+INSERT
+  5
+D5E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+229.00088777014574
+ 20
+86.08773732302352
+ 30
+0.0
+  0
+INSERT
+  5
+D60
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+229.53870460410153
+ 20
+85.58108382517318
+ 30
+0.0
+  0
+INSERT
+  5
+D62
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+230.27458190450128
+ 20
+85.65576698376988
+ 30
+0.0
+  0
+INSERT
+  5
+D64
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.49719250482028
+ 20
+86.78236711487544
+ 30
+0.0
+  0
+INSERT
+  5
+D66
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+229.6576069241583
+ 20
+86.41915892666438
+ 30
+0.0
+  0
+INSERT
+  5
+D68
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.62226390825532
+ 20
+89.39082891973077
+ 30
+0.0
+  0
+INSERT
+  5
+D6A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.10440002686957
+ 20
+84.36744070212153
+ 30
+0.0
+  0
+INSERT
+  5
+D6C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+244.34951327828517
+ 20
+178.6500353297384
+ 30
+0.0
+  0
+INSERT
+  5
+D6E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+245.1531739739526
+ 20
+179.68847224386172
+ 30
+0.0
+  0
+INSERT
+  5
+D70
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+245.27477657961464
+ 20
+178.8862403460573
+ 30
+0.0
+  0
+INSERT
+  5
+D72
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+241.94886697550436
+ 20
+178.13790745891308
+ 30
+0.0
+  0
+INSERT
+  5
+D74
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+245.23187866269757
+ 20
+180.51849131481606
+ 30
+0.0
+  0
+INSERT
+  5
+D76
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+244.7947023011864
+ 20
+181.12794818349502
+ 30
+0.0
+  0
+INSERT
+  5
+D78
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+246.69179032946866
+ 20
+181.75088596394104
+ 30
+0.0
+  0
+INSERT
+  5
+D7A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+246.928056124095
+ 20
+180.07997118220476
+ 30
+0.0
+  0
+INSERT
+  5
+D7C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+244.07512299147385
+ 20
+176.9065922635796
+ 30
+0.0
+  0
+INSERT
+  5
+D7E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+243.47006747880502
+ 20
+178.24448271921577
+ 30
+0.0
+  0
+INSERT
+  5
+D80
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+226.33714710884894
+ 20
+92.27564935554526
+ 30
+0.0
+  0
+INSERT
+  5
+D82
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.76981292877073
+ 20
+92.93034658955891
+ 30
+0.0
+  0
+INSERT
+  5
+D84
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+224.06386135694336
+ 20
+88.80763079027797
+ 30
+0.0
+  0
+INSERT
+  5
+D86
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+226.74211232359735
+ 20
+89.54585707956221
+ 30
+0.0
+  0
+INSERT
+  5
+D88
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.3860679573727
+ 20
+90.16352416161709
+ 30
+0.0
+  0
+INSERT
+  5
+D8A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+224.51736732093934
+ 20
+90.13323465264757
+ 30
+0.0
+  0
+INSERT
+  5
+D8C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+224.3319607143706
+ 20
+88.11407873810381
+ 30
+0.0
+  0
+INSERT
+  5
+D8E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+229.11133475894815
+ 20
+87.26068069181733
+ 30
+0.0
+  0
+INSERT
+  5
+D90
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+225.42517203168563
+ 20
+90.66404054128468
+ 30
+0.0
+  0
+INSERT
+  5
+D92
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+229.04256749004344
+ 20
+90.04474875711034
+ 30
+0.0
+  0
+INSERT
+  5
+D94
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+225.64663657327003
+ 20
+86.99090950366713
+ 30
+0.0
+  0
+INSERT
+  5
+D96
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+226.02074742968043
+ 20
+90.47102953235252
+ 30
+0.0
+  0
+INSERT
+  5
+D98
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.4994899774181
+ 20
+89.32113288651217
+ 30
+0.0
+  0
+INSERT
+  5
+D9A
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+225.41884322677768
+ 20
+88.24620712018373
+ 30
+0.0
+  0
+INSERT
+  5
+D9C
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+226.06548101374347
+ 20
+91.68308895142702
+ 30
+0.0
+  0
+INSERT
+  5
+D9E
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+225.22913199965643
+ 20
+91.71043256052461
+ 30
+0.0
+  0
+INSERT
+  5
+DA0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.5491517057899
+ 20
+87.98340391258161
+ 30
+0.0
+  0
+INSERT
+  5
+DA2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.54051815481037
+ 20
+90.12827463070481
+ 30
+0.0
+  0
+INSERT
+  5
+DA4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.00396349289701
+ 20
+87.22017155307427
+ 30
+0.0
+  0
+INSERT
+  5
+DA6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+489.9048018409496
+ 20
+182.5864060759712
+ 30
+0.0
+  0
+INSERT
+  5
+DA8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+491.4237748223483
+ 20
+182.50295682748967
+ 30
+0.0
+  0
+INSERT
+  5
+DAA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+490.66117329983035
+ 20
+179.74136822664235
+ 30
+0.0
+  0
+INSERT
+  5
+DAC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+488.86928430112226
+ 20
+183.33698774179643
+ 30
+0.0
+  0
+INSERT
+  5
+DAE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+492.00518233482364
+ 20
+181.92320487908287
+ 30
+0.0
+  0
+INSERT
+  5
+DB0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+493.4359253509051
+ 20
+181.43387006479804
+ 30
+0.0
+  0
+INSERT
+  5
+DB2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+488.2864031455306
+ 20
+183.62402775178563
+ 30
+0.0
+  0
+INSERT
+  5
+DB4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+492.4986199054703
+ 20
+180.17693804442246
+ 30
+0.0
+  0
+INSERT
+  5
+DB6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+489.20667051351523
+ 20
+182.3636449422451
+ 30
+0.0
+  0
+INSERT
+  5
+DB8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+488.5837656731773
+ 20
+181.0524580623306
+ 30
+0.0
+  0
+INSERT
+  5
+DBA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+488.05299766448536
+ 20
+181.7392951362886
+ 30
+0.0
+  0
+INSERT
+  5
+DBC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+491.9503751611066
+ 20
+183.45822632168745
+ 30
+0.0
+  0
+INSERT
+  5
+DBE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+488.0986771854981
+ 20
+182.47452530528696
+ 30
+0.0
+  0
+INSERT
+  5
+DC0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+492.44669319683055
+ 20
+181.07297291040143
+ 30
+0.0
+  0
+INSERT
+  5
+DC2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+489.98693224888507
+ 20
+183.4267597709225
+ 30
+0.0
+  0
+INSERT
+  5
+DC4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.34911913145487
+ 20
+107.76527423075211
+ 30
+0.0
+  0
+INSERT
+  5
+DC6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+227.7076128693472
+ 20
+105.68799541065778
+ 30
+0.0
+  0
+INSERT
+  5
+DC8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+225.61969031016991
+ 20
+102.51784543704152
+ 30
+0.0
+  0
+INSERT
+  5
+DCA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+230.49126571248263
+ 20
+104.0770235394441
+ 30
+0.0
+  0
+INSERT
+  5
+DCC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.79063600533513
+ 20
+106.98484283465642
+ 30
+0.0
+  0
+INSERT
+  5
+DCE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+224.78500066095435
+ 20
+104.70371052983492
+ 30
+0.0
+  0
+INSERT
+  5
+DD0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+229.80367548580605
+ 20
+105.71086375469453
+ 30
+0.0
+  0
+INSERT
+  5
+DD2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+230.0319423849334
+ 20
+106.4471918794602
+ 30
+0.0
+  0
+INSERT
+  5
+DD4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+229.09645827233362
+ 20
+106.20067459517378
+ 30
+0.0
+  0
+INSERT
+  5
+DD6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.13248814031923
+ 20
+101.87840678096512
+ 30
+0.0
+  0
+INSERT
+  5
+DD8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.4478545121968
+ 20
+102.67279195772763
+ 30
+0.0
+  0
+INSERT
+  5
+DDA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+226.98703769164248
+ 20
+107.4265357083285
+ 30
+0.0
+  0
+INSERT
+  5
+DDC
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+225.98188253678455
+ 20
+104.84726273428173
+ 30
+0.0
+  0
+INSERT
+  5
+DDE
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+225.72460779180642
+ 20
+107.13850390235413
+ 30
+0.0
+  0
+INSERT
+  5
+DE0
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+224.89009801178375
+ 20
+105.3454223679507
+ 30
+0.0
+  0
+INSERT
+  5
+DE2
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.23599368513533
+ 20
+104.92330203629307
+ 30
+0.0
+  0
+INSERT
+  5
+DE4
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+230.692305899252
+ 20
+105.4937493995578
+ 30
+0.0
+  0
+INSERT
+  5
+DE6
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+228.82482360175067
+ 20
+105.11512793751113
+ 30
+0.0
+  0
+INSERT
+  5
+DE8
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+226.56890209825542
+ 20
+104.49369205640475
+ 30
+0.0
+  0
+INSERT
+  5
+DEA
+330
+17
+100
+AcDbEntity
+  8
+BUSH
+100
+AcDbBlockReference
+  2
+ЗЛАКИ_ОРНАМЕНТАЛЬНЫЕ
+ 10
+226.52830539475625
+ 20
+102.34765117906538
+ 30
+0.0
+  0
 ENDSEC
   0
 SECTION
@@ -139675,7 +150403,7 @@ DictionaryVariables
 280
 0
   1
-1.4.4 @ 2026-09-18T17:43:12.589744+00:00
+1.4.4 @ 2026-09-19T07:38:14.463294+00:00
   0
 ENDSEC
   0

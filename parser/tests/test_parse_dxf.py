@@ -514,6 +514,26 @@ def test_extract_point_objects_lone_circle_without_line_is_a_marker(empty_doc):
     assert "height" not in objects[0]["metadata"]
 
 
+def test_extract_point_objects_bare_circles_and_inserts_coexist_on_same_layer(empty_doc):
+    # Баг, найденный на реальном файле (19_2ya_pryadilnaya): 443 дерева на
+    # слое TREE -- голые CIRCLE без INSERT/POINT (топосъёмка). При попытке
+    # добавить дерево через add_blockref на тот же слой ветка "одиночный
+    # CIRCLE-маркер" требовала "and not inserts_or_points" и молча теряла
+    # все 443 существующих дерева, как только на слое появлялся хоть один
+    # INSERT. CIRCLE и INSERT -- разные сущности одних и тех же данных, а не
+    # альтернативные прочтения, оба должны попасть в объекты.
+    empty_doc.blocks.new(name="tree_block")
+    msp = empty_doc.modelspace()
+    msp.add_circle((1, 1, 0), radius=0.5, dxfattribs={"layer": "TREE"})
+    msp.add_circle((2, 2, 0), radius=0.5, dxfattribs={"layer": "TREE"})
+    msp.add_blockref("tree_block", insert=(9, 9, 0), dxfattribs={"layer": "TREE"})
+    objects = extract_point_objects(msp, Transform())
+    assert len(objects) == 3
+    assert sum(1 for o in objects if o["type"] == "tree") == 3
+    positions = {(o["position"]["x"], o["position"]["z"]) for o in objects}
+    assert positions == {(1.0, 1.0), (2.0, 2.0), (9.0, 9.0)}
+
+
 def test_extract_point_objects_ignores_unmatched_layers(empty_doc):
     msp = empty_doc.modelspace()
     msp.add_point((0, 0, 0), dxfattribs={"layer": "SOMETHING_UNRELATED"})
