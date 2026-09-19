@@ -54,7 +54,7 @@ from collections import Counter
 from collections.abc import Callable
 from typing import Optional
 
-from placement import Placer, clamp, pick_spread, polygons
+from placement import Placer, clamp, lines_of, pick_spread, polygons, rect_sides, rotation_of, sample_line
 from plant_catalog import CatalogItem
 from schemas import Scene
 from shapely.geometry import LineString, Point, Polygon
@@ -161,36 +161,6 @@ AXIS_CLEARANCE_M = {
 Create = Callable[[CatalogItem, float, float, float], None]
 
 
-def _lines(geom) -> list[LineString]:
-    if geom is None or geom.is_empty:
-        return []
-    if geom.geom_type in ("LineString", "LinearRing"):
-        return [LineString(geom.coords)]
-    return [part for g in getattr(geom, "geoms", []) for part in _lines(g)]
-
-
-def _rotation(tx: float, tz: float) -> float:
-    # Как в Placer.points_along: поворот θ кладёт локальную ось X по (cosθ, -sinθ).
-    return math.degrees(math.atan2(-tz, tx)) if (tx or tz) else 0.0
-
-
-def _samples(line: LineString, step: float):
-    """(x, z, tx, tz) через step вдоль линии, с отступом от концов поровну;
-    (tx, tz) -- единичная касательная."""
-    length = line.length
-    if length < 1e-6:
-        return
-    count = max(1, int(length // step))
-    first = (length - (count - 1) * step) / 2
-    for i in range(count):
-        d = first + i * step
-        p = line.interpolate(d)
-        a, b = line.interpolate(max(d - 0.25, 0.0)), line.interpolate(min(d + 0.25, length))
-        tx, tz = b.x - a.x, b.y - a.y
-        norm = math.hypot(tx, tz) or 1.0
-        yield p.x, p.y, tx / norm, tz / norm
-
-
 def _footprint(item: CatalogItem, x: float, z: float, rotation_deg: float):
     """Полный габарит объекта в плане -- прямоугольник (лавка, секция
     изгороди, клумба, дорожка) или круг (дерево, куст, фонарь, урна, фонтан),
@@ -200,7 +170,7 @@ def _footprint(item: CatalogItem, x: float, z: float, rotation_deg: float):
     dims = item.dimensions
     if dims.width and dims.depth:
         angle = math.radians(rotation_deg)
-        ux, uz = math.cos(angle), -math.sin(angle)  # ось X объекта (как в _rotation)
+        ux, uz = math.cos(angle), -math.sin(angle)  # ось X объекта (как в rotation_of)
         vx, vz = math.sin(angle), math.cos(angle)  # перпендикулярная ось Z объекта
         hw, hd = dims.width / 2, dims.depth / 2
         return Polygon(
@@ -214,18 +184,6 @@ def _footprint(item: CatalogItem, x: float, z: float, rotation_deg: float):
     if dims.radius:
         return Point(x, z).buffer(dims.radius, quad_segs=8)
     return Point(x, z)
-
-
-def _rect_sides(poly) -> list[tuple[float, float, float]]:
-    """Две смежные стороны минимального описанного прямоугольника, как
-    (единичный вектор x, единичный вектор z, длина стороны)."""
-    coords = list(poly.minimum_rotated_rectangle.exterior.coords)[:-1]
-    sides = []
-    for i in range(2):
-        (ax, az), (bx, bz) = coords[i], coords[i + 1]
-        length = math.hypot(bx - ax, bz - az) or 1.0
-        sides.append(((bx - ax) / length, (bz - az) / length, length))
-    return sides
 
 
 def _mst_edges(points: list[Point]) -> list[tuple[int, int]]:
@@ -260,7 +218,7 @@ def _main_directions(poly) -> list[tuple[float, float]]:
     """Единичные векторы вдоль сторон минимального описанного прямоугольника --
     главные оси двора, в обе стороны."""
     directions = []
-    for ux, uz, _ in _rect_sides(poly):
+    for ux, uz, _ in rect_sides(poly):
         directions += [(ux, uz), (-ux, -uz)]
     return directions
 
@@ -395,14 +353,14 @@ class CourtyardDesigner:
         segments = []
         for entrance, anchor in zip(near_entrances, anchors):
             stub = LineString([(entrance.x, entrance.y), (anchor.x, anchor.y)]).intersection(inner)
-            segments.extend(p for p in _lines(stub) if p.length >= 0.5)
+            segments.extend(p for p in lines_of(stub) if p.length >= 0.5)
         for i, j in _mst_edges(anchors):
             edge = LineString([(anchors[i].x, anchors[i].y), (anchors[j].x, anchors[j].y)])
             clipped = edge.intersection(inner)
             covered = clipped.length if not clipped.is_empty else 0.0
             if edge.length - covered > ENTRANCE_LINK_LEAK_M:
                 continue
-            segments.extend(p for p in _lines(clipped) if p.length >= 0.5)
+            segments.extend(p for p in lines_of(clipped) if p.length >= 0.5)
         return segments
 
     def _network_diagonal(self, poly, depth: float, center: Point):
@@ -412,7 +370,7 @@ class CourtyardDesigner:
         network = []
         for a, b in ((corners[0], corners[2]), (corners[1], corners[3])):
             piece = LineString([a, b]).intersection(inner)
-            network += [g for g in _lines(piece) if g.length >= 4.0]
+            network += [g for g in lines_of(piece) if g.length >= 4.0]
         if plaza:
             network.append(center.buffer(plaza, quad_segs=12).exterior)
         return network, plaza
@@ -422,7 +380,7 @@ class CourtyardDesigner:
         if inner.is_empty:
             return [], 0.0
         network = []
-        for ux, uz, length in _rect_sides(poly):
+        for ux, uz, length in rect_sides(poly):
             perp_x, perp_z = -uz, ux  # направление, вдоль которого раскладываем линии сетки
             lines_count = min(GRID_MAX_LINES_PER_AXIS, max(int(length // GRID_SPACING_TARGET_M), 1))
             spacing = length / (lines_count + 1)
@@ -431,7 +389,7 @@ class CourtyardDesigner:
                 offset = -length / 2 + k * spacing
                 sx, sz = center.x + perp_x * offset, center.y + perp_z * offset
                 ray = LineString([(sx - ux * far, sz - uz * far), (sx + ux * far, sz + uz * far)])
-                network += [g for g in _lines(ray.intersection(inner)) if g.length >= 4.0]
+                network += [g for g in lines_of(ray.intersection(inner)) if g.length >= 4.0]
         return network, 0.0
 
     def _network_perimeter(self, poly, depth: float, center: Point):
@@ -442,7 +400,7 @@ class CourtyardDesigner:
     def _choose_style(self, poly, depth: float, near_entrances: list) -> str:
         """"diagonal" сюда намеренно не входит -- крест по диагоналям красив,
         но не то, что появляется во дворе само по себе; его выбирают явно."""
-        (_, _, side_a), (_, _, side_b) = _rect_sides(poly)
+        (_, _, side_a), (_, _, side_b) = rect_sides(poly)
         aspect = max(side_a, side_b) / max(min(side_a, side_b), 1e-6)
         if depth < PLAZA_MIN_DEPTH_M:
             return "perimeter"
@@ -600,7 +558,7 @@ class CourtyardDesigner:
             inner = poly.buffer(-3.0)
             for dx, dz in _main_directions(poly):
                 ray = LineString([(center.x, center.y), (center.x + dx * 2000, center.y + dz * 2000)])
-                piece = next((g for g in _lines(ray.intersection(inner)) if g.distance(center) < 0.5), None)
+                piece = next((g for g in lines_of(ray.intersection(inner)) if g.distance(center) < 0.5), None)
                 if piece is not None and piece.length >= 3.0:
                     network.append(piece)
 
@@ -618,10 +576,10 @@ class CourtyardDesigner:
         return center, plaza, network, links, style
 
     def pave(self, network: list, item: CatalogItem) -> None:
-        pieces = [g for line in network for g in _lines(line.intersection(self.paving)) if g.length >= 1.0]
+        pieces = [g for line in network for g in lines_of(line.intersection(self.paving)) if g.length >= 1.0]
         for piece in pieces:
-            for x, z, tx, tz in _samples(piece, item.dimensions.width or 2.0):
-                self.create(item, x, z, _rotation(tx, tz))
+            for x, z, tx, tz in sample_line(piece, item.dimensions.width or 2.0):
+                self.create(item, x, z, rotation_of(tx, tz))
                 self.counts[item.object_type] += 1
         self.axes = pieces
         self.path_length = sum(p.length for p in pieces)
@@ -671,13 +629,13 @@ class CourtyardDesigner:
         placed = []
         index = 0
         for piece in self.axes:
-            for x, z, tx, tz in _samples(piece, step):
+            for x, z, tx, tz in sample_line(piece, step):
                 sides = (1.0, -1.0) if both_sides else (1.0 if index % 2 == 0 else -1.0,)
                 for side in sides:
                     item = items[index % len(items)]
                     index += 1
                     px, pz = x - tz * offset * side, z + tx * offset * side
-                    rotation = _rotation(tx, tz) if oriented else (index * 137.5) % 360
+                    rotation = rotation_of(tx, tz) if oriented else (index * 137.5) % 360
                     if self._put(item, px, pz, rotation):
                         placed.append((px, pz, tx, tz))
                         if companion is not None:
@@ -693,7 +651,7 @@ class CourtyardDesigner:
             for k in range(count):
                 angle = 2 * math.pi * k / count + math.pi / count
                 x, z = center.x + radius * math.cos(angle), center.y + radius * math.sin(angle)
-                self._put(bed, x, z, _rotation(-math.sin(angle), math.cos(angle)))
+                self._put(bed, x, z, rotation_of(-math.sin(angle), math.cos(angle)))
         for link in links:
             if link.length < ENTRANCE_BED_BACK_M + 1.0:
                 continue
@@ -702,15 +660,15 @@ class CourtyardDesigner:
             tx, tz = (bx - ax) / link.length, (bz - az) / link.length
             for side in (1.0, -1.0):
                 offset = ENTRANCE_BED_OFFSET_M * side
-                self._put(bed, p.x - tz * offset, p.y + tx * offset, _rotation(tx, tz))
+                self._put(bed, p.x - tz * offset, p.y + tx * offset, rotation_of(tx, tz))
 
     def hedge(self, poly, item: CatalogItem) -> None:
         width = item.dimensions.width or 2.0
         for part in polygons(poly.buffer(-HEDGE_INSET_M)):
-            for x, z, tx, tz in _samples(part.exterior, width):
+            for x, z, tx, tz in sample_line(part.exterior, width):
                 if self.facades is not None and self.facades.distance(Point(x, z)) < HEDGE_FACADE_CLEARANCE_M:
                     continue
-                self._put(item, x, z, _rotation(tx, tz))
+                self._put(item, x, z, rotation_of(tx, tz))
 
     def scatter(self, poly, items: list[CatalogItem]) -> int:
         """count объектов (по площади poly, см. TREE_SCATTER_*), равномерно
