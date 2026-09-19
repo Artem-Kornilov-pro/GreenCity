@@ -44,10 +44,12 @@ FastAPI-бэкенд для веб-редактора озеленения. Эн
     uvicorn main:app --reload --port 8000
 """
 
+import asyncio
 import io
 import logging
 import sys
 import tempfile
+import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
@@ -55,6 +57,7 @@ from typing import Optional
 import cache
 import db
 import metrics
+import pattern_corpus
 import projects as projects_service
 from assortment_report import AssortmentRow, summarize_assortment
 from auth import AuthError, CurrentUser, decode_token, refresh_access_token, require_user
@@ -125,6 +128,16 @@ async def lifespan(app: FastAPI):
     # Индексы MongoDB создаются здесь, а не при импорте db.py: у асинхронного
     # клиента нет операций до работающего event loop (см. db.ensure_indexes).
     await db.ensure_indexes()
+    # Прогрев retrieval-корпуса GreenPlan (backend/pattern_corpus.py) --
+    # первый вызов corpus_characteristics() парсит 9 реальных DXF (~7 секунд
+    # CPU-геометрии), а @lru_cache сам по себе не защищает от того, что
+    # НЕСКОЛЬКО первых одновременных запросов к /api/greenplan/generate до
+    # прогрева каждый начнут парсить все 9 файлов заново, не дожидаясь друг
+    # друга -- реальный вклад в нестабильность под нагрузкой сразу после
+    # старта контейнера. asyncio.to_thread -- чтобы эти 7 секунд CPU-работы
+    # не блокировали event loop во время старта (await ensure_indexes выше
+    # уже отработал на нём).
+    await asyncio.to_thread(pattern_corpus.corpus_characteristics)
     yield
 
 
@@ -381,6 +394,21 @@ def generate_greenery(
     return scene
 
 
+# threading.Lock, не asyncio.Lock -- эти эндпоинты синхронные (def, не async
+# def) и выполняются в пуле потоков FastAPI, вне event loop, где asyncio.Lock
+# не работает предсказуемо между потоками. Замер этой же сессии: 3
+# параллельных /api/greenplan/generate на крупном участке шли не параллельно,
+# а ~11x медленнее КАЖДЫЙ (19.5с вместо 1.7с) -- чистая CPU-геометрия на
+# shapely не распараллеливается общим GIL (см. тот же аргумент в
+# backend/Dockerfile про UVICORN_WORKERS), конкурирующие потоки друг друга
+# только тормозят. Лок сериализует запросы вместо того, чтобы позволить им
+# толкаться за GIL -- сумма времени по факту меньше, а event loop (и
+# healthcheck на нём) не голодает, пока несколько тяжёлых запросов crunch'ат
+# геометрию одновременно.
+_greenplan_generate_lock = threading.Lock()
+_greenplan_report_lock = threading.Lock()
+
+
 class GreenPlanGenerateResult(BaseModel):
     scene: Scene
     assignments: list[ZoneAssignment]
@@ -412,23 +440,24 @@ def greenplan_generate(scene: Scene, k: int = Query(default=3, ge=1, le=9, descr
     он занимает ~30 секунд (локальная LLM) и не должен блокировать уже
     готовый детерминированный результат.
     """
-    catalog = load_catalog()
-    trees = [c for c in catalog if c.category == "tree"]
-    bushes = [c for c in catalog if c.category == "bush" and c.object_type == "bush"]
+    with _greenplan_generate_lock:
+        catalog = load_catalog()
+        trees = [c for c in catalog if c.category == "tree"]
+        bushes = [c for c in catalog if c.category == "bush" and c.object_type == "bush"]
 
-    new_objects, assignments = generate_for_scene(scene, trees, bushes, k)
-    scene.objects = [*scene.objects, *new_objects]
+        new_objects, assignments = generate_for_scene(scene, trees, bushes, k)
+        scene.objects = [*scene.objects, *new_objects]
 
-    logging.getLogger("greencity.greenplan").info(
-        "GreenPlan: %d новых объектов, %d зон", len(new_objects), len(assignments)
-    )
+        logging.getLogger("greencity.greenplan").info(
+            "GreenPlan: %d новых объектов, %d зон", len(new_objects), len(assignments)
+        )
 
-    return GreenPlanGenerateResult(
-        scene=scene,
-        assignments=assignments,
-        violations=find_violations(scene),
-        assortment=summarize_assortment(new_objects, catalog_by_id()),
-    )
+        return GreenPlanGenerateResult(
+            scene=scene,
+            assignments=assignments,
+            violations=find_violations(scene),
+            assortment=summarize_assortment(new_objects, catalog_by_id()),
+        )
 
 
 class GreenPlanReportResult(BaseModel):
@@ -440,7 +469,9 @@ class GreenPlanReportResult(BaseModel):
 # ниже), FastAPI уводит в пул потоков; сам вызов -- ~30 секунд (mistral:7b
 # локально), поэтому отдельный от /api/greenplan/generate эндпоинт: фронтенд
 # показывает уже готовую расстановку сразу и дотягивает текст в фоне, не
-# блокируя ничего остальным ожиданием LLM.
+# блокируя ничего остальным ожиданием LLM. Свой лок (не общий с generate
+# выше) -- это разные ресурсы (CPU-геометрия vs сетевой вызов к Ollama),
+# нет причины заставлять их ждать друг друга.
 @app.post("/api/greenplan/report", response_model=GreenPlanReportResult)
 def greenplan_report(assignments: list[ZoneAssignment]):
     """Текст-объяснение решений GreenPlan (Этап 6) через локальную LLM
@@ -448,13 +479,14 @@ def greenplan_report(assignments: list[ZoneAssignment]):
     уже посчитанному /api/greenplan/generate (передаётся сюда как есть, не
     пересчитывается). Недоступность Ollama -- не ошибка запроса: 200 с
     report=None и понятной report_error, а не 500."""
-    try:
-        report = generate_report(assignments)
-        metrics.greenplan_generate_total.labels(report_outcome="success").inc()
-        return GreenPlanReportResult(report=report, report_error=None)
-    except DecisionReportUnavailable as e:
-        metrics.greenplan_generate_total.labels(report_outcome="unavailable").inc()
-        return GreenPlanReportResult(report=None, report_error=str(e))
+    with _greenplan_report_lock:
+        try:
+            report = generate_report(assignments)
+            metrics.greenplan_generate_total.labels(report_outcome="success").inc()
+            return GreenPlanReportResult(report=report, report_error=None)
+        except DecisionReportUnavailable as e:
+            metrics.greenplan_generate_total.labels(report_outcome="unavailable").inc()
+            return GreenPlanReportResult(report=None, report_error=str(e))
 
 
 # Синхронный def, а не async: клиент openai блокирующий, и FastAPI сам уводит
