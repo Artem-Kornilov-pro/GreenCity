@@ -49,7 +49,12 @@ def test_zones_do_not_double_count_area(scene_02):
     zones = partition_zones(scene_02)
     total_usable = usable_planting_area(scene_02).area
     total_zones = sum(z.area_sqm for z in zones)
-    assert total_zones <= total_usable + 1e-6
+    # Каждый z.area_sqm округлён до 2 знаков (round(poly.area, 2) в _emit),
+    # поэтому сумма округлённых площадей может превысить точную сумму не
+    # больше чем на 0.005 на зону -- 1e-6 этого не учитывал и был слишком
+    # тесен для сцен с несколькими десятками зон.
+    rounding_budget = 0.005 * len(zones) + 1e-9
+    assert total_zones <= total_usable + rounding_budget
     # Если зоны честно партиционируют площадь, а не только частично её
     # покрывают, потерять можно не больше, чем по одному MIN_ZONE_AREA_SQM
     # обрезку на каждую из 4 полос -- иначе где-то теряется целый кусок.
