@@ -13,15 +13,20 @@ from placement import (
     PointIndex,
     _geometry,
     _segment_visible,
+    centerline_of,
     clamp,
+    lines_of,
     pick_near,
     pick_spread,
     polygons,
+    rect_sides,
+    rotation_of,
+    sample_line,
     shortest_path,
     spread_subset,
 )
 from schemas import Point2
-from shapely.geometry import MultiPolygon, Point, Polygon
+from shapely.geometry import LineString, MultiLineString, MultiPolygon, Point, Polygon
 
 # --- clamp / _geometry / polygons ------------------------------------------
 
@@ -678,3 +683,79 @@ def test_shortest_path_visible_straight_line_ignores_far_obstacles():
     far_obstacle = Polygon([(1000, 1000), (1001, 1000), (1001, 1001)])
     path = shortest_path(Point(0, 0), Point(10, 0), [far_obstacle])
     assert list(path.coords) == [(0.0, 0.0), (10.0, 0.0)]
+
+
+# --- lines_of / rotation_of / sample_line / rect_sides / centerline_of --------
+#
+# Изначально были частными хелперами courtyard_design.py (единственного тогда
+# потребителя); переехали сюда, когда deterministic_placement.py понадобилась
+# та же самая логика линейных паттернов (см. docstring centerline_of).
+
+
+def test_lines_of_extracts_linestring_and_linearring():
+    ls = LineString([(0, 0), (1, 1)])
+    assert lines_of(ls) == [ls]
+    ring = Polygon([(0, 0), (1, 0), (1, 1)]).exterior
+    assert len(lines_of(ring)) == 1
+
+
+def test_lines_of_handles_none_and_empty():
+    assert lines_of(None) == []
+    assert lines_of(LineString()) == []
+
+
+def test_lines_of_flattens_multilinestring():
+    mls = MultiLineString([[(0, 0), (1, 0)], [(2, 2), (3, 3)]])
+    assert len(lines_of(mls)) == 2
+
+
+def test_rotation_of_matches_points_along_convention():
+    assert rotation_of(1.0, 0.0) == pytest.approx(0.0)
+    assert rotation_of(0.0, 0.0) == 0.0
+    assert rotation_of(0.0, -1.0) == pytest.approx(90.0)
+
+
+def test_sample_line_yields_evenly_spaced_points_with_unit_tangent():
+    line = LineString([(0, 0), (10, 0)])
+    points = list(sample_line(line, step=5.0))
+    assert len(points) == 2
+    for _x, _z, tx, tz in points:
+        assert math.hypot(tx, tz) == pytest.approx(1.0)
+        assert tz == pytest.approx(0.0)
+
+
+def test_sample_line_empty_for_degenerate_line():
+    assert list(sample_line(LineString([(0, 0), (0, 0)]), step=1.0)) == []
+
+
+def test_rect_sides_returns_two_perpendicular_unit_vectors():
+    square = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)])
+    sides = rect_sides(square)
+    assert len(sides) == 2
+    (ux1, uz1, len1), (ux2, uz2, len2) = sides
+    assert len1 == pytest.approx(10.0)
+    assert len2 == pytest.approx(10.0)
+    assert ux1 * ux2 + uz1 * uz2 == pytest.approx(0.0, abs=1e-6)  # перпендикулярны
+
+
+def test_centerline_of_spans_the_long_axis_of_a_band():
+    # Полоса 40x4 -- centerline должен пройти вдоль длинной стороны (40 м),
+    # а не короткой, и почти по всей её длине.
+    band = Polygon([(0, 0), (40, 0), (40, 4), (0, 4)])
+    line = centerline_of(band)
+    assert line is not None
+    assert lines_of(line)[0].length == pytest.approx(40.0, rel=0.01)
+
+
+def test_centerline_of_none_for_degenerate_polygon():
+    assert centerline_of(Polygon()) is None
+
+
+def test_centerline_of_bent_band_yields_multiple_segments():
+    # L-образная полоса -- прямая через центроид вдоль "главной" оси выходит
+    # за пределы контура и возвращается назад, поэтому пересечение с полигоном
+    # распадается на несколько кусков (см. docstring centerline_of).
+    bent = Polygon([(0, 0), (30, 0), (30, 10), (10, 10), (10, 30), (0, 30)])
+    line = centerline_of(bent)
+    assert line is not None
+    assert len(lines_of(line)) >= 1

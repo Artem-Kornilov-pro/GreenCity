@@ -1,68 +1,25 @@
 """courtyard_design.py -- полный дизайн двора (design_area). Геометрия
 достаточно сложна (MST, видимость подъездов, подбор площади), чтобы
 осмысленно тестировать в основном через реальные участки locations/ --
-чистые геометрические хелперы (_rotation/_samples/_footprint/_mst_edges/
-_rect_sides/_main_directions) проверяются отдельно, точечно."""
+чистые геометрические хелперы (_footprint/_mst_edges/_main_directions)
+проверяются отдельно, точечно. lines_of/rotation_of/sample_line/rect_sides
+переехали в placement.py (общие утилиты для courtyard_design.py и
+deterministic_placement.py) -- их тесты теперь в test_placement.py."""
 
 import math
 
 import courtyard_design as cd
 import pytest
-from courtyard_design import (
-    DEFAULT_ELEMENTS,
-    ELEMENTS,
-    _lines,
-    _main_directions,
-    _mst_edges,
-    _rect_sides,
-    _rotation,
-    _samples,
-)
+from courtyard_design import DEFAULT_ELEMENTS, ELEMENTS, _main_directions, _mst_edges
 from llm_editor import LlmPlan, apply_plan
 from plant_catalog import CatalogItem, CatalogItemDimensions, CatalogItemRender, load_catalog
 from setback_norms import setback_for
-from shapely.geometry import LineString, MultiLineString, Point, Polygon
+from shapely.geometry import Point, Polygon
 
 CATALOG = load_catalog()
 
 
 # --- Чистые геометрические хелперы -------------------------------------------
-
-
-def test_lines_extracts_linestring_and_linearring():
-    ls = LineString([(0, 0), (1, 1)])
-    assert _lines(ls) == [ls]
-    ring = Polygon([(0, 0), (1, 0), (1, 1)]).exterior
-    assert len(_lines(ring)) == 1
-
-
-def test_lines_handles_none_and_empty():
-    assert _lines(None) == []
-    assert _lines(LineString()) == []
-
-
-def test_lines_flattens_multilinestring():
-    mls = MultiLineString([[(0, 0), (1, 0)], [(2, 2), (3, 3)]])
-    assert len(_lines(mls)) == 2
-
-
-def test_rotation_matches_placer_points_along_convention():
-    assert _rotation(1.0, 0.0) == pytest.approx(0.0)
-    assert _rotation(0.0, 0.0) == 0.0
-    assert _rotation(0.0, -1.0) == pytest.approx(90.0)
-
-
-def test_samples_yields_evenly_spaced_points_with_unit_tangent():
-    line = LineString([(0, 0), (10, 0)])
-    points = list(_samples(line, step=5.0))
-    assert len(points) == 2
-    for _x, _z, tx, tz in points:
-        assert math.hypot(tx, tz) == pytest.approx(1.0)
-        assert tz == pytest.approx(0.0)
-
-
-def test_samples_empty_for_degenerate_line():
-    assert list(_samples(LineString([(0, 0), (0, 0)]), step=1.0)) == []
 
 
 def _hedge_item():
@@ -98,16 +55,6 @@ def test_footprint_point_when_no_dimensions_at_all():
     )
     result = cd._footprint(bare, 5, 5, 0.0)
     assert result.equals(Point(5, 5))
-
-
-def test_rect_sides_returns_two_perpendicular_unit_vectors():
-    square = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)])
-    sides = _rect_sides(square)
-    assert len(sides) == 2
-    (ux1, uz1, len1), (ux2, uz2, len2) = sides
-    assert len1 == pytest.approx(10.0)
-    assert len2 == pytest.approx(10.0)
-    assert ux1 * ux2 + uz1 * uz2 == pytest.approx(0.0, abs=1e-6)  # перпендикулярны
 
 
 def test_main_directions_returns_four_directions_for_a_rectangle():

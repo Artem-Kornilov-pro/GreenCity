@@ -662,3 +662,82 @@ def shortest_path(start: Point, end: Point, obstacles: list[Polygon]) -> Optiona
     while path[-1] != 0:
         path.append(prev[path[-1]])
     return LineString([(nodes[i].x, nodes[i].y) for i in reversed(path)])
+
+
+# --- Линии: сэмплирование и центральная ось ----------------------------------
+#
+# Общие утилиты для любого линейного паттерна вдоль контура или через площадь
+# зоны -- изначально были написаны в courtyard_design.py (единственный тогда
+# потребитель), перенесены сюда, когда deterministic_placement.py понадобилась
+# та же самая логика: третья независимая копия одного и того же сэмплирования
+# линии была бы лишним местом для расхождения, а не самостоятельным кодом.
+
+
+def lines_of(geom) -> list[LineString]:
+    """Плоский список LineString из геометрии любой вложенности (одна линия,
+    MultiLineString, GeometryCollection после intersection) -- пересечение
+    линии с полигоном не гарантирует один цельный кусок."""
+    if geom is None or geom.is_empty:
+        return []
+    if geom.geom_type in ("LineString", "LinearRing"):
+        return [LineString(geom.coords)]
+    return [part for g in getattr(geom, "geoms", []) for part in lines_of(g)]
+
+
+def rotation_of(tx: float, tz: float) -> float:
+    """Поворот в градусах для объекта, чья локальная ось X должна лечь по
+    касательной (tx, tz) -- как в Placer.points_along: поворот θ кладёт
+    локальную ось X по (cosθ, -sinθ) в three.js-координатах (x, z)."""
+    return math.degrees(math.atan2(-tz, tx)) if (tx or tz) else 0.0
+
+
+def sample_line(line: LineString, step: float):
+    """(x, z, tx, tz) через step вдоль линии, с отступом от концов поровну;
+    (tx, tz) -- единичная касательная в точке."""
+    length = line.length
+    if length < 1e-6:
+        return
+    count = max(1, int(length // step))
+    first = (length - (count - 1) * step) / 2
+    for i in range(count):
+        d = first + i * step
+        p = line.interpolate(d)
+        a, b = line.interpolate(max(d - 0.25, 0.0)), line.interpolate(min(d + 0.25, length))
+        tx, tz = b.x - a.x, b.y - a.y
+        norm = math.hypot(tx, tz) or 1.0
+        yield p.x, p.y, tx / norm, tz / norm
+
+
+def rect_sides(poly: Polygon) -> list[tuple[float, float, float]]:
+    """Две смежные стороны минимального описанного прямоугольника, как
+    (единичный вектор x, единичный вектор z, длина стороны)."""
+    coords = list(poly.minimum_rotated_rectangle.exterior.coords)[:-1]
+    sides = []
+    for i in range(2):
+        (ax, az), (bx, bz) = coords[i], coords[i + 1]
+        length = math.hypot(bx - ax, bz - az) or 1.0
+        sides.append(((bx - ax) / length, (bz - az) / length, length))
+    return sides
+
+
+def centerline_of(poly: Polygon):
+    """Линия вдоль ДЛИННОЙ стороны минимального описанного прямоугольника
+    зоны, проходящая через центроид и обрезанная по контуру полигона --
+    "хребет" вытянутой полосовой зоны (building_border/path_corridor/
+    site_edge из zone_partitioning.py), вдоль которого сэмплируются точки
+    линейных паттернов (deterministic_placement.py). Не настоящая медиальная
+    ось (для полосы примерно постоянной ширины прямая через центроид вдоль
+    длинной стороны уже хорошо её приближает, а точный skeleton — трудоёмче
+    на порядок), для изогнутой зоны пересечение с контуром может дать
+    несколько кусков -- вызывающий код проходит их все через lines_of().
+    None, если зона слишком мала или вырождена (нулевая площадь)."""
+    if poly.is_empty or poly.area <= 0:
+        return None
+    sides = rect_sides(poly)
+    ux, uz, _ = max(sides, key=lambda s: s[2])
+    center = poly.centroid
+    min_x, min_z, max_x, max_z = poly.bounds
+    far = max(math.hypot(max_x - min_x, max_z - min_z), 1.0) * 2
+    ray = LineString([(center.x - ux * far, center.y - uz * far), (center.x + ux * far, center.y + uz * far)])
+    clipped = ray.intersection(poly)
+    return None if clipped.is_empty else clipped
