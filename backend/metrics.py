@@ -46,6 +46,12 @@ llm_edit_requests_total = Counter(
     ["outcome"],  # success | llm_error | not_configured
 )
 
+greenplan_generate_total = Counter(
+    "greencity_greenplan_generate_total",
+    "Запросы автоозеленения по прошлым проектам (/api/greenplan/generate), по исходу текста-отчёта",
+    ["report_outcome"],  # success | unavailable -- сама расстановка при этом всегда успешна
+)
+
 auth_registrations_total = Counter(
     "greencity_auth_registrations_total",
     "Регистрации пользователей, по исходу",

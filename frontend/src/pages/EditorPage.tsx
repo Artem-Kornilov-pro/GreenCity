@@ -19,6 +19,7 @@ import {
   Send,
   ChevronLeft,
   LassoSelect,
+  Trees,
 } from "lucide-react";
 import { SceneView } from "../scene/SceneView";
 import type { TransformMode } from "../scene/PlacedObjects";
@@ -30,6 +31,8 @@ import {
   createProject,
   loadProject,
   saveProject,
+  generateGreenPlan,
+  type GreenPlanResult,
 } from "../api";
 import { checkViolations, computeSceneBounds } from "../geometry";
 import { plantKindOfObjectType } from "../setbackNorms";
@@ -92,6 +95,10 @@ export default function EditorPage() {
   const [editing, setEditing] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
+
+  const [greenPlanBusy, setGreenPlanBusy] = useState(false);
+  const [greenPlanPanelOpen, setGreenPlanPanelOpen] = useState(false);
+  const [greenPlanResult, setGreenPlanResult] = useState<GreenPlanResult | null>(null);
 
   const [selectionMode, setSelectionMode] = useState(false);
 
@@ -238,6 +245,23 @@ export default function EditorPage() {
     }
   }, [scene, instruction]);
 
+  const handleGreenPlan = useCallback(async () => {
+    if (!scene) return;
+    setGreenPlanBusy(true);
+    setError(null);
+    try {
+      const result = await generateGreenPlan(scene);
+      setScene(result.scene);
+      setGreenPlanResult(result);
+      setAiPanelOpen(false);
+      setGreenPlanPanelOpen(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setGreenPlanBusy(false);
+    }
+  }, [scene]);
+
   const handleExportJson = () => {
     if (!scene) return;
     const blob = new Blob([JSON.stringify(scene.objects, null, 2)], { type: "application/json" });
@@ -371,10 +395,17 @@ export default function EditorPage() {
                 <Button
                   size="sm"
                   variant={aiPanelOpen ? "outline" : "primary"}
-                  onClick={() => setAiPanelOpen((v) => !v)}
+                  onClick={() => {
+                    setGreenPlanPanelOpen(false);
+                    setAiPanelOpen((v) => !v);
+                  }}
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   Ассистент
+                </Button>
+                <Button size="sm" variant="outline" onClick={handleGreenPlan} disabled={greenPlanBusy} title="Автоозеленение по прошлым проектам (GreenPlan)">
+                  {greenPlanBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trees className="h-3.5 w-3.5" />}
+                  GreenPlan
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -692,6 +723,95 @@ export default function EditorPage() {
                   {editing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
               </form>
+            </motion.aside>
+
+            {/* GreenPlan -- та же выезжающая справа панель, что и у Ассистента,
+                но без чат-формы: только отчёт по уже готовому результату. */}
+            <motion.aside
+              initial={false}
+              animate={{ x: greenPlanPanelOpen ? 0 : "100%" }}
+              transition={{ type: "spring", stiffness: 320, damping: 34 }}
+              className="absolute right-0 top-14 z-30 flex h-[calc(100%-3.5rem)] w-full max-w-md flex-col border-l border-white/30 bg-white/20 shadow-soft-lg backdrop-blur-xl backdrop-saturate-150"
+            >
+              <button
+                type="button"
+                onClick={() => setGreenPlanPanelOpen((v) => !v)}
+                aria-label={greenPlanPanelOpen ? "Свернуть GreenPlan" : "Развернуть GreenPlan"}
+                className="absolute -left-8 top-1/2 flex h-16 w-8 -translate-y-1/2 items-center justify-center rounded-l-xl border border-r-0 border-white/30 bg-white/20 text-brand-600 shadow-soft backdrop-blur-xl backdrop-saturate-150 transition-colors hover:bg-white/40"
+              >
+                <motion.span animate={{ rotate: greenPlanPanelOpen ? 180 : 0 }} transition={{ duration: 0.25 }}>
+                  <ChevronLeft className="h-4 w-4" />
+                </motion.span>
+              </button>
+
+              <div className="flex items-center justify-between border-b border-ink-200/70 px-4 py-3">
+                <div className="flex items-center gap-2 font-semibold text-ink-900">
+                  <Trees className="h-4.5 w-4.5 text-brand-600" />
+                  GreenPlan
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setGreenPlanPanelOpen(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="scrollbar-thin flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-4">
+                {!greenPlanResult && (
+                  <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center text-sm text-ink-400">
+                    <Trees className="h-8 w-8 text-brand-300" />
+                    <p>Нажмите «GreenPlan» на панели инструментов — участок озеленится по аналогии с похожими прошлыми проектами.</p>
+                  </div>
+                )}
+
+                {greenPlanResult && (
+                  <>
+                    <section>
+                      <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-400">Обоснование</h3>
+                      {greenPlanResult.report ? (
+                        <p className="whitespace-pre-line rounded-2xl bg-ink-100 px-3.5 py-2.5 text-sm text-ink-800">{greenPlanResult.report}</p>
+                      ) : (
+                        <p className="rounded-2xl bg-warning-500/15 px-3.5 py-2.5 text-sm text-ink-700">
+                          ⚠ Текст-объяснение недоступен: {greenPlanResult.report_error ?? "неизвестная причина"}
+                        </p>
+                      )}
+                    </section>
+
+                    <section>
+                      <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-400">
+                        Нарушения норм ({greenPlanResult.violations.length})
+                      </h3>
+                      {greenPlanResult.violations.length > 0 ? (
+                        <div className="flex flex-col gap-1.5">
+                          {greenPlanResult.violations.map((v, i) => (
+                            <Badge key={`${v.object_id}-${v.zone_id}-${i}`} variant={v.severity === "forbidden" ? "danger" : "warning"} className="justify-start">
+                              ⚠ {v.object_id}: {v.message} (до зоны {v.distance_m} м, нужно {v.required_m} м)
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <Badge variant="success">Нарушений нет</Badge>
+                      )}
+                    </section>
+
+                    <section>
+                      <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-400">Новая посадка по видам</h3>
+                      {greenPlanResult.assortment.length > 0 ? (
+                        <div className="flex flex-col gap-1 text-sm text-ink-700">
+                          {greenPlanResult.assortment.map((row, i) => (
+                            <div key={`${row.category}-${row.species}-${i}`} className="flex items-center justify-between gap-2 rounded-lg bg-white/40 px-3 py-1.5">
+                              <span>
+                                {row.species} <span className="text-ink-400">({row.category})</span>
+                              </span>
+                              <span className="font-medium">{row.count}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-ink-400">Новых объектов не добавлено.</p>
+                      )}
+                    </section>
+                  </>
+                )}
+              </div>
             </motion.aside>
         </main>
       </div>

@@ -53,6 +53,59 @@ export async function exportDxf(scene: Scene): Promise<Blob> {
   return res.blob();
 }
 
+// GreenPlan -- автоозеленение по прошлым проектам (backend: pattern_assignment.py,
+// violation_report.py, assortment_report.py, decision_report.py). Решения
+// (assignments) считаются полностью детерминированно, без LLM -- report
+// (текст-объяснение) через локальную LLM (mistral:7b/Ollama) и может быть
+// недоступен (report_error), это не ошибка запроса, остальной результат
+// при этом всё равно валиден.
+export interface GreenPlanZoneAssignment {
+  zone_id: string;
+  zone_kind: string;
+  pattern_id: string;
+  source_project: string | null;
+  source_quote: string | null;
+  confidence: number;
+}
+
+export interface GreenPlanViolation {
+  object_id: string;
+  object_type: string;
+  zone_id: string;
+  zone_type: string;
+  severity: string;
+  distance_m: number;
+  required_m: number;
+  message: string;
+}
+
+export interface GreenPlanAssortmentRow {
+  category: string;
+  species: string;
+  count: number;
+}
+
+export interface GreenPlanResult {
+  scene: Scene;
+  assignments: GreenPlanZoneAssignment[];
+  violations: GreenPlanViolation[];
+  assortment: GreenPlanAssortmentRow[];
+  report: string | null;
+  report_error: string | null;
+}
+
+export async function generateGreenPlan(scene: Scene): Promise<GreenPlanResult> {
+  const res = await fetch(`${API_BASE}/api/greenplan/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(scene),
+  });
+  if (!res.ok) {
+    throw new Error(`Не удалось построить GreenPlan (${res.status}): ${await readErrorDetail(res)}`);
+  }
+  return res.json() as Promise<GreenPlanResult>;
+}
+
 export interface TextEditResult {
   scene: Scene;
   explanation: string;
