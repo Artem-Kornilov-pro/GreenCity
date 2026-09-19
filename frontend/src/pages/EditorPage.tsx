@@ -32,7 +32,8 @@ import {
   loadProject,
   saveProject,
   generateGreenPlan,
-  type GreenPlanResult,
+  fetchGreenPlanReport,
+  type GreenPlanGenerateResult,
 } from "../api";
 import { checkViolations, computeSceneBounds } from "../geometry";
 import { plantKindOfObjectType } from "../setbackNorms";
@@ -74,6 +75,14 @@ interface ChatMessage {
   warnings?: string[];
 }
 
+// generateGreenPlan (быстро, без LLM) отдаёт всё, кроме report/report_error --
+// те приходят отдельным запросом (fetchGreenPlanReport) и домешиваются в это
+// же состояние по готовности, см. handleGreenPlan.
+interface GreenPlanState extends GreenPlanGenerateResult {
+  report: string | null;
+  report_error: string | null;
+}
+
 export default function EditorPage() {
   const { projectId } = useParams<{ projectId?: string }>();
   const navigate = useNavigate();
@@ -98,7 +107,8 @@ export default function EditorPage() {
 
   const [greenPlanBusy, setGreenPlanBusy] = useState(false);
   const [greenPlanPanelOpen, setGreenPlanPanelOpen] = useState(false);
-  const [greenPlanResult, setGreenPlanResult] = useState<GreenPlanResult | null>(null);
+  const [greenPlanResult, setGreenPlanResult] = useState<GreenPlanState | null>(null);
+  const [greenPlanReportLoading, setGreenPlanReportLoading] = useState(false);
 
   const [selectionMode, setSelectionMode] = useState(false);
 
@@ -252,12 +262,28 @@ export default function EditorPage() {
     try {
       const result = await generateGreenPlan(scene);
       setScene(result.scene);
-      setGreenPlanResult(result);
+      // Расстановка/нарушения/ведомость уже готовы -- показываем сразу, не
+      // дожидаясь текста-объяснения (тот -- ~30 секунд, локальная LLM).
+      setGreenPlanResult({ ...result, report: null, report_error: null });
       setAiPanelOpen(false);
       setGreenPlanPanelOpen(true);
+      setGreenPlanBusy(false);
+
+      // Отдельно, в фоне: не await'ится этим же try -- ошибка здесь не
+      // должна откатывать уже показанный результат расстановки.
+      setGreenPlanReportLoading(true);
+      try {
+        const { report, report_error } = await fetchGreenPlanReport(result.assignments);
+        setGreenPlanResult((prev) => (prev ? { ...prev, report, report_error } : prev));
+      } catch (e) {
+        setGreenPlanResult((prev) =>
+          (prev ? { ...prev, report: null, report_error: e instanceof Error ? e.message : String(e) } : prev),
+        );
+      } finally {
+        setGreenPlanReportLoading(false);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
-    } finally {
       setGreenPlanBusy(false);
     }
   }, [scene]);
@@ -766,7 +792,12 @@ export default function EditorPage() {
                   <>
                     <section>
                       <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-400">Обоснование</h3>
-                      {greenPlanResult.report ? (
+                      {greenPlanReportLoading ? (
+                        <p className="flex items-center gap-2 rounded-2xl bg-ink-100 px-3.5 py-2.5 text-sm text-ink-500">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Генерирую объяснение (обычно около 30 секунд)…
+                        </p>
+                      ) : greenPlanResult.report ? (
                         <p className="whitespace-pre-line rounded-2xl bg-ink-100 px-3.5 py-2.5 text-sm text-ink-800">{greenPlanResult.report}</p>
                       ) : (
                         <p className="rounded-2xl bg-warning-500/15 px-3.5 py-2.5 text-sm text-ink-700">

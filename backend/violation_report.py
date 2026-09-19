@@ -24,6 +24,21 @@ GreenPlan) -- отчёт должен быть честным о финальн�
 точка-точка (дерево-фонарь и т.п., placement.POINT_CLEARANCE_M): это другой
 класс проверки, issue его в контексте существующих объектов не упоминает, и
 прошлая сессия тоже не разбирала его как "нарушение нормы".
+
+Индексация через STRtree -- тот же приём и та же причина, что уже описаны в
+greenery_generator.py::_ZoneIndex ("при тысячах точек и десятках тысяч зон
+линейный перебор был главной причиной, почему generate-greenery не
+укладывался в разумное время"): наивный перебор всех зон на каждый объект
+на крупном реальном участке (20_makeeva_s, 88 зданий) занимал ~13.5 секунды
+сам по себе, без единого обращения к LLM. В отличие от _ZoneIndex (там
+`.nearest()` -- одна ближайшая зона для текстового объяснения), здесь нужны
+`.query()` -- ВСЕ зоны в пределах охвата, потому что объект может нарушать
+несколько разных зон одновременно, и каждую нужно честно проверить своим
+нормативом. Индекс строится по зонам, буферизованным на ХУДШИЙ ИЗ ДВУХ
+видов посадки отступ (используется только для грубого отбора кандидатов по
+bounding box) -- точное расстояние и точная норма для конкретного объекта
+считаются уже после, на исходной (небуферизованной) геометрии зоны, поэтому
+результат совпадает с прежним наивным перебором бит-в-бит, только быстрее.
 """
 
 from __future__ import annotations
@@ -32,6 +47,7 @@ from pydantic import BaseModel
 from schemas import Scene
 from setback_norms import plant_kind_of_object_type, setback_for
 from shapely.geometry import Point, Polygon
+from shapely.strtree import STRtree
 
 
 class Violation(BaseModel):
@@ -45,14 +61,33 @@ class Violation(BaseModel):
     message: str
 
 
-def find_violations(scene: Scene) -> list[Violation]:
-    zones = []
+def _build_zone_index(scene: Scene):
+    """(STRtree по буферизованным зонам, параллельный список (zone, исходный
+    полигон)) -- или (None, []), если проверять нечего. Буфер каждой зоны --
+    max(отступ для дерева, отступ для куста): худший случай по обоим видам
+    посадки, чтобы точный отбор кандидатов ниже не потерял ни одного реального
+    нарушения, каким бы ни был kind конкретного объекта."""
+    entries: list[tuple] = []
+    buffered: list[Polygon] = []
     for zone in scene.restrictions:
         if zone.severity == "allowed" or len(zone.polygon) < 3:
             continue
         poly = Polygon([(p.x, p.z) for p in zone.polygon])
-        if poly.is_valid and poly.area > 0:
-            zones.append((zone, poly))
+        if not poly.is_valid or poly.area == 0:
+            continue
+        reach = max(setback_for(zone.type, "tree", zone.minDistance), setback_for(zone.type, "bush", zone.minDistance))
+        entries.append((zone, poly))
+        buffered.append(poly.buffer(reach) if reach > 0 else poly)
+
+    if not entries:
+        return None, entries
+    return STRtree(buffered), entries
+
+
+def find_violations(scene: Scene) -> list[Violation]:
+    tree, entries = _build_zone_index(scene)
+    if tree is None:
+        return []
 
     violations: list[Violation] = []
     for obj in scene.objects:
@@ -60,7 +95,8 @@ def find_violations(scene: Scene) -> list[Violation]:
         if kind is None:
             continue
         point = Point(obj.position.x, obj.position.z)
-        for zone, poly in zones:
+        for idx in tree.query(point):
+            zone, poly = entries[idx]
             required = setback_for(zone.type, kind, zone.minDistance)
             distance = poly.distance(point)
             if distance < required:

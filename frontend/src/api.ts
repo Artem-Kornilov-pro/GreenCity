@@ -55,10 +55,14 @@ export async function exportDxf(scene: Scene): Promise<Blob> {
 
 // GreenPlan -- автоозеленение по прошлым проектам (backend: pattern_assignment.py,
 // violation_report.py, assortment_report.py, decision_report.py). Решения
-// (assignments) считаются полностью детерминированно, без LLM -- report
-// (текст-объяснение) через локальную LLM (mistral:7b/Ollama) и может быть
-// недоступен (report_error), это не ошибка запроса, остальной результат
-// при этом всё равно валиден.
+// (assignments) считаются полностью детерминированно, без LLM, и быстро
+// (find_violations -- через пространственный индекс, доли секунды даже на
+// крупных участках). Текст-объяснение (report) -- через локальную LLM
+// (mistral:7b/Ollama), занимает ~30 секунд, поэтому отдельный запрос
+// (/api/greenplan/report), а не часть /api/greenplan/generate -- иначе
+// пользователь ждал бы уже готовую расстановку все эти 30 секунд ради
+// текста, который к ней не относится. Недоступность Ollama -- не ошибка
+// запроса (report_error заполнен, report null), сама расстановка не страдает.
 export interface GreenPlanZoneAssignment {
   zone_id: string;
   zone_kind: string;
@@ -85,16 +89,14 @@ export interface GreenPlanAssortmentRow {
   count: number;
 }
 
-export interface GreenPlanResult {
+export interface GreenPlanGenerateResult {
   scene: Scene;
   assignments: GreenPlanZoneAssignment[];
   violations: GreenPlanViolation[];
   assortment: GreenPlanAssortmentRow[];
-  report: string | null;
-  report_error: string | null;
 }
 
-export async function generateGreenPlan(scene: Scene): Promise<GreenPlanResult> {
+export async function generateGreenPlan(scene: Scene): Promise<GreenPlanGenerateResult> {
   const res = await fetch(`${API_BASE}/api/greenplan/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -103,7 +105,26 @@ export async function generateGreenPlan(scene: Scene): Promise<GreenPlanResult> 
   if (!res.ok) {
     throw new Error(`Не удалось построить GreenPlan (${res.status}): ${await readErrorDetail(res)}`);
   }
-  return res.json() as Promise<GreenPlanResult>;
+  return res.json() as Promise<GreenPlanGenerateResult>;
+}
+
+export interface GreenPlanReportResult {
+  report: string | null;
+  report_error: string | null;
+}
+
+// Отдельный запрос, ~30 секунд (локальная LLM) -- вызывающий код (EditorPage)
+// не ждёт его перед тем, как показать уже готовый результат generateGreenPlan.
+export async function fetchGreenPlanReport(assignments: GreenPlanZoneAssignment[]): Promise<GreenPlanReportResult> {
+  const res = await fetch(`${API_BASE}/api/greenplan/report`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(assignments),
+  });
+  if (!res.ok) {
+    throw new Error(`Не удалось получить отчёт GreenPlan (${res.status}): ${await readErrorDetail(res)}`);
+  }
+  return res.json() as Promise<GreenPlanReportResult>;
 }
 
 export interface TextEditResult {

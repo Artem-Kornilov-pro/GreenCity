@@ -130,45 +130,60 @@ def test_generate_greenery_rejects_grid_spacing_out_of_range(client):
     assert r.status_code == 422
 
 
-# --- /api/greenplan/generate (LLM-часть отчёта подменена, как и у edit-with-text) --
+# --- /api/greenplan/generate (быстрый, без LLM вовсе) ------------------------
 
 
-def test_greenplan_generate_success_returns_full_result(client, monkeypatch):
+def test_greenplan_generate_returns_full_deterministic_result(client):
     scene = _parsed_scene(client)
-    monkeypatch.setattr(main_module, "generate_report", lambda assignments: "связный текст отчёта")
     r = client.post("/api/greenplan/generate", json=scene)
     assert r.status_code == 200
     body = r.json()
     assert body["assignments"]
-    assert body["report"] == "связный текст отчёта"
-    assert body["report_error"] is None
+    # Ни report, ни report_error здесь больше нет вовсе -- текст отдельным
+    # эндпоинтом (/api/greenplan/report), см. ниже.
+    assert "report" not in body
+    assert "report_error" not in body
     # violations/assortment -- всегда списки (возможно пустые), не отсутствуют
     assert isinstance(body["violations"], list)
     assert isinstance(body["assortment"], list)
-
-
-def test_greenplan_generate_survives_report_unavailable(client, monkeypatch):
-    from decision_report import DecisionReportUnavailable
-
-    scene = _parsed_scene(client)
-
-    def _raise(assignments):
-        raise DecisionReportUnavailable("Ollama не запущена")
-
-    monkeypatch.setattr(main_module, "generate_report", _raise)
-    r = client.post("/api/greenplan/generate", json=scene)
-    assert r.status_code == 200
-    body = r.json()
-    assert body["report"] is None
-    assert body["report_error"] == "Ollama не запущена"
-    # Детерминированная часть не пострадала от недоступности LLM.
-    assert body["assignments"]
 
 
 def test_greenplan_generate_rejects_k_out_of_range(client):
     scene = _parsed_scene(client)
     r = client.post("/api/greenplan/generate?k=0", json=scene)
     assert r.status_code == 422
+
+
+# --- /api/greenplan/report (LLM подменена, как и у edit-with-text) -----------
+
+
+def test_greenplan_report_success(client, monkeypatch):
+    scene = _parsed_scene(client)
+    assignments = client.post("/api/greenplan/generate", json=scene).json()["assignments"]
+
+    monkeypatch.setattr(main_module, "generate_report", lambda assignments: "связный текст отчёта")
+    r = client.post("/api/greenplan/report", json=assignments)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["report"] == "связный текст отчёта"
+    assert body["report_error"] is None
+
+
+def test_greenplan_report_survives_llm_unavailable(client, monkeypatch):
+    from decision_report import DecisionReportUnavailable
+
+    scene = _parsed_scene(client)
+    assignments = client.post("/api/greenplan/generate", json=scene).json()["assignments"]
+
+    def _raise(assignments):
+        raise DecisionReportUnavailable("Ollama не запущена")
+
+    monkeypatch.setattr(main_module, "generate_report", _raise)
+    r = client.post("/api/greenplan/report", json=assignments)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["report"] is None
+    assert body["report_error"] == "Ollama не запущена"
 
 
 # --- /api/edit-with-text (LLM ПОЛНОСТЬЮ подменена) ---------------------------
