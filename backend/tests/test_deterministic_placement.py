@@ -10,12 +10,22 @@
 
 import math
 
-from deterministic_placement import generate_for_scene
+from deterministic_placement import (
+    MAX_GROUPS_PER_ZONE,
+    MAX_OBJECTS_PER_ZONE,
+    _place_area_fill,
+    _place_clustered,
+    generate_for_scene,
+)
+from helpers import make_boundary, make_scene
+from pattern_assignment import ZoneAssignment
 from pattern_corpus import _corpus_scenes
-from placement import OBJECT_CLEARANCE_M, POINT_CLEARANCE_M
+from pattern_library import PATTERN_LIBRARY
+from placement import OBJECT_CLEARANCE_M, POINT_CLEARANCE_M, Placer
+from schemas import Point2
 from setback_norms import setback_for
 from shapely.geometry import Point, Polygon
-from zone_partitioning import partition_zones
+from zone_partitioning import GeometricZone, partition_zones
 
 
 def _trees_and_bushes(catalog):
@@ -110,3 +120,50 @@ def test_real_corpus_has_zero_violations(catalog):
 
         pairwise_violations = _independent_pairwise_violations(objects)
         assert not pairwise_violations, f"{slug}: нарушения расстояния между объектами {pairwise_violations[:5]}"
+
+
+# --- Ограничение числа объектов на гигантской зоне ---------------------------
+#
+# Регрессия на реальный случай: одна open_area зона 646 279 м² (реальный
+# синтетический участок locations/location_old/05_klykova_avenue, район
+# 2 км²) без верхней границы давала target ~18 000 -- pick_spread (k-средних
+# с k=target) на такой k уходил в минуты вместо долей секунды, и приложение
+# выглядело зависшим ("работает нестабильно, зависает на что-то"). Зона в
+# тесте синтетическая и ещё крупнее (1 км x 1 км), чтобы не тянуть реальный
+# 9.6 МБ DXF и оставаться быстрым.
+
+
+def _huge_square_zone(kind: str, side_m: float = 1000.0) -> GeometricZone:
+    half = side_m / 2
+    polygon = [Point2(x=-half, z=-half), Point2(x=half, z=-half), Point2(x=half, z=half), Point2(x=-half, z=half)]
+    return GeometricZone(id="huge_zone", kind=kind, polygon=polygon, area_sqm=side_m * side_m)
+
+
+def _huge_scene() -> object:
+    return make_scene(boundary=make_boundary(-600, -600, 600, 600))
+
+
+def test_place_area_fill_caps_object_count_on_a_huge_zone(catalog):
+    trees, bushes = _trees_and_bushes(catalog)
+    zone = _huge_square_zone("open_area")
+    placer = Placer(_huge_scene())
+    assignment = ZoneAssignment(
+        zone_id=zone.id, zone_kind="open_area", pattern_id="poisson_scatter_fill",
+        source_project=None, source_quote=None, confidence=0.0,
+    )
+    objects = _place_area_fill(placer, zone, assignment, trees, bushes)
+    assert sum(1 for o in objects if o.type == "bush") <= MAX_OBJECTS_PER_ZONE
+    assert sum(1 for o in objects if o.type == "tree") <= MAX_OBJECTS_PER_ZONE
+
+
+def test_place_clustered_caps_group_count_on_a_huge_zone(catalog):
+    trees, bushes = _trees_and_bushes(catalog)
+    zone = _huge_square_zone("open_area")
+    placer = Placer(_huge_scene())
+    spec = PATTERN_LIBRARY["grove_clusters"]
+    assignment = ZoneAssignment(
+        zone_id=zone.id, zone_kind="open_area", pattern_id="grove_clusters",
+        source_project=None, source_quote=None, confidence=0.0,
+    )
+    objects = _place_clustered(placer, zone, spec, assignment, trees, bushes)
+    assert len(objects) <= MAX_GROUPS_PER_ZONE * spec.group_size[1]
