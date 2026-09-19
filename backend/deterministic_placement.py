@@ -59,6 +59,23 @@ CLUSTER_AREA_PER_GROUP_SQM = 200.0
 CLUSTER_CENTER_SPACING_M = 8.0
 CLUSTER_MEMBER_SPACING_M = 2.0
 
+# Верхняя граница числа объектов/групп на ОДНУ зону -- без неё площадная
+# заливка или рощи на очень крупной зоне (найдено на реальном случае:
+# locations/location_old/05_klykova_avenue, район 2 км², одна open_area зона
+# 646 279 м²) требуют target ~18 000, а pick_spread -- k-средних с k=target,
+# чья стоимость на итерацию растёт как O(точки x k): при k в десятки тысяч
+# один вызов уходит в минуты вместо долей секунды и на практике выглядит как
+# зависшее приложение (issue "приложение работает нестабильно, зависает").
+# Тот же класс проблемы уже решён для того же файла в courtyard_design.py
+# (MAX_DESIGN_AREA_M2) и для генератора по сетке в greenery_generator.py
+# (MAX_GENERATED_TREES=400/MAX_GENERATED_BUSH_CLUSTERS=60, те же числа ниже
+# для согласованности) -- здесь тот же приём, только для одной зоны, а не
+# для всего дизайна: сверх этой границы зона получает столько объектов,
+# сколько уместилось при разумной плотности, а не по одному на каждый
+# квадратный метр гигантской территории.
+MAX_OBJECTS_PER_ZONE = 400
+MAX_GROUPS_PER_ZONE = 60
+
 
 def _polygon_of(zone: GeometricZone) -> Polygon:
     return Polygon([(p.x, p.z) for p in zone.polygon])
@@ -152,7 +169,7 @@ def _place_area_fill(
     ):
         if not items:
             continue
-        target = max(0, round(poly.area / spacing**2))
+        target = min(max(0, round(poly.area / spacing**2)), MAX_OBJECTS_PER_ZONE)
         if target == 0:
             continue
         candidates = placer.points_in_area(kind, spacing / 2, within=poly, max_candidates=target * 20)
@@ -185,7 +202,7 @@ def _place_clustered(
     if poly.is_empty or poly.area <= 0:
         return []
 
-    group_count = max(1, round(poly.area / CLUSTER_AREA_PER_GROUP_SQM))
+    group_count = min(max(1, round(poly.area / CLUSTER_AREA_PER_GROUP_SQM)), MAX_GROUPS_PER_ZONE)
     pool = placer.points_in_area(kind, CLUSTER_MEMBER_SPACING_M / 2, within=poly, max_candidates=group_count * 60)
     if not pool:
         return []

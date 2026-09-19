@@ -92,7 +92,15 @@ class DecisionReportUnavailable(RuntimeError):
 
 
 def _client() -> openai.OpenAI:
-    return openai.OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama", timeout=REQUEST_TIMEOUT_S)
+    # max_retries=0 -- явно, вместо дефолта openai-SDK (2 повтора). Для
+    # облачного API повтор на сетевой сбой оправдан; для локальной модели,
+    # которая просто медленно отвечает или недоступна, повтор с тем же
+    # REQUEST_TIMEOUT_S на попытку МНОЖИТ время до ответа (до 3x), а не
+    # спасает запрос -- Ollama не станет отвечать быстрее со второй попытки.
+    # Это и превращало единичный подвисший вызов в 60-90-секундный, из-за
+    # которого весь процесс (один воркер uvicorn, общий GIL) выглядел
+    # "зависшим" и для остальных запросов, включая healthcheck.
+    return openai.OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama", timeout=REQUEST_TIMEOUT_S, max_retries=0)
 
 
 def _summarize(assignments: list[ZoneAssignment]) -> list[SummaryRow]:
