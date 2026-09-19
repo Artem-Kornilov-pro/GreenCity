@@ -78,6 +78,7 @@ def _scene_object(
             "species": item.label,
             "category": "vegetation",
             "generated": True,
+            "catalogId": item.id,
             "pattern_id": assignment.pattern_id,
             "zone_id": zone.id,
             "source_project": assignment.source_project,

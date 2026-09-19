@@ -82,6 +82,14 @@ _SAFE_TYPE_LAYER = {
 
 
 def _object_layer(obj: SceneObject) -> str:
+    # Сгенерированные GreenPlan-объекты (deterministic_placement.py) не несут
+    # sourceLayer -- без этой ветки они бы попали на тот же слой, что и
+    # существующие объекты того же типа (часто буквально "TREE"/"BUSH"),
+    # хотя issue #23 (Этап 6) явно требует разделить "сохранённое" и "новую
+    # посадку" по разным слоям.
+    if obj.metadata.get("generated"):
+        layer_name = _SAFE_TYPE_LAYER.get(obj.type, obj.type.upper())
+        return _safe_layer_name(f"NEW_{layer_name}", "NEW_OBJECT")
     source = obj.metadata.get("sourceLayer")
     if isinstance(source, str) and source:
         return _safe_layer_name(source, obj.type.upper())
