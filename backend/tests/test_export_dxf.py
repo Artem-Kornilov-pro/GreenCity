@@ -57,6 +57,30 @@ def test_object_layer_remaps_colliding_type_names():
     assert "LAWN" not in ed._object_layer(lawn_obj)
 
 
+def test_object_layer_prefixes_generated_objects_regardless_of_source_layer():
+    # metadata.generated -- GreenPlan (deterministic_placement.py); даже если
+    # у объекта случайно оказался sourceLayer, флаг generated главнее (issue
+    # #23, Этап 6: "новая посадка" -- всегда отдельный слой).
+    obj = make_object("t1", "tree", 0, 0, metadata={"generated": True, "sourceLayer": "TREE"})
+    assert ed._object_layer(obj) == "NEW_TREE"
+
+
+def test_object_layer_generated_object_without_flag_uses_old_behavior():
+    obj = make_object("t1", "tree", 0, 0, metadata={"sourceLayer": "TREE"})
+    assert ed._object_layer(obj) == "TREE"
+
+
+def test_object_layer_new_and_existing_object_of_same_type_end_up_on_different_layers():
+    existing = make_object("t1", "tree", 0, 0, metadata={"sourceLayer": "TREE"})
+    generated = make_object("t2", "tree", 5, 5, metadata={"generated": True})
+    assert ed._object_layer(existing) != ed._object_layer(generated)
+
+
+def test_object_layer_generated_object_remaps_colliding_type_names():
+    obj = make_object("p1", "path_segment", 0, 0, metadata={"generated": True})
+    assert ed._object_layer(obj) == "NEW_PAVING"
+
+
 def test_zone_layer_prefers_zone_name():
     assert ed._zone_layer("building", "BUILDING_1") == "BUILDING_1"
 
