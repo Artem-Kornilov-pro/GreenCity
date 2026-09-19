@@ -6,12 +6,13 @@ retrieval: "корпус из 20 проектов другой разработ�
 корпус там до сих пор не появился -- в репозитории нет ни data/projects/, ни
 species_catalog.csv, ни decision_codes.csv.
 
-Здесь -- не 20, а 9 проектов: locations/<slug>/ с настоящим DXF и уже
-написанным design_rationale.md (прошлая сессия подробно задокументировала,
-какой геометрический паттерн применён и почему). Это честный меньший корпус
-из данных, которые реально есть в репозитории, а не ожидание второго
-разработчика. Если/когда полный корпус появится -- CORPUS_SLUGS и
-data/pattern_corpus.yaml расширяются, остальной retrieval-код не меняется.
+Здесь -- не 20, а 14 проектов: locations/<slug>/ с настоящим DXF и уже
+написанным design_rationale.md (9 задокументированы в прошлых сессиях, ещё
+5 -- реальные проекты ветки `new-convert`, слитой в main отдельно от issue
+#23). Это честный меньший корпус из данных, которые реально есть в
+репозитории, а не ожидание второго разработчика. Если/когда полный корпус
+появится -- CORPUS_SLUGS и data/pattern_corpus.yaml расширяются, остальной
+retrieval-код не меняется.
 """
 
 from __future__ import annotations
@@ -41,6 +42,14 @@ CORPUS_SLUGS = (
     "13_kharkovsky_proezd",
     "19_2ya_pryadilnaya",
     "20_makeeva_s",
+    # new-convert (5 доп. реальных проектов, слиты в main отдельной веткой):
+    # тот же принцип честного корпуса из того, что реально есть, а не 20
+    # проектов из issue #23.
+    "04_kharkovskaya_ulitsa",
+    "05_bagritskogo_ulitsa",
+    "08_lodochnaya",
+    "09_izmaylovskaya_ploshad",
+    "17_gruzinskaya_m",
 )
 
 _CORPUS_YAML = ROOT / "data" / "pattern_corpus.yaml"

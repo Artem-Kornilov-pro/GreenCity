@@ -102,6 +102,11 @@ POINT_LAYER_RULES = [
     ("BUSH",       dict(type="bush",       model="/models/bush.glb")),
     ("SHRUB",      dict(type="bush",       model="/models/bush.glb")),
     ("BENCH",      dict(type="bench",      model="/models/bench.glb")),
+    # Шезлонг -- отдельный от лавки тип (см. frontend/public/models/README.md:
+    # "шезлонг, стол и табурет не должны все считаться bench"), у него уже
+    # есть настоящая .glb-модель из пака МАФ (lounger_narrow/lounger_wide,
+    # backend/catalog_generated.json), в отличие от большинства типов ниже.
+    ("LOUNGER",    dict(type="lounger",    model="/models/lounger_narrow.glb")),
     ("URN",        dict(type="urn",        model="/models/urn.glb")),
     ("BIKE_RACK",  dict(type="bike_rack",  model="/models/bike_rack.glb")),
     ("TRASH_BIN",  dict(type="trash_bin",  model="/models/trash_bin.glb")),
