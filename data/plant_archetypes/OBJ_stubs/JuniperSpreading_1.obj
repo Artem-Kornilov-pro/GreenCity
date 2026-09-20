@@ -1,6 +1,6 @@
 # Stub OBJ File (GreenCity procedural placeholder): 'JuniperSpreading_1'
 # generated as low-poly gap-filler, see GreenCity_model_distribution_report.md
-mtllib JuniperSpreading_1.mtl
+mtllib stub_shared.mtl
 o JuniperSpreading_1
 v 0.000000 0.385000 0.000000
 v 0.000000 0.385000 0.000000

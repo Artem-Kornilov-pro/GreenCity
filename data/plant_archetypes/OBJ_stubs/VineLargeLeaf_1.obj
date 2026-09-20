@@ -1,6 +1,6 @@
 # Stub OBJ File (GreenCity procedural placeholder): 'VineLargeLeaf_1'
 # generated as low-poly gap-filler, see GreenCity_model_distribution_report.md
-mtllib VineLargeLeaf_1.mtl
+mtllib stub_shared.mtl
 o VineLargeLeaf_1
 v 0.018000 0.000000 0.200000
 v 0.005562 0.000000 0.217119

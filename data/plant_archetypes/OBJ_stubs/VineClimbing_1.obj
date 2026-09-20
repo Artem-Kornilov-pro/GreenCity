@@ -1,6 +1,6 @@
 # Stub OBJ File (GreenCity procedural placeholder): 'VineClimbing_1'
 # generated as low-poly gap-filler, see GreenCity_model_distribution_report.md
-mtllib VineClimbing_1.mtl
+mtllib stub_shared.mtl
 o VineClimbing_1
 v 0.018000 0.000000 0.150000
 v 0.005562 0.000000 0.167119

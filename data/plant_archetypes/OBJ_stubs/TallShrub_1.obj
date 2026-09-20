@@ -1,6 +1,6 @@
 # Stub OBJ File (GreenCity procedural placeholder): 'TallShrub_1'
 # generated as low-poly gap-filler, see GreenCity_model_distribution_report.md
-mtllib TallShrub_1.mtl
+mtllib stub_shared.mtl
 o TallShrub_1
 v 0.025000 0.000000 0.000000
 v 0.007725 0.000000 0.023776

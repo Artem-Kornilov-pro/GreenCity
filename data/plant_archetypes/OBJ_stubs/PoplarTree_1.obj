@@ -1,6 +1,6 @@
 # Stub OBJ File (GreenCity procedural placeholder): 'PoplarTree_1'
 # generated as low-poly gap-filler, see GreenCity_model_distribution_report.md
-mtllib PoplarTree_1.mtl
+mtllib stub_shared.mtl
 o PoplarTree_1
 v 0.055000 0.000000 0.000000
 v 0.027500 0.000000 0.047631

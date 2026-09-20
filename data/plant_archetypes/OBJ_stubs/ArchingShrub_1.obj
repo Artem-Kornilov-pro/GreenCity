@@ -1,6 +1,6 @@
 # Stub OBJ File (GreenCity procedural placeholder): 'ArchingShrub_1'
 # generated as low-poly gap-filler, see GreenCity_model_distribution_report.md
-mtllib ArchingShrub_1.mtl
+mtllib stub_shared.mtl
 o ArchingShrub_1
 v 0.550000 0.750000 0.000000
 v 0.085000 0.100000 0.000000

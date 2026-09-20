@@ -1,6 +1,6 @@
 # Stub OBJ File (GreenCity procedural placeholder): 'ConiferLow_1'
 # generated as low-poly gap-filler, see GreenCity_model_distribution_report.md
-mtllib ConiferLow_1.mtl
+mtllib stub_shared.mtl
 o ConiferLow_1
 v 0.000000 0.196000 0.000000
 v 0.000000 0.196000 0.000000

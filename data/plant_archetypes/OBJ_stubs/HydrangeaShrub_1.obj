@@ -1,6 +1,6 @@
 # Stub OBJ File (GreenCity procedural placeholder): 'HydrangeaShrub_1'
 # generated as low-poly gap-filler, see GreenCity_model_distribution_report.md
-mtllib HydrangeaShrub_1.mtl
+mtllib stub_shared.mtl
 o HydrangeaShrub_1
 v 0.000000 0.490000 0.000000
 v 0.000000 0.490000 0.000000

@@ -1,6 +1,6 @@
 # Stub OBJ File (GreenCity procedural placeholder): 'Larch_1'
 # generated as low-poly gap-filler, see GreenCity_model_distribution_report.md
-mtllib Larch_1.mtl
+mtllib stub_shared.mtl
 o Larch_1
 v 0.045000 0.000000 0.000000
 v 0.022500 0.000000 0.038971
