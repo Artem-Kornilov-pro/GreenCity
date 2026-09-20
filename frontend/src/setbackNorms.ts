@@ -25,10 +25,27 @@ const SETBACK_NORMS: Record<string, SetbackRule> = {
   pedestrian_path: { tree: 0.7, bush: 0.5 },
 };
 
+// Портировано 1:1 из backend/setback_norms.py::SPECIES_SETBACK_OVERRIDES
+// (issue #43) — синхронизация ручная, при правке обновить оба файла. Ключи —
+// ровно то, что ожидается в metadata.species (с заглавной буквы), сравнение
+// регистрозависимое. Обоснование цифр — докстринг .py-версии.
+const SPECIES_SETBACK_OVERRIDES: Record<string, Partial<Record<string, number>>> = {
+  "Тополь чёрный": { building: 8.0, sewer: 3.0, water_pipeline: 3.0 },
+  "Тополь бальзамический": { building: 8.0, sewer: 3.0, water_pipeline: 3.0 },
+  "Ива белая": { building: 6.0, sewer: 3.5, water_pipeline: 3.5 },
+  "Ива ломкая": { building: 6.0, sewer: 3.5, water_pipeline: 3.5 },
+};
+
 // Для зон без табличного значения (трансформатор, детская площадка, парковка,
 // охраняемая зона, наземная ЛЭП) — берём minDistance зоны как есть, без
-// выдумывания цифр, которые нечем подтвердить.
-export function setbackFor(zoneType: string, plantKind: PlantKind, zoneMinDistance: number): number {
+// выдумывания цифр, которые нечем подтвердить. species — опционален и
+// действует только для plantKind === "tree" (переопределение проверяется
+// ПЕРЕД общей таблицей, тот же порядок разрешения, что и в backend).
+export function setbackFor(zoneType: string, plantKind: PlantKind, zoneMinDistance: number, species?: string): number {
+  if (plantKind === "tree" && species) {
+    const override = SPECIES_SETBACK_OVERRIDES[species]?.[zoneType];
+    if (override !== undefined) return override;
+  }
   const rule = SETBACK_NORMS[zoneType];
   return rule ? rule[plantKind] : zoneMinDistance;
 }

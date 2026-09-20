@@ -40,6 +40,28 @@ def test_species_override_empty_dict_is_same_as_no_override(monkeypatch):
     assert setback_for("building", "tree", zone_min_distance=0.0, species="неизвестный вид") == SETBACK_NORMS["building"]["tree"]
 
 
+def test_poplar_and_willow_have_real_overrides():
+    # Issue #43: реальные записи (не monkeypatch) -- агрессивная корневая
+    # система тополя/ивы требует большего отступа от здания/сетей, чем общая
+    # норма для дерева.
+    for species in ("Тополь чёрный", "Тополь бальзамический"):
+        assert setback_for("building", "tree", zone_min_distance=0.0, species=species) == 8.0
+        assert setback_for("sewer", "tree", zone_min_distance=0.0, species=species) == 3.0
+        assert setback_for("water_pipeline", "tree", zone_min_distance=0.0, species=species) == 3.0
+    for species in ("Ива белая", "Ива ломкая"):
+        assert setback_for("building", "tree", zone_min_distance=0.0, species=species) == 6.0
+        assert setback_for("sewer", "tree", zone_min_distance=0.0, species=species) == 3.5
+        assert setback_for("water_pipeline", "tree", zone_min_distance=0.0, species=species) == 3.5
+    # gas_pipeline осознанно не переопределён -- общая норма tree применяется
+    assert setback_for("gas_pipeline", "tree", zone_min_distance=0.0, species="Тополь чёрный") == SETBACK_NORMS["gas_pipeline"]["tree"]
+
+
+def test_species_override_lookup_is_case_sensitive():
+    # metadata.species в проекте всегда с заглавной буквы (DEFAULT_TREE_SPECIES,
+    # реальные названия видов) -- lowercase-вариант не должен найти запись.
+    assert setback_for("building", "tree", zone_min_distance=0.0, species="тополь чёрный") == SETBACK_NORMS["building"]["tree"]
+
+
 def test_default_species_has_no_overrides_currently():
     # Каталог видов пока пуст (см. докстринг модуля) -- поведение с дефолтным
     # видом должно быть тождественно поведению без species вовсе.

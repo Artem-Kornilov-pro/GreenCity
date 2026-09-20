@@ -374,7 +374,13 @@ export default function EditorPage() {
 
   const selectedObj = scene?.objects.find((o) => o.id === selectedId) ?? null;
   const selectedViolations = selectedObj
-    ? checkViolations(selectedObj.position.x, selectedObj.position.z, scene?.restrictions ?? [], plantKindOfObjectType(selectedObj.type))
+    ? checkViolations(
+        selectedObj.position.x,
+        selectedObj.position.z,
+        scene?.restrictions ?? [],
+        plantKindOfObjectType(selectedObj.type),
+        typeof selectedObj.metadata.species === "string" ? selectedObj.metadata.species : undefined
+      )
     : [];
 
   return (
