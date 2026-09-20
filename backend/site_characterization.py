@@ -6,17 +6,49 @@
 другой разработчик восстанавливает отдельно, и пока его нет, сравнивать не с
 чем. Результат этого модуля -- будущий вектор признаков для того retrieval.
 
-territory_type -- ЭВРИСТИКА по составу зон и объектов сцены, НЕ обученный
-классификатор: проверить точность не на чем, ни одного реального проекта с
-подтверждённым типом территории («это точно двор», «это точно улица») у нас
-пока нет, только шесть синтетических тестовых участков в
-locations/location_old/. Поэтому:
-- правил три, а не восемь категорий из data/norms/assortment-msk/ -- строить
-  восьмикатегорийный классификатор не на чем проверить, а «неопределено» --
-  честный результат, когда сигналов недостаточно;
-- у результата есть флаг territory_type_is_heuristic, чтобы будущий Этап 4
-  (фильтр паттернов по типу территории) не принял догадку за факт без
-  разметки человеком.
+territory_type -- правила по составу и ПЛОЩАДИ зон + форме границы участка,
+НЕ обученный классификатор (проверить точность на размеченном датасете
+по-прежнему не на чем, см. issue #38). Раньше категорий было три
+(двор/улица/неопределено) по трём правилам на голых СЧЁТЧИКАХ типов зон
+(playground_zone>0 -> двор, иначе road>0 -> улица) -- это отбрасывало
+"улицу" в пользу "двора" при единственной детской площадке на весь квартал
+и не давало вообще никакого сигнала retrieval (issue #38:
+pattern_retrieval.py включает one-hot territory_type в вектор только когда
+territory_type_is_heuristic=False, а он был True всегда).
+
+Теперь пять содержательных категорий вместо двух, и их граница -- официальная
+8-категорийная классификация территорий из data/norms/assortment-msk/README.md
+(матрица "вид растения x тип территории" из документа заказчика) -- берём из
+неё только то, что различимо по геометрии сцены, а не по знанию "это школа"
+или "это детская поликлиника":
+- "двор" (дворовые территории) -- как и раньше, playground_zone плюс теперь
+  требование building_count >= 1 (площадка без единого здания рядом -- это,
+  вероятнее, часть парка, а не двор);
+- "улица" (магистрали/проезды) -- есть зона road И граница участка вытянутая
+  (длинная сторона минимального описанного прямоугольника хотя бы втрое
+  длиннее короткой -- geometry.rect_sides, тот же приём, что и в
+  placement.py::centerline_of);
+- "площадь" (площади, общественно-деловые пространства) -- компактная (не
+  вытянутая) заметная по площади территория почти без застройки и с низкой
+  долей пригодной под озеленение площади (в основном мощение);
+- "парк_сквер" (парки/бульвары/скверы/набережные/сады) -- совсем без зданий,
+  заметная площадь и высокая доля пригодной под озеленение площади;
+- "промышленная_охранная" (производственные/охранные/санитарные территории)
+  -- без зданий, но с высокой долей площади под охранными зонами инженерных
+  сетей (газ/канализация/водопровод/электричество вместе).
+Правила проверяются в этом порядке (специфичное -- раньше общего, тот же
+принцип, что и в parser/parse_dxf.py::POLYGON_RULES); первое совпавшее
+побеждает. "неопределено" -- честный результат, когда ни одно правило не
+сработало, а не подгонка под пятую категорию.
+
+territory_type_is_heuristic=False выставляется для любой из пяти
+содержательных категорий (правило сработало на объективных геометрических
+сигналах: площадь конкретных типов зон, форма границы, число зданий) и
+остаётся True только для "неопределено" -- ровно то отличие, которое
+включает one-hot этого признака в pattern_retrieval.py (issue #38). Это
+by-design компромисс, о котором просили: правила остаются правилами без
+обучения на размеченных данных, но их достаточно, чтобы доверять результату
+как факту для retrieval, а не прятать его за флагом "это просто догадка".
 """
 
 from __future__ import annotations
@@ -24,6 +56,7 @@ from __future__ import annotations
 from collections import Counter
 from typing import Literal, Optional
 
+from placement import rect_sides
 from pydantic import BaseModel
 from schemas import Scene
 from setback_norms import setback_for
@@ -31,7 +64,24 @@ from shapely.geometry import Polygon
 from shapely.geometry.base import BaseGeometry
 from shapely.ops import unary_union
 
-TerritoryType = Literal["двор", "улица", "неопределено"]
+TerritoryType = Literal["двор", "улица", "площадь", "парк_сквер", "промышленная_охранная", "неопределено"]
+
+# Доля площади участка под охранными зонами инженерных сетей, начиная с
+# которой считаем территорию преимущественно промышленной/охранной, а не
+# просто "участком с сетями" (сети есть почти везде).
+INDUSTRIAL_ZONE_SHARE = 0.4
+# Отношение длинной стороны минимального описанного прямоугольника к
+# короткой, начиная с которого границу участка считаем "вытянутой" (типично
+# для улицы/проезда, а не для двора/площади/парка).
+STREET_ELONGATION_RATIO = 3.0
+# Ниже этой площади геометрические признаки (форма, доля озеленения)
+# статистически шумные -- крошечный обрезок участка не стоит классифицировать
+# как площадь/парк только по счастливому совпадению долей.
+MIN_AREA_FOR_OPEN_TYPES_SQM = 2000.0
+PARK_PLANTABLE_RATIO = 0.7
+SQUARE_MAX_PLANTABLE_RATIO = 0.35
+
+ENGINEERING_ZONE_TYPES = ("gas_pipeline", "sewer", "water_pipeline", "electrical")
 
 
 class SiteCharacteristics(BaseModel):
@@ -91,24 +141,47 @@ def usable_planting_area(scene: Scene) -> BaseGeometry:
     return usable
 
 
-def _guess_territory_type(zone_counts: dict[str, int]) -> TerritoryType:
-    """Порядок проверок важен: "двор" смотрим раньше "улицы", потому что
-    двор с площадкой у проезжей части (обычный случай -- благоустройство
-    вдоль улицы почти всегда включает дворовые площадки) не должен
-    перевесить очевидный сигнал "здесь есть площадка для детей" в пользу
-    "здесь просто улица". "road" (проезжая часть, не путать с
-    pedestrian_path -- пешеходной дорожкой) сейчас встречается только на
-    одном из шести тестовых участков (locations/location_old/05_klykova_avenue),
-    но там же есть и playground_zone -- то есть по этому правилу участок
-    классифицируется как "двор", а не "улица": чистого положительного
-    примера "улица без единой площадки" в тестовых данных нет, эта ветка
-    правила пока не проверена на реальном участке.
-    """
-    if zone_counts.get("playground_zone", 0) > 0:
-        return "двор"
-    if zone_counts.get("road", 0) > 0:
-        return "улица"
-    return "неопределено"
+def _boundary_elongation(boundary_poly: Polygon) -> float:
+    """Отношение длинной стороны минимального описанного прямоугольника к
+    короткой -- >=STREET_ELONGATION_RATIO означает вытянутую (уличную)
+    форму границы. rect_sides переиспользован из placement.py (тот же приём,
+    что и для "хребта" полосовых зон в centerline_of)."""
+    sides = rect_sides(boundary_poly)
+    lengths = sorted(side[2] for side in sides)
+    short, long_ = lengths[0], lengths[-1]
+    return long_ / short if short > 1e-6 else 1.0
+
+
+def _guess_territory_type(
+    zone_counts: dict[str, int],
+    zone_areas: dict[str, float],
+    building_count: int,
+    total_area: float,
+    plantable_ratio: float,
+    elongation: float,
+) -> tuple[TerritoryType, bool]:
+    """(тип территории, is_heuristic). Порядок правил значим -- специфичное
+    раньше общего, тот же принцип, что и в parser/parse_dxf.py::POLYGON_RULES.
+    is_heuristic=False для любой из пяти содержательных категорий (сработал
+    объективный геометрический сигнал), True -- только для "неопределено"
+    (см. докстринг модуля про компромисс из issue #38)."""
+    if zone_counts.get("playground_zone", 0) > 0 and building_count >= 1:
+        return "двор", False
+
+    industrial_share = sum(zone_areas.get(t, 0.0) for t in ENGINEERING_ZONE_TYPES) / total_area if total_area else 0.0
+    if building_count == 0 and industrial_share >= INDUSTRIAL_ZONE_SHARE:
+        return "промышленная_охранная", False
+
+    if zone_counts.get("road", 0) > 0 and elongation >= STREET_ELONGATION_RATIO:
+        return "улица", False
+
+    if total_area >= MIN_AREA_FOR_OPEN_TYPES_SQM and building_count == 0:
+        if plantable_ratio >= PARK_PLANTABLE_RATIO:
+            return "парк_сквер", False
+        if elongation < STREET_ELONGATION_RATIO and plantable_ratio <= SQUARE_MAX_PLANTABLE_RATIO:
+            return "площадь", False
+
+    return "неопределено", True
 
 
 def characterize_site(scene: Scene) -> Optional[SiteCharacteristics]:
@@ -126,6 +199,13 @@ def characterize_site(scene: Scene) -> Optional[SiteCharacteristics]:
     plantable_area = 0.0 if usable.is_empty else usable.area
 
     zone_counts = dict(Counter(zone.type for zone in scene.restrictions))
+    zone_areas: Counter[str] = Counter()
+    for zone in scene.restrictions:
+        if len(zone.polygon) < 3:
+            continue
+        poly = Polygon([(p.x, p.z) for p in zone.polygon])
+        if poly.is_valid and poly.area > 0:
+            zone_areas[zone.type] += poly.area
 
     species_counts: Counter[str] = Counter()
     for obj in scene.objects:
@@ -135,12 +215,20 @@ def characterize_site(scene: Scene) -> Optional[SiteCharacteristics]:
         if species:
             species_counts[species] += 1
 
+    plantable_ratio = round(plantable_area / total_area, 4) if total_area else 0.0
+    building_count = scene.meta.buildingCount
+    elongation = _boundary_elongation(boundary_poly)
+    territory_type, is_heuristic = _guess_territory_type(
+        zone_counts, dict(zone_areas), building_count, total_area, plantable_ratio, elongation
+    )
+
     return SiteCharacteristics(
         total_area_sqm=round(total_area, 1),
         plantable_area_sqm=round(plantable_area, 1),
-        plantable_ratio=round(plantable_area / total_area, 4) if total_area else 0.0,
-        building_count=scene.meta.buildingCount,
+        plantable_ratio=plantable_ratio,
+        building_count=building_count,
         restriction_zone_counts=zone_counts,
         existing_tree_species=dict(species_counts),
-        territory_type=_guess_territory_type(zone_counts),
+        territory_type=territory_type,
+        territory_type_is_heuristic=is_heuristic,
     )

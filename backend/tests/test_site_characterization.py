@@ -46,36 +46,85 @@ def test_no_existing_trees_on_synthetic_locations(location_scene):
 
 
 def test_territory_type_guess_is_playground_before_road(location_scene):
-    # 03_lshape_vs_rect: есть playground_zone -- должен распознаться как двор,
-    # даже при наличии дорожек (pedestrian_path, не road).
+    # 03_lshape_vs_rect: есть playground_zone и здания -- должен распознаться
+    # как двор, даже при наличии дорожек (pedestrian_path, не road).
     result = characterize_site(location_scene[3])
     assert result.territory_type == "двор"
-    assert result.territory_type_is_heuristic is True
+    # Issue #38: содержательная категория -- сработал объективный сигнал
+    # (playground_zone + здания), а не догадка "по умолчанию".
+    assert result.territory_type_is_heuristic is False
 
 
-def test_territory_type_guess_road_without_playground():
-    # Ни один из шести тестовых участков не содержит "road" без единой
-    # playground_zone одновременно -- собираем минимальную сцену, чтобы
-    # проверить эту ветку правила напрямую.
+def test_territory_type_guess_road_needs_elongated_boundary():
+    # Компактная (не вытянутая) граница с дорогой -- это не "улица" (для нашей
+    # эвристики улица должна быть вытянутой геометрически, не просто
+    # содержать любую road-зону), а "площадь": здание отсутствует, участок
+    # почти весь занят проезжей частью (низкая доля озеленяемой площади).
     square = [Point2(x=0, z=0), Point2(x=50, z=0), Point2(x=50, z=50), Point2(x=0, z=50)]
     road = RestrictionZone(
         id="r1", type="road", name="Проезжая часть", polygon=square, severity="forbidden", minDistance=2.0, message=""
     )
     scene = Scene(boundary=Boundary(polygon=square, sourceLayer="BOUNDARY"), restrictions=[road], objects=[], meta=_meta())
-    assert characterize_site(scene).territory_type == "улица"
+    result = characterize_site(scene)
+    assert result.territory_type == "площадь"
+    assert result.territory_type_is_heuristic is False
+
+
+def test_territory_type_guess_road_with_elongated_boundary_is_ulitsa():
+    # Тот же принцип, но граница вытянута (200x20, отношение сторон 10) --
+    # длинная узкая полоса с дорогой это и есть "улица".
+    strip = [Point2(x=0, z=0), Point2(x=200, z=0), Point2(x=200, z=20), Point2(x=0, z=20)]
+    road = RestrictionZone(
+        id="r1", type="road", name="Проезжая часть", polygon=strip, severity="forbidden", minDistance=2.0, message=""
+    )
+    scene = Scene(boundary=Boundary(polygon=strip, sourceLayer="BOUNDARY"), restrictions=[road], objects=[], meta=_meta())
+    result = characterize_site(scene)
+    assert result.territory_type == "улица"
+    assert result.territory_type_is_heuristic is False
 
 
 def test_territory_type_guess_road_and_playground_together_is_dvor(location_scene):
     # 05_klykova_avenue -- единственный тестовый участок с type="road", но у
-    # него же есть playground_zone: по документированному приоритету это
-    # "двор", не "улица" (см. докстринг _guess_territory_type).
+    # него же есть playground_zone и здания: по документированному приоритету
+    # это "двор", не "улица" (см. докстринг _guess_territory_type).
     result = characterize_site(location_scene[5])
     assert result.territory_type == "двор"
 
 
+def test_territory_type_guess_park_needs_no_buildings_and_high_plantable_ratio():
+    # Большой (>= MIN_AREA_FOR_OPEN_TYPES_SQM) участок без зданий и почти
+    # целиком пригодный под озеленение (allowed-зона на весь контур) --
+    # парк/сквер, не "неопределено".
+    square = [Point2(x=0, z=0), Point2(x=100, z=0), Point2(x=100, z=100), Point2(x=0, z=100)]
+    grass = RestrictionZone(
+        id="g1", type="protected_zone", name="Газон", polygon=square, severity="allowed", minDistance=0.0, message=""
+    )
+    scene = Scene(boundary=Boundary(polygon=square, sourceLayer="BOUNDARY"), restrictions=[grass], objects=[], meta=_meta())
+    result = characterize_site(scene)
+    assert result.territory_type == "парк_сквер"
+    assert result.territory_type_is_heuristic is False
+
+
+def test_territory_type_guess_industrial_needs_dominant_engineering_zones():
+    # Большая доля площади под охранными зонами инженерных сетей и ни одного
+    # здания -- промышленная/охранная территория, а не "неопределено".
+    square = [Point2(x=0, z=0), Point2(x=100, z=0), Point2(x=100, z=100), Point2(x=0, z=100)]
+    gas = RestrictionZone(
+        id="e1", type="gas_pipeline", name="Газопровод", polygon=square, severity="forbidden", minDistance=2.0, message=""
+    )
+    scene = Scene(boundary=Boundary(polygon=square, sourceLayer="BOUNDARY"), restrictions=[gas], objects=[], meta=_meta())
+    result = characterize_site(scene)
+    assert result.territory_type == "промышленная_охранная"
+    assert result.territory_type_is_heuristic is False
+
+
 def test_territory_type_guess_undetermined_without_signals(scene_02):
-    # 02_courtyard_3buildings: ни playground_zone, ни road.
-    assert characterize_site(scene_02).territory_type == "неопределено"
+    # 02_courtyard_3buildings: ни playground_zone, ни road, здания есть --
+    # ни одно правило не срабатывает, честное "неопределено" остаётся
+    # эвристикой (единственный случай is_heuristic=True).
+    result = characterize_site(scene_02)
+    assert result.territory_type == "неопределено"
+    assert result.territory_type_is_heuristic is True
 
 
 def test_usable_planting_area_empty_without_boundary():
