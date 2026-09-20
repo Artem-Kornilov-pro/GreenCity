@@ -1,3 +1,8 @@
+> Это шаблонный README от Vite (тулинг фронтенда), не документация проекта.
+> Архитектура фронтенда, эндпоинты, GreenPlan — см.
+> [../docs/TECHNICAL_OVERVIEW.md](../docs/TECHNICAL_OVERVIEW.md) и
+> [../README.md](../README.md). 3D-модели — [public/models/README.md](public/models/README.md).
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
