@@ -2,6 +2,15 @@
 """
 FastAPI-бэкенд для веб-редактора озеленения. Эндпоинты:
     POST /api/parse             -- DXF -> JSON-сцена (через parser/parse_dxf.py)
+    POST /api/parse-dwg         -- батч из нескольких .dwg (папка проекта) ->
+                                    JSON-сцена (issue #50): каждый файл сначала
+                                    конвертируется в DXF через dwg2dxf/LibreDWG
+                                    (dwg_batch_converter.py), результаты
+                                    сливаются в один документ и парсятся тем же
+                                    parser/parse_dxf.py, что и /api/parse.
+                                    Файлы, которые не удалось сконвертировать,
+                                    не роняют весь запрос -- попадают в
+                                    dwgConversionWarnings в ответе.
     POST /api/generate-greenery -- JSON-сцена (+ опциональные query-параметры
                                     species/grid_spacing_m/min_tree_spacing_m/
                                     include_trees/include_bushes/
@@ -56,6 +65,7 @@ from typing import Optional
 
 import cache
 import db
+import dwg_batch_converter
 import metrics
 import pattern_corpus
 import projects as projects_service
@@ -266,6 +276,73 @@ def parse_dxf_endpoint(file: UploadFile = File(...)):
     logging.getLogger("greencity.parse").info(
         "разобран %r: %d объектов, %d зон",
         file.filename,
+        len(scene.get("objects", [])),
+        len(scene.get("restrictions", [])),
+    )
+
+    return scene
+
+
+# Синхронный def по той же причине, что и /api/parse выше -- субпроцессы
+# dwg2dxf и геометрия ezdxf/shapely блокирующие, await тут нечему быть.
+# Частичный успех -- штатный сценарий (issue #50): реальные DWG-проекты
+# приходят россыпью в 20-30 файлов, часть из которых либо почти пустая
+# сборка с нерезолвленными xref-ссылками, либо содержит объекты, которые
+# LibreDWG не умеет читать (см. docstring dwg_batch_converter.py) -- поэтому
+# при хотя бы одном успешно сконвертированном файле возвращаем 200 с
+# результатом и списком неудач в dwgConversionWarnings, а не роняем весь
+# запрос.
+@app.post("/api/parse-dwg")
+def parse_dwg_folder_endpoint(files: list[UploadFile] = File(...)):
+    dwg_files = [f for f in files if f.filename.lower().endswith(".dwg")]
+    if not dwg_files:
+        raise HTTPException(400, "Среди загруженных файлов нет ни одного .dwg")
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        dwg_paths = []
+        for f in dwg_files:
+            # Path(f.filename).name -- обрезает любые каталоговые компоненты
+            # (в т.ч. "../"), которые клиент может подсунуть в имени файла
+            # multipart-запроса, прежде чем строить путь внутри tmp_path.
+            dest = tmp_path / Path(f.filename).name
+            dest.write_bytes(f.file.read())
+            dwg_paths.append(dest)
+
+        try:
+            result = dwg_batch_converter.merge_dwg_files(dwg_paths, tmp_path)
+        except dwg_batch_converter.Dwg2DxfNotFound as e:
+            metrics.dwg_batch_conversions_total.labels(outcome="tool_missing").inc()
+            raise HTTPException(503, str(e)) from e
+
+        if not result.converted:
+            metrics.dwg_batch_conversions_total.labels(outcome="all_failed").inc()
+            metrics.dwg_files_processed_total.labels(outcome="failed").inc(len(result.failed))
+            detail = "; ".join(f"{name}: {err}" for name, err in result.failed.items())
+            raise HTTPException(400, f"Не удалось сконвертировать ни один .dwg-файл. {detail}")
+
+        combined_dxf = tmp_path / "combined.dxf"
+        result.doc.saveas(combined_dxf)
+
+        try:
+            scene = parse_dxf_file(str(combined_dxf))
+        except Exception as e:
+            metrics.dxf_parse_errors_total.inc()
+            logging.getLogger("greencity.parse").warning("не удалось разобрать смёрженный DWG-батч: %s", e)
+            raise HTTPException(400, f"Не удалось разобрать результат конвертации: {e}") from e
+
+    scene["buildingSetbacks"] = compute_building_setbacks(scene.get("objects", []))
+    if result.failed:
+        scene["dwgConversionWarnings"] = [{"file": name, "error": err} for name, err in result.failed.items()]
+
+    metrics.dwg_batch_conversions_total.labels(outcome="success").inc()
+    metrics.dwg_files_processed_total.labels(outcome="converted").inc(len(result.converted))
+    metrics.dwg_files_processed_total.labels(outcome="failed").inc(len(result.failed))
+    metrics.dxf_parses_total.inc()
+    logging.getLogger("greencity.parse").info(
+        "DWG-батч разобран: %d/%d файлов сконвертировано, %d объектов, %d зон",
+        len(result.converted),
+        len(dwg_files),
         len(scene.get("objects", [])),
         len(scene.get("restrictions", [])),
     )

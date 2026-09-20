@@ -19,6 +19,19 @@ export async function uploadDxf(file: File): Promise<Scene> {
   return res.json() as Promise<Scene>;
 }
 
+// Папка проекта из .dwg (issue #50) -- backend конвертирует каждый файл через
+// dwg2dxf/LibreDWG и сливает их в один документ (dwg_batch_converter.py)
+// прежде чем прогнать через тот же parser/parse_dxf.py, что и /api/parse.
+// Файлы, которые не удалось сконвертировать, не считаются ошибкой всего
+// запроса -- попадают в Scene.dwgConversionWarnings.
+export async function uploadDwgFolder(files: File[]): Promise<Scene> {
+  const form = new FormData();
+  for (const file of files) form.append("files", file);
+  const res = await fetch(`${API_BASE}/api/parse-dwg`, { method: "POST", body: form });
+  if (!res.ok) throw new Error(`Ошибка конвертации DWG (${res.status}): ${await readErrorDetail(res)}`);
+  return res.json() as Promise<Scene>;
+}
+
 // Бэкенд-эндпоинт сейчас заглушка (backend/main.py::generate_greenery) --
 // возвращает null, пока алгоритм не реализован. null здесь не ошибка сети,
 // поэтому не бросаем исключение, а даём вызывающему коду решить, что делать

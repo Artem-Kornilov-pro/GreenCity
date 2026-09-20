@@ -34,6 +34,18 @@ dxf_exports_total = Counter(
     "Экспорт сцены в DXF (/api/export-dxf)",
 )
 
+dwg_batch_conversions_total = Counter(
+    "greencity_dwg_batch_conversions_total",
+    "Батч-конвертации папки .dwg (/api/parse-dwg) по итогу",
+    ["outcome"],  # success (хотя бы 1 файл сконвертирован) / all_failed / tool_missing
+)
+
+dwg_files_processed_total = Counter(
+    "greencity_dwg_files_processed_total",
+    "Отдельные .dwg-файлы, обработанные внутри /api/parse-dwg",
+    ["outcome"],  # converted / failed
+)
+
 greenery_generated_total = Counter(
     "greencity_greenery_generated_total",
     "Сгенерированные объекты озеленения (/api/generate-greenery), по типу",

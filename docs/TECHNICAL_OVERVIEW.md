@@ -53,6 +53,7 @@ Docker-compose поднимает 8 сервисов с healthcheck на каж�
 | Эндпоинт | Что делает |
 |---|---|
 | `POST /api/parse` | DXF → `Scene` |
+| `POST /api/parse-dwg` | Папка из нескольких `.dwg` → `Scene` (issue #50): батч-конвертация через `dwg2dxf`/LibreDWG + слияние в один документ (`backend/dwg_batch_converter.py`), дальше тот же `parse_dxf.py`. Файлы, которые не удалось сконвертировать, не роняют запрос — попадают в `Scene.dwgConversionWarnings` |
 | `POST /api/generate-greenery` | Деревья/кусты/газон по сетке (без ML), см. ниже |
 | `POST /api/edit-with-text` | Правка плана текстом через LLM |
 | `POST /api/export-dxf` | `Scene` → DXF (зеркало парсера) |
