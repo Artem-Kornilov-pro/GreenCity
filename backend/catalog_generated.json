@@ -1,656 +1,5 @@
 [
   {
-    "id": "100_mesh_099",
-    "category": "tree",
-    "label": "Дерево 100 — среднее, раскидистое, 4.33 м",
-    "size_class": "medium",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/100_mesh_099.glb",
-    "dimensions": {
-      "height": 4.33,
-      "radius": 1.95,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "101_mesh_100",
-    "category": "tree",
-    "label": "Дерево 101 — среднее, обычная крона, 3.76 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/101_mesh_100.glb",
-    "dimensions": {
-      "height": 3.76,
-      "radius": 0.93,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "102_mesh_101",
-    "category": "tree",
-    "label": "Дерево 102 — среднее, обычная крона, 4.85 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/102_mesh_101.glb",
-    "dimensions": {
-      "height": 4.85,
-      "radius": 1.29,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "103_mesh_102",
-    "category": "tree",
-    "label": "Дерево 103 — среднее, обычная крона, 3.55 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/103_mesh_102.glb",
-    "dimensions": {
-      "height": 3.55,
-      "radius": 0.74,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "107_mesh_106",
-    "category": "tree",
-    "label": "Дерево 107 — высокое, обычная крона, 6.18 м",
-    "size_class": "tall",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/107_mesh_106.glb",
-    "dimensions": {
-      "height": 6.18,
-      "radius": 1.46,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "109_mesh_108",
-    "category": "tree",
-    "label": "Дерево 109 — среднее, обычная крона, 4.45 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/109_mesh_108.glb",
-    "dimensions": {
-      "height": 4.45,
-      "radius": 1.24,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "121_mesh_120",
-    "category": "tree",
-    "label": "Дерево 121 — высокое, обычная крона, 7.72 м",
-    "size_class": "tall",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/121_mesh_120.glb",
-    "dimensions": {
-      "height": 7.72,
-      "radius": 2.38,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "131_mesh_130",
-    "category": "tree",
-    "label": "Дерево 131 — среднее, раскидистое, 4.81 м",
-    "size_class": "medium",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/131_mesh_130.glb",
-    "dimensions": {
-      "height": 4.81,
-      "radius": 2.37,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "134_mesh_133",
-    "category": "tree",
-    "label": "Дерево 134 — высокое, раскидистое, 6.17 м",
-    "size_class": "tall",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/134_mesh_133.glb",
-    "dimensions": {
-      "height": 6.17,
-      "radius": 2.65,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "135_mesh_134",
-    "category": "tree",
-    "label": "Дерево 135 — высокое, раскидистое, 6.01 м",
-    "size_class": "tall",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/135_mesh_134.glb",
-    "dimensions": {
-      "height": 6.01,
-      "radius": 2.74,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "144_mesh_143",
-    "category": "tree",
-    "label": "Дерево 144 — высокое, обычная крона, 6.81 м",
-    "size_class": "tall",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/144_mesh_143.glb",
-    "dimensions": {
-      "height": 6.81,
-      "radius": 1.37,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "146_mesh_145",
-    "category": "tree",
-    "label": "Дерево 146 — высокое, обычная крона, 6.17 м",
-    "size_class": "tall",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/146_mesh_145.glb",
-    "dimensions": {
-      "height": 6.17,
-      "radius": 1.32,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "193_mesh_196",
-    "category": "tree",
-    "label": "Дерево 193 — среднее, раскидистое, 5.84 м",
-    "size_class": "medium",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/193_mesh_196.glb",
-    "dimensions": {
-      "height": 5.84,
-      "radius": 2.65,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "21_mesh_020",
-    "category": "tree",
-    "label": "Дерево 21 — среднее, обычная крона, 4.24 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/21_mesh_020.glb",
-    "dimensions": {
-      "height": 4.24,
-      "radius": 1.01,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "23_mesh_022",
-    "category": "tree",
-    "label": "Дерево 23 — среднее, обычная крона, 4.32 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/23_mesh_022.glb",
-    "dimensions": {
-      "height": 4.32,
-      "radius": 1.03,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "31_mesh_030",
-    "category": "tree",
-    "label": "Дерево 31 — среднее, обычная крона, 4.62 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/31_mesh_030.glb",
-    "dimensions": {
-      "height": 4.62,
-      "radius": 1.11,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "32_mesh_031",
-    "category": "tree",
-    "label": "Дерево 32 — среднее, обычная крона, 4.95 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/32_mesh_031.glb",
-    "dimensions": {
-      "height": 4.95,
-      "radius": 1.19,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "36_mesh_035",
-    "category": "tree",
-    "label": "Дерево 36 — среднее, обычная крона, 3.49 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/36_mesh_035.glb",
-    "dimensions": {
-      "height": 3.49,
-      "radius": 1.19,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "37_mesh_036",
-    "category": "tree",
-    "label": "Дерево 37 — среднее, обычная крона, 3.18 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/37_mesh_036.glb",
-    "dimensions": {
-      "height": 3.18,
-      "radius": 1.14,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "51_mesh_050",
-    "category": "tree",
-    "label": "Дерево 51 — высокое, раскидистое, 6.4 м",
-    "size_class": "tall",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/51_mesh_050.glb",
-    "dimensions": {
-      "height": 6.4,
-      "radius": 2.98,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "58_mesh_057",
-    "category": "tree",
-    "label": "Дерево 58 — среднее, раскидистое, 4.85 м",
-    "size_class": "medium",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/58_mesh_057.glb",
-    "dimensions": {
-      "height": 4.85,
-      "radius": 2.31,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "65_mesh_064",
-    "category": "tree",
-    "label": "Дерево 65 — среднее, раскидистое, 5.44 м",
-    "size_class": "medium",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/65_mesh_064.glb",
-    "dimensions": {
-      "height": 5.44,
-      "radius": 2.19,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "66_mesh_065",
-    "category": "tree",
-    "label": "Дерево 66 — среднее, обычная крона, 5.68 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/66_mesh_065.glb",
-    "dimensions": {
-      "height": 5.68,
-      "radius": 2.09,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "71_mesh_070",
-    "category": "tree",
-    "label": "Дерево 71 — среднее, обычная крона, 3.95 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/71_mesh_070.glb",
-    "dimensions": {
-      "height": 3.95,
-      "radius": 1.47,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "80_mesh_079",
-    "category": "tree",
-    "label": "Дерево 80 — среднее, обычная крона, 3.03 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/80_mesh_079.glb",
-    "dimensions": {
-      "height": 3.03,
-      "radius": 0.99,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "83_mesh_082",
-    "category": "tree",
-    "label": "Дерево 83 — низкое, обычная крона, 2.76 м",
-    "size_class": "low",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/83_mesh_082.glb",
-    "dimensions": {
-      "height": 2.76,
-      "radius": 0.91,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "87_mesh_086",
-    "category": "tree",
-    "label": "Дерево 87 — среднее, раскидистое, 3.48 м",
-    "size_class": "medium",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/87_mesh_086.glb",
-    "dimensions": {
-      "height": 3.48,
-      "radius": 1.34,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "89_mesh_088",
-    "category": "tree",
-    "label": "Дерево 89 — среднее, обычная крона, 5.24 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/89_mesh_088.glb",
-    "dimensions": {
-      "height": 5.24,
-      "radius": 1.88,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "95_mesh_094",
-    "category": "tree",
-    "label": "Дерево 95 — среднее, обычная крона, 5.09 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/95_mesh_094.glb",
-    "dimensions": {
-      "height": 5.09,
-      "radius": 1.07,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "96_mesh_095",
-    "category": "tree",
-    "label": "Дерево 96 — среднее, колонновидное, 5.72 м",
-    "size_class": "medium",
-    "crown_class": "columnar",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/96_mesh_095.glb",
-    "dimensions": {
-      "height": 5.72,
-      "radius": 1.06,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "98_mesh_097",
-    "category": "tree",
-    "label": "Дерево 98 — среднее, обычная крона, 3.45 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/98_mesh_097.glb",
-    "dimensions": {
-      "height": 3.45,
-      "radius": 1.31,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
     "id": "bench_long",
     "category": "furniture",
     "label": "Скамья длинная",
@@ -2502,14 +1851,14 @@
     "id": "species_iva_belaya",
     "category": "tree",
     "label": "Ива белая",
-    "size_class": "medium",
-    "crown_class": "spreading",
+    "size_class": "low",
+    "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/willow_2.glb",
+    "model": "/models/weepingtree_1.glb",
     "dimensions": {
-      "height": 3.82,
-      "radius": 1.78,
+      "height": 2.57,
+      "radius": 0.95,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2523,14 +1872,14 @@
     "id": "species_iva_prutovidnaya",
     "category": "tree",
     "label": "Ива прутовидная",
-    "size_class": "medium",
-    "crown_class": "spreading",
+    "size_class": "low",
+    "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/willow_2.glb",
+    "model": "/models/weepingtree_1.glb",
     "dimensions": {
-      "height": 3.82,
-      "radius": 1.78,
+      "height": 2.57,
+      "radius": 0.95,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2565,14 +1914,14 @@
     "id": "species_iva_shverina",
     "category": "tree",
     "label": "Ива Шверина",
-    "size_class": "medium",
-    "crown_class": "spreading",
+    "size_class": "low",
+    "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/willow_2.glb",
+    "model": "/models/weepingtree_1.glb",
     "dimensions": {
-      "height": 3.82,
-      "radius": 1.78,
+      "height": 2.57,
+      "radius": 0.95,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2608,13 +1957,13 @@
     "category": "tree",
     "label": "Ива белая",
     "size_class": "medium",
-    "crown_class": "regular",
+    "crown_class": "spreading",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/37_mesh_036.glb",
+    "model": "/models/willow_2.glb",
     "dimensions": {
-      "height": 3.66,
-      "radius": 1.31,
+      "height": 3.82,
+      "radius": 1.78,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2650,13 +1999,13 @@
     "category": "tree",
     "label": "Ива прутовидная",
     "size_class": "medium",
-    "crown_class": "regular",
+    "crown_class": "spreading",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/71_mesh_070.glb",
+    "model": "/models/willow_2.glb",
     "dimensions": {
-      "height": 4.54,
-      "radius": 1.69,
+      "height": 3.82,
+      "radius": 1.78,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2758,10 +2107,10 @@
     "crown_class": "spreading",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/131_mesh_130.glb",
+    "model": "/models/willow_2.glb",
     "dimensions": {
-      "height": 5.53,
-      "radius": 2.73,
+      "height": 3.82,
+      "radius": 1.78,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
