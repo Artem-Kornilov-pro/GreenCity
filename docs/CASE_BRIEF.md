@@ -9,7 +9,6 @@
 - [data/norms/README.md](data/norms/README.md) — нормативные акты в машиночитаемом виде, что извлечено/проверено.
 - [observability/README.md](observability/README.md) — метрики, логи, дашборды Grafana.
 - [frontend/public/models/README.md](frontend/public/models/README.md) — 3D-модели, как подключить свой пак.
-- [docs/CASE_BRIEF.md](docs/CASE_BRIEF.md) — исходное описание кейса от организаторов хакатона ЛЦТ.
 
 ## Структура репозитория
 
