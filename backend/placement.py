@@ -720,9 +720,20 @@ def rect_sides(poly: Polygon) -> list[tuple[float, float, float]]:
     return sides
 
 
-def centerline_of(poly: Polygon):
+def _rotate(ux: float, uz: float, angle_deg: float) -> tuple[float, float]:
+    """Единичный вектор (ux, uz), повёрнутый на angle_deg градусов."""
+    if angle_deg == 0.0:
+        return ux, uz
+    theta = math.radians(angle_deg)
+    cos_t, sin_t = math.cos(theta), math.sin(theta)
+    return ux * cos_t - uz * sin_t, ux * sin_t + uz * cos_t
+
+
+def centerline_of(poly: Polygon, angle_offset_deg: float = 0.0):
     """Линия вдоль ДЛИННОЙ стороны минимального описанного прямоугольника
-    зоны, проходящая через центроид и обрезанная по контуру полигона --
+    зоны (повёрнутой на angle_offset_deg -- issue "не только прямые
+    засадки": diagonal_rows проводит линию под углом к этой оси, а не вдоль
+    неё), проходящая через центроид и обрезанная по контуру полигона --
     "хребет" вытянутой полосовой зоны (building_border/path_corridor/
     site_edge из zone_partitioning.py), вдоль которого сэмплируются точки
     линейных паттернов (deterministic_placement.py). Не настоящая медиальная
@@ -735,9 +746,92 @@ def centerline_of(poly: Polygon):
         return None
     sides = rect_sides(poly)
     ux, uz, _ = max(sides, key=lambda s: s[2])
+    ux, uz = _rotate(ux, uz, angle_offset_deg)
     center = poly.centroid
     min_x, min_z, max_x, max_z = poly.bounds
     far = max(math.hypot(max_x - min_x, max_z - min_z), 1.0) * 2
     ray = LineString([(center.x - ux * far, center.y - uz * far), (center.x + ux * far, center.y + uz * far)])
     clipped = ray.intersection(poly)
     return None if clipped.is_empty else clipped
+
+
+def wavy_line(line: LineString, amplitude: float, wavelength: float):
+    """line, изогнутая синус-модуляцией поперёк своего направления --
+    амплитуда amplitude, длина волны wavelength (issue "не только прямые
+    засадки": flowing_rows в реальном проекте 10_stary_gay -- волнистая
+    изгородь, а не прямая, см. data/pattern_corpus.yaml). Пересэмплирует
+    line с мелким шагом (не реже 8 точек на волну, но не гуще 2 м -- ровно
+    настолько, чтобы синус выглядел гладким, не более) и сдвигает каждую
+    точку перпендикулярно локальной касательной на amplitude*sin(2πt/λ), где
+    t -- пройденное расстояние вдоль ИСХОДНОЙ (не изогнутой) линии.
+    amplitude<=0 возвращает line как есть -- волна не применяется."""
+    if amplitude <= 0 or line is None or line.is_empty:
+        return line
+    length = line.length
+    if length < 1e-6:
+        return line
+    step = min(2.0, wavelength / 8)
+    count = max(2, int(length // step) + 1)
+    points = []
+    for i in range(count + 1):
+        t = min(i * step, length)
+        p = line.interpolate(t)
+        a = line.interpolate(max(t - 0.1, 0.0))
+        b = line.interpolate(min(t + 0.1, length))
+        tx, tz = b.x - a.x, b.y - a.y
+        norm = math.hypot(tx, tz) or 1.0
+        tx, tz = tx / norm, tz / norm
+        px, pz = -tz, tx  # перпендикуляр к касательной
+        offset = amplitude * math.sin(2 * math.pi * t / wavelength)
+        points.append((p.x + px * offset, p.y + pz * offset))
+        if t >= length:
+            break
+    return LineString(points) if len(points) >= 2 else line
+
+
+def rows_of(poly: Polygon, spacing: float, angle_offset_deg: float = 0.0):
+    """Несколько параллельных линий вдоль ДЛИННОЙ стороны минимального
+    описанного прямоугольника (повёрнутой на angle_offset_deg -- diagonal_rows,
+    как и у centerline_of), разнесённых по КОРОТКОЙ стороне с шагом spacing,
+    каждая обрезана по контуру полигона -- то же построение, что и у
+    centerline_of, только не одна линия, а столько, сколько уместится по
+    ширине зоны.
+
+    Нужно для open_area (zone_partitioning.py): в отличие от узких полосовых
+    зон (building_border/path_corridor/site_edge, ширина -- их собственная
+    полоса-константа ~3 м, там одной центральной линии достаточно),
+    open_area -- произвольной ширины двумерное пятно. Одна линия через её
+    центр (как для узкой полосы) покрывает только ряд посередине, оставляя
+    остальную ширину зоны пустой -- реальная находка ручного тестирования
+    ("не заполняет всё пространство") на linear-паттернах (flowing_rows/
+    diagonal_rows), назначенных open_area через retrieval.
+
+    Число рядов = ширина зоны (короткая сторона) / spacing, округлено, не
+    меньше 1 (для узкой open_area-зоны это и есть один ряд, как раньше).
+    Ряды центрированы симметрично вокруг центроида зоны. angle_offset_deg
+    поворачивает направление рядов, но не меняет, из чего считается ширина
+    (короткая сторона НЕповёрнутого прямоугольника) -- приближение, не точный
+    расчёт вместимости под углом, но раскладка всё равно ограничена
+    MAX_ROWS_PER_ZONE в вызывающем коде."""
+    if poly.is_empty or poly.area <= 0:
+        return []
+    sides = rect_sides(poly)
+    long_side = max(sides, key=lambda s: s[2])
+    short_side = min(sides, key=lambda s: s[2])
+    ux, uz, _ = long_side
+    ux, uz = _rotate(ux, uz, angle_offset_deg)
+    px, pz = -uz, ux  # единичный перпендикуляр к (повёрнутой) длинной стороне
+    n_rows = max(1, round(short_side[2] / spacing))
+    center = poly.centroid
+    min_x, min_z, max_x, max_z = poly.bounds
+    far = max(math.hypot(max_x - min_x, max_z - min_z), 1.0) * 2
+    start_offset = -(n_rows - 1) / 2 * spacing
+    lines = []
+    for i in range(n_rows):
+        offset = start_offset + i * spacing
+        cx, cz = center.x + px * offset, center.y + pz * offset
+        ray = LineString([(cx - ux * far, cz - uz * far), (cx + ux * far, cz + uz * far)])
+        clipped = ray.intersection(poly)
+        if not clipped.is_empty:
+            lines.append(clipped)
+    return lines

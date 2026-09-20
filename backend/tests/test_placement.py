@@ -21,9 +21,11 @@ from placement import (
     polygons,
     rect_sides,
     rotation_of,
+    rows_of,
     sample_line,
     shortest_path,
     spread_subset,
+    wavy_line,
 )
 from schemas import Point2
 from shapely.geometry import LineString, MultiLineString, MultiPolygon, Point, Polygon
@@ -759,3 +761,67 @@ def test_centerline_of_bent_band_yields_multiple_segments():
     line = centerline_of(bent)
     assert line is not None
     assert len(lines_of(line)) >= 1
+
+
+def test_centerline_of_angle_offset_gives_diagonal_line():
+    # Issue "не только прямые засадки" -- diagonal_rows проводит линию под
+    # углом к длинной оси зоны, а не вдоль неё. На квадрате поворот на 45°
+    # должен дать диагональ угол-в-угол, а не ту же вертикаль/горизонталь.
+    square = Polygon([(0, 0), (20, 0), (20, 20), (0, 20)])
+    straight = centerline_of(square, angle_offset_deg=0.0)
+    diagonal = centerline_of(square, angle_offset_deg=45.0)
+    assert straight is not None and diagonal is not None
+    sx0, sz0 = straight.coords[0]
+    sx1, sz1 = straight.coords[-1]
+    dx0, dz0 = diagonal.coords[0]
+    dx1, dz1 = diagonal.coords[-1]
+    # Прямая идёт вдоль одной из осей (x или z почти не меняется), диагональ --
+    # нет (оба конца заметно различаются и по x, и по z).
+    assert abs(sx0 - sx1) < 1e-6 or abs(sz0 - sz1) < 1e-6
+    assert abs(dx0 - dx1) > 15.0
+    assert abs(dz0 - dz1) > 15.0
+
+
+def test_rows_of_gives_multiple_rows_across_zone_width():
+    # Issue "не заполняет всё пространство" -- одна линия через центр
+    # покрывала только середину широкой open_area-зоны. Полоса 60x24 при
+    # шаге 6 м должна дать несколько рядов, не один.
+    band = Polygon([(0, 0), (60, 0), (60, 24), (0, 24)])
+    rows = rows_of(band, spacing=6.0)
+    assert len(rows) >= 3
+    # Ряды реально разнесены по короткой стороне (z), а не совпадают.
+    z_positions = sorted({round(lines_of(r)[0].coords[0][1], 1) for r in rows})
+    assert len(z_positions) == len(rows)
+
+
+def test_rows_of_single_row_for_narrow_band():
+    # Узкая полоса (4 м, как у building_border/path_corridor) -- рядов не
+    # больше 1 и на достаточно большом шаге, тот же случай, что раньше
+    # покрывался одной centerline_of().
+    band = Polygon([(0, 0), (40, 0), (40, 4), (0, 4)])
+    rows = rows_of(band, spacing=6.0)
+    assert len(rows) == 1
+
+
+def test_wavy_line_oscillates_by_amplitude_perpendicular_to_direction():
+    # Issue "не только прямые засадки" -- flowing_rows (10_stary_gay) должен
+    # быть волнистым, не прямым. Прямая вдоль x, изогнутая по z на амплитуду
+    # 4 м -- координата z всех точек должна колебаться в пределах +-4 м
+    # (с небольшим запасом на численную интерполяцию), а не быть константой.
+    line = LineString([(0, 0), (100, 0)])
+    wavy = wavy_line(line, amplitude=4.0, wavelength=40.0)
+    zs = [c[1] for c in wavy.coords]
+    assert max(zs) > 3.5
+    assert min(zs) < -3.5
+    assert max(zs) <= 4.01 and min(zs) >= -4.01
+
+
+def test_wavy_line_zero_amplitude_returns_line_unchanged():
+    line = LineString([(0, 0), (100, 0)])
+    assert wavy_line(line, amplitude=0.0, wavelength=40.0) is line
+
+
+def test_wavy_line_none_or_empty_is_safe():
+    assert wavy_line(None, amplitude=4.0, wavelength=40.0) is None
+    empty = LineString()
+    assert wavy_line(empty, amplitude=4.0, wavelength=40.0) is empty

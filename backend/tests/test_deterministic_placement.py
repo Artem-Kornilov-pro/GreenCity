@@ -9,12 +9,14 @@
 постоянный тест, а не одноразовый scratch-скрипт."""
 
 import math
+from collections import Counter
 
 from deterministic_placement import (
     MAX_GROUPS_PER_ZONE,
     MAX_OBJECTS_PER_ZONE,
     _place_area_fill,
     _place_clustered,
+    _place_linear,
     generate_for_scene,
 )
 from helpers import make_boundary, make_scene
@@ -58,6 +60,40 @@ def test_objects_carry_provenance_metadata(scene_02, catalog):
         assert zone_id in assignment_by_zone
         assert obj.metadata["pattern_id"] == assignment_by_zone[zone_id].pattern_id
         assert obj.metadata["source_project"] == assignment_by_zone[zone_id].source_project
+
+
+def test_linear_pattern_on_open_area_uses_multiple_rows(scene_01, scene_02, catalog):
+    # Регрессия: _place_linear раньше сажал ОДНУ линию через середину любой
+    # зоны, включая open_area -- двумерное пятно произвольной ширины
+    # (zone_partitioning.py: "всё, что осталось: под площадные паттерны"),
+    # не узкую полосу постоянной ширины вроде building_border/path_corridor.
+    # Один ряд посередине оставлял остальную ширину открытой площади пустой
+    # -- находка ручного тестирования ("не заполняет всё пространство") на
+    # linear-паттернах (flowing_rows/diagonal_rows), которые retrieval может
+    # назначить open_area наравне с площадными паттернами. rows_of() должен
+    # заметно поднять итоговую плотность на тех же двух сценах, где раньше
+    # не было ни одного дерева (см. тест выше).
+    trees, bushes = _trees_and_bushes(catalog)
+    for scene in (scene_01, scene_02):
+        objects, _ = generate_for_scene(scene, trees=trees, bushes=bushes, k=3)
+        assert len(objects) > 500, f"расстановка выглядит как один ряд, а не заполнение площади: {len(objects)} объектов"
+
+
+def test_linear_pattern_places_both_trees_and_bushes(scene_01, scene_02, catalog):
+    # Регрессия: раньше _place_linear сажал кусты (шаг 1.4 м) на ВСЮ линию
+    # ПЕРЕД деревьями (шаг в 8.5 раз больше) -- любая точка-кандидат для
+    # дерева на той же линии оказывалась ближе OBJECT_CLEARANCE_M к уже
+    # занявшему её кусту, и деревья не появлялись НИ НА ОДНОМ линейном
+    # паттерне (building_ring/linear_hedge_row/flowing_rows) вообще, только
+    # кусты -- нашлось ручным тестированием на 01_single_building и
+    # 02_courtyard_3buildings, обе используют linear-семейство паттернов
+    # (building_border/path_corridor/open_area).
+    trees, bushes = _trees_and_bushes(catalog)
+    for scene in (scene_01, scene_02):
+        objects, _ = generate_for_scene(scene, trees=trees, bushes=bushes, k=3)
+        counts = Counter(o.type for o in objects)
+        assert counts["tree"] > 0, f"деревья не появились вовсе: {counts}"
+        assert counts["bush"] > 0, f"кусты не появились вовсе: {counts}"
 
 
 def _independent_zone_violations(scene, new_objects) -> list[tuple[str, str, float, float]]:
@@ -167,3 +203,91 @@ def test_place_clustered_caps_group_count_on_a_huge_zone(catalog):
     )
     objects = _place_clustered(placer, zone, spec, assignment, trees, bushes)
     assert len(objects) <= MAX_GROUPS_PER_ZONE * spec.group_size[1]
+
+
+# --- Разнообразие линейных паттернов (issue "не только прямые засадки") -----
+#
+# building_ring/diagonal_rows/flowing_rows раньше проводили ТУ ЖЕ прямую
+# линию через центроид зоны, что и linear_hedge_row -- реальный проект
+# 10_stary_gay (data/pattern_corpus.yaml) использует волнистую изгородь, не
+# прямую, а "кольцо кустов вокруг здания" не бывает прямым отрезком.
+
+
+def _donut_building_border_zone() -> GeometricZone:
+    # Узкая полоса-бублик вокруг здания 10x10 в начале координат -- то, что
+    # реально строит zone_partitioning.py для building_border.
+    outer = [(-13, -13), (13, -13), (13, 13), (-13, 13)]
+    inner = [(-5, -5), (5, -5), (5, 5), (-5, 5)]
+    donut = Polygon(outer, [inner[::-1]])
+    return GeometricZone(
+        id="building_border_ring_test",
+        kind="building_border",
+        polygon=[Point2(x=x, z=z) for x, z in donut.exterior.coords[:-1]],
+        area_sqm=donut.area,
+    )
+
+
+def test_building_ring_places_points_around_the_building_not_a_chord(catalog):
+    trees, bushes = _trees_and_bushes(catalog)
+    zone = _donut_building_border_zone()
+    placer = Placer(make_scene(boundary=make_boundary(-20, -20, 20, 20)))
+    spec = PATTERN_LIBRARY["building_ring"]
+    assert spec.line_shape == "ring"
+    assignment = ZoneAssignment(
+        zone_id=zone.id, zone_kind="building_border", pattern_id="building_ring",
+        source_project=None, source_quote=None, confidence=0.0,
+    )
+    objects = _place_linear(placer, zone, spec, assignment, trees, bushes)
+    assert objects, "кольцо вокруг здания должно дать хотя бы несколько кустов"
+    # Прямая линия через центр дала бы точки на одной оси (x или z почти
+    # постоянна) -- кольцо должно охватывать точки по ВСЕМ четырём сторонам.
+    xs = [o.position.x for o in objects]
+    zs = [o.position.z for o in objects]
+    assert max(xs) > 4 and min(xs) < -4
+    assert max(zs) > 4 and min(zs) < -4
+
+
+def test_diagonal_rows_places_points_along_a_diagonal(catalog):
+    trees, bushes = _trees_and_bushes(catalog)
+    square = [(0, 0), (30, 0), (30, 30), (0, 30)]
+    zone = GeometricZone(
+        id="open_area_diagonal_test", kind="open_area",
+        polygon=[Point2(x=x, z=z) for x, z in square], area_sqm=900.0,
+    )
+    placer = Placer(make_scene(boundary=make_boundary(-10, -10, 40, 40)))
+    spec = PATTERN_LIBRARY["diagonal_rows"]
+    assert spec.line_shape == "diagonal"
+    assignment = ZoneAssignment(
+        zone_id=zone.id, zone_kind="open_area", pattern_id="diagonal_rows",
+        source_project=None, source_quote=None, confidence=0.0,
+    )
+    objects = _place_linear(placer, zone, spec, assignment, trees, bushes)
+    assert objects
+    # На диагональном ряду x и z меняются вместе (корреляция), а не как на
+    # оси-выровненном ряду, где одна из координат почти постоянна.
+    xs = [o.position.x for o in objects]
+    zs = [o.position.z for o in objects]
+    assert max(xs) - min(xs) > 10
+    assert max(zs) - min(zs) > 10
+
+
+def test_flowing_rows_places_points_off_the_straight_centerline(catalog):
+    trees, bushes = _trees_and_bushes(catalog)
+    strip = [(0, -2), (100, -2), (100, 2), (0, 2)]
+    zone = GeometricZone(
+        id="path_corridor_wavy_test", kind="path_corridor",
+        polygon=[Point2(x=x, z=z) for x, z in strip], area_sqm=400.0,
+    )
+    placer = Placer(make_scene(boundary=make_boundary(-10, -10, 110, 10)))
+    spec = PATTERN_LIBRARY["flowing_rows"]
+    assert spec.line_shape == "wavy"
+    assignment = ZoneAssignment(
+        zone_id=zone.id, zone_kind="path_corridor", pattern_id="flowing_rows",
+        source_project=None, source_quote=None, confidence=0.0,
+    )
+    objects = _place_linear(placer, zone, spec, assignment, trees, bushes)
+    assert objects
+    # Прямая линия шла бы по z=0 у всех точек -- волна должна дать заметный
+    # разброс z вокруг него.
+    zs = [o.position.z for o in objects]
+    assert max(zs) - min(zs) > 0.5

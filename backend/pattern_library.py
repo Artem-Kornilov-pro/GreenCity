@@ -39,18 +39,36 @@ class PatternSpec(BaseModel):
     # типа open_area, даже если в корпусе почему-то нашлась бы такая запись).
     zone_kinds: frozenset[ZoneKind]
     # geometry_family == "linear": вторая линия в double_row_offset_m от
-    # первой (0.0 -- однорядно). Единственная геометрическая развилка внутри
-    # ОДНОГО параметризуемого линейного алгоритма (issue #23, Этап 5: "один
-    # параметризуемый алгоритм смещения вдоль линии, переиспользуемый для
-    # всех линейных типов") -- diagonal_rows/flowing_rows не получают
-    # отдельного кода под угол/синус-волну, только тот же алгоритм вдоль
-    # собственной длинной оси зоны (centerline_of в placement.py); точное
-    # визуальное отличие (диагональ под углом к дороге, "текучая" волна),
-    # которое прошлая сессия рисовала одноразовыми скриптами, здесь не
-    # воспроизводится -- честный компромисс за один переиспользуемый алгоритм.
+    # первой (0.0 -- однорядно).
     double_row_offset_m: float = 0.0
     # geometry_family == "clustered": размер одной группы (мин, макс).
     group_size: tuple[int, int] = (2, 4)
+    # geometry_family == "linear": форма самой линии, вдоль которой шагает
+    # общий алгоритм смещения (placement.py, deterministic_placement.py).
+    # Раньше (issue: "не только прямые засадки") все linear-паттерны
+    # получали ОДНУ И ТУ ЖЕ прямую линию через centerline_of(), и
+    # diagonal_rows/flowing_rows визуально ничем не отличались от
+    # linear_hedge_row, хотя в исходном проекте (10_stary_gay) реально
+    # волнистые линии, а не прямые. Теперь один параметризуемый алгоритм
+    # смещения вдоль линии (issue #23, Этап 5) сохранён -- отличается
+    # только САМА линия, которую он обходит:
+    #   straight  -- прямая вдоль длинной оси зоны (было раньше, по
+    #                умолчанию для большинства паттернов).
+    #   wavy      -- та же прямая, синус-модулированная поперечным
+    #                смещением (wave_amplitude_m/wave_length_m ниже).
+    #   diagonal  -- прямая под углом diagonal_angle_deg к длинной оси зоны,
+    #                а не вдоль неё.
+    #   ring      -- собственный контур зоны (кольцо), а не линия через
+    #                середину -- для building_border, вытянутой узкой
+    #                полосы-бублика вокруг здания, где линия через центроид
+    #                срезает зону хордой, а не обходит здание по кругу.
+    line_shape: Literal["straight", "wavy", "diagonal", "ring"] = "straight"
+    # line_shape == "wavy": амплитуда и длина волны синус-модуляции, по
+    # факту из 10_stary_gay (data/pattern_corpus.yaml, "flowing_rows").
+    wave_amplitude_m: float = 0.0
+    wave_length_m: float = 1.0  # не 0, чтобы не делить на ноль, если amplitude=0 (волна не применяется)
+    # line_shape == "diagonal": угол между линией и длинной осью зоны.
+    diagonal_angle_deg: float = 0.0
 
 
 PATTERN_LIBRARY: dict[str, PatternSpec] = {
@@ -65,12 +83,15 @@ PATTERN_LIBRARY: dict[str, PatternSpec] = {
         label="Кольцо кустарника вокруг здания",
         geometry_family="linear",
         zone_kinds=frozenset({"building_border"}),
+        line_shape="ring",
     ),
     "diagonal_rows": PatternSpec(
         id="diagonal_rows",
         label="Диагональные линии под углом к проезжей части",
         geometry_family="linear",
         zone_kinds=frozenset({"open_area", "path_corridor"}),
+        line_shape="diagonal",
+        diagonal_angle_deg=45.0,  # "под углом к проезжей части" -- 45° как нейтральный диагональный угол без данных о реальной ориентации дороги
     ),
     "flowing_rows": PatternSpec(
         id="flowing_rows",
@@ -78,6 +99,9 @@ PATTERN_LIBRARY: dict[str, PatternSpec] = {
         geometry_family="linear",
         zone_kinds=frozenset({"open_area", "path_corridor"}),
         double_row_offset_m=1.2,  # как в 10_stary_gay: вторая волна в 1.2 м от первой
+        line_shape="wavy",
+        wave_amplitude_m=4.0,  # 10_stary_gay (data/pattern_corpus.yaml): амплитуда 4 м
+        wave_length_m=40.0,  # 10_stary_gay: длина волны 40 м
     ),
     "grove_clusters": PatternSpec(
         id="grove_clusters",
