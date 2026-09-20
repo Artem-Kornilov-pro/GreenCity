@@ -66,6 +66,9 @@ CORPUS_SLUGS = (
     # Синтетические эталонные участки (green-city-locations-primer-spec.md) --
     # см. докстринг модуля выше про суффикс "_primer".
     "21_road_buffer_primer",
+    "22_circular_plaza_primer",
+    "23_triangular_plot_primer",
+    "24_hexagon_courtyard_primer",
 )
 
 _CORPUS_YAML = ROOT / "data" / "pattern_corpus.yaml"

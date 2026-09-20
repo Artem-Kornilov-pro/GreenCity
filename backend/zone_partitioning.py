@@ -31,13 +31,15 @@ GeometricZone, а не одной дырявой мультиполигонал�
 
 from __future__ import annotations
 
+import math
 from typing import Literal
 
 from pydantic import BaseModel
 from schemas import Point2, RestrictionZone, Scene
 from setback_norms import setback_for
-from shapely.geometry import Polygon
+from shapely.geometry import LineString, Polygon
 from shapely.geometry.base import BaseGeometry
+from shapely.ops import split as shapely_split
 from shapely.ops import unary_union
 from site_characterization import usable_planting_area
 
@@ -64,11 +66,54 @@ class GeometricZone(BaseModel):
     area_sqm: float
 
 
+def _split_out_hole(poly: Polygon) -> list[Polygon]:
+    """Разрезает Polygon с дыркой (interior ring) на простые куски без дыр,
+    прямой линией через центроид дырки. GeometricZone.polygon -- плоский
+    список точек одного контура, дырки не поддерживает; на КОМПАКТНЫХ
+    участках (круг, треугольник, шестигранник -- в отличие от узких
+    вытянутых реальных локаций, где такое не возникало) boundary.buffer(-band)
+    не пуст, и site_edge/building_border/path_corridor получаются настоящим
+    кольцом (Polygon с дыркой). Раньше _emit брал только .exterior.coords,
+    отбрасывая дырку -- баг: полигон превращался в сплошной диск, перекрывая
+    open_area целиком.
+
+    Резать линией (shapely.ops.split), а не схлопывать дырку "перемычкой"
+    нулевой ширины (первая попытка) -- перемычка технически валидна как
+    приём, но даёт self-tangent контур, который GEOS помечает invalid, и
+    Polygon.contains() у такого контура ведёт себя непредсказуемо возле
+    самой перемычки (поймано тестом на круглом участке: угловая точка
+    шестигранника у самой перемычки не считалась ни site_edge, ни
+    open_area). Разрез линией даёт два обычных выпуклых куска без дыр --
+    тот же случай, что уже штатно бывает у building_border с несколькими
+    несвязными зданиями (несколько отдельных GeometricZone вместо одной
+    дырявой записи), просто тут не несколько зданий, а одна большая дырка."""
+    if not poly.interiors:
+        return [poly]
+    hole_centroid = Polygon(poly.interiors[0]).centroid
+    minx, miny, maxx, maxy = poly.bounds
+    reach = math.hypot(maxx - minx, maxy - miny) * 2 + 1.0
+    for cutter in (
+        LineString([(hole_centroid.x - reach, hole_centroid.y), (hole_centroid.x + reach, hole_centroid.y)]),
+        LineString([(hole_centroid.x, hole_centroid.y - reach), (hole_centroid.x, hole_centroid.y + reach)]),
+    ):
+        pieces = list(shapely_split(poly, cutter).geoms)
+        if len(pieces) > 1:
+            result = []
+            for piece in pieces:
+                if piece.geom_type == "Polygon" and piece.area >= MIN_ZONE_AREA_SQM:
+                    result.extend(_split_out_hole(piece))
+            return result
+    # Не удалось разрезать (вырожденный случай) -- лучше честно вернуть
+    # дырявый полигон как есть (площадь верна, .exterior потом даст
+    # завышенный контур), чем тихо потерять зону целиком.
+    return [poly]
+
+
 def _iter_polygons(geom: BaseGeometry):
     if geom is None or geom.is_empty:
         return
     if geom.geom_type == "Polygon":
-        yield geom
+        yield from _split_out_hole(geom)
     elif geom.geom_type in ("MultiPolygon", "GeometryCollection"):
         for part in geom.geoms:
             yield from _iter_polygons(part)

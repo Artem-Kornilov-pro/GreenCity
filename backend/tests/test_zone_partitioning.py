@@ -4,7 +4,9 @@
 test_site_characterization.py: собрать вручную Scene с содержательной
 геометрией зданий/дорожек/границы дороже, чем взять готовые фикстуры."""
 
-from schemas import Scene, SceneMeta
+import pytest
+
+from schemas import Point2, Scene, SceneMeta
 from site_characterization import usable_planting_area
 from zone_partitioning import MIN_ZONE_AREA_SQM, partition_zones
 
@@ -59,6 +61,63 @@ def test_zones_do_not_double_count_area(scene_02):
     # покрывают, потерять можно не больше, чем по одному MIN_ZONE_AREA_SQM
     # обрезку на каждую из 4 полос -- иначе где-то теряется целый кусок.
     assert total_usable - total_zones < 4 * MIN_ZONE_AREA_SQM
+
+
+def test_site_edge_ring_has_no_hole_leak_on_compact_site():
+    # Круглый участок (не узкая вытянутая полоса, как реальные локации в
+    # фикстурах) -- boundary.buffer(-SITE_EDGE_BAND_M) не пуст, значит
+    # site_edge обязан быть КОЛЬЦОМ (Polygon с дыркой на уровне геометрии
+    # difference), а не сплошным диском. Регрессия на баг из _emit():
+    # раньше interior ring отбрасывался (брались только .exterior.coords),
+    # и реконструированный Polygon(zone.polygon) получался сплошным,
+    # перекрывая open_area. Дырка теперь схлопывается разрезом на два
+    # простых куска без дыр (_split_out_hole) -- поэтому site_edge на таком
+    # участке ожидаемо приходит НЕСКОЛЬКИМИ GeometricZone, а не одной.
+    import math
+
+    from shapely.geometry import Point, Polygon
+    from shapely.ops import unary_union
+    from zone_partitioning import SITE_EDGE_BAND_M
+
+    from schemas import Boundary
+
+    radius = 18.0
+    n = 48
+    circle = [
+        Point2(x=radius * math.cos(2 * math.pi * k / n), z=radius * math.sin(2 * math.pi * k / n))
+        for k in range(n)
+    ]
+    scene = Scene(boundary=Boundary(polygon=circle, sourceLayer="TERRITORY_BOUNDARY"), restrictions=[], objects=[], meta=_meta())
+
+    zones = partition_zones(scene)
+    edge_zones = [z for z in zones if z.kind == "site_edge"]
+    open_zones = [z for z in zones if z.kind == "open_area"]
+    assert edge_zones and open_zones
+    assert len(edge_zones) > 1  # дырка схлопнута разрезом, не одним куском
+
+    edge_union = unary_union([Polygon([(p.x, p.z) for p in z.polygon]) for z in edge_zones])
+    open_union = unary_union([Polygon([(p.x, p.z) for p in z.polygon]) for z in open_zones])
+    assert all(p.is_valid for p in [edge_union, open_union] if p.geom_type != "GeometryCollection")
+
+    # Реконструированная площадь честного кольца обязана совпадать с
+    # заявленной суммой area_sqm (площадь круга минус дырка) -- если бы
+    # дырка терялась, реконструированная площадь была бы заметно больше.
+    assert edge_union.area == pytest.approx(sum(z.area_sqm for z in edge_zones), abs=0.5)
+
+    # Центр круга -- вглубине open_area, за пределами site_edge (band=3м от
+    # границы) -- при потерянной дырке центр ошибочно тоже попадал бы в
+    # "сплошной" site_edge.
+    assert not edge_union.contains(Point(0.0, 0.0))
+    assert open_union.contains(Point(0.0, 0.0))
+    assert edge_union.intersection(open_union).area < 1.0
+
+    # Каждая точка на кольце ровно посередине полосы (radius - band/2)
+    # обязана лежать в site_edge, а не потеряться на стыке разреза.
+    for k in range(24):
+        angle = 2 * math.pi * k / 24
+        mid_r = radius - SITE_EDGE_BAND_M / 2
+        p = Point(mid_r * math.cos(angle), mid_r * math.sin(angle))
+        assert edge_union.contains(p), f"точка на кольце потеряна на стыке разреза: {p}"
 
 
 def test_site_edge_hugs_boundary(scene_06):
