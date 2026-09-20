@@ -1,0 +1,141 @@
+# CI/CD для SourceCraft (https://sourcecraft.dev/portal/docs/ru/sourcecraft/concepts/ci-cd).
+#
+# test-workflow -- lint (Python/ruff + frontend/oxlint) и backend-тесты, тот
+# же набор проверок, что и в .github/workflows/ci.yaml, полностью офлайн
+# (MongoDB/Redis подменены mongomock/fakeredis в тестах, LLM не вызывается ни
+# разу -- backend/tests/conftest.py). Работает сразу, без ручной настройки.
+#
+# deploy-backend-workflow -- собирает backend/Dockerfile и разворачивает в
+# Yandex Serverless Containers. ТРЕБУЕТ одноразовой ручной подготовки в
+# консоли Yandex Cloud и настроек SourceCraft ПЕРЕД первым запуском -- см.
+# docs/SOURCECRAFT_DEPLOY.md, без неё джоба упадёт на первом же шаге
+# (нет service connection/реестра). Разворачивается только backend: без
+# MongoDB/Redis (аккаунты/проекты ответят понятной ошибкой, сам редактор и
+# GreenPlan работают, см. README.md) и без Ollama (текст-отчёт GreenPlan
+# ответит report_error, расстановка не пострадает) -- ровно то штатное
+# деградирующее поведение, которое уже заложено в backend/db.py,
+# backend/cache.py и backend/decision_report.py, не костыль ради деплоя.
+# Фронтенд сюда пока не входит -- его Dockerfile сейчас dev-режим (vite dev
+# server, см. комментарий в самом файле), для деплоя нужна отдельная
+# production-сборка, это следующий шаг.
+
+on:
+  pull_request:
+    - workflows: [test-workflow]
+      filter:
+        target_branches: "main"
+  push:
+    - workflows: [test-workflow, deploy-backend-workflow]
+      filter:
+        branches: ["main"]
+
+tokens:
+  SERVICE_CONNECTION:
+    service_connection: default-service-connection
+    scope: org
+
+workflows:
+  test-workflow:
+    tasks:
+      - lint-python-task
+      - lint-frontend-task
+      - test-task
+
+  deploy-backend-workflow:
+    tasks:
+      - deploy-backend-task
+
+tasks:
+  - name: lint-python-task
+    cubes:
+      - name: lint-python
+        image: docker.io/library/python:3.12-slim
+        script:
+          - pip install -r requirements-dev.txt
+          - ruff check .
+
+  - name: lint-frontend-task
+    cubes:
+      - name: lint-frontend
+        image: docker.io/library/node:20-alpine
+        script:
+          - cd frontend && npm ci && npx oxlint --deny-warnings
+
+  - name: test-task
+    cubes:
+      - name: backend-tests
+        image: docker.io/library/python:3.12-slim
+        script:
+          - pip install -r requirements-dev.txt
+          - pytest --cov --cov-report=term-missing
+
+  # Три шага по официальному примеру SourceCraft (sourcecraft/yc-ci-cd-serverless):
+  # 1) обменять service connection на IAM-токен, 2) собрать backend/Dockerfile
+  # и отправить в Container Registry, 3) развернуть/обновить ревизию
+  # Serverless-контейнера. ЗАМЕНИТЕ <YOUR_DOCKER_REGISTRY_ID> ниже на
+  # реальный идентификатор реестра (docs/SOURCECRAFT_DEPLOY.md, шаг 2).
+  - name: deploy-backend-task
+    env:
+      YC_DOCKER_REGISTRY_URI: cr.yandex/<YOUR_DOCKER_REGISTRY_ID>
+      IMAGE_NAME: greencity-backend
+      YC_SERVERLESS_CONTAINER_NAME: greencity-backend
+      YC_SERVICE_ACCOUNT_ID: ${{ tokens.SERVICE_CONNECTION.service_account_id }}
+    cubes:
+      - name: get-iam-token
+        env:
+          ID_TOKEN: ${{ tokens.SERVICE_CONNECTION.id_token }}
+          YC_SA_ID: ${{ tokens.SERVICE_CONNECTION.service_account_id }}
+        image: cr.yandex/sourcecraft/yc-iam:latest
+
+      - name: setup-buildx
+        action: docker/setup-buildx-action@v3.11.1
+
+      - name: login
+        action: docker/login-action@v3.5.0
+        with:
+          registry: ${{env.YC_DOCKER_REGISTRY_URI}}
+          username: iam
+          password: ${{ cubes.get-iam-token.outputs.IAM_TOKEN }}
+
+      # context: . (не backend/) -- backend/Dockerfile сам это требует, см.
+      # комментарий в его начале: main.py читает parser/ по относительному
+      # от репозитория пути.
+      - name: build-and-push
+        action: docker/build-push-action@v6.18.0
+        with:
+          context: .
+          file: backend/Dockerfile
+          platforms: linux/amd64
+          tags: |
+            ${{env.YC_DOCKER_REGISTRY_URI}}/${{env.IMAGE_NAME}}:latest
+          push: true
+
+      - name: deploy
+        env:
+          YC_FOLDER_ID: ${{ tokens.SERVICE_CONNECTION.folder_id }}
+          YC_IAM_TOKEN: ${{ cubes.get-iam-token.outputs.IAM_TOKEN }}
+        image:
+          name: cr.yandex/sourcecraft/yc-cli:latest
+          entrypoint: ""
+        script:
+          - |
+            yc config set folder-id $YC_FOLDER_ID
+
+            if ! yc serverless container get --name $YC_SERVERLESS_CONTAINER_NAME &>/dev/null; then
+              echo "Контейнер $YC_SERVERLESS_CONTAINER_NAME не найден, создаю..."
+              yc serverless container create --name $YC_SERVERLESS_CONTAINER_NAME --folder-id $YC_FOLDER_ID
+            fi
+
+            # memory/cores/execution-timeout -- начальные значения для
+            # демо-нагрузки (shapely-геометрия из backend/parser CPU-ёмкая на
+            # крупных DXF, см. README.md про UVICORN_WORKERS); если контейнер
+            # падает по памяти/таймауту на реальных файлах -- поднять здесь.
+            yc serverless container revision deploy \
+              --container-name $YC_SERVERLESS_CONTAINER_NAME \
+              --image $YC_DOCKER_REGISTRY_URI/$IMAGE_NAME:latest \
+              --service-account-id $YC_SERVICE_ACCOUNT_ID \
+              --cores 1 \
+              --memory 1GB \
+              --execution-timeout 60s \
+              --concurrency 1 \
+              --environment UVICORN_WORKERS=1

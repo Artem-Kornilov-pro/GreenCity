@@ -10,6 +10,7 @@
 - [observability/README.md](observability/README.md) — метрики, логи, дашборды Grafana.
 - [frontend/public/models/README.md](frontend/public/models/README.md) — 3D-модели, как подключить свой пак.
 - [docs/CASE_BRIEF.md](docs/CASE_BRIEF.md) — исходное описание кейса от организаторов хакатона ЛЦТ.
+- [docs/SOURCECRAFT_DEPLOY.md](docs/SOURCECRAFT_DEPLOY.md) — деплой backend в Yandex Cloud через SourceCraft CI/CD (`.sourcecraft/ci.yaml`), какие шаги нужно сделать руками перед первым запуском.
 
 ## Структура репозитория
 
