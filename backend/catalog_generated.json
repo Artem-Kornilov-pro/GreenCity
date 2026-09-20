@@ -1332,8 +1332,8 @@
     "object_type": "bush",
     "model": "/models/archingshrub_1.glb",
     "dimensions": {
-      "height": 1.5,
-      "radius": 2.52,
+      "height": 1.86,
+      "radius": 1.43,
       "trunk_height": null,
       "width": null,
       "depth": null
@@ -5154,8 +5154,8 @@
     "object_type": "bush",
     "model": "/models/archingshrub_1.glb",
     "dimensions": {
-      "height": 1.05,
-      "radius": 1.76,
+      "height": 1.3,
+      "radius": 1.0,
       "trunk_height": null,
       "width": null,
       "depth": null
@@ -5175,8 +5175,8 @@
     "object_type": "bush",
     "model": "/models/archingshrub_1.glb",
     "dimensions": {
-      "height": 1.05,
-      "radius": 1.76,
+      "height": 1.3,
+      "radius": 1.0,
       "trunk_height": null,
       "width": null,
       "depth": null
@@ -5196,8 +5196,8 @@
     "object_type": "bush",
     "model": "/models/archingshrub_1.glb",
     "dimensions": {
-      "height": 1.05,
-      "radius": 1.76,
+      "height": 1.3,
+      "radius": 1.0,
       "trunk_height": null,
       "width": null,
       "depth": null
@@ -5217,8 +5217,8 @@
     "object_type": "bush",
     "model": "/models/archingshrub_1.glb",
     "dimensions": {
-      "height": 1.05,
-      "radius": 1.76,
+      "height": 1.3,
+      "radius": 1.0,
       "trunk_height": null,
       "width": null,
       "depth": null
@@ -5238,8 +5238,8 @@
     "object_type": "bush",
     "model": "/models/archingshrub_1.glb",
     "dimensions": {
-      "height": 1.05,
-      "radius": 1.76,
+      "height": 1.3,
+      "radius": 1.0,
       "trunk_height": null,
       "width": null,
       "depth": null
@@ -5259,8 +5259,8 @@
     "object_type": "bush",
     "model": "/models/archingshrub_1.glb",
     "dimensions": {
-      "height": 1.05,
-      "radius": 1.76,
+      "height": 1.3,
+      "radius": 1.0,
       "trunk_height": null,
       "width": null,
       "depth": null
@@ -5280,8 +5280,8 @@
     "object_type": "bush",
     "model": "/models/archingshrub_1.glb",
     "dimensions": {
-      "height": 1.05,
-      "radius": 1.76,
+      "height": 1.3,
+      "radius": 1.0,
       "trunk_height": null,
       "width": null,
       "depth": null
@@ -5301,8 +5301,8 @@
     "object_type": "bush",
     "model": "/models/archingshrub_1.glb",
     "dimensions": {
-      "height": 1.05,
-      "radius": 1.76,
+      "height": 1.3,
+      "radius": 1.0,
       "trunk_height": null,
       "width": null,
       "depth": null
