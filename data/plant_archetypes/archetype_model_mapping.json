@@ -1,0 +1,281 @@
+[
+  {
+    "archetype_code": "T1",
+    "model_group": "tree_round",
+    "category": "Лиственные деревья — 8 моделей",
+    "status": "closed",
+    "source_file": "CommonTree_1.obj",
+    "source_path": "OBJ/CommonTree_1.obj",
+    "notes": "Широкая округлая крона с равномерно расходящимися ветвями (подтверждено по bounding box h/w=0.89 и по каркасной проекции геометрии). Запасные варианты: CommonTree_5.obj (h/w=1.12), CommonTree_2.obj."
+  },
+  {
+    "archetype_code": "T2",
+    "model_group": "tree_oval",
+    "category": "Лиственные деревья — 8 моделей",
+    "status": "closed",
+    "source_file": "CommonTree_3.obj",
+    "source_path": "OBJ/CommonTree_3.obj",
+    "notes": "Более вытянутая по вертикали крона той же серии (h/w=2.21 против 0.89 у CommonTree_1) — визуально подтверждено по каркасной проекции. Запасной вариант: CommonTree_4.obj (h/w=1.55)."
+  },
+  {
+    "archetype_code": "T3",
+    "model_group": "tree_columnar",
+    "category": "Лиственные деревья — 8 моделей",
+    "status": "closed",
+    "source_file": "ColumnarTree_1.obj",
+    "source_path": "OBJ_real_extra/ColumnarTree_1.obj",
+    "notes": "В датасете нет модели с выраженной узкой пирамидальной/колонновидной кроной и явной градацией высот 4/7/10/14 м. BirchTree имеет узкий силуэт (h/w до 2.6), но это готовая \"берёза\" по стилю коры/текстуры — переиспользовать для тополей/колонновидных форм нежелательно (конфликт стилистики). ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ (донабор №3) из пака Kenney Nature Kit (Kenney, CC0): tree_simple.obj — узкая вытянутая крона на тонком стволе (h/w=3.98, width=0.38), самый узкий силуэт среди деревьев пака."
+  },
+  {
+    "archetype_code": "T4",
+    "model_group": "tree_birch",
+    "category": "Лиственные деревья — 8 моделей",
+    "status": "closed",
+    "source_file": "BirchTree_2.obj",
+    "source_path": "OBJ/BirchTree_2.obj",
+    "notes": "Прямое совпадение по названию и силуэту — узкая вытянутая крона на характерном светлом стволе (h/w=2.38, подтверждено визуально). Запасные варианты для разнообразия: BirchTree_1.obj, BirchTree_5.obj; сезонные материалы: BirchTree_Autumn_*, BirchTree_Snow_*."
+  },
+  {
+    "archetype_code": "T5",
+    "model_group": "tree_weeping",
+    "category": "Лиственные деревья — 8 моделей",
+    "status": "stub",
+    "source_file": "WeepingTree_1.obj",
+    "source_path": "OBJ_stubs/WeepingTree_1.obj",
+    "notes": "В геометрии Willow_*.obj видны отдельные изгибающиеся боковые ветви, но выраженного \"плакучего занавеса\" нет — визуальная проверка каркаса не подтверждает сильную пендулярность. Модель Willow отдана в tree_willow (T6), для T5 отдельной подходящей модели не найдено. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов')."
+  },
+  {
+    "archetype_code": "T6",
+    "model_group": "tree_willow",
+    "category": "Лиственные деревья — 8 моделей",
+    "status": "closed",
+    "source_file": "Willow_2.obj",
+    "source_path": "OBJ/Willow_2.obj",
+    "notes": "Широкая раскidистая крона с изгибающимися книзу боковыми ветвями по краям (визуально подтверждено по каркасной проекции). Запасной вариант: Willow_4.obj."
+  },
+  {
+    "archetype_code": "T7",
+    "model_group": "tree_small_ornamental",
+    "category": "Лиственные деревья — 8 моделей",
+    "status": "closed",
+    "source_file": "SmallOrnamentalTree_1.obj",
+    "source_path": "OBJ_real_extra/SmallOrnamentalTree_1.obj",
+    "notes": "Нужна модель дерева малой формы (2.5–7 м) с многоствольностью и цветением/ягодами. В датасете есть только кустовые формы (Bush/BushBerries, до ~1.3 м по геометрии) и полноразмерные деревья — промежуточной модели нет. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ из пака Ultimate Stylized Nature Pack (Quaternius, CC0): MapleTree_4.obj — небольшое дерево с разветвлением ствола на 2-3 рукава и компактной округлой кроной, лучше подходит под T7, чем полноразмерные деревья того же пака."
+  },
+  {
+    "archetype_code": "T8",
+    "model_group": "tree_poplar",
+    "category": "Лиственные деревья — 8 моделей",
+    "status": "closed",
+    "source_file": "PoplarTree_1.obj",
+    "source_path": "OBJ_real_extra/PoplarTree_1.obj",
+    "notes": "Нет отдельной модели с узкой вертикальной \"тополиной\" кроной, отличной от CommonTree/BirchTree по стилю. Присвоение CommonTree_3 сюда создало бы дублирование с T2. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ (донабор №3) из пака Kenney Nature Kit (Kenney, CC0): tree_tall.obj — узкая вытянутая крона (h/w=3.92), визуально отличима от ColumnarTree_1 (tree_simple) по общему масштабу и пропорциям, что даёт разнообразие между T3 и T8."
+  },
+  {
+    "archetype_code": "C1",
+    "model_group": "conifer_spruce",
+    "category": "Хвойные деревья — 5 моделей",
+    "status": "closed",
+    "source_file": "Spruce_1.obj",
+    "source_path": "OBJ_real_extra/Spruce_1.obj",
+    "notes": "В датасете один хвойный тип (PineTree) — многоярусный конус с явно раскидистыми \"лапами\", он занят под conifer_pine. Отдельной плотной конической ели не найдено. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ из Stylized Nature MegaKit (Quaternius, CC0): Pine_1.obj — самый широкий у основания и наиболее плавно сужающийся к вершине силуэт среди Pine_1..5 из этого пака, классический силуэт ели."
+  },
+  {
+    "archetype_code": "C2",
+    "model_group": "conifer_pine",
+    "category": "Хвойные деревья — 5 моделей",
+    "status": "closed",
+    "source_file": "PineTree_2.obj",
+    "source_path": "OBJ/PineTree_2.obj",
+    "notes": "Классический многоярусный конус — подтверждено визуально по каркасной проекции. Запасные варианты: PineTree_1.obj, PineTree_3.obj; сезонные материалы: PineTree_Snow_*, PineTree_Autumn_*."
+  },
+  {
+    "archetype_code": "C3",
+    "model_group": "conifer_larch",
+    "category": "Хвойные деревья — 5 моделей",
+    "status": "closed",
+    "source_file": "Larch_1.obj",
+    "source_path": "OBJ_real_extra/Larch_1.obj",
+    "notes": "Нет модели с более лёгкой, ажурной (не вечнозелёной по силуэту) кроной лиственницы — единственная хвойная модель уже занята под сосну. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ (приближённо) из Stylized Nature MegaKit (Quaternius, CC0): Pine_5.obj — третий отдельный вариант той же серии, визуально отличим от Spruce_1/Fir_1. ПРИБЛИЖЕНИЕ: настоящей ажурной листопадной кроны лиственницы в паке нет, крона всё ещё вечнозелёного типа — рекомендуется дальнейшая замена при появлении подходящего ассета."
+  },
+  {
+    "archetype_code": "C4",
+    "model_group": "conifer_fir",
+    "category": "Хвойные деревья — 5 моделей",
+    "status": "closed",
+    "source_file": "Fir_1.obj",
+    "source_path": "OBJ_real_extra/Fir_1.obj",
+    "notes": "Нет отдельной модели с узкой плотной пихтовой кроной (нужен более \"игольчатый\" силуэт, чем PineTree). ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ из Stylized Nature MegaKit (Quaternius, CC0): Pine_3.obj — самый узкий и вытянутый силуэт (h/w=1.94) среди Pine_1..5, ближе всего к плотной игольчатой кроне пихты."
+  },
+  {
+    "archetype_code": "C5",
+    "model_group": "conifer_thuja",
+    "category": "Хвойные деревья — 5 моделей",
+    "status": "closed",
+    "source_file": "Thuja_1.obj",
+    "source_path": "OBJ_real_extra/Thuja_1.obj",
+    "notes": "Нет модели с характерной плотной чешуйчатой колонновидной кроной туи. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ (донабор №3, ПРИБЛИЖЕНИЕ) из пака Kenney Nature Kit (Kenney, CC0): tree_cone.obj — плотная коническая крона на стволе. Оговорка: это скорее подстриженная коническая форма, чем классическая узкая колонна туи, но ближе к архетипу, чем процедурная заглушка."
+  },
+  {
+    "archetype_code": "HC1",
+    "model_group": "shrub_juniper_upright",
+    "category": "Хвойные кустарники — 4 модели",
+    "status": "closed",
+    "source_file": "JuniperUpright_1.obj",
+    "source_path": "OBJ_real_extra/JuniperUpright_1.obj",
+    "notes": "Нет узкой вертикальной хвойной кустовой формы — Bush/BushBerries в датасете лиственные по силуэту. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ (донабор №2) из пака Kenney Nature Kit (Kenney, CC0): tree_pineSmallC.obj — самый узкий и вытянутый силуэт (h/w=2.89) среди хвойных моделей пака, ближе всего к узкой вертикальной форме можжевельника."
+  },
+  {
+    "archetype_code": "HC2",
+    "model_group": "shrub_juniper_spreading",
+    "category": "Хвойные кустарники — 4 модели",
+    "status": "closed",
+    "source_file": "JuniperSpreading_1.obj",
+    "source_path": "OBJ_real_extra/JuniperSpreading_1.obj",
+    "notes": "Нет низкой стелющейся хвойной формы. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ (донабор №2) из пака Kenney Nature Kit (Kenney, CC0): plant_bushLargeTriangle.obj — самый широкий и приплюснутый силуэт (h/w=0.39) среди кустовых моделей пака, соответствует раскидистой стелющейся форме."
+  },
+  {
+    "archetype_code": "HC3",
+    "model_group": "shrub_mountain_pine",
+    "category": "Хвойные кустарники — 4 модели",
+    "status": "closed",
+    "source_file": "MountainPine_1.obj",
+    "source_path": "OBJ_real_extra/MountainPine_1.obj",
+    "notes": "Нет компактной хвойной кустовой модели. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ (донабор №2) из пака Kenney Nature Kit (Kenney, CC0): tree_pineGroundA.obj — компактный, приземистый хвойный силуэт (модель из серии \"Ground\", самая невысокая среди хвойных пака), похож на низкорослую горную сосну."
+  },
+  {
+    "archetype_code": "HC4",
+    "model_group": "shrub_conifer_low",
+    "category": "Хвойные кустарники — 4 модели",
+    "status": "closed",
+    "source_file": "ConiferLow_1.obj",
+    "source_path": "OBJ_real_extra/ConiferLow_1.obj",
+    "notes": "Нет низкой хвойной кустовой модели. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ (донабор №2) из пака Kenney Nature Kit (Kenney, CC0): plant_bushSmall.obj — самый маленький по масштабу кустовой силуэт пака (width=0.36), подходит для низкого хвойного куста."
+  },
+  {
+    "archetype_code": "S1",
+    "model_group": "shrub_round",
+    "category": "Лиственные кустарники — 11 моделей",
+    "status": "closed",
+    "source_file": "Bush_1.obj",
+    "source_path": "OBJ/Bush_1.obj",
+    "notes": "Компактный округлый ярусный куст (bbox h/w=0.73, шире чем выше) — подтверждено визуально. Запасной вариант: Bush_2.obj; вариант с ягодами для видов типа барбарис/снежноягодник/смородина — BushBerries_1.obj / BushBerries_2.obj."
+  },
+  {
+    "archetype_code": "S2",
+    "model_group": "shrub_dense_round",
+    "category": "Лиственные кустарники — 11 моделей",
+    "status": "partial",
+    "source_file": "Bush_2.obj",
+    "source_path": "OBJ/Bush_2.obj",
+    "notes": "Условно закрыто: Bush_2.obj чуть компактнее и плотнее Bush_1 (bbox h/w=0.83, уже по ширине), но это, по сути, тот же ассет-семейство, что и S1 — визуального разнообразия между округлым и \"плотным округлым\" кустом почти нет. Рекомендуется получить отдельную модель под S2, либо сознательно объединить S1+S2 в одну группу на этапе оптимизации (что и предлагает сам План при укрупнении до ~28 архетипов)."
+  },
+  {
+    "archetype_code": "S3",
+    "model_group": "shrub_tall",
+    "category": "Лиственные кустарники — 11 моделей",
+    "status": "closed",
+    "source_file": "TallShrub_1.obj",
+    "source_path": "OBJ_real_extra/TallShrub_1.obj",
+    "notes": "Нет модели высокого вертикального куста (сирень, чубушник, бузина) — все доступные кусты низкие и округлые. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ (донабор №3) из пака Stylized Nature MegaKit (Quaternius, CC0): TwistedTree_2.obj — самый высокий и узкий силуэт (h/w=1.92) среди серии TwistedTree_1..5, отличим от MultistemShrub_1 (TwistedTree_1) по пропорциям."
+  },
+  {
+    "archetype_code": "S4",
+    "model_group": "shrub_spirea_arching",
+    "category": "Лиственные кустарники — 11 моделей",
+    "status": "closed",
+    "source_file": "ArchingShrub_1.obj",
+    "source_path": "OBJ_real_extra/ArchingShrub_1.obj",
+    "notes": "Нет модели с дугообразными \"фонтанными\" ветвями. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ (донабор №3, ПРИБЛИЖЕНИЕ) из пака Stylized Nature MegaKit (Quaternius, CC0): Fern_1.obj — низкий силуэт с радиально расходящимися дугообразными фрондами (h/w=0.31), визуально передаёт \"фонтанную\" расходящуюся структуру ветвей. Оговорка: это папоротник, а не спирея — по силуэту ближе к архетипу, чем заглушка, но не ботанически точное совпадение."
+  },
+  {
+    "archetype_code": "S5",
+    "model_group": "shrub_low_spreading",
+    "category": "Лиственные кустарники — 11 моделей",
+    "status": "closed",
+    "source_file": "LowSpreadingShrub_1.obj",
+    "source_path": "OBJ_real_extra/LowSpreadingShrub_1.obj",
+    "notes": "Нет низкой стелющейся лиственной формы, отличной по масштабу от Bush. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ из Ultimate Stylized Nature Pack (Quaternius, CC0): Bush_Small.obj — низкий, широкий и приплюснутый силуэт (h/w=0.59)."
+  },
+  {
+    "archetype_code": "S6",
+    "model_group": "shrub_rose",
+    "category": "Лиственные кустарники — 11 моделей",
+    "status": "closed",
+    "source_file": "RoseShrub_1.obj",
+    "source_path": "OBJ_real_extra/RoseShrub_1.obj",
+    "notes": "Нет модели розы/шиповника с характерными шипастыми тонкими стеблями и цветками. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ из Ultimate Stylized Nature Pack (Quaternius, CC0): Plant_Flowers.obj — видны отдельные тонкие стебли с цветочными головками."
+  },
+  {
+    "archetype_code": "S7",
+    "model_group": "shrub_hydrangea",
+    "category": "Лиственные кустарники — 11 моделей",
+    "status": "closed",
+    "source_file": "HydrangeaShrub_1.obj",
+    "source_path": "OBJ_real_extra/HydrangeaShrub_1.obj",
+    "notes": "Нет модели с крупными шаровидными/метельчатыми соцветиями гортензии. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ (приближённо) из Ultimate Stylized Nature Pack (Quaternius, CC0): Bush_Flowers.obj — округлый купольный куст, сплошь покрытый мелкими соцветиями. ПРИБЛИЖЕНИЕ: соцветия мельче, чем крупные шаровидные метёлки настоящей гортензии."
+  },
+  {
+    "archetype_code": "S8",
+    "model_group": "shrub_large_multistem",
+    "category": "Лиственные кустарники — 11 моделей",
+    "status": "closed",
+    "source_file": "MultistemShrub_1.obj",
+    "source_path": "OBJ_real_extra/MultistemShrub_1.obj",
+    "notes": "Нет крупной многоствольной кустовой формы (лещина, ирга, калина) — Bush в датасете мельче по геометрии (высота ~1.1–1.3 у.е.). ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ из Stylized Nature MegaKit (Quaternius, CC0): TwistedTree_1.obj — чётко видна многоствольность (несколько мощных ответвлений от одного основания) и крупная плотная крона."
+  },
+  {
+    "archetype_code": "S9",
+    "model_group": "shrub_dogwood",
+    "category": "Лиственные кустарники — 11 моделей",
+    "status": "stub",
+    "source_file": "DogwoodShrub_1.obj",
+    "source_path": "OBJ_stubs/DogwoodShrub_1.obj",
+    "notes": "Нет модели дерена с характерными прямыми красноватыми побегами. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов')."
+  },
+  {
+    "archetype_code": "S10",
+    "model_group": "shrub_silver",
+    "category": "Лиственные кустарники — 11 моделей",
+    "status": "stub",
+    "source_file": "SilverShrub_1.obj",
+    "source_path": "OBJ_stubs/SilverShrub_1.obj",
+    "notes": "Нет модели с серебристой узкой листвой средиземноморского силуэта (лох, скумпия, карагана). ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов')."
+  },
+  {
+    "archetype_code": "S11",
+    "model_group": "shrub_rhododendron",
+    "category": "Лиственные кустарники — 11 моделей",
+    "status": "closed",
+    "source_file": "RhododendronShrub_1.obj",
+    "source_path": "OBJ_real_extra/RhododendronShrub_1.obj",
+    "notes": "Нет модели с крупными вечнозелёными листьями и купольной формой рододендрона. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов'). ЗАКРЫТО РЕАЛЬНОЙ МОДЕЛЬЮ из Stylized Nature MegaKit (Quaternius, CC0): Bush_Common.obj — плотный округлый купол без выраженного ствола, совпадает с купольной вечнозелёной формой рододендрона."
+  },
+  {
+    "archetype_code": "V1",
+    "model_group": "vine_climbing",
+    "category": "Лианы — 3 модели",
+    "status": "stub",
+    "source_file": "VineClimbing_1.obj",
+    "source_path": "OBJ_stubs/VineClimbing_1.obj",
+    "notes": "В датасете нет ни одной лианы/вьющегося растения — только отдельно стоящие деревья, кусты, кактусы и наземный покров. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов')."
+  },
+  {
+    "archetype_code": "V2",
+    "model_group": "vine_large_leaf",
+    "category": "Лианы — 3 модели",
+    "status": "stub",
+    "source_file": "VineLargeLeaf_1.obj",
+    "source_path": "OBJ_stubs/VineLargeLeaf_1.obj",
+    "notes": "Аналогично — моделей лиан для этой группы нет. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов')."
+  },
+  {
+    "archetype_code": "V3",
+    "model_group": "vine_clematis",
+    "category": "Лианы — 3 модели",
+    "status": "stub",
+    "source_file": "VineClematis_1.obj",
+    "source_path": "OBJ_stubs/VineClematis_1.obj",
+    "notes": "Аналогично — моделей лиан для этой группы нет. ЗАКРЫТО ЗАГЛУШКОЙ: Процедурная low-poly заглушка (сгенерирована скриптом, не из исходного датасета OBJ), создана для закрытия визуального пробела к демо. Требует замены на реальный ассет (см. GreenCity_model_distribution_report.md, раздел 'План закрытия пробелов')."
+  }
+]

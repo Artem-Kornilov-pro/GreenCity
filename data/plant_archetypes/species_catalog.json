@@ -1,0 +1,3018 @@
+[
+  {
+    "name": "Бархат Амурский",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Вяз гибридный Резиста",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Вяз перисто-ветвистый",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Вяз шершавый",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Клен красный",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Клен остролистный",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Клен сахаристый/серебристый",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Липа американская",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Липа крупнолистная",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Липа мелколистная",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Липа европейская",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Липа монгольская",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ясень маньчжурский",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Орех маньчжурский",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Орех серый",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Дуб монгольский",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Дуб черешчатый",
+    "category": "Лиственные деревья",
+    "model_group": "tree_round",
+    "archetype_code": "T1",
+    "model_file": "CommonTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Груша уссурийская",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Груша обыкновенная",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Груша иволистная",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Клен маньчжурский",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Клен зеленокорый",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Клён мелколистный",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Клён колосистый",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Клен ложнозибольдов",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Клен гиннала",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Кладрастис желтый",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Маакия амурская",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Рябина ария",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Рябина гибридная",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Рябина промежуточная",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Рябина тюрингская",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Рябина Арнольда",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Рябина Мужо",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Рябина кашмирская",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Тополь лавролистный",
+    "category": "Лиственные деревья",
+    "model_group": "tree_oval",
+    "archetype_code": "T2",
+    "model_file": "CommonTree_3.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Тополь берлинский",
+    "category": "Лиственные деревья",
+    "model_group": "tree_columnar",
+    "archetype_code": "T3",
+    "model_file": "ColumnarTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.3
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Тополь советский Пирамидальный",
+    "category": "Лиственные деревья",
+    "model_group": "tree_columnar",
+    "archetype_code": "T3",
+    "model_file": "ColumnarTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.3
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "часть сортов тополя белого",
+    "category": "Лиственные деревья",
+    "model_group": "tree_columnar",
+    "archetype_code": "T3",
+    "model_file": "ColumnarTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.3
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "часть сортов яблони с колонновидной формой",
+    "category": "Лиственные деревья",
+    "model_group": "tree_columnar",
+    "archetype_code": "T3",
+    "model_file": "ColumnarTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.3
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "отдельные вертикальные формы вяза",
+    "category": "Лиственные деревья",
+    "model_group": "tree_columnar",
+    "archetype_code": "T3",
+    "model_file": "ColumnarTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.3
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Береза повислая",
+    "category": "Лиственные деревья",
+    "model_group": "tree_birch",
+    "archetype_code": "T4",
+    "model_file": "BirchTree_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Береза пушистая",
+    "category": "Лиственные деревья",
+    "model_group": "tree_birch",
+    "archetype_code": "T4",
+    "model_file": "BirchTree_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Береза бумажная",
+    "category": "Лиственные деревья",
+    "model_group": "tree_birch",
+    "archetype_code": "T4",
+    "model_file": "BirchTree_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Берёза вишнёвая",
+    "category": "Лиственные деревья",
+    "model_group": "tree_birch",
+    "archetype_code": "T4",
+    "model_file": "BirchTree_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Береза ребристая",
+    "category": "Лиственные деревья",
+    "model_group": "tree_birch",
+    "archetype_code": "T4",
+    "model_file": "BirchTree_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Береза черная",
+    "category": "Лиственные деревья",
+    "model_group": "tree_birch",
+    "archetype_code": "T4",
+    "model_file": "BirchTree_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Береза Эрмана",
+    "category": "Лиственные деревья",
+    "model_group": "tree_birch",
+    "archetype_code": "T4",
+    "model_file": "BirchTree_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Береза повислая / плакучая",
+    "category": "Лиственные деревья",
+    "model_group": "tree_weeping",
+    "archetype_code": "T5",
+    "model_file": "WeepingTree_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.8,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ива белая",
+    "category": "Лиственные деревья",
+    "model_group": "tree_weeping",
+    "archetype_code": "T5",
+    "model_file": "WeepingTree_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.8,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ива прутовидная",
+    "category": "Лиственные деревья",
+    "model_group": "tree_weeping",
+    "archetype_code": "T5",
+    "model_file": "WeepingTree_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.8,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ивы свердловской селекции",
+    "category": "Лиственные деревья",
+    "model_group": "tree_weeping",
+    "archetype_code": "T5",
+    "model_file": "WeepingTree_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.8,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ива Шверина",
+    "category": "Лиственные деревья",
+    "model_group": "tree_weeping",
+    "archetype_code": "T5",
+    "model_file": "WeepingTree_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.8,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "отдельные сорта ивы козьей",
+    "category": "Лиственные деревья",
+    "model_group": "tree_weeping",
+    "archetype_code": "T5",
+    "model_file": "WeepingTree_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.8,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ива белая",
+    "category": "Лиственные деревья",
+    "model_group": "tree_willow",
+    "archetype_code": "T6",
+    "model_file": "Willow_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ива ломкая Bullata",
+    "category": "Лиственные деревья",
+    "model_group": "tree_willow",
+    "archetype_code": "T6",
+    "model_file": "Willow_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ива прутовидная",
+    "category": "Лиственные деревья",
+    "model_group": "tree_willow",
+    "archetype_code": "T6",
+    "model_file": "Willow_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ива козья",
+    "category": "Лиственные деревья",
+    "model_group": "tree_willow",
+    "archetype_code": "T6",
+    "model_file": "Willow_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ива пятитычинковая",
+    "category": "Лиственные деревья",
+    "model_group": "tree_willow",
+    "archetype_code": "T6",
+    "model_file": "Willow_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ива росистая",
+    "category": "Лиственные деревья",
+    "model_group": "tree_willow",
+    "archetype_code": "T6",
+    "model_file": "Willow_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ива цельнолистная",
+    "category": "Лиственные деревья",
+    "model_group": "tree_willow",
+    "archetype_code": "T6",
+    "model_file": "Willow_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ива Шверина",
+    "category": "Лиственные деревья",
+    "model_group": "tree_willow",
+    "archetype_code": "T6",
+    "model_file": "Willow_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Боярышник Арнольда",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Боярышник крупноколючковый",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Боярышник перистонадрезанный",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Боярышник полумягкий",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Боярышник сливолистный",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Боярышник точечный",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Боярышник чёрный",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Боярышник зеленомясый",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Вишня обыкновенная",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Слива домашняя",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Слива колючая",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Слива растопыренная",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Яблоня Недзведцкого",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Яблоня обильноцветущая",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Яблоня сливолистная",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Яблоня ягодная",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Яблоня Зибольда",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Яблоня Саржента",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Черемуха виргинская",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Черемуха Маака",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Черемуха обыкновенная",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Черемуха поздняя",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Черемуха пенсильванская",
+    "category": "Лиственные деревья",
+    "model_group": "tree_small_ornamental",
+    "archetype_code": "T7",
+    "model_file": "SmallOrnamentalTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.7,
+      "max": 2.0
+    },
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
+  },
+  {
+    "name": "Тополь бальзамический",
+    "category": "Лиственные деревья",
+    "model_group": "tree_poplar",
+    "archetype_code": "T8",
+    "model_file": "PoplarTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 1.0,
+      "max": 1.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Тополь белый",
+    "category": "Лиственные деревья",
+    "model_group": "tree_poplar",
+    "archetype_code": "T8",
+    "model_file": "PoplarTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 1.0,
+      "max": 1.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Тополь берлинский",
+    "category": "Лиственные деревья",
+    "model_group": "tree_poplar",
+    "archetype_code": "T8",
+    "model_file": "PoplarTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 1.0,
+      "max": 1.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Тополь дрожащий",
+    "category": "Лиственные деревья",
+    "model_group": "tree_poplar",
+    "archetype_code": "T8",
+    "model_file": "PoplarTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 1.0,
+      "max": 1.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Тополь канадский",
+    "category": "Лиственные деревья",
+    "model_group": "tree_poplar",
+    "archetype_code": "T8",
+    "model_file": "PoplarTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 1.0,
+      "max": 1.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Тополь Симона",
+    "category": "Лиственные деревья",
+    "model_group": "tree_poplar",
+    "archetype_code": "T8",
+    "model_file": "PoplarTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 1.0,
+      "max": 1.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Тополь советский",
+    "category": "Лиственные деревья",
+    "model_group": "tree_poplar",
+    "archetype_code": "T8",
+    "model_file": "PoplarTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 1.0,
+      "max": 1.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Тополь лавролистный",
+    "category": "Лиственные деревья",
+    "model_group": "tree_poplar",
+    "archetype_code": "T8",
+    "model_file": "PoplarTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 1.0,
+      "max": 1.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Тополь Максимовича",
+    "category": "Лиственные деревья",
+    "model_group": "tree_poplar",
+    "archetype_code": "T8",
+    "model_file": "PoplarTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 1.0,
+      "max": 1.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Тополь черный",
+    "category": "Лиственные деревья",
+    "model_group": "tree_poplar",
+    "archetype_code": "T8",
+    "model_file": "PoplarTree_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 1.0,
+      "max": 1.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ель колючая",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_spruce",
+    "archetype_code": "C1",
+    "model_file": "Spruce_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ель обыкновенная",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_spruce",
+    "archetype_code": "C1",
+    "model_file": "Spruce_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ель канадская",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_spruce",
+    "archetype_code": "C1",
+    "model_file": "Spruce_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ель сербская",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_spruce",
+    "archetype_code": "C1",
+    "model_file": "Spruce_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ель шероховатая",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_spruce",
+    "archetype_code": "C1",
+    "model_file": "Spruce_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ель Энгельмана",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_spruce",
+    "archetype_code": "C1",
+    "model_file": "Spruce_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Сосна обыкновенная",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_pine",
+    "archetype_code": "C2",
+    "model_file": "PineTree_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Сосна Веймутова",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_pine",
+    "archetype_code": "C2",
+    "model_file": "PineTree_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Сосна румелийская",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_pine",
+    "archetype_code": "C2",
+    "model_file": "PineTree_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Сосна черная австрийская",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_pine",
+    "archetype_code": "C2",
+    "model_file": "PineTree_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Сосна кедровая европейская",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_pine",
+    "archetype_code": "C2",
+    "model_file": "PineTree_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Сосна кедровая корейская",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_pine",
+    "archetype_code": "C2",
+    "model_file": "PineTree_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Сосна кедровая сибирская",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_pine",
+    "archetype_code": "C2",
+    "model_file": "PineTree_2.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Лиственница американская",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_larch",
+    "archetype_code": "C3",
+    "model_file": "Larch_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 1.0,
+      "max": 1.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Лиственница даурская",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_larch",
+    "archetype_code": "C3",
+    "model_file": "Larch_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 1.0,
+      "max": 1.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Лиственница европейская",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_larch",
+    "archetype_code": "C3",
+    "model_file": "Larch_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 1.0,
+      "max": 1.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Лиственница Кемфера",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_larch",
+    "archetype_code": "C3",
+    "model_file": "Larch_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 1.0,
+      "max": 1.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Лиственница Сукачева",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_larch",
+    "archetype_code": "C3",
+    "model_file": "Larch_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 1.0,
+      "max": 1.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Лиственница сибирская",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_larch",
+    "archetype_code": "C3",
+    "model_file": "Larch_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 1.0,
+      "max": 1.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Пихта бальзамическая",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_fir",
+    "archetype_code": "C4",
+    "model_file": "Fir_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Пихта Вича",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_fir",
+    "archetype_code": "C4",
+    "model_file": "Fir_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Пихта одноцветная",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_fir",
+    "archetype_code": "C4",
+    "model_file": "Fir_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Пихта сибирская",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_fir",
+    "archetype_code": "C4",
+    "model_file": "Fir_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Псевдотсуга Мензиса",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_fir",
+    "archetype_code": "C4",
+    "model_file": "Fir_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Туя западная — отдельная модель",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_thuja",
+    "archetype_code": "C5",
+    "model_file": "Thuja_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.5,
+      "max": 1.0
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "визуально характерна для городского озеленения",
+    "category": "Хвойные деревья",
+    "model_group": "conifer_thuja",
+    "archetype_code": "C5",
+    "model_file": "Thuja_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.5,
+      "max": 1.0
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Можжевельник виргинский",
+    "category": "Хвойные кустарники",
+    "model_group": "shrub_juniper_upright",
+    "archetype_code": "HC1",
+    "model_file": "JuniperUpright_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.4,
+      "max": 0.9
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Можжевельник скальный",
+    "category": "Хвойные кустарники",
+    "model_group": "shrub_juniper_upright",
+    "archetype_code": "HC1",
+    "model_file": "JuniperUpright_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.4,
+      "max": 0.9
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Можжевельник китайский",
+    "category": "Хвойные кустарники",
+    "model_group": "shrub_juniper_upright",
+    "archetype_code": "HC1",
+    "model_file": "JuniperUpright_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.4,
+      "max": 0.9
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Можжевельник чешуйчатый",
+    "category": "Хвойные кустарники",
+    "model_group": "shrub_juniper_upright",
+    "archetype_code": "HC1",
+    "model_file": "JuniperUpright_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.4,
+      "max": 0.9
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Можжевельник горизонтальный",
+    "category": "Хвойные кустарники",
+    "model_group": "shrub_juniper_spreading",
+    "archetype_code": "HC2",
+    "model_file": "JuniperSpreading_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.3,
+      "max": 0.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Можжевельник казацкий",
+    "category": "Хвойные кустарники",
+    "model_group": "shrub_juniper_spreading",
+    "archetype_code": "HC2",
+    "model_file": "JuniperSpreading_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.3,
+      "max": 0.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Можжевельник средний Пфитцериана",
+    "category": "Хвойные кустарники",
+    "model_group": "shrub_juniper_spreading",
+    "archetype_code": "HC2",
+    "model_file": "JuniperSpreading_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.3,
+      "max": 0.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Сосна горная",
+    "category": "Хвойные кустарники",
+    "model_group": "shrub_mountain_pine",
+    "archetype_code": "HC3",
+    "model_file": "MountainPine_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.4,
+      "max": 0.8
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Микробиота перекрёстнопарная",
+    "category": "Хвойные кустарники",
+    "model_group": "shrub_conifer_low",
+    "archetype_code": "HC4",
+    "model_file": "ConiferLow_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.2,
+      "max": 0.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Кедровый стланик",
+    "category": "Хвойные кустарники",
+    "model_group": "shrub_conifer_low",
+    "archetype_code": "HC4",
+    "model_file": "ConiferLow_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.2,
+      "max": 0.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Арония",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Барбарис амурский",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Барбарис обыкновенный",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Барбарис оттавский",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Барбарис Вильсон",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Бересклет бородавчатый",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Бересклет европейский",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Бересклет Маака",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Бирючина",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Жимолость альпийская",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Жимолость золотистая",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Жимолость Королькова",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Жимолость Маака",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Жимолость Максимовича",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Жимолость обыкновенная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Жимолость татарская",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Смородина альпийская",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Смородина железистая",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Смородина золотистая",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Смородина красная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Снежноягодник",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Форзиция",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_round",
+    "archetype_code": "S1",
+    "model_file": "Bush_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Барбарис Тунберга",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_dense_round",
+    "archetype_code": "S2",
+    "model_file": "Bush_2.obj",
+    "model_status": "partial",
+    "scale": {
+      "min": 0.4,
+      "max": 0.8
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Кизильник блестящий",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_dense_round",
+    "archetype_code": "S2",
+    "model_file": "Bush_2.obj",
+    "model_status": "partial",
+    "scale": {
+      "min": 0.4,
+      "max": 0.8
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Магония",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_dense_round",
+    "archetype_code": "S2",
+    "model_file": "Bush_2.obj",
+    "model_status": "partial",
+    "scale": {
+      "min": 0.4,
+      "max": 0.8
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Лапчатка кустарниковая",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_dense_round",
+    "archetype_code": "S2",
+    "model_file": "Bush_2.obj",
+    "model_status": "partial",
+    "scale": {
+      "min": 0.4,
+      "max": 0.8
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Спирея японская",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_dense_round",
+    "archetype_code": "S2",
+    "model_file": "Bush_2.obj",
+    "model_status": "partial",
+    "scale": {
+      "min": 0.4,
+      "max": 0.8
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Спирея березолистная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_dense_round",
+    "archetype_code": "S2",
+    "model_file": "Bush_2.obj",
+    "model_status": "partial",
+    "scale": {
+      "min": 0.4,
+      "max": 0.8
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Спирея Бумальда",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_dense_round",
+    "archetype_code": "S2",
+    "model_file": "Bush_2.obj",
+    "model_status": "partial",
+    "scale": {
+      "min": 0.4,
+      "max": 0.8
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Спирея острозубчатая",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_dense_round",
+    "archetype_code": "S2",
+    "model_file": "Bush_2.obj",
+    "model_status": "partial",
+    "scale": {
+      "min": 0.4,
+      "max": 0.8
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Спирея дубравколистная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_dense_round",
+    "archetype_code": "S2",
+    "model_file": "Bush_2.obj",
+    "model_status": "partial",
+    "scale": {
+      "min": 0.4,
+      "max": 0.8
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Стефанандра",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_dense_round",
+    "archetype_code": "S2",
+    "model_file": "Bush_2.obj",
+    "model_status": "partial",
+    "scale": {
+      "min": 0.4,
+      "max": 0.8
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Сирень амурская",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_tall",
+    "archetype_code": "S3",
+    "model_file": "TallShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Сирень венгерская",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_tall",
+    "archetype_code": "S3",
+    "model_file": "TallShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Сирень обыкновенная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_tall",
+    "archetype_code": "S3",
+    "model_file": "TallShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Сирень Престон",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_tall",
+    "archetype_code": "S3",
+    "model_file": "TallShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Сирень Вольфа",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_tall",
+    "archetype_code": "S3",
+    "model_file": "TallShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Сирень Комарова",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_tall",
+    "archetype_code": "S3",
+    "model_file": "TallShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Чубушник венечный",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_tall",
+    "archetype_code": "S3",
+    "model_file": "TallShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Чубушник Лемуана",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_tall",
+    "archetype_code": "S3",
+    "model_file": "TallShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Чубушник мелколистный",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_tall",
+    "archetype_code": "S3",
+    "model_file": "TallShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Бузина черная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_tall",
+    "archetype_code": "S3",
+    "model_file": "TallShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Бузина красная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_tall",
+    "archetype_code": "S3",
+    "model_file": "TallShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Бузина канадская",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_tall",
+    "archetype_code": "S3",
+    "model_file": "TallShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.8,
+      "max": 1.4
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Спирея Вангутта",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_spirea_arching",
+    "archetype_code": "S4",
+    "model_file": "ArchingShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.5,
+      "max": 0.9
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Спирея серая",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_spirea_arching",
+    "archetype_code": "S4",
+    "model_file": "ArchingShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.5,
+      "max": 0.9
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Спирея Билларда",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_spirea_arching",
+    "archetype_code": "S4",
+    "model_file": "ArchingShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.5,
+      "max": 0.9
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Спирея Дугласа",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_spirea_arching",
+    "archetype_code": "S4",
+    "model_file": "ArchingShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.5,
+      "max": 0.9
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Спирея иволистная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_spirea_arching",
+    "archetype_code": "S4",
+    "model_file": "ArchingShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.5,
+      "max": 0.9
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Спирея ниппонская",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_spirea_arching",
+    "archetype_code": "S4",
+    "model_file": "ArchingShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.5,
+      "max": 0.9
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Спирея средняя",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_spirea_arching",
+    "archetype_code": "S4",
+    "model_file": "ArchingShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.5,
+      "max": 0.9
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Спирея трехлопастная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_spirea_arching",
+    "archetype_code": "S4",
+    "model_file": "ArchingShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.5,
+      "max": 0.9
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Кизильник горизонтальный",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_low_spreading",
+    "archetype_code": "S5",
+    "model_file": "LowSpreadingShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.3,
+      "max": 0.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Бересклет Форчуна",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_low_spreading",
+    "archetype_code": "S5",
+    "model_file": "LowSpreadingShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.3,
+      "max": 0.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Стефанандра надрезаннолистная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_low_spreading",
+    "archetype_code": "S5",
+    "model_file": "LowSpreadingShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.3,
+      "max": 0.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Стефанандра Танаки",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_low_spreading",
+    "archetype_code": "S5",
+    "model_file": "LowSpreadingShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.3,
+      "max": 0.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Миндаль низкий/степной",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_low_spreading",
+    "archetype_code": "S5",
+    "model_file": "LowSpreadingShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.3,
+      "max": 0.6
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Роза бедренцеволистная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_rose",
+    "archetype_code": "S6",
+    "model_file": "RoseShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.4,
+      "max": 0.8
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Роза морщинистая",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_rose",
+    "archetype_code": "S6",
+    "model_file": "RoseShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.4,
+      "max": 0.8
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Роза сизая",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_rose",
+    "archetype_code": "S6",
+    "model_file": "RoseShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.4,
+      "max": 0.8
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Роза собачья",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_rose",
+    "archetype_code": "S6",
+    "model_file": "RoseShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.4,
+      "max": 0.8
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Гортензия Бреттшнейдера",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_hydrangea",
+    "archetype_code": "S7",
+    "model_file": "HydrangeaShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Гортензия древовидная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_hydrangea",
+    "archetype_code": "S7",
+    "model_file": "HydrangeaShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Гортензия метельчатая",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_hydrangea",
+    "archetype_code": "S7",
+    "model_file": "HydrangeaShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.6,
+      "max": 1.1
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Лещина обыкновенная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_large_multistem",
+    "archetype_code": "S8",
+    "model_file": "MultistemShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Лещина пурпурнолистная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_large_multistem",
+    "archetype_code": "S8",
+    "model_file": "MultistemShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ирга канадская",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_large_multistem",
+    "archetype_code": "S8",
+    "model_file": "MultistemShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ирга Ламарка",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_large_multistem",
+    "archetype_code": "S8",
+    "model_file": "MultistemShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ирга колосистая",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_large_multistem",
+    "archetype_code": "S8",
+    "model_file": "MultistemShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ирга круглолистная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_large_multistem",
+    "archetype_code": "S8",
+    "model_file": "MultistemShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Калина гордовина",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_large_multistem",
+    "archetype_code": "S8",
+    "model_file": "MultistemShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Калина обыкновенная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_large_multistem",
+    "archetype_code": "S8",
+    "model_file": "MultistemShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Калина Саржента",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_large_multistem",
+    "archetype_code": "S8",
+    "model_file": "MultistemShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Экзохорда",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_large_multistem",
+    "archetype_code": "S8",
+    "model_file": "MultistemShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Вейгела Миддендорфа",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_large_multistem",
+    "archetype_code": "S8",
+    "model_file": "MultistemShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Вишня войлочная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_large_multistem",
+    "archetype_code": "S8",
+    "model_file": "MultistemShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.9,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Дерен белый",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_dogwood",
+    "archetype_code": "S9",
+    "model_file": "DogwoodShrub_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Дерен кроваво-красный",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_dogwood",
+    "archetype_code": "S9",
+    "model_file": "DogwoodShrub_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Дерен отпрысковый",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_dogwood",
+    "archetype_code": "S9",
+    "model_file": "DogwoodShrub_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Дёрен Бейли",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_dogwood",
+    "archetype_code": "S9",
+    "model_file": "DogwoodShrub_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Дёрен Вальтера",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_dogwood",
+    "archetype_code": "S9",
+    "model_file": "DogwoodShrub_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.7,
+      "max": 1.2
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Лох серебристый",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_silver",
+    "archetype_code": "S10",
+    "model_file": "SilverShrub_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.6,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Лох узколистный",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_silver",
+    "archetype_code": "S10",
+    "model_file": "SilverShrub_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.6,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Скумпия",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_silver",
+    "archetype_code": "S10",
+    "model_file": "SilverShrub_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.6,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Карагана древовидная",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_silver",
+    "archetype_code": "S10",
+    "model_file": "SilverShrub_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.6,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Карагана кустарниковая",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_silver",
+    "archetype_code": "S10",
+    "model_file": "SilverShrub_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.6,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Аморфа кустарниковая",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_silver",
+    "archetype_code": "S10",
+    "model_file": "SilverShrub_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.6,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Ракитник русский",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_silver",
+    "archetype_code": "S10",
+    "model_file": "SilverShrub_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.6,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Рододендрон даурский",
+    "category": "Лиственные кустарники",
+    "model_group": "shrub_rhododendron",
+    "archetype_code": "S11",
+    "model_file": "RhododendronShrub_1.obj",
+    "model_status": "closed",
+    "scale": {
+      "min": 0.4,
+      "max": 0.8
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Актинидия коломикта",
+    "category": "Лианы",
+    "model_group": "vine_climbing",
+    "archetype_code": "V1",
+    "model_file": "VineClimbing_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.6,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Виноград амурский",
+    "category": "Лианы",
+    "model_group": "vine_climbing",
+    "archetype_code": "V1",
+    "model_file": "VineClimbing_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.6,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Девичий виноград",
+    "category": "Лианы",
+    "model_group": "vine_climbing",
+    "archetype_code": "V1",
+    "model_file": "VineClimbing_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.6,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Жимолость каприфоль",
+    "category": "Лианы",
+    "model_group": "vine_climbing",
+    "archetype_code": "V1",
+    "model_file": "VineClimbing_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.6,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Лимонник китайский",
+    "category": "Лианы",
+    "model_group": "vine_climbing",
+    "archetype_code": "V1",
+    "model_file": "VineClimbing_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.6,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Жимолость вьющаяся",
+    "category": "Лианы",
+    "model_group": "vine_climbing",
+    "archetype_code": "V1",
+    "model_file": "VineClimbing_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.6,
+      "max": 1.3
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Аристолохия крупнолистная",
+    "category": "Лианы",
+    "model_group": "vine_large_leaf",
+    "archetype_code": "V2",
+    "model_file": "VineLargeLeaf_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.8,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Аристолохия маньчжурская",
+    "category": "Лианы",
+    "model_group": "vine_large_leaf",
+    "archetype_code": "V2",
+    "model_file": "VineLargeLeaf_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.8,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Гортензия черешковая",
+    "category": "Лианы",
+    "model_group": "vine_large_leaf",
+    "archetype_code": "V2",
+    "model_file": "VineLargeLeaf_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.8,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Древогубец круглолистный",
+    "category": "Лианы",
+    "model_group": "vine_large_leaf",
+    "archetype_code": "V2",
+    "model_file": "VineLargeLeaf_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.8,
+      "max": 1.5
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Клематис сибирский",
+    "category": "Лианы",
+    "model_group": "vine_clematis",
+    "archetype_code": "V3",
+    "model_file": "VineClematis_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.5,
+      "max": 0.9
+    },
+    "scale_status": "требует проверки"
+  },
+  {
+    "name": "Клематис тангутский",
+    "category": "Лианы",
+    "model_group": "vine_clematis",
+    "archetype_code": "V3",
+    "model_file": "VineClematis_1.obj",
+    "model_status": "stub",
+    "scale": {
+      "min": 0.5,
+      "max": 0.9
+    },
+    "scale_status": "требует проверки"
+  }
+]

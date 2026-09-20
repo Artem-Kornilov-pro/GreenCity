@@ -1,656 +1,5 @@
 [
   {
-    "id": "100_mesh_099",
-    "category": "tree",
-    "label": "Дерево 100 — среднее, раскидистое, 4.33 м",
-    "size_class": "medium",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/100_mesh_099.glb",
-    "dimensions": {
-      "height": 4.33,
-      "radius": 1.95,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "101_mesh_100",
-    "category": "tree",
-    "label": "Дерево 101 — среднее, обычная крона, 3.76 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/101_mesh_100.glb",
-    "dimensions": {
-      "height": 3.76,
-      "radius": 0.93,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "102_mesh_101",
-    "category": "tree",
-    "label": "Дерево 102 — среднее, обычная крона, 4.85 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/102_mesh_101.glb",
-    "dimensions": {
-      "height": 4.85,
-      "radius": 1.29,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "103_mesh_102",
-    "category": "tree",
-    "label": "Дерево 103 — среднее, обычная крона, 3.55 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/103_mesh_102.glb",
-    "dimensions": {
-      "height": 3.55,
-      "radius": 0.74,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "107_mesh_106",
-    "category": "tree",
-    "label": "Дерево 107 — высокое, обычная крона, 6.18 м",
-    "size_class": "tall",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/107_mesh_106.glb",
-    "dimensions": {
-      "height": 6.18,
-      "radius": 1.46,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "109_mesh_108",
-    "category": "tree",
-    "label": "Дерево 109 — среднее, обычная крона, 4.45 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/109_mesh_108.glb",
-    "dimensions": {
-      "height": 4.45,
-      "radius": 1.24,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "121_mesh_120",
-    "category": "tree",
-    "label": "Дерево 121 — высокое, обычная крона, 7.72 м",
-    "size_class": "tall",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/121_mesh_120.glb",
-    "dimensions": {
-      "height": 7.72,
-      "radius": 2.38,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "131_mesh_130",
-    "category": "tree",
-    "label": "Дерево 131 — среднее, раскидистое, 4.81 м",
-    "size_class": "medium",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/131_mesh_130.glb",
-    "dimensions": {
-      "height": 4.81,
-      "radius": 2.37,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "134_mesh_133",
-    "category": "tree",
-    "label": "Дерево 134 — высокое, раскидистое, 6.17 м",
-    "size_class": "tall",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/134_mesh_133.glb",
-    "dimensions": {
-      "height": 6.17,
-      "radius": 2.65,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "135_mesh_134",
-    "category": "tree",
-    "label": "Дерево 135 — высокое, раскидистое, 6.01 м",
-    "size_class": "tall",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/135_mesh_134.glb",
-    "dimensions": {
-      "height": 6.01,
-      "radius": 2.74,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "144_mesh_143",
-    "category": "tree",
-    "label": "Дерево 144 — высокое, обычная крона, 6.81 м",
-    "size_class": "tall",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/144_mesh_143.glb",
-    "dimensions": {
-      "height": 6.81,
-      "radius": 1.37,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "146_mesh_145",
-    "category": "tree",
-    "label": "Дерево 146 — высокое, обычная крона, 6.17 м",
-    "size_class": "tall",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/146_mesh_145.glb",
-    "dimensions": {
-      "height": 6.17,
-      "radius": 1.32,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "193_mesh_196",
-    "category": "tree",
-    "label": "Дерево 193 — среднее, раскидистое, 5.84 м",
-    "size_class": "medium",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/193_mesh_196.glb",
-    "dimensions": {
-      "height": 5.84,
-      "radius": 2.65,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "21_mesh_020",
-    "category": "tree",
-    "label": "Дерево 21 — среднее, обычная крона, 4.24 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/21_mesh_020.glb",
-    "dimensions": {
-      "height": 4.24,
-      "radius": 1.01,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "23_mesh_022",
-    "category": "tree",
-    "label": "Дерево 23 — среднее, обычная крона, 4.32 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/23_mesh_022.glb",
-    "dimensions": {
-      "height": 4.32,
-      "radius": 1.03,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "31_mesh_030",
-    "category": "tree",
-    "label": "Дерево 31 — среднее, обычная крона, 4.62 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/31_mesh_030.glb",
-    "dimensions": {
-      "height": 4.62,
-      "radius": 1.11,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "32_mesh_031",
-    "category": "tree",
-    "label": "Дерево 32 — среднее, обычная крона, 4.95 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/32_mesh_031.glb",
-    "dimensions": {
-      "height": 4.95,
-      "radius": 1.19,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "36_mesh_035",
-    "category": "tree",
-    "label": "Дерево 36 — среднее, обычная крона, 3.49 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/36_mesh_035.glb",
-    "dimensions": {
-      "height": 3.49,
-      "radius": 1.19,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "37_mesh_036",
-    "category": "tree",
-    "label": "Дерево 37 — среднее, обычная крона, 3.18 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/37_mesh_036.glb",
-    "dimensions": {
-      "height": 3.18,
-      "radius": 1.14,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "51_mesh_050",
-    "category": "tree",
-    "label": "Дерево 51 — высокое, раскидистое, 6.4 м",
-    "size_class": "tall",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/51_mesh_050.glb",
-    "dimensions": {
-      "height": 6.4,
-      "radius": 2.98,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "58_mesh_057",
-    "category": "tree",
-    "label": "Дерево 58 — среднее, раскидистое, 4.85 м",
-    "size_class": "medium",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/58_mesh_057.glb",
-    "dimensions": {
-      "height": 4.85,
-      "radius": 2.31,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "65_mesh_064",
-    "category": "tree",
-    "label": "Дерево 65 — среднее, раскидистое, 5.44 м",
-    "size_class": "medium",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/65_mesh_064.glb",
-    "dimensions": {
-      "height": 5.44,
-      "radius": 2.19,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "66_mesh_065",
-    "category": "tree",
-    "label": "Дерево 66 — среднее, обычная крона, 5.68 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/66_mesh_065.glb",
-    "dimensions": {
-      "height": 5.68,
-      "radius": 2.09,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "71_mesh_070",
-    "category": "tree",
-    "label": "Дерево 71 — среднее, обычная крона, 3.95 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/71_mesh_070.glb",
-    "dimensions": {
-      "height": 3.95,
-      "radius": 1.47,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "80_mesh_079",
-    "category": "tree",
-    "label": "Дерево 80 — среднее, обычная крона, 3.03 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/80_mesh_079.glb",
-    "dimensions": {
-      "height": 3.03,
-      "radius": 0.99,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "83_mesh_082",
-    "category": "tree",
-    "label": "Дерево 83 — низкое, обычная крона, 2.76 м",
-    "size_class": "low",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/83_mesh_082.glb",
-    "dimensions": {
-      "height": 2.76,
-      "radius": 0.91,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "87_mesh_086",
-    "category": "tree",
-    "label": "Дерево 87 — среднее, раскидистое, 3.48 м",
-    "size_class": "medium",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/87_mesh_086.glb",
-    "dimensions": {
-      "height": 3.48,
-      "radius": 1.34,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "89_mesh_088",
-    "category": "tree",
-    "label": "Дерево 89 — среднее, обычная крона, 5.24 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/89_mesh_088.glb",
-    "dimensions": {
-      "height": 5.24,
-      "radius": 1.88,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "95_mesh_094",
-    "category": "tree",
-    "label": "Дерево 95 — среднее, обычная крона, 5.09 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/95_mesh_094.glb",
-    "dimensions": {
-      "height": 5.09,
-      "radius": 1.07,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "96_mesh_095",
-    "category": "tree",
-    "label": "Дерево 96 — среднее, колонновидное, 5.72 м",
-    "size_class": "medium",
-    "crown_class": "columnar",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/96_mesh_095.glb",
-    "dimensions": {
-      "height": 5.72,
-      "radius": 1.06,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "98_mesh_097",
-    "category": "tree",
-    "label": "Дерево 98 — среднее, обычная крона, 3.45 м",
-    "size_class": "medium",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/98_mesh_097.glb",
-    "dimensions": {
-      "height": 3.45,
-      "radius": 1.31,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
     "id": "bench_long",
     "category": "furniture",
     "label": "Скамья длинная",
@@ -963,6 +312,5382 @@
     "render": {
       "shape": "bench",
       "color": "#7a5230"
+    }
+  },
+  {
+    "id": "spruce_1",
+    "category": "tree",
+    "label": "Ель (дерево, высокое, обычная крона, 7.32 м)",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/spruce_1.glb",
+    "dimensions": {
+      "height": 7.32,
+      "radius": 2.47,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "fir_1",
+    "category": "tree",
+    "label": "Пихта (дерево, высокое, обычная крона, 7.39 м)",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/fir_1.glb",
+    "dimensions": {
+      "height": 7.39,
+      "radius": 2,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "larch_1",
+    "category": "tree",
+    "label": "Лиственница (дерево, высокое, обычная крона, 8.72 м)",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/larch_1.glb",
+    "dimensions": {
+      "height": 8.72,
+      "radius": 3.21,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "columnartree_1",
+    "category": "tree",
+    "label": "Дерево колонновидное (дерево, среднее, колонновидное, 6.0 м)",
+    "size_class": "medium",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/columnartree_1.glb",
+    "dimensions": {
+      "height": 6,
+      "radius": 0.81,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "poplartree_1",
+    "category": "tree",
+    "label": "Тополь (дерево, высокое, колонновидное, 8.0 м)",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/poplartree_1.glb",
+    "dimensions": {
+      "height": 8,
+      "radius": 1.09,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "thuja_1",
+    "category": "tree",
+    "label": "Туя (дерево, низкое, колонновидное, 2.0 м)",
+    "size_class": "low",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/thuja_1.glb",
+    "dimensions": {
+      "height": 2,
+      "radius": 0.37,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "smallornamentaltree_1",
+    "category": "tree",
+    "label": "Малое декоративное дерево (дерево, среднее, раскидистое, 3.59 м)",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 3.59,
+      "radius": 1.39,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "rhododendronshrub_1",
+    "category": "bush",
+    "label": "Рододендрон (кустарник, низкое, раскидистое, 1.58 м)",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/rhododendronshrub_1.glb",
+    "dimensions": {
+      "height": 1.58,
+      "radius": 0.98,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "multistemshrub_1",
+    "category": "bush",
+    "label": "Крупный многоствольный куст (кустарник, среднее, раскидистое, 3.0 м)",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/multistemshrub_1.glb",
+    "dimensions": {
+      "height": 3,
+      "radius": 1.21,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "hydrangeashrub_1",
+    "category": "bush",
+    "label": "Гортензия (кустарник, низкое, раскидистое, 0.76 м)",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/hydrangeashrub_1.glb",
+    "dimensions": {
+      "height": 0.76,
+      "radius": 0.56,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "lowspreadingshrub_1",
+    "category": "bush",
+    "label": "Низкий стелющийся куст (кустарник, низкое, раскидистое, 0.78 м)",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/lowspreadingshrub_1.glb",
+    "dimensions": {
+      "height": 0.78,
+      "radius": 0.95,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "roseshrub_1",
+    "category": "bush",
+    "label": "Роза (шиповник) (кустарник, низкое, раскидистое, 1.18 м)",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/roseshrub_1.glb",
+    "dimensions": {
+      "height": 1.18,
+      "radius": 0.77,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "juniperupright_1",
+    "category": "bush",
+    "label": "Можжевельник вертикальный (кустарник, низкое, колонновидное, 1.8 м)",
+    "size_class": "low",
+    "crown_class": "columnar",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/juniperupright_1.glb",
+    "dimensions": {
+      "height": 1.8,
+      "radius": 0.31,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "juniperspreading_1",
+    "category": "bush",
+    "label": "Можжевельник раскидистый (кустарник, низкое, раскидистое, 0.4 м)",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/juniperspreading_1.glb",
+    "dimensions": {
+      "height": 1.0,
+      "radius": 1.39,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "mountainpine_1",
+    "category": "bush",
+    "label": "Сосна горная (кустарник, низкое, обычная крона, 0.91 м)",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/mountainpine_1.glb",
+    "dimensions": {
+      "height": 0.91,
+      "radius": 0.28,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "coniferlow_1",
+    "category": "bush",
+    "label": "Низкий хвойный куст (кустарник, низкое, раскидистое, 0.4 м)",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/coniferlow_1.glb",
+    "dimensions": {
+      "height": 1.0,
+      "radius": 0.92,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "tallshrub_1",
+    "category": "bush",
+    "label": "Высокий куст (сирень/чубушник) (кустарник, низкое, обычная крона, 2.5 м)",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/tallshrub_1.glb",
+    "dimensions": {
+      "height": 2.5,
+      "radius": 0.7,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "archingshrub_1",
+    "category": "bush",
+    "label": "Дугообразная спирея (кустарник, низкое, раскидистое, 0.48 м)",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/archingshrub_1.glb",
+    "dimensions": {
+      "height": 1.86,
+      "radius": 1.43,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "weepingtree_1",
+    "category": "tree",
+    "label": "Плакучее дерево (архетип tree_weeping, заглушка)",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/weepingtree_1.glb",
+    "dimensions": {
+      "height": 2.45,
+      "radius": 0.9,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "dogwoodshrub_1",
+    "category": "bush",
+    "label": "Дёрен (архетип shrub_dogwood, заглушка)",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/dogwoodshrub_1.glb",
+    "dimensions": {
+      "height": 1.85,
+      "radius": 0.4,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "silvershrub_1",
+    "category": "bush",
+    "label": "Серебристый кустарник (архетип shrub_silver, заглушка)",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/silvershrub_1.glb",
+    "dimensions": {
+      "height": 1.7,
+      "radius": 0.38,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "vineclematis_1",
+    "category": "bush",
+    "label": "Клематис (архетип vine_clematis, заглушка)",
+    "size_class": "low",
+    "crown_class": "columnar",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/vineclematis_1.glb",
+    "dimensions": {
+      "height": 1.63,
+      "radius": 0.26,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "vineclimbing_1",
+    "category": "bush",
+    "label": "Лиана вьющаяся (архетип vine_climbing, заглушка)",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/vineclimbing_1.glb",
+    "dimensions": {
+      "height": 2,
+      "radius": 0.44,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "vinelargeleaf_1",
+    "category": "bush",
+    "label": "Лиана крупнолистная (архетип vine_large_leaf, заглушка)",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/vinelargeleaf_1.glb",
+    "dimensions": {
+      "height": 2.4,
+      "radius": 0.57,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_barhat_amurskiy",
+    "category": "tree",
+    "label": "Бархат Амурский",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_vyaz_gibridnyy_rezista",
+    "category": "tree",
+    "label": "Вяз гибридный Резиста",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_vyaz_peristo_vetvistyy",
+    "category": "tree",
+    "label": "Вяз перисто-ветвистый",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_vyaz_shershavyy",
+    "category": "tree",
+    "label": "Вяз шершавый",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_klen_krasnyy",
+    "category": "tree",
+    "label": "Клен красный",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_klen_ostrolistnyy",
+    "category": "tree",
+    "label": "Клен остролистный",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_klen_saharistyy_serebristyy",
+    "category": "tree",
+    "label": "Клен сахаристый/серебристый",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_lipa_amerikanskaya",
+    "category": "tree",
+    "label": "Липа американская",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_lipa_krupnolistnaya",
+    "category": "tree",
+    "label": "Липа крупнолистная",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_lipa_melkolistnaya",
+    "category": "tree",
+    "label": "Липа мелколистная",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_lipa_evropeyskaya",
+    "category": "tree",
+    "label": "Липа европейская",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_lipa_mongolskaya",
+    "category": "tree",
+    "label": "Липа монгольская",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_yasen_manchzhurskiy",
+    "category": "tree",
+    "label": "Ясень маньчжурский",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_oreh_manchzhurskiy",
+    "category": "tree",
+    "label": "Орех маньчжурский",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_oreh_seryy",
+    "category": "tree",
+    "label": "Орех серый",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_dub_mongolskiy",
+    "category": "tree",
+    "label": "Дуб монгольский",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_dub_chereshchatyy",
+    "category": "tree",
+    "label": "Дуб черешчатый",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_1.glb",
+    "dimensions": {
+      "height": 2.73,
+      "radius": 1.53,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_grusha_ussuriyskaya",
+    "category": "tree",
+    "label": "Груша уссурийская",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_grusha_obyknovennaya",
+    "category": "tree",
+    "label": "Груша обыкновенная",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_grusha_ivolistnaya",
+    "category": "tree",
+    "label": "Груша иволистная",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_klen_manchzhurskiy",
+    "category": "tree",
+    "label": "Клен маньчжурский",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_klen_zelenokoryy",
+    "category": "tree",
+    "label": "Клен зеленокорый",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_klen_melkolistnyy",
+    "category": "tree",
+    "label": "Клён мелколистный",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_klen_kolosistyy",
+    "category": "tree",
+    "label": "Клён колосистый",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_klen_lozhnoziboldov",
+    "category": "tree",
+    "label": "Клен ложнозибольдов",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_klen_ginnala",
+    "category": "tree",
+    "label": "Клен гиннала",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_kladrastis_zheltyy",
+    "category": "tree",
+    "label": "Кладрастис желтый",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_maakiya_amurskaya",
+    "category": "tree",
+    "label": "Маакия амурская",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_ryabina_ariya",
+    "category": "tree",
+    "label": "Рябина ария",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_ryabina_gibridnaya",
+    "category": "tree",
+    "label": "Рябина гибридная",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_ryabina_promezhutochnaya",
+    "category": "tree",
+    "label": "Рябина промежуточная",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_ryabina_tyuringskaya",
+    "category": "tree",
+    "label": "Рябина тюрингская",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_ryabina_arnolda",
+    "category": "tree",
+    "label": "Рябина Арнольда",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_ryabina_muzho",
+    "category": "tree",
+    "label": "Рябина Мужо",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_ryabina_kashmirskaya",
+    "category": "tree",
+    "label": "Рябина кашмирская",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_topol_lavrolistnyy",
+    "category": "tree",
+    "label": "Тополь лавролистный",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/commontree_3.glb",
+    "dimensions": {
+      "height": 3.29,
+      "radius": 0.74,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_topol_berlinskiy",
+    "category": "tree",
+    "label": "Тополь берлинский",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/columnartree_1.glb",
+    "dimensions": {
+      "height": 9.0,
+      "radius": 1.22,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_topol_sovetskiy_piramidalnyy",
+    "category": "tree",
+    "label": "Тополь советский Пирамидальный",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/columnartree_1.glb",
+    "dimensions": {
+      "height": 9.0,
+      "radius": 1.22,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_chast_sortov_topolya_belogo",
+    "category": "tree",
+    "label": "часть сортов тополя белого",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/columnartree_1.glb",
+    "dimensions": {
+      "height": 9.0,
+      "radius": 1.22,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_chast_sortov_yabloni_s_kolonnovidnoy_formoy",
+    "category": "tree",
+    "label": "часть сортов яблони с колонновидной формой",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/columnartree_1.glb",
+    "dimensions": {
+      "height": 9.0,
+      "radius": 1.22,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_otdelnye_vertikalnye_formy_vyaza",
+    "category": "tree",
+    "label": "отдельные вертикальные формы вяза",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/columnartree_1.glb",
+    "dimensions": {
+      "height": 9.0,
+      "radius": 1.22,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_bereza_povislaya",
+    "category": "tree",
+    "label": "Береза повислая",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/birchtree_2.glb",
+    "dimensions": {
+      "height": 4.43,
+      "radius": 0.94,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_bereza_pushistaya",
+    "category": "tree",
+    "label": "Береза пушистая",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/birchtree_2.glb",
+    "dimensions": {
+      "height": 4.43,
+      "radius": 0.94,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_bereza_bumazhnaya",
+    "category": "tree",
+    "label": "Береза бумажная",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/birchtree_2.glb",
+    "dimensions": {
+      "height": 4.43,
+      "radius": 0.94,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_bereza_vishnevaya",
+    "category": "tree",
+    "label": "Берёза вишнёвая",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/birchtree_2.glb",
+    "dimensions": {
+      "height": 4.43,
+      "radius": 0.94,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_bereza_rebristaya",
+    "category": "tree",
+    "label": "Береза ребристая",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/birchtree_2.glb",
+    "dimensions": {
+      "height": 4.43,
+      "radius": 0.94,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_bereza_chernaya",
+    "category": "tree",
+    "label": "Береза черная",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/birchtree_2.glb",
+    "dimensions": {
+      "height": 4.43,
+      "radius": 0.94,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_bereza_ermana",
+    "category": "tree",
+    "label": "Береза Эрмана",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/birchtree_2.glb",
+    "dimensions": {
+      "height": 4.43,
+      "radius": 0.94,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_bereza_povislaya_plakuchaya",
+    "category": "tree",
+    "label": "Береза повислая / плакучая",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/weepingtree_1.glb",
+    "dimensions": {
+      "height": 2.57,
+      "radius": 0.95,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_iva_belaya",
+    "category": "tree",
+    "label": "Ива белая",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/weepingtree_1.glb",
+    "dimensions": {
+      "height": 2.57,
+      "radius": 0.95,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_iva_prutovidnaya",
+    "category": "tree",
+    "label": "Ива прутовидная",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/weepingtree_1.glb",
+    "dimensions": {
+      "height": 2.57,
+      "radius": 0.95,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_ivy_sverdlovskoy_selektsii",
+    "category": "tree",
+    "label": "Ивы свердловской селекции",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/weepingtree_1.glb",
+    "dimensions": {
+      "height": 2.57,
+      "radius": 0.95,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_iva_shverina",
+    "category": "tree",
+    "label": "Ива Шверина",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/weepingtree_1.glb",
+    "dimensions": {
+      "height": 2.57,
+      "radius": 0.95,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_otdelnye_sorta_ivy_kozey",
+    "category": "tree",
+    "label": "отдельные сорта ивы козьей",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/weepingtree_1.glb",
+    "dimensions": {
+      "height": 2.57,
+      "radius": 0.95,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_iva_belaya_2",
+    "category": "tree",
+    "label": "Ива белая",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/willow_2.glb",
+    "dimensions": {
+      "height": 3.82,
+      "radius": 1.78,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_iva_lomkaya_bullata",
+    "category": "tree",
+    "label": "Ива ломкая Bullata",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/willow_2.glb",
+    "dimensions": {
+      "height": 3.82,
+      "radius": 1.78,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_iva_prutovidnaya_2",
+    "category": "tree",
+    "label": "Ива прутовидная",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/willow_2.glb",
+    "dimensions": {
+      "height": 3.82,
+      "radius": 1.78,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_iva_kozya",
+    "category": "tree",
+    "label": "Ива козья",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/willow_2.glb",
+    "dimensions": {
+      "height": 3.82,
+      "radius": 1.78,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_iva_pyatitychinkovaya",
+    "category": "tree",
+    "label": "Ива пятитычинковая",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/willow_2.glb",
+    "dimensions": {
+      "height": 3.82,
+      "radius": 1.78,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_iva_rosistaya",
+    "category": "tree",
+    "label": "Ива росистая",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/willow_2.glb",
+    "dimensions": {
+      "height": 3.82,
+      "radius": 1.78,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_iva_tselnolistnaya",
+    "category": "tree",
+    "label": "Ива цельнолистная",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/willow_2.glb",
+    "dimensions": {
+      "height": 3.82,
+      "radius": 1.78,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_iva_shverina_2",
+    "category": "tree",
+    "label": "Ива Шверина",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/willow_2.glb",
+    "dimensions": {
+      "height": 3.82,
+      "radius": 1.78,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_boyaryshnik_arnolda",
+    "category": "tree",
+    "label": "Боярышник Арнольда",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_boyaryshnik_krupnokolyuchkovyy",
+    "category": "tree",
+    "label": "Боярышник крупноколючковый",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_boyaryshnik_peristonadrezannyy",
+    "category": "tree",
+    "label": "Боярышник перистонадрезанный",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_boyaryshnik_polumyagkiy",
+    "category": "tree",
+    "label": "Боярышник полумягкий",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_boyaryshnik_slivolistnyy",
+    "category": "tree",
+    "label": "Боярышник сливолистный",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_boyaryshnik_tochechnyy",
+    "category": "tree",
+    "label": "Боярышник точечный",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_boyaryshnik_chernyy",
+    "category": "tree",
+    "label": "Боярышник чёрный",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_boyaryshnik_zelenomyasyy",
+    "category": "tree",
+    "label": "Боярышник зеленомясый",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_vishnya_obyknovennaya",
+    "category": "tree",
+    "label": "Вишня обыкновенная",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_sliva_domashnyaya",
+    "category": "tree",
+    "label": "Слива домашняя",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_sliva_kolyuchaya",
+    "category": "tree",
+    "label": "Слива колючая",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_sliva_rastopyrennaya",
+    "category": "tree",
+    "label": "Слива растопыренная",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_yablonya_nedzvedtskogo",
+    "category": "tree",
+    "label": "Яблоня Недзведцкого",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_yablonya_obilnotsvetuschaya",
+    "category": "tree",
+    "label": "Яблоня обильноцветущая",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_yablonya_slivolistnaya",
+    "category": "tree",
+    "label": "Яблоня сливолистная",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_yablonya_yagodnaya",
+    "category": "tree",
+    "label": "Яблоня ягодная",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_yablonya_zibolda",
+    "category": "tree",
+    "label": "Яблоня Зибольда",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_yablonya_sarzhenta",
+    "category": "tree",
+    "label": "Яблоня Саржента",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_cheremuha_virginskaya",
+    "category": "tree",
+    "label": "Черемуха виргинская",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_cheremuha_maaka",
+    "category": "tree",
+    "label": "Черемуха Маака",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_cheremuha_obyknovennaya",
+    "category": "tree",
+    "label": "Черемуха обыкновенная",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_cheremuha_pozdnyaya",
+    "category": "tree",
+    "label": "Черемуха поздняя",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_cheremuha_pensilvanskaya",
+    "category": "tree",
+    "label": "Черемуха пенсильванская",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/smallornamentaltree_1.glb",
+    "dimensions": {
+      "height": 4.85,
+      "radius": 1.88,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_topol_balzamicheskiy",
+    "category": "tree",
+    "label": "Тополь бальзамический",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/poplartree_1.glb",
+    "dimensions": {
+      "height": 10.4,
+      "radius": 1.42,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_topol_belyy",
+    "category": "tree",
+    "label": "Тополь белый",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/poplartree_1.glb",
+    "dimensions": {
+      "height": 10.4,
+      "radius": 1.42,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_topol_berlinskiy_2",
+    "category": "tree",
+    "label": "Тополь берлинский",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/poplartree_1.glb",
+    "dimensions": {
+      "height": 10.4,
+      "radius": 1.42,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_topol_drozhaschiy",
+    "category": "tree",
+    "label": "Тополь дрожащий",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/poplartree_1.glb",
+    "dimensions": {
+      "height": 10.4,
+      "radius": 1.42,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_topol_kanadskiy",
+    "category": "tree",
+    "label": "Тополь канадский",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/poplartree_1.glb",
+    "dimensions": {
+      "height": 10.4,
+      "radius": 1.42,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_topol_simona",
+    "category": "tree",
+    "label": "Тополь Симона",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/poplartree_1.glb",
+    "dimensions": {
+      "height": 10.4,
+      "radius": 1.42,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_topol_sovetskiy",
+    "category": "tree",
+    "label": "Тополь советский",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/poplartree_1.glb",
+    "dimensions": {
+      "height": 10.4,
+      "radius": 1.42,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_topol_lavrolistnyy_2",
+    "category": "tree",
+    "label": "Тополь лавролистный",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/poplartree_1.glb",
+    "dimensions": {
+      "height": 10.4,
+      "radius": 1.42,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_topol_maksimovicha",
+    "category": "tree",
+    "label": "Тополь Максимовича",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/poplartree_1.glb",
+    "dimensions": {
+      "height": 10.4,
+      "radius": 1.42,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_topol_chernyy",
+    "category": "tree",
+    "label": "Тополь черный",
+    "size_class": "tall",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/poplartree_1.glb",
+    "dimensions": {
+      "height": 10.4,
+      "radius": 1.42,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_el_kolyuchaya",
+    "category": "tree",
+    "label": "Ель колючая",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/spruce_1.glb",
+    "dimensions": {
+      "height": 8.78,
+      "radius": 2.96,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_el_obyknovennaya",
+    "category": "tree",
+    "label": "Ель обыкновенная",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/spruce_1.glb",
+    "dimensions": {
+      "height": 8.78,
+      "radius": 2.96,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_el_kanadskaya",
+    "category": "tree",
+    "label": "Ель канадская",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/spruce_1.glb",
+    "dimensions": {
+      "height": 8.78,
+      "radius": 2.96,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_el_serbskaya",
+    "category": "tree",
+    "label": "Ель сербская",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/spruce_1.glb",
+    "dimensions": {
+      "height": 8.78,
+      "radius": 2.96,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_el_sherohovataya",
+    "category": "tree",
+    "label": "Ель шероховатая",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/spruce_1.glb",
+    "dimensions": {
+      "height": 8.78,
+      "radius": 2.96,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_el_engelmana",
+    "category": "tree",
+    "label": "Ель Энгельмана",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/spruce_1.glb",
+    "dimensions": {
+      "height": 8.78,
+      "radius": 2.96,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_sosna_obyknovennaya",
+    "category": "tree",
+    "label": "Сосна обыкновенная",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/pinetree_2.glb",
+    "dimensions": {
+      "height": 3.74,
+      "radius": 1.03,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_sosna_veymutova",
+    "category": "tree",
+    "label": "Сосна Веймутова",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/pinetree_2.glb",
+    "dimensions": {
+      "height": 3.74,
+      "radius": 1.03,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_sosna_rumeliyskaya",
+    "category": "tree",
+    "label": "Сосна румелийская",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/pinetree_2.glb",
+    "dimensions": {
+      "height": 3.74,
+      "radius": 1.03,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_sosna_chernaya_avstriyskaya",
+    "category": "tree",
+    "label": "Сосна черная австрийская",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/pinetree_2.glb",
+    "dimensions": {
+      "height": 3.74,
+      "radius": 1.03,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_sosna_kedrovaya_evropeyskaya",
+    "category": "tree",
+    "label": "Сосна кедровая европейская",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/pinetree_2.glb",
+    "dimensions": {
+      "height": 3.74,
+      "radius": 1.03,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_sosna_kedrovaya_koreyskaya",
+    "category": "tree",
+    "label": "Сосна кедровая корейская",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/pinetree_2.glb",
+    "dimensions": {
+      "height": 3.74,
+      "radius": 1.03,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_sosna_kedrovaya_sibirskaya",
+    "category": "tree",
+    "label": "Сосна кедровая сибирская",
+    "size_class": "medium",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/pinetree_2.glb",
+    "dimensions": {
+      "height": 3.74,
+      "radius": 1.03,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_listvennitsa_amerikanskaya",
+    "category": "tree",
+    "label": "Лиственница американская",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/larch_1.glb",
+    "dimensions": {
+      "height": 11.34,
+      "radius": 4.17,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_listvennitsa_daurskaya",
+    "category": "tree",
+    "label": "Лиственница даурская",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/larch_1.glb",
+    "dimensions": {
+      "height": 11.34,
+      "radius": 4.17,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_listvennitsa_evropeyskaya",
+    "category": "tree",
+    "label": "Лиственница европейская",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/larch_1.glb",
+    "dimensions": {
+      "height": 11.34,
+      "radius": 4.17,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_listvennitsa_kemfera",
+    "category": "tree",
+    "label": "Лиственница Кемфера",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/larch_1.glb",
+    "dimensions": {
+      "height": 11.34,
+      "radius": 4.17,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_listvennitsa_sukacheva",
+    "category": "tree",
+    "label": "Лиственница Сукачева",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/larch_1.glb",
+    "dimensions": {
+      "height": 11.34,
+      "radius": 4.17,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_listvennitsa_sibirskaya",
+    "category": "tree",
+    "label": "Лиственница сибирская",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/larch_1.glb",
+    "dimensions": {
+      "height": 11.34,
+      "radius": 4.17,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_pihta_balzamicheskaya",
+    "category": "tree",
+    "label": "Пихта бальзамическая",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/fir_1.glb",
+    "dimensions": {
+      "height": 8.5,
+      "radius": 2.3,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_pihta_vicha",
+    "category": "tree",
+    "label": "Пихта Вича",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/fir_1.glb",
+    "dimensions": {
+      "height": 8.5,
+      "radius": 2.3,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_pihta_odnotsvetnaya",
+    "category": "tree",
+    "label": "Пихта одноцветная",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/fir_1.glb",
+    "dimensions": {
+      "height": 8.5,
+      "radius": 2.3,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_pihta_sibirskaya",
+    "category": "tree",
+    "label": "Пихта сибирская",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/fir_1.glb",
+    "dimensions": {
+      "height": 8.5,
+      "radius": 2.3,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_psevdotsuga_menzisa",
+    "category": "tree",
+    "label": "Псевдотсуга Мензиса",
+    "size_class": "tall",
+    "crown_class": "regular",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/fir_1.glb",
+    "dimensions": {
+      "height": 8.5,
+      "radius": 2.3,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_tuya_zapadnaya_otdelnaya_model",
+    "category": "tree",
+    "label": "Туя западная — отдельная модель",
+    "size_class": "low",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/thuja_1.glb",
+    "dimensions": {
+      "height": 1.5,
+      "radius": 0.28,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_vizualno_harakterna_dlya_gorodskogo_ozeleneniya",
+    "category": "tree",
+    "label": "визуально характерна для городского озеленения",
+    "size_class": "low",
+    "crown_class": "columnar",
+    "setback_kind": "tree",
+    "object_type": "tree",
+    "model": "/models/thuja_1.glb",
+    "dimensions": {
+      "height": 1.5,
+      "radius": 0.28,
+      "trunk_height": 1.2,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "cluster",
+      "color": "#3a8f45"
+    }
+  },
+  {
+    "id": "species_mozhzhevelnik_virginskiy",
+    "category": "bush",
+    "label": "Можжевельник виргинский",
+    "size_class": "low",
+    "crown_class": "columnar",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/juniperupright_1.glb",
+    "dimensions": {
+      "height": 1.17,
+      "radius": 0.2,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_mozhzhevelnik_skalnyy",
+    "category": "bush",
+    "label": "Можжевельник скальный",
+    "size_class": "low",
+    "crown_class": "columnar",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/juniperupright_1.glb",
+    "dimensions": {
+      "height": 1.17,
+      "radius": 0.2,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_mozhzhevelnik_kitayskiy",
+    "category": "bush",
+    "label": "Можжевельник китайский",
+    "size_class": "low",
+    "crown_class": "columnar",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/juniperupright_1.glb",
+    "dimensions": {
+      "height": 1.17,
+      "radius": 0.2,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_mozhzhevelnik_cheshuychatyy",
+    "category": "bush",
+    "label": "Можжевельник чешуйчатый",
+    "size_class": "low",
+    "crown_class": "columnar",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/juniperupright_1.glb",
+    "dimensions": {
+      "height": 1.17,
+      "radius": 0.2,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_mozhzhevelnik_gorizontalnyy",
+    "category": "bush",
+    "label": "Можжевельник горизонтальный",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/juniperspreading_1.glb",
+    "dimensions": {
+      "height": 0.45,
+      "radius": 0.63,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_mozhzhevelnik_kazatskiy",
+    "category": "bush",
+    "label": "Можжевельник казацкий",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/juniperspreading_1.glb",
+    "dimensions": {
+      "height": 0.45,
+      "radius": 0.63,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_mozhzhevelnik_sredniy_pfittseriana",
+    "category": "bush",
+    "label": "Можжевельник средний Пфитцериана",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/juniperspreading_1.glb",
+    "dimensions": {
+      "height": 0.45,
+      "radius": 0.63,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_sosna_gornaya",
+    "category": "bush",
+    "label": "Сосна горная",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/mountainpine_1.glb",
+    "dimensions": {
+      "height": 0.55,
+      "radius": 0.17,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_mikrobiota_perekrestnoparnaya",
+    "category": "bush",
+    "label": "Микробиота перекрёстнопарная",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/coniferlow_1.glb",
+    "dimensions": {
+      "height": 0.35,
+      "radius": 0.32,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_kedrovyy_stlanik",
+    "category": "bush",
+    "label": "Кедровый стланик",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/coniferlow_1.glb",
+    "dimensions": {
+      "height": 0.35,
+      "radius": 0.32,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_aroniya",
+    "category": "bush",
+    "label": "Арония",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_barbaris_amurskiy",
+    "category": "bush",
+    "label": "Барбарис амурский",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_barbaris_obyknovennyy",
+    "category": "bush",
+    "label": "Барбарис обыкновенный",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_barbaris_ottavskiy",
+    "category": "bush",
+    "label": "Барбарис оттавский",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_barbaris_vilson",
+    "category": "bush",
+    "label": "Барбарис Вильсон",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_beresklet_borodavchatyy",
+    "category": "bush",
+    "label": "Бересклет бородавчатый",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_beresklet_evropeyskiy",
+    "category": "bush",
+    "label": "Бересклет европейский",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_beresklet_maaka",
+    "category": "bush",
+    "label": "Бересклет Маака",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_biryuchina",
+    "category": "bush",
+    "label": "Бирючина",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_zhimolost_alpiyskaya",
+    "category": "bush",
+    "label": "Жимолость альпийская",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_zhimolost_zolotistaya",
+    "category": "bush",
+    "label": "Жимолость золотистая",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_zhimolost_korolkova",
+    "category": "bush",
+    "label": "Жимолость Королькова",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_zhimolost_maaka",
+    "category": "bush",
+    "label": "Жимолость Маака",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_zhimolost_maksimovicha",
+    "category": "bush",
+    "label": "Жимолость Максимовича",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_zhimolost_obyknovennaya",
+    "category": "bush",
+    "label": "Жимолость обыкновенная",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_zhimolost_tatarskaya",
+    "category": "bush",
+    "label": "Жимолость татарская",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_smorodina_alpiyskaya",
+    "category": "bush",
+    "label": "Смородина альпийская",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_smorodina_zhelezistaya",
+    "category": "bush",
+    "label": "Смородина железистая",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_smorodina_zolotistaya",
+    "category": "bush",
+    "label": "Смородина золотистая",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_smorodina_krasnaya",
+    "category": "bush",
+    "label": "Смородина красная",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_snezhnoyagodnik",
+    "category": "bush",
+    "label": "Снежноягодник",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_forzitsiya",
+    "category": "bush",
+    "label": "Форзиция",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_1.glb",
+    "dimensions": {
+      "height": 1.05,
+      "radius": 0.72,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_barbaris_tunberga",
+    "category": "bush",
+    "label": "Барбарис Тунберга",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_2.glb",
+    "dimensions": {
+      "height": 0.67,
+      "radius": 0.4,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_kizilnik_blestyaschiy",
+    "category": "bush",
+    "label": "Кизильник блестящий",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_2.glb",
+    "dimensions": {
+      "height": 0.67,
+      "radius": 0.4,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_magoniya",
+    "category": "bush",
+    "label": "Магония",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_2.glb",
+    "dimensions": {
+      "height": 0.67,
+      "radius": 0.4,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_lapchatka_kustarnikovaya",
+    "category": "bush",
+    "label": "Лапчатка кустарниковая",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_2.glb",
+    "dimensions": {
+      "height": 0.67,
+      "radius": 0.4,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_spireya_yaponskaya",
+    "category": "bush",
+    "label": "Спирея японская",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_2.glb",
+    "dimensions": {
+      "height": 0.67,
+      "radius": 0.4,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_spireya_berezolistnaya",
+    "category": "bush",
+    "label": "Спирея березолистная",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_2.glb",
+    "dimensions": {
+      "height": 0.67,
+      "radius": 0.4,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_spireya_bumalda",
+    "category": "bush",
+    "label": "Спирея Бумальда",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_2.glb",
+    "dimensions": {
+      "height": 0.67,
+      "radius": 0.4,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_spireya_ostrozubchataya",
+    "category": "bush",
+    "label": "Спирея острозубчатая",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_2.glb",
+    "dimensions": {
+      "height": 0.67,
+      "radius": 0.4,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_spireya_dubravkolistnaya",
+    "category": "bush",
+    "label": "Спирея дубравколистная",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_2.glb",
+    "dimensions": {
+      "height": 0.67,
+      "radius": 0.4,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_stefanandra",
+    "category": "bush",
+    "label": "Стефанандра",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/bush_2.glb",
+    "dimensions": {
+      "height": 0.67,
+      "radius": 0.4,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_siren_amurskaya",
+    "category": "bush",
+    "label": "Сирень амурская",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/tallshrub_1.glb",
+    "dimensions": {
+      "height": 2.75,
+      "radius": 0.77,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_siren_vengerskaya",
+    "category": "bush",
+    "label": "Сирень венгерская",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/tallshrub_1.glb",
+    "dimensions": {
+      "height": 2.75,
+      "radius": 0.77,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_siren_obyknovennaya",
+    "category": "bush",
+    "label": "Сирень обыкновенная",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/tallshrub_1.glb",
+    "dimensions": {
+      "height": 2.75,
+      "radius": 0.77,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_siren_preston",
+    "category": "bush",
+    "label": "Сирень Престон",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/tallshrub_1.glb",
+    "dimensions": {
+      "height": 2.75,
+      "radius": 0.77,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_siren_volfa",
+    "category": "bush",
+    "label": "Сирень Вольфа",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/tallshrub_1.glb",
+    "dimensions": {
+      "height": 2.75,
+      "radius": 0.77,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_siren_komarova",
+    "category": "bush",
+    "label": "Сирень Комарова",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/tallshrub_1.glb",
+    "dimensions": {
+      "height": 2.75,
+      "radius": 0.77,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_chubushnik_venechnyy",
+    "category": "bush",
+    "label": "Чубушник венечный",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/tallshrub_1.glb",
+    "dimensions": {
+      "height": 2.75,
+      "radius": 0.77,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_chubushnik_lemuana",
+    "category": "bush",
+    "label": "Чубушник Лемуана",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/tallshrub_1.glb",
+    "dimensions": {
+      "height": 2.75,
+      "radius": 0.77,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_chubushnik_melkolistnyy",
+    "category": "bush",
+    "label": "Чубушник мелколистный",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/tallshrub_1.glb",
+    "dimensions": {
+      "height": 2.75,
+      "radius": 0.77,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_buzina_chernaya",
+    "category": "bush",
+    "label": "Бузина черная",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/tallshrub_1.glb",
+    "dimensions": {
+      "height": 2.75,
+      "radius": 0.77,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_buzina_krasnaya",
+    "category": "bush",
+    "label": "Бузина красная",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/tallshrub_1.glb",
+    "dimensions": {
+      "height": 2.75,
+      "radius": 0.77,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_buzina_kanadskaya",
+    "category": "bush",
+    "label": "Бузина канадская",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/tallshrub_1.glb",
+    "dimensions": {
+      "height": 2.75,
+      "radius": 0.77,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_spireya_vangutta",
+    "category": "bush",
+    "label": "Спирея Вангутта",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/archingshrub_1.glb",
+    "dimensions": {
+      "height": 1.3,
+      "radius": 1.0,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_spireya_seraya",
+    "category": "bush",
+    "label": "Спирея серая",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/archingshrub_1.glb",
+    "dimensions": {
+      "height": 1.3,
+      "radius": 1.0,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_spireya_billarda",
+    "category": "bush",
+    "label": "Спирея Билларда",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/archingshrub_1.glb",
+    "dimensions": {
+      "height": 1.3,
+      "radius": 1.0,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_spireya_duglasa",
+    "category": "bush",
+    "label": "Спирея Дугласа",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/archingshrub_1.glb",
+    "dimensions": {
+      "height": 1.3,
+      "radius": 1.0,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_spireya_ivolistnaya",
+    "category": "bush",
+    "label": "Спирея иволистная",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/archingshrub_1.glb",
+    "dimensions": {
+      "height": 1.3,
+      "radius": 1.0,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_spireya_nipponskaya",
+    "category": "bush",
+    "label": "Спирея ниппонская",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/archingshrub_1.glb",
+    "dimensions": {
+      "height": 1.3,
+      "radius": 1.0,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_spireya_srednyaya",
+    "category": "bush",
+    "label": "Спирея средняя",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/archingshrub_1.glb",
+    "dimensions": {
+      "height": 1.3,
+      "radius": 1.0,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_spireya_trehlopastnaya",
+    "category": "bush",
+    "label": "Спирея трехлопастная",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/archingshrub_1.glb",
+    "dimensions": {
+      "height": 1.3,
+      "radius": 1.0,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_kizilnik_gorizontalnyy",
+    "category": "bush",
+    "label": "Кизильник горизонтальный",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/lowspreadingshrub_1.glb",
+    "dimensions": {
+      "height": 0.35,
+      "radius": 0.43,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_beresklet_forchuna",
+    "category": "bush",
+    "label": "Бересклет Форчуна",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/lowspreadingshrub_1.glb",
+    "dimensions": {
+      "height": 0.35,
+      "radius": 0.43,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_stefanandra_nadrezannolistnaya",
+    "category": "bush",
+    "label": "Стефанандра надрезаннолистная",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/lowspreadingshrub_1.glb",
+    "dimensions": {
+      "height": 0.35,
+      "radius": 0.43,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_stefanandra_tanaki",
+    "category": "bush",
+    "label": "Стефанандра Танаки",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/lowspreadingshrub_1.glb",
+    "dimensions": {
+      "height": 0.35,
+      "radius": 0.43,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_mindal_nizkiy_stepnoy",
+    "category": "bush",
+    "label": "Миндаль низкий/степной",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/lowspreadingshrub_1.glb",
+    "dimensions": {
+      "height": 0.35,
+      "radius": 0.43,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_roza_bedrentsevolistnaya",
+    "category": "bush",
+    "label": "Роза бедренцеволистная",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/roseshrub_1.glb",
+    "dimensions": {
+      "height": 0.71,
+      "radius": 0.46,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_roza_morschinistaya",
+    "category": "bush",
+    "label": "Роза морщинистая",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/roseshrub_1.glb",
+    "dimensions": {
+      "height": 0.71,
+      "radius": 0.46,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_roza_sizaya",
+    "category": "bush",
+    "label": "Роза сизая",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/roseshrub_1.glb",
+    "dimensions": {
+      "height": 0.71,
+      "radius": 0.46,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_roza_sobachya",
+    "category": "bush",
+    "label": "Роза собачья",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/roseshrub_1.glb",
+    "dimensions": {
+      "height": 0.71,
+      "radius": 0.46,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_gortenziya_brettshneydera",
+    "category": "bush",
+    "label": "Гортензия Бреттшнейдера",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/hydrangeashrub_1.glb",
+    "dimensions": {
+      "height": 0.65,
+      "radius": 0.48,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_gortenziya_drevovidnaya",
+    "category": "bush",
+    "label": "Гортензия древовидная",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/hydrangeashrub_1.glb",
+    "dimensions": {
+      "height": 0.65,
+      "radius": 0.48,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_gortenziya_metelchataya",
+    "category": "bush",
+    "label": "Гортензия метельчатая",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/hydrangeashrub_1.glb",
+    "dimensions": {
+      "height": 0.65,
+      "radius": 0.48,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_leschina_obyknovennaya",
+    "category": "bush",
+    "label": "Лещина обыкновенная",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/multistemshrub_1.glb",
+    "dimensions": {
+      "height": 3.6,
+      "radius": 1.45,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_leschina_purpurnolistnaya",
+    "category": "bush",
+    "label": "Лещина пурпурнолистная",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/multistemshrub_1.glb",
+    "dimensions": {
+      "height": 3.6,
+      "radius": 1.45,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_irga_kanadskaya",
+    "category": "bush",
+    "label": "Ирга канадская",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/multistemshrub_1.glb",
+    "dimensions": {
+      "height": 3.6,
+      "radius": 1.45,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_irga_lamarka",
+    "category": "bush",
+    "label": "Ирга Ламарка",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/multistemshrub_1.glb",
+    "dimensions": {
+      "height": 3.6,
+      "radius": 1.45,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_irga_kolosistaya",
+    "category": "bush",
+    "label": "Ирга колосистая",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/multistemshrub_1.glb",
+    "dimensions": {
+      "height": 3.6,
+      "radius": 1.45,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_irga_kruglolistnaya",
+    "category": "bush",
+    "label": "Ирга круглолистная",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/multistemshrub_1.glb",
+    "dimensions": {
+      "height": 3.6,
+      "radius": 1.45,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_kalina_gordovina",
+    "category": "bush",
+    "label": "Калина гордовина",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/multistemshrub_1.glb",
+    "dimensions": {
+      "height": 3.6,
+      "radius": 1.45,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_kalina_obyknovennaya",
+    "category": "bush",
+    "label": "Калина обыкновенная",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/multistemshrub_1.glb",
+    "dimensions": {
+      "height": 3.6,
+      "radius": 1.45,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_kalina_sarzhenta",
+    "category": "bush",
+    "label": "Калина Саржента",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/multistemshrub_1.glb",
+    "dimensions": {
+      "height": 3.6,
+      "radius": 1.45,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_ekzohorda",
+    "category": "bush",
+    "label": "Экзохорда",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/multistemshrub_1.glb",
+    "dimensions": {
+      "height": 3.6,
+      "radius": 1.45,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_veygela_middendorfa",
+    "category": "bush",
+    "label": "Вейгела Миддендорфа",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/multistemshrub_1.glb",
+    "dimensions": {
+      "height": 3.6,
+      "radius": 1.45,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_vishnya_voylochnaya",
+    "category": "bush",
+    "label": "Вишня войлочная",
+    "size_class": "medium",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/multistemshrub_1.glb",
+    "dimensions": {
+      "height": 3.6,
+      "radius": 1.45,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_deren_belyy",
+    "category": "bush",
+    "label": "Дерен белый",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/dogwoodshrub_1.glb",
+    "dimensions": {
+      "height": 1.76,
+      "radius": 0.38,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_deren_krovavo_krasnyy",
+    "category": "bush",
+    "label": "Дерен кроваво-красный",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/dogwoodshrub_1.glb",
+    "dimensions": {
+      "height": 1.76,
+      "radius": 0.38,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_deren_otpryskovyy",
+    "category": "bush",
+    "label": "Дерен отпрысковый",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/dogwoodshrub_1.glb",
+    "dimensions": {
+      "height": 1.76,
+      "radius": 0.38,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_deren_beyli",
+    "category": "bush",
+    "label": "Дёрен Бейли",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/dogwoodshrub_1.glb",
+    "dimensions": {
+      "height": 1.76,
+      "radius": 0.38,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_deren_valtera",
+    "category": "bush",
+    "label": "Дёрен Вальтера",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/dogwoodshrub_1.glb",
+    "dimensions": {
+      "height": 1.76,
+      "radius": 0.38,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_loh_serebristyy",
+    "category": "bush",
+    "label": "Лох серебристый",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/silvershrub_1.glb",
+    "dimensions": {
+      "height": 1.61,
+      "radius": 0.36,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_loh_uzkolistnyy",
+    "category": "bush",
+    "label": "Лох узколистный",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/silvershrub_1.glb",
+    "dimensions": {
+      "height": 1.61,
+      "radius": 0.36,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_skumpiya",
+    "category": "bush",
+    "label": "Скумпия",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/silvershrub_1.glb",
+    "dimensions": {
+      "height": 1.61,
+      "radius": 0.36,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_karagana_drevovidnaya",
+    "category": "bush",
+    "label": "Карагана древовидная",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/silvershrub_1.glb",
+    "dimensions": {
+      "height": 1.61,
+      "radius": 0.36,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_karagana_kustarnikovaya",
+    "category": "bush",
+    "label": "Карагана кустарниковая",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/silvershrub_1.glb",
+    "dimensions": {
+      "height": 1.61,
+      "radius": 0.36,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_amorfa_kustarnikovaya",
+    "category": "bush",
+    "label": "Аморфа кустарниковая",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/silvershrub_1.glb",
+    "dimensions": {
+      "height": 1.61,
+      "radius": 0.36,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_rakitnik_russkiy",
+    "category": "bush",
+    "label": "Ракитник русский",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/silvershrub_1.glb",
+    "dimensions": {
+      "height": 1.61,
+      "radius": 0.36,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_rododendron_daurskiy",
+    "category": "bush",
+    "label": "Рододендрон даурский",
+    "size_class": "low",
+    "crown_class": "spreading",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/rhododendronshrub_1.glb",
+    "dimensions": {
+      "height": 0.95,
+      "radius": 0.59,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_aktinidiya_kolomikta",
+    "category": "bush",
+    "label": "Актинидия коломикта",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/vineclimbing_1.glb",
+    "dimensions": {
+      "height": 1.9,
+      "radius": 0.42,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_vinograd_amurskiy",
+    "category": "bush",
+    "label": "Виноград амурский",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/vineclimbing_1.glb",
+    "dimensions": {
+      "height": 1.9,
+      "radius": 0.42,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_devichiy_vinograd",
+    "category": "bush",
+    "label": "Девичий виноград",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/vineclimbing_1.glb",
+    "dimensions": {
+      "height": 1.9,
+      "radius": 0.42,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_zhimolost_kaprifol",
+    "category": "bush",
+    "label": "Жимолость каприфоль",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/vineclimbing_1.glb",
+    "dimensions": {
+      "height": 1.9,
+      "radius": 0.42,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_limonnik_kitayskiy",
+    "category": "bush",
+    "label": "Лимонник китайский",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/vineclimbing_1.glb",
+    "dimensions": {
+      "height": 1.9,
+      "radius": 0.42,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_zhimolost_vyuschayasya",
+    "category": "bush",
+    "label": "Жимолость вьющаяся",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/vineclimbing_1.glb",
+    "dimensions": {
+      "height": 1.9,
+      "radius": 0.42,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_aristolohiya_krupnolistnaya",
+    "category": "bush",
+    "label": "Аристолохия крупнолистная",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/vinelargeleaf_1.glb",
+    "dimensions": {
+      "height": 2.76,
+      "radius": 0.66,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_aristolohiya_manchzhurskaya",
+    "category": "bush",
+    "label": "Аристолохия маньчжурская",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/vinelargeleaf_1.glb",
+    "dimensions": {
+      "height": 2.76,
+      "radius": 0.66,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_gortenziya_chereshkovaya",
+    "category": "bush",
+    "label": "Гортензия черешковая",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/vinelargeleaf_1.glb",
+    "dimensions": {
+      "height": 2.76,
+      "radius": 0.66,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_drevogubets_kruglolistnyy",
+    "category": "bush",
+    "label": "Древогубец круглолистный",
+    "size_class": "low",
+    "crown_class": "regular",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/vinelargeleaf_1.glb",
+    "dimensions": {
+      "height": 2.76,
+      "radius": 0.66,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_klematis_sibirskiy",
+    "category": "bush",
+    "label": "Клематис сибирский",
+    "size_class": "low",
+    "crown_class": "columnar",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/vineclematis_1.glb",
+    "dimensions": {
+      "height": 1.14,
+      "radius": 0.18,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
+    }
+  },
+  {
+    "id": "species_klematis_tangutskiy",
+    "category": "bush",
+    "label": "Клематис тангутский",
+    "size_class": "low",
+    "crown_class": "columnar",
+    "setback_kind": "bush",
+    "object_type": "bush",
+    "model": "/models/vineclematis_1.glb",
+    "dimensions": {
+      "height": 1.14,
+      "radius": 0.18,
+      "trunk_height": null,
+      "width": null,
+      "depth": null
+    },
+    "render": {
+      "shape": "sphere",
+      "color": "#4a9450"
     }
   }
 ]
