@@ -10,10 +10,12 @@ retrieval-корпуса (pattern_corpus.py). Косинусное рассто�
 сравнением -- иначе log1p(площадь участка) (порядок 5-12) забил бы
 plantable_ratio (порядок 0-1) в косинусном расстоянии почти до нуля.
 territory_type учитывается в векторе, только если он НЕ эвристика
-(SiteCharacteristics.territory_type_is_heuristic) -- сейчас характеризация
-всегда возвращает эвристику (см. site_characterization.py), поэтому эта часть
-вектора сейчас нулевая для всех участков; код готов начать её использовать,
-как только territory_type перестанет быть догадкой без разметки человеком.
+(SiteCharacteristics.territory_type_is_heuristic) -- issue #38:
+site_characterization.py теперь различает 5 содержательных категорий по
+объективным геометрическим сигналам (площадь конкретных типов зон, форма
+границы, число зданий) и помечает их is_heuristic=False; только честное
+"неопределено" (ни одно правило не сработало) остаётся эвристикой и не
+попадает в one-hot этой части вектора.
 """
 
 from __future__ import annotations
@@ -41,7 +43,7 @@ KNOWN_ZONE_TYPES = (
     "electrical",
     "playground_zone",
 )
-TERRITORY_TYPES = ("двор", "улица", "неопределено")
+TERRITORY_TYPES = ("двор", "улица", "площадь", "парк_сквер", "промышленная_охранная", "неопределено")
 
 
 def _raw_vector(c: SiteCharacteristics) -> np.ndarray:
