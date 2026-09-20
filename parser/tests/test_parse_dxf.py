@@ -20,6 +20,7 @@ from parse_dxf import (
     clean_label,
     extract_boundary,
     extract_buildings,
+    extract_curb_polylines,
     extract_facade_quads,
     extract_point_objects,
     extract_restrictions,
@@ -31,7 +32,7 @@ from parse_dxf import (
     polygon_points,
     print_summary,
 )
-from shapely.geometry import Polygon
+from shapely.geometry import Point, Polygon
 
 # --- layer_matches / match_rule ------------------------------------------
 
@@ -54,6 +55,23 @@ def test_match_rule_returns_first_matching_rule_in_order():
 
 def test_match_rule_returns_none_when_nothing_matches():
     assert match_rule("SOME_RANDOM_LAYER", POLYGON_RULES) is None
+
+
+def test_match_rule_russian_signal_cable_beats_general_electrical():
+    # Та же специфичность-раньше-общего гарантия, что и у OVERHEAD/POWER
+    # выше, но для русского блока (issue #50 follow-up) -- реальный слой
+    # "Кабель связи" содержит подстроку "КАБЕЛ" (общий электрокабель), но
+    # должен классифицироваться как слаботочка (СВЯЗ), а не силовой кабель.
+    cfg = match_rule("Кабель связи".upper(), POLYGON_RULES)
+    assert cfg["type"] == "signal_cable"
+
+
+def test_match_rule_recognizes_russian_layer_names():
+    assert match_rule("ЗДАНИЕ_1".upper(), POLYGON_RULES)["type"] == "building"
+    assert match_rule("ДВ_ГП_П_Газон_Рулонный".upper(), POLYGON_RULES)["type"] == "protected_zone"
+    assert match_rule("Устройство_трот_более_2м".upper(), POLYGON_RULES)["type"] == "pedestrian_path"
+    assert match_rule("Газопровод".upper(), POLYGON_RULES)["type"] == "gas_pipeline"
+    assert match_rule("Канализация самотёчная".upper(), POLYGON_RULES)["type"] == "sewer"
 
 
 # --- polygon_points --------------------------------------------------------
@@ -400,6 +418,28 @@ def test_extract_restrictions_overhead_power_carries_max_height(empty_doc):
     assert zones[0]["severity"] == "warning"
 
 
+def test_extract_restrictions_reads_zone_from_hatch_boundary(empty_doc):
+    # issue #50 follow-up: план покрытий (газон/тротуар и т.п.) в реальных
+    # DWG-проектах Мосгеотреста часто залит HATCH-штриховкой, а не нарисован
+    # полигоном ("13_kharkovskaya": "...Газон_Рулонный" целиком из HATCH).
+    msp = empty_doc.modelspace()
+    hatch = msp.add_hatch(dxfattribs={"layer": "LAWN_FILL"})
+    hatch.paths.add_polyline_path([(0, 0), (10, 0), (10, 10), (0, 10)], is_closed=True)
+    zones = extract_restrictions(msp, Transform())
+    assert len(zones) == 1
+    assert zones[0]["type"] == "protected_zone"
+    assert zones[0]["severity"] == "allowed"
+    poly = Polygon([(p["x"], p["z"]) for p in zones[0]["polygon"]])
+    assert poly.area == pytest.approx(100.0, rel=0.01)
+
+
+def test_extract_restrictions_ignores_hatch_on_unmatched_layer(empty_doc):
+    msp = empty_doc.modelspace()
+    hatch = msp.add_hatch(dxfattribs={"layer": "SOMETHING_UNRELATED"})
+    hatch.paths.add_polyline_path([(0, 0), (10, 0), (10, 10), (0, 10)], is_closed=True)
+    assert extract_restrictions(msp, Transform()) == []
+
+
 # --- extract_buildings ---------------------------------------------------------
 
 
@@ -458,6 +498,76 @@ def test_extract_buildings_ignores_malformed_text_entities(empty_doc):
     assert buildings[0]["metadata"]["name"] == "BUILDING_X"
 
 
+# --- реконструкция зданий из разрозненных LINE (issue #50 follow-up) -----------
+# Реальные топопланы Мосгеотреста рисуют контур здания сложным линтайпом,
+# который при конвертации DWG->DXF "взрывается" на отдельные LINE без связи
+# между собой -- см. docstring _reconstruct_buildings_from_line_fragments.
+
+
+def test_extract_restrictions_merges_disconnected_line_fragments_into_one_building(empty_doc):
+    msp = empty_doc.modelspace()
+    # Квадрат 10x10, нарисованный 4 НЕЗАВИСИМЫМИ LINE (не LWPOLYLINE) --
+    # ровно то, что реально приходит из "взорвавшегося" линтайпа.
+    msp.add_line((0, 0, 0), (10, 0, 0), dxfattribs={"layer": "BUILDING_A"})
+    msp.add_line((10, 0, 0), (10, 10, 0), dxfattribs={"layer": "BUILDING_A"})
+    msp.add_line((10, 10, 0), (0, 10, 0), dxfattribs={"layer": "BUILDING_A"})
+    msp.add_line((0, 10, 0), (0, 0, 0), dxfattribs={"layer": "BUILDING_A"})
+    zones = extract_restrictions(msp, Transform())
+    assert len(zones) == 1
+    assert zones[0]["type"] == "building"
+    poly = Polygon([(p["x"], p["z"]) for p in zones[0]["polygon"]])
+    assert poly.area == pytest.approx(100.0, rel=0.01)
+
+
+def test_extract_restrictions_keeps_two_disconnected_buildings_separate(empty_doc):
+    msp = empty_doc.modelspace()
+    for x0 in (0, 100):
+        msp.add_line((x0, 0, 0), (x0 + 10, 0, 0), dxfattribs={"layer": "BUILDING_A"})
+        msp.add_line((x0 + 10, 0, 0), (x0 + 10, 10, 0), dxfattribs={"layer": "BUILDING_A"})
+        msp.add_line((x0 + 10, 10, 0), (x0, 10, 0), dxfattribs={"layer": "BUILDING_A"})
+        msp.add_line((x0, 10, 0), (x0, 0, 0), dxfattribs={"layer": "BUILDING_A"})
+    zones = extract_restrictions(msp, Transform())
+    assert len(zones) == 2
+    assert {z["type"] for z in zones} == {"building"}
+
+
+def test_extract_restrictions_closes_small_gap_in_line_fragment_chain(empty_doc):
+    # Топосъёмка трассирует только видимую со стороны съёмки часть стен --
+    # реальный разрыв между концами меньше _BUILDING_CLOSE_GAP_M всё ещё
+    # считается "реально замкнут".
+    msp = empty_doc.modelspace()
+    msp.add_line((0, 0, 0), (10, 0, 0), dxfattribs={"layer": "BUILDING_A"})
+    msp.add_line((10, 0, 0), (10, 10, 0), dxfattribs={"layer": "BUILDING_A"})
+    msp.add_line((10, 10, 0), (0, 10, 0), dxfattribs={"layer": "BUILDING_A"})
+    msp.add_line((0, 10, 0), (0, 1.0, 0), dxfattribs={"layer": "BUILDING_A"})  # разрыв 1м < 2м
+    zones = extract_restrictions(msp, Transform())
+    assert len(zones) == 1
+    assert zones[0]["type"] == "building"
+
+
+def test_extract_restrictions_reconstructs_open_chain_via_minimum_rotated_rectangle(empty_doc):
+    # Реальный разрыв (>= _BUILDING_CLOSE_GAP_M) -- три стороны прямоугольника
+    # 20x8, четвёртая не оцифрована вовсе (реальный эффект топосъёмки).
+    msp = empty_doc.modelspace()
+    msp.add_line((0, 0, 0), (20, 0, 0), dxfattribs={"layer": "BUILDING_A"})
+    msp.add_line((20, 0, 0), (20, 8, 0), dxfattribs={"layer": "BUILDING_A"})
+    msp.add_line((20, 8, 0), (0, 8, 0), dxfattribs={"layer": "BUILDING_A"})
+    zones = extract_restrictions(msp, Transform())
+    assert len(zones) == 1
+    poly = Polygon([(p["x"], p["z"]) for p in zones[0]["polygon"]])
+    assert poly.area == pytest.approx(160.0, rel=0.05)
+
+
+def test_extract_restrictions_drops_short_open_fragment_as_survey_noise(empty_doc):
+    # Разомкнутый обрывок короче _BUILDING_MIN_SHORT_SIDE_M по короткой
+    # стороне -- шум съёмки (забор, обрывок бордюра), не здание.
+    msp = empty_doc.modelspace()
+    msp.add_line((0, 0, 0), (10, 0, 0), dxfattribs={"layer": "BUILDING_A"})
+    msp.add_line((10, 0, 0), (10, 1, 0), dxfattribs={"layer": "BUILDING_A"})
+    zones = extract_restrictions(msp, Transform())
+    assert zones == []
+
+
 # --- extract_point_objects ------------------------------------------------------
 
 
@@ -472,6 +582,40 @@ def test_extract_point_objects_insert_block_reference(empty_doc):
     assert obj["scale"] == 1.5
     assert obj["rotation"] == pytest.approx(math.radians(90.0))
     assert obj["metadata"]["blockName"] == "tree_block"
+
+
+def test_extract_point_objects_clamps_near_zero_block_xscale(empty_doc):
+    # issue #50 follow-up, реальный случай ("13_kharkovskaya"): блок
+    # "Яблоня 1" вставлен с xscale~0.0012 -- отмасштабировано под референсную
+    # геометрию ТОГО САМОГО блока в исходном DWG (в тысячи раз крупнее
+    # дерева), а не под нашу .glb-модель. Без клампа дерево на сцене
+    # оказывается практически невидимым. Клампим наверх до MIN_RENDER_SCALE.
+    empty_doc.blocks.new(name="Яблоня 1")
+    msp = empty_doc.modelspace()
+    msp.add_blockref("Яблоня 1", insert=(0, 0, 0), dxfattribs={"layer": "! ПР ДЕРЕВЬЯ", "xscale": 0.0012})
+    objects = extract_point_objects(msp, Transform())
+    assert objects[0]["scale"] == parse_dxf.MIN_RENDER_SCALE
+
+
+def test_extract_point_objects_clamps_excessively_large_block_xscale(empty_doc):
+    empty_doc.blocks.new(name="huge_block")
+    msp = empty_doc.modelspace()
+    msp.add_blockref("huge_block", insert=(0, 0, 0), dxfattribs={"layer": "TREE_LAYER", "xscale": 50.0})
+    objects = extract_point_objects(msp, Transform())
+    assert objects[0]["scale"] == parse_dxf.MAX_RENDER_SCALE
+
+
+def test_extract_point_objects_preserves_plausible_xscale_variation(empty_doc):
+    # 0.69/1.9 -- правдоподобный, судя по всему намеренный разброс размера
+    # (молодое/взрослое дерево), внутри [MIN_RENDER_SCALE, MAX_RENDER_SCALE]
+    # -- не должен округляться до одного значения клампом.
+    empty_doc.blocks.new(name="tree_block")
+    msp = empty_doc.modelspace()
+    msp.add_blockref("tree_block", insert=(0, 0, 0), dxfattribs={"layer": "TREE_LAYER", "xscale": 0.69})
+    msp.add_blockref("tree_block", insert=(1, 0, 0), dxfattribs={"layer": "TREE_LAYER", "xscale": 1.9})
+    objects = extract_point_objects(msp, Transform())
+    scales = sorted(o["scale"] for o in objects)
+    assert scales == pytest.approx([0.69, 1.9])
 
 
 def test_extract_point_objects_bare_point_entity(empty_doc):
@@ -540,6 +684,21 @@ def test_extract_point_objects_ignores_unmatched_layers(empty_doc):
     assert extract_point_objects(msp, Transform()) == []
 
 
+def test_extract_point_objects_excludes_tree_strip_zone_despite_keyword_match(empty_doc):
+    # issue #50 follow-up, реальный случай ("13_kharkovskaya", топоплан):
+    # "Полоса деревьев" -- линейная зона существующей растительности,
+    # отрисованная топосъёмкой тысячами разрозненных LINE, а не по объекту на
+    # дерево. Слово "ДЕРЕВ" совпадает с общим POINT_LAYER_RULES keyword'ом --
+    # без POINT_LAYER_EXCLUDE_KEYWORDS LINE+CIRCLE-логика "столб+плафон"
+    # (задумана для фонарей) распаковала бы каждый уникальный конец
+    # фрагмента в отдельное фантомное дерево (были все LINE с разными
+    # координатами -- тысячи "деревьев" вместо нуля).
+    msp = empty_doc.modelspace()
+    for i in range(5):
+        msp.add_line((i * 2.0, 0, 0), (i * 2.0 + 1.0, 0, 0), dxfattribs={"layer": "Полоса деревьев"})
+    assert extract_point_objects(msp, Transform()) == []
+
+
 def test_extract_point_objects_assigns_independent_counters_per_type(empty_doc):
     msp = empty_doc.modelspace()
     msp.add_point((0, 0, 0), dxfattribs={"layer": "TREE_A"})
@@ -548,6 +707,67 @@ def test_extract_point_objects_assigns_independent_counters_per_type(empty_doc):
     objects = extract_point_objects(msp, Transform())
     ids = sorted(o["id"] for o in objects)
     assert ids == ["bush_001", "tree_001", "tree_002"]
+
+
+def test_extract_point_objects_recognizes_russian_generic_keywords(empty_doc):
+    # issue #50 follow-up: реальные проекты Мосгеотреста размечают точечную
+    # посадку по-русски ("! ПР ДЕРЕВЬЯ" на "13_kharkovskaya"), не по-английски.
+    msp = empty_doc.modelspace()
+    msp.add_point((0, 0, 0), dxfattribs={"layer": "! ПР ДЕРЕВЬЯ"})
+    msp.add_point((1, 0, 0), dxfattribs={"layer": "КУСТАРНИК"})
+    objects = extract_point_objects(msp, Transform())
+    types = sorted(o["type"] for o in objects)
+    assert types == ["bush", "tree"]
+
+
+def test_extract_point_objects_species_catalog_disambiguates_tree_vs_bush(empty_doc):
+    # Слой назван не общим словом, а конкретным видом из справочника
+    # (data/plant_archetypes/species_catalog.json) -- ровно то, что реально
+    # встречается на "13_kharkovskaya" ("! ПР СПИРЕЯ ВАНГУТТА", кустарник, и
+    # т.п.). "Бархат Амурский" в справочнике -- дерево, "Спирея Вангутта" --
+    # лиственный кустарник.
+    msp = empty_doc.modelspace()
+    msp.add_point((0, 0, 0), dxfattribs={"layer": "! ПР БАРХАТ АМУРСКИЙ"})
+    msp.add_point((1, 0, 0), dxfattribs={"layer": "! ПР СПИРЕЯ ВАНГУТТА"})
+    objects = extract_point_objects(msp, Transform())
+    by_layer = {o["metadata"]["sourceLayer"]: o["type"] for o in objects}
+    assert by_layer["! ПР БАРХАТ АМУРСКИЙ"] == "tree"
+    assert by_layer["! ПР СПИРЕЯ ВАНГУТТА"] == "bush"
+
+
+def test_species_point_rules_load_real_catalog_and_split_tree_vs_bush():
+    rules = parse_dxf._species_point_rules()
+    assert len(rules) > 100
+    by_name = dict(rules)
+    assert by_name["БАРХАТ АМУРСКИЙ"]["type"] == "tree"
+    assert by_name["СПИРЕЯ ВАНГУТТА"]["type"] == "bush"
+
+
+def test_species_point_rules_returns_empty_list_when_file_missing(monkeypatch, tmp_path):
+    # Справочник необязателен -- отсутствие/битость файла не должна ронять
+    # парсер. Подставляем __file__ так, что Path(__file__).parent.parent
+    # указывает на пустую tmp_path (без data/plant_archetypes/...).
+    monkeypatch.setattr(parse_dxf, "__file__", str(tmp_path / "parser" / "parse_dxf.py"))
+    assert parse_dxf._species_point_rules() == []
+
+
+def test_species_point_rules_returns_empty_list_for_invalid_json(monkeypatch, tmp_path):
+    bad_path = tmp_path / "data" / "plant_archetypes" / "species_catalog.json"
+    bad_path.parent.mkdir(parents=True)
+    bad_path.write_text("not valid json", encoding="utf-8")
+    monkeypatch.setattr(parse_dxf, "__file__", str(tmp_path / "parser" / "parse_dxf.py"))
+    assert parse_dxf._species_point_rules() == []
+
+
+# --- extract_curb_polylines ------------------------------------------------
+
+
+def test_extract_curb_polylines_recognizes_russian_kerb_keyword(empty_doc):
+    # issue #50 follow-up: "ДВ_ГП_П_Борт_БР100.30.15" на "13_kharkovskaya".
+    msp = empty_doc.modelspace()
+    msp.add_line((0, 0, 0), (1, 0, 0), dxfattribs={"layer": "ДВ_ГП_П_Борт_БР100.30.15"})
+    curbs = extract_curb_polylines(msp, Transform())
+    assert len(curbs) == 1
 
 
 # --- extract_facade_quads -------------------------------------------------------
@@ -611,6 +831,90 @@ def test_parse_dxf_doc_default_scale_comes_from_insunits(empty_doc):
     # $INSUNITS=6 -- метры, коэффициент 1.0 (см. INSUNITS_TO_METERS)
     result = parse_dxf_doc(empty_doc)
     assert result["meta"]["scale"] == 1.0
+
+
+# --- _estimate_fallback_region / отсев выбросов без границы (issue #50) --------
+
+
+def test_parse_dxf_doc_without_boundary_drops_far_away_outlier_point(empty_doc):
+    # Реальный случай ("13_kharkovskaya", issue #50 follow-up): без слоя
+    # границы одна точка за много километров от плотного скопления остальных
+    # растягивает bbox сцены в разы. 12 деревьев плотно у (0,0), одно -- за
+    # 5 км, слоя границы нет вообще.
+    msp = empty_doc.modelspace()
+    for i in range(12):
+        msp.add_point((i * 0.5, i * 0.3, 0), dxfattribs={"layer": "TREE"})
+    msp.add_point((5000, 5000, 0), dxfattribs={"layer": "TREE"})
+    result = parse_dxf_doc(empty_doc)
+    assert len(result["objects"]) == 12
+    xs = [o["position"]["x"] for o in result["objects"]]
+    assert max(xs) < 100
+    # Граница теперь оценивается по отфильтрованному содержимому (issue #50
+    # follow-up: GreenPlan без scene.boundary не работает вообще, см.
+    # docstring _estimate_boundary_from_content) -- и не должна включать
+    # отброшенный выброс.
+    assert result["boundary"] is not None
+    assert result["boundary"]["sourceLayer"] == parse_dxf.ESTIMATED_BOUNDARY_SOURCE_LAYER
+    bxs = [p["x"] for p in result["boundary"]["polygon"]]
+    assert max(bxs) < 100
+
+
+def test_parse_dxf_doc_without_boundary_keeps_elongated_site_intact(empty_doc):
+    # Честно длинный узкий участок (набережная/проезд) не должен обрезаться
+    # по краям -- точки распределены НЕПРЕРЫВНО по всей длине, без разрыва,
+    # в отличие от единичного выброса выше.
+    msp = empty_doc.modelspace()
+    for i in range(50):
+        msp.add_point((i * 20.0, 0, 0), dxfattribs={"layer": "TREE"})
+    result = parse_dxf_doc(empty_doc)
+    assert len(result["objects"]) == 50
+    xs = [o["position"]["x"] for o in result["objects"]]
+    assert max(xs) - min(xs) == pytest.approx(49 * 20.0)
+    # Оценённая граница должна накрывать весь участок, а не только середину.
+    bxs = [p["x"] for p in result["boundary"]["polygon"]]
+    assert min(bxs) < 0
+    assert max(bxs) > 49 * 20.0
+
+
+def test_parse_dxf_doc_without_boundary_and_too_few_points_skips_filtering(empty_doc):
+    # Меньше _OUTLIER_MIN_POINTS -- перцентильная оценка ненадёжна, ничего не
+    # отсеиваем (лучше показать выброс, чем случайно выкинуть настоящий
+    # объект на маленькой сцене) -- и границу тоже не оцениваем по той же
+    # причине.
+    msp = empty_doc.modelspace()
+    msp.add_point((0, 0, 0), dxfattribs={"layer": "TREE"})
+    msp.add_point((5000, 5000, 0), dxfattribs={"layer": "TREE"})
+    result = parse_dxf_doc(empty_doc)
+    assert len(result["objects"]) == 2
+    assert result["boundary"] is None
+
+
+# --- _estimate_boundary_from_content (issue #50) --------------------------------
+
+
+def test_estimate_boundary_from_content_returns_none_for_too_few_points():
+    objects = [{"position": {"x": 0, "z": 0}}, {"position": {"x": 1, "z": 1}}]
+    assert parse_dxf._estimate_boundary_from_content(objects, [], []) is None
+
+
+def test_estimate_boundary_from_content_covers_all_input_points():
+    objects = [{"position": {"x": float(i), "z": float(i % 3)}} for i in range(20)]
+    boundary = parse_dxf._estimate_boundary_from_content(objects, [], [])
+    assert boundary is not None
+    assert boundary["sourceLayer"] == parse_dxf.ESTIMATED_BOUNDARY_SOURCE_LAYER
+    poly = Polygon([(p["x"], p["z"]) for p in boundary["polygon"]])
+    assert poly.is_valid
+    for o in objects:
+        assert poly.covers(Point(o["position"]["x"], o["position"]["z"]))
+
+
+def test_estimate_boundary_from_content_survives_nearly_collinear_points():
+    # concave_hull может упасть на почти вырожденных наборах точек (GEOS
+    # "Tri::getAdjacent - invalid index", реально воспроизведено на этом же
+    # наборе координат) -- должен тихо откатиться на convex_hull, не падать.
+    objects = [{"position": {"x": i * 0.5, "z": i * 0.3}} for i in range(12)]
+    boundary = parse_dxf._estimate_boundary_from_content(objects, [], [])
+    assert boundary is not None
 
 
 def test_parse_dxf_doc_without_any_boundary_layer_returns_none_boundary(empty_doc):

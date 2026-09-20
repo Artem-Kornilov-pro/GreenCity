@@ -20,7 +20,10 @@ from pathlib import Path
 
 import ezdxf
 import shapely
-from shapely.geometry import LineString, Polygon
+from ezdxf import path as ezpath
+from shapely import concave_hull
+from shapely.geometry import LineString, MultiPoint, Polygon
+from shapely.ops import linemerge
 
 # ---------------------------------------------------------------------------
 # КОНФИГУРАЦИЯ — правьте под слои своего конкретного DXF-файла.
@@ -87,6 +90,44 @@ POLYGON_RULES = [
     # severity, не по типу), отдельной правки бэкенда не потребовалось.
     ("GROUND",      dict(type="protected_zone",       severity="allowed",   minDistance=0.0,
                           message="Открытая земля — вычислено как участок минус здания/дорога/тротуар")),
+
+    # Русские названия (issue #50 follow-up) -- та же логика специфичности,
+    # что и у английского блока выше: более узкое правило (слаботочка) идёт
+    # раньше более общего (силовой кабель/электросеть), иначе общее
+    # перехватит совпадение первым. Подтверждено реальными слоями проектов
+    # Мосгеотреста: landscaping-файл "13_kharkovskaya" ("Борт_БР100.30.15",
+    # "Газон_Рулонный", "Устройство_трот...") И его собственный топоплан
+    # (Xrefs/output*_tp.dwg -- "Здания", "Граница улицы", "Леса и газоны") и
+    # подземка (Xrefs/output*_up.dwg -- "Водопровод", "Канализация
+    # самотёчная", "Водосток", "Дренаж", "Общий коллектор", "Газопровод",
+    # "Теплосеть", "Кабель электрический"/"Кабели"/"Кабель защиты", "Кабель
+    # связи") -- отдельные DWG-файлы того же проекта, не включённые в
+    # изначально протестированный набор "Проектное решение" (только сама
+    # посадка), см. переписку issue #50.
+    ("ЗДАНИ",       dict(type="building",             severity="forbidden", minDistance=1.5,
+                          message="Отступ от здания: дерево — 5 м, кустарник — 1.5 м")),
+    ("ГАЗОПРОВОД",  dict(type="gas_pipeline",         severity="forbidden", minDistance=2.0, message="Охранная зона газопровода")),
+    ("КАНАЛИЗАЦ",   dict(type="sewer",                severity="forbidden", minDistance=3.0, message="Охранная зона канализации")),
+    ("ВОДОСТОК",    dict(type="sewer",                severity="forbidden", minDistance=3.0, message="Охранная зона водостока")),
+    ("ДРЕНАЖ",      dict(type="sewer",                severity="forbidden", minDistance=3.0, message="Охранная зона дренажа")),
+    ("КОЛЛЕКТОР",   dict(type="sewer",                severity="forbidden", minDistance=3.0, message="Охранная зона общего коллектора коммуникаций")),
+    ("ВОДОПРОВОД",  dict(type="water_pipeline",       severity="forbidden", minDistance=3.0, message="Охранная зона водопровода")),
+    ("СВЯЗ",        dict(type="signal_cable",         severity="warning",   minDistance=0.5,
+                          message="Кабель связи — слаботочная сеть, отступ меньше, чем у силового кабеля")),
+    ("ТЕПЛОСЕТ",    dict(type="custom",               severity="forbidden", minDistance=2.0, message="Охранная зона теплосети")),
+    ("ЛЭП",         dict(type="overhead_power_line",  severity="warning",   minDistance=2.0, maxHeight=4.0,
+                          message="Наземная ЛЭП — ограничение по высоте посадки под проводом (~9м), не запрет на посадку как таковую")),
+    ("ЭЛЕКТР",      dict(type="electrical",           severity="forbidden", minDistance=2.0, message="Охранная зона электросети")),
+    ("КАБЕЛ",       dict(type="electrical",           severity="forbidden", minDistance=2.0, message="Охранная зона электрокабеля")),
+    # Общий "подземные коммуникации" без уточнения вида -- самый широкий из
+    # русского блока, поэтому идёт последним среди коммуникаций: если бы стоял
+    # раньше -- перехватывал бы совпадение у более специфичных правил выше
+    # (газопровод, канализация и т.д.), которые тоже "подземные коммуникации"
+    # по сути, но с известным точным нормативом.
+    ("ПОДЗЕМН",     dict(type="custom",               severity="forbidden", minDistance=2.0, message="Неуточнённые подземные коммуникации")),
+    ("ТРОТ",        dict(type="pedestrian_path",      severity="warning",   minDistance=0.5, message="Пешеходная дорожка/тротуар")),
+    ("УЛИЦ",        dict(type="road",                 severity="forbidden", minDistance=1.0, message="Проезжая часть улицы — посадка запрещена")),
+    ("ГАЗОН",       dict(type="protected_zone",       severity="allowed",   minDistance=0.0, message="Газон — допустимая зона озеленения")),
 ]
 
 # Слои, задающие границу участка (не ограничение, а boundary для генератора посадок)
@@ -97,6 +138,20 @@ SKIP_LAYER_KEYWORDS = ["MARKING", "LABEL", "DIM", "TEXT"]
 
 # Точечные объекты (деревья, кусты, лавочки, фонари...) -> SceneObject
 # Ключ — подстрока в имени слоя.
+# Слои, которые совпадают с одним из ключей POINT_LAYER_RULES по подстроке,
+# но на самом деле не дискретные точечные объекты, а линейная/площадная зона
+# (issue #50 follow-up, реальный случай: "Полоса деревьев" -- топоплан
+# Мосгеотреста, полоса/пятно существующей растительности вдоль улицы,
+# отрисованная топосъёмкой как ~15600 разрозненных LINE-фрагментов контура,
+# а НЕ по объекту на дерево). Слово "ДЕРЕВ" внутри совпадает с общим
+# keyword'ом ниже -- без этого исключения LINE+CIRCLE-логика "столб+плафон"
+# (задумана для фонарей) плодит по объекту на каждый уникальный конец
+# фрагмента, то есть тысячи фантомных деревьев на одном линтайпе. Зона как
+# таковая (полигон полосы) пока не реконструируется -- это отдельная, более
+# сложная задача (см. _reconstruct_buildings_from_line_fragments для здания
+# как прецедент), сейчас слой просто не попадает ни в объекты, ни в зоны.
+POINT_LAYER_EXCLUDE_KEYWORDS = ["ПОЛОСА"]
+
 POINT_LAYER_RULES = [
     ("TREE",       dict(type="tree",       model="/models/tree.glb")),
     ("BUSH",       dict(type="bush",       model="/models/bush.glb")),
@@ -114,10 +169,58 @@ POINT_LAYER_RULES = [
     ("PLAYGROUND", dict(type="playground", model="/models/playground.glb")),
     ("ENTRANCE",   dict(type="entrance",   model="/models/entrance.glb")),
     ("CROSSWALK",  dict(type="crosswalk",  model="/models/crosswalk.glb")),
+    # Русские названия (issue #50 follow-up): реальные DWG-проекты
+    # Мосгеотреста размечают слои по-русски, не по-английски -- см. проверку
+    # реального проекта "13_kharkovskaya" ("! ПР ДЕРЕВЬЯ", "ДВ_ГП_П_МАФ") и
+    # docs/DWG_TO_DXF_INTEGRATION_GUIDE.md-эквивалентную разведку по
+    # "07_peschany_pereulok" ("Фонари", "Отдельно стоящее дерево"). Порядок
+    # значим меньше, чем для POLYGON_RULES -- extract_point_objects (ниже)
+    # проверяет ВСЕ правила независимо, а не первое совпадение, поэтому
+    # риск -- не порядок, а коллизия ключа с чужой категорией.
+    ("ДЕРЕВ",      dict(type="tree",       model="/models/tree.glb")),
+    ("КУСТ",       dict(type="bush",       model="/models/bush.glb")),
+    ("СКАМ",       dict(type="bench",      model="/models/bench.glb")),
+    ("ЛАВОЧ",      dict(type="bench",      model="/models/bench.glb")),
+    ("УРН",        dict(type="urn",        model="/models/urn.glb")),
+    ("ФОНАР",      dict(type="lamp",       model="/models/lamp.glb")),
+    ("ВЕЛОПАРКОВ", dict(type="bike_rack",  model="/models/bike_rack.glb")),
 ]
 
+
+def _species_point_rules() -> list[tuple[str, dict]]:
+    """Каждый вид из справочника (data/plant_archetypes/species_catalog.json,
+    232 записи) становится ОТДЕЛЬНЫМ правилом POINT_LAYER_RULES -- реальные
+    проекты часто размечают точечную посадку не общим словом "дерево"/
+    "кустарник", а конкретным русским названием вида на отдельном слое
+    (например "! ПР ГОРТЕНЗИЯ МЕТЕЛЬЧАТАЯ", "! ПР СПИРЕЯ ВАНГУТТА" --
+    подтверждено на реальном проекте "13_kharkovskaya"), и ни один keyword
+    выше этого не поймает. tree/bush решается по полю category справочника;
+    "Лианы" (вьющиеся) относим к bush -- отдельного типа для лиан в сцене
+    нет, а по силуэту они ближе к кустарнику, чем к дереву. Молча
+    возвращает [] при отсутствии/битости файла -- парсер не должен падать
+    из-за необязательного справочника."""
+    path = Path(__file__).resolve().parent.parent / "data" / "plant_archetypes" / "species_catalog.json"
+    try:
+        species = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+
+    rules = []
+    for entry in species:
+        name = entry.get("name")
+        category = entry.get("category", "")
+        if not name:
+            continue
+        cfg = dict(type="tree", model="/models/tree.glb") if "дерев" in category.lower() \
+            else dict(type="bush", model="/models/bush.glb")
+        rules.append((name.upper(), cfg))
+    return rules
+
+
+POINT_LAYER_RULES = POINT_LAYER_RULES + _species_point_rules()
+
 # Слой с 3D-мешами зданий (используется только для высоты)
-BUILDING_MESH_LAYER_KEYWORDS = ["BUILDING"]
+BUILDING_MESH_LAYER_KEYWORDS = ["BUILDING", "ЗДАНИ"]
 
 # Слои с фасадными элементами (3DFACE) -- не самостоятельные объекты сцены,
 # а геометрия для отрисовки прямо на фасаде здания (см. extract_facade_quads).
@@ -130,10 +233,35 @@ FACADE_LAYER_KEYWORDS = {
 # участок, не переставляются), а линии для схематичной отрисовки прямо на
 # земле (см. extract_curb_polylines). Тот же принцип, что у FACADE_LAYER_KEYWORDS
 # выше, только 2D-полилинии вместо 3D-квадов.
-CURB_LAYER_KEYWORDS = ["CURB", "KERB", "BORDER_STONE"]
+CURB_LAYER_KEYWORDS = ["CURB", "KERB", "BORDER_STONE", "БОРТ", "БОРДЮР"]
 
 # Единицы DXF ($INSUNITS) -> метры
 INSUNITS_TO_METERS = {0: 1.0, 1: 0.0254, 2: 0.3048, 4: 0.001, 5: 0.01, 6: 1.0, 8: 0.9144}
+
+# Диапазон, в который зажимается INSERT.xscale блока при использовании как
+# render-scale нашей 3D-модели (issue #50 follow-up). xscale в исходном DWG
+# отмасштабирован под РЕФЕРЕНСНУЮ ГЕОМЕТРИЮ ТОГО САМОГО блока (то, каким его
+# нарисовал автор чертежа), а не под наши .glb-модели -- у них нет ничего
+# общего по размеру. Подтверждено на реальном файле "13_kharkovskaya": блок
+# "Яблоня 1" вставлен с xscale~0.0012 (референсная геометрия блока в тысячи
+# раз крупнее дерева), другие деревья того же слоя -- xscale 0.69-2.0
+# (правдоподобный, судя по всему НАМЕРЕННЫЙ разброс размера дерева от
+# молодого до взрослого). Клампим, а не игнорируем xscale целиком, чтобы не
+# потерять этот второй, осмысленный случай.
+MIN_RENDER_SCALE = 0.3
+MAX_RENDER_SCALE = 3.0
+
+
+def _clamp_render_scale(xscale: float) -> float:
+    return max(MIN_RENDER_SCALE, min(MAX_RENDER_SCALE, xscale))
+
+# Максимальное отклонение (стрела прогиба) дуг HATCH-контура при аппроксимации
+# отрезками (issue #50 follow-up) -- в исходных единицах DXF, ДО масштаба tf
+# (см. extract_restrictions). План покрытий (газон/тротуар и т.п.) в реальных
+# проектах Мосгеотреста часто залит HATCH-штриховкой, а не нарисован полигоном
+# -- подтверждено на "13_kharkovskaya" (слои "...Газон_Рулонный"/"...трот..."
+# состоят целиком из HATCH, ни одной LWPOLYLINE).
+HATCH_FLATTENING_DISTANCE = 0.3
 
 
 # ---------------------------------------------------------------------------
@@ -263,6 +391,64 @@ def _add_zone(zones, idx_by_type, cfg, layer, pts_xyz, tf):
         if k not in zone:
             zone[k] = v
     zones.append(zone)
+
+
+# Насколько близко должны сойтись концы склеенной linemerge-цепочки, чтобы
+# считать контур реально замкнутым (issue #50 follow-up) -- тот же порог и
+# та же причина, что у "реально замкнут vs разомкнутая топосъёмка" в ручной
+# методике реконструкции зданий для этого же класса реальных DWG-проектов.
+_BUILDING_CLOSE_GAP_M = 2.0
+# Порог "это шум съёмки (забор, обрывок бордюра), а не здание" по короткой
+# стороне прямоугольника-реконструкции -- тоже оттуда же.
+_BUILDING_MIN_SHORT_SIDE_M = 4.0
+
+
+def _reconstruct_buildings_from_line_fragments(zones, idx_by_type, building_lines, tf):
+    """Реальные топопланы Мосгеотреста часто рисуют контур здания сложным
+    (штриховым) типом линии, который при конвертации DWG->DXF "взрывается" на
+    тысячи отдельных LINE без какой-либо связи между собой в самом DXF
+    (реальный случай, issue #50 follow-up: "13_kharkovskaya", слой "Здания" --
+    1012 отдельных LINE, ни одной LWPOLYLINE). `shapely.linemerge` склеивает
+    фрагменты по совпадающим концам обратно в непрерывные линии.
+
+    Если склеенная цепочка сошлась в кольцо (концы ближе
+    _BUILDING_CLOSE_GAP_M) -- берём её контур как есть, это надёжный случай.
+    Если нет -- топосъёмка трассирует только видимую со стороны съёмки часть
+    стен (тот же реальный эффект, что и с разомкнутыми LWPOLYLINE в другом
+    проекте с этим же классом данных): честный convex hull на разомкнutой
+    трассе часто вырождается в острый "парус", поэтому берём
+    minimum_rotated_rectangle (честные 90° углы) и отбрасываем результат,
+    если его короткая сторона меньше _BUILDING_MIN_SHORT_SIDE_M -- это шум
+    съёмки, не здание."""
+    for layer, (cfg, segments) in building_lines.items():
+        if not segments:
+            continue
+        merged = linemerge([LineString(s) for s in segments])
+        pieces = list(merged.geoms) if merged.geom_type == "MultiLineString" else [merged]
+        for piece in pieces:
+            coords = list(piece.coords)
+            if len(coords) < 3:
+                continue
+            (x0, y0), (x1, y1) = coords[0], coords[-1]
+            gap = math.hypot(x1 - x0, y1 - y0)
+            if gap < _BUILDING_CLOSE_GAP_M:
+                poly = Polygon(coords)
+                if not poly.is_valid:
+                    poly = poly.buffer(0)
+                if poly.is_empty or poly.geom_type != "Polygon" or poly.area <= 0:
+                    continue
+            else:
+                hull = MultiPoint(coords).convex_hull
+                if hull.geom_type != "Polygon":
+                    continue
+                rect = hull.minimum_rotated_rectangle
+                rect_pts = list(rect.exterior.coords)[:-1]
+                sides = [math.hypot(rect_pts[i][0] - rect_pts[i - 1][0], rect_pts[i][1] - rect_pts[i - 1][1]) for i in range(len(rect_pts))]
+                if min(sides) < _BUILDING_MIN_SHORT_SIDE_M:
+                    continue
+                poly = rect
+            pts3 = [(x, y, 0.0) for x, y in poly.exterior.coords[:-1]]
+            _add_zone(zones, idx_by_type, cfg, layer, pts3, tf)
 
 
 # Трассы сетей приходят из DXF раздробленными: одна линия кабеля -- это сотни
@@ -433,6 +619,149 @@ def _clip_offsite_zones(zones, boundary):
     return result
 
 
+# "Дальний выброс" по Тьюки -- за пределами IQR*_OUTLIER_IQR_FACTOR от
+# межквартильного размаха (3.0 -- стандартный порог именно для "дальних", а
+# не любых, выбросов, вдвое строже обычных 1.5, используемых для разметки
+# отдельных точек на boxplot). Работает независимо от размера выборки, в
+# отличие от прямого перцентильного индекса (int(n*0.01) даёт 0 при n<100,
+# т.е. не отбрасывает вообще ничего на типичных сценах в сотни объектов).
+_OUTLIER_IQR_FACTOR = 3.0
+_OUTLIER_MIN_MARGIN_M = 50.0
+_OUTLIER_MIN_POINTS = 10
+
+
+def _robust_bounds(values):
+    """Границы Тьюки [Q1 - k*IQR, Q3 + k*IQR] по отсортированному списку --
+    устойчивы к единичным дальним выбросам, в отличие от честного min/max.
+    Запас снизу ограничен _OUTLIER_MIN_MARGIN_M, чтобы не обрезать
+    естественный разброс плотного скопления с маленьким IQR."""
+    n = len(values)
+    q1 = values[n // 4]
+    q3 = values[(3 * n) // 4]
+    margin = max((q3 - q1) * _OUTLIER_IQR_FACTOR, _OUTLIER_MIN_MARGIN_M)
+    return q1 - margin, q3 + margin
+
+
+def _estimate_fallback_region(objects, restrictions, curbs):
+    """Прямоугольная оценка "относящейся к площадке" области, когда явного
+    слоя границы участка нет вообще (см. docstring boundary в
+    extract_restrictions про то, откуда берётся посторонняя геометрия).
+    Без границы _clip_offsite_zones ничего не отсеивает, и единичная точка,
+    случайно дотянутая из общегородской подложки/чужого тайла, растягивает
+    bbox всей сцены в разы -- настоящая, корректно отмасштабированная
+    посадка выглядит на экране крошечной точкой на фоне пустоты (реальный
+    случай, issue #50 follow-up: "13_kharkovskaya" -- 99% из 912 деревьев/
+    кустов укладывались в область ~700×200м, но одно-два дерева оказались в
+    8-9 км от неё).
+
+    Границы Тьюки по X и Z ОТДЕЛЬНО по всем собранным координатам сразу
+    (объекты + вершины зон + вершины бордюров) -- честно длинный узкий
+    участок (набережная, проезд) не обрезается по краям, потому что его
+    точки распределены непрерывно, без разрыва, и попадают в межквартильный
+    размах целиком. Возвращает None, если точек слишком мало для устойчивой
+    оценки (тогда ничего не фильтруем)."""
+    xs, zs = [], []
+    for o in objects:
+        xs.append(o["position"]["x"])
+        zs.append(o["position"]["z"])
+    for r in restrictions:
+        for p in r["polygon"]:
+            xs.append(p["x"])
+            zs.append(p["z"])
+    for c in curbs:
+        for p in c:
+            xs.append(p["x"])
+            zs.append(p["z"])
+
+    if len(xs) < _OUTLIER_MIN_POINTS:
+        return None
+
+    xs.sort()
+    zs.sort()
+    minx, maxx = _robust_bounds(xs)
+    minz, maxz = _robust_bounds(zs)
+    return (minx, maxx, minz, maxz)
+
+
+def _point_in_region(x, z, region):
+    minx, maxx, minz, maxz = region
+    return minx <= x <= maxx and minz <= z <= maxz
+
+
+def _region_to_polygon_points(region):
+    minx, maxx, minz, maxz = region
+    return [{"x": minx, "z": minz}, {"x": maxx, "z": minz}, {"x": maxx, "z": maxz}, {"x": minx, "z": maxz}]
+
+
+# Запас вокруг concave hull содержимого при оценке границы участка -- чтобы
+# не терять объекты у самого края из-за погрешности аппроксимации.
+_ESTIMATED_BOUNDARY_MARGIN_M = 10.0
+# ratio для shapely.concave_hull: 0 -- максимально детальный контур (ближе к
+# альфа-форме), 1 -- обычный convex hull. 0.2 -- компромисс между точностью
+# формы участка (важно для plantable_ratio/elongation в GreenPlan, см.
+# _estimate_boundary_from_content) и устойчивостью/числом вершин контура.
+_ESTIMATED_BOUNDARY_CONCAVITY_RATIO = 0.2
+# По этой метке GreenPlan/фронтенд может отличить вычисленную границу от
+# реально найденного в DXF слоя -- это ОЦЕНКА, не официальный кадастр.
+ESTIMATED_BOUNDARY_SOURCE_LAYER = "__estimated_from_content__"
+
+
+def _estimate_boundary_from_content(objects, restrictions, curbs):
+    """Граница участка "по факту" -- concave hull уже отфильтрованной (см.
+    _estimate_fallback_region) геометрии сцены, когда явного слоя границы в
+    DXF нет вообще (issue #50 follow-up). Это не косметика: GreenPlan
+    (backend/site_characterization.py::characterize_site,
+    backend/zone_partitioning.py::partition_zones) требует scene.boundary
+    ЖЁСТКО -- обе функции возвращают None/[] при boundary=None, ничего не
+    пытаясь сделать с одними restrictions/objects. Реальный случай: сцена с
+    904 объектами и 15355 зонами (issue #50, "13_kharkovskaya" с топопланом)
+    давала 0 assignments в /api/greenplan/generate именно поэтому, а не
+    из-за нехватки места, как выглядело со стороны ("места много, а не
+    расставилось").
+
+    Concave hull, а не bbox/convex hull: у вытянutой улицы bbox/hull сильно
+    завышают total_area против реальной формы участка, искажая
+    plantable_ratio и elongation, на которых строится классификация
+    territory_type. Небольшой запас (_ESTIMATED_BOUNDARY_MARGIN_M) по краям,
+    чтобы не обрезать объекты впритык к контуру из-за погрешности
+    аппроксимации. Возвращает None при недостатке точек для устойчивой
+    оценки формы -- тогда сцена остаётся без границы, как и раньше."""
+    points = [(o["position"]["x"], o["position"]["z"]) for o in objects]
+    for r in restrictions:
+        for p in r["polygon"]:
+            points.append((p["x"], p["z"]))
+    for c in curbs:
+        for p in c:
+            points.append((p["x"], p["z"]))
+
+    if len(points) < _OUTLIER_MIN_POINTS:
+        return None
+
+    multipoint = MultiPoint(points)
+    try:
+        # GEOS-триангуляция внутри concave_hull иногда падает на почти
+        # вырожденных наборах точек (например, объекты почти на одной
+        # прямой -- узкий вытянутый участок с малым числом объектов) --
+        # "Tri::getAdjacent - invalid index", воспроизведено на 12 точках
+        # вдоль прямой. convex_hull не строит триангуляцию Делоне вообще,
+        # поэтому устойчив там, где concave_hull ломается -- ценой более
+        # грубой формы (это всё равно лучше, чем совсем без границы).
+        hull = concave_hull(multipoint, ratio=_ESTIMATED_BOUNDARY_CONCAVITY_RATIO)
+    except shapely.errors.GEOSException:
+        hull = multipoint.convex_hull
+    hull = hull.buffer(_ESTIMATED_BOUNDARY_MARGIN_M)
+    if hull.geom_type != "Polygon" or not hull.is_valid or hull.area <= 0:
+        return None
+
+    pts = list(hull.exterior.coords)[:-1]
+    if len(pts) < 3:
+        return None
+    return {
+        "polygon": [{"x": round(x, 3), "z": round(z, 3)} for x, z in pts],
+        "sourceLayer": ESTIMATED_BOUNDARY_SOURCE_LAYER,
+    }
+
+
 def extract_restrictions(msp, tf, boundary=None):
     """Закрытые LWPOLYLINE/POLYLINE -> зона-полигон, объединённая по слою
     (см. _merge_polygon_zones) -- НЕ как есть по одной сущности, вопреки тому,
@@ -477,6 +806,7 @@ def extract_restrictions(msp, tf, boundary=None):
     idx_by_type = Counter()
     corridors = {}
     polygon_zones = {}
+    building_lines = {}
 
     def add_line(layer, cfg, coords):
         if len(coords) < 2:
@@ -547,8 +877,44 @@ def extract_restrictions(msp, tf, boundary=None):
         s, en = e.dxf.start, e.dxf.end
         if math.hypot(en.x - s.x, en.y - s.y) < 1e-6:
             continue
+        # Здания -- отдельно от общего add_line (issue #50 follow-up): в
+        # реальных топопланах контур здания часто рисуется сложным
+        # (штриховым) линтайпом, который при конвертации DWG->DXF "взрывается"
+        # на тысячи отдельных LINE безо всякой связи между собой в самом DXF
+        # (реальный случай, "13_kharkovskaya": слой "Здания" -- 1012
+        # отдельных LINE, ни одной LWPOLYLINE). add_line для зданий буферизует
+        # КАЖДЫЙ отрезок отдельно -- на несвязанных фрагментах превратил бы
+        # одно здание в тысячу несвязанных полосок. Копим по слою, склеиваем
+        # в цельные контуры позже, см. _reconstruct_buildings_from_line_fragments.
+        if cfg["type"] == "building":
+            building_lines.setdefault(layer, (cfg, []))[1].append(((s.x, s.y), (en.x, en.y)))
+            continue
         add_line(layer, cfg, [(s.x, s.y), (en.x, en.y)])
 
+    # HATCH -- план покрытий (газон/тротуар и т.п.) в реальных DWG-проектах
+    # часто залит штриховкой, а не нарисован полигоном (issue #50 follow-up,
+    # см. HATCH_FLATTENING_DISTANCE выше). Каждый boundary path заливки --
+    # свой замкнутый контур; ezdxf.path.from_hatch отдаёт их все разом
+    # (внешний контур + возможные острова-дыры вперемешку, без явного флага
+    # "это дыра") -- как и справочный пример, из которого это переписано, не
+    # различаем их и просто объединяем все контуры слоя через ту же
+    # add_closed_polygon/_merge_polygon_zones, что и обычные полигоны: на
+    # практике эти покрытия почти всегда без внутренних вырезов, а island-
+    # контур (если и встретится) просто добавит лишний маленький кусок той же
+    # разрешённой зоны, не испортит форму в целом.
+    for e in msp.query("HATCH"):
+        layer = e.dxf.layer
+        if layer_matches(layer, BOUNDARY_LAYER_KEYWORDS) or layer_matches(layer, SKIP_LAYER_KEYWORDS):
+            continue
+        cfg = match_rule(layer, POLYGON_RULES)
+        if not cfg:
+            continue
+        for p in ezpath.from_hatch(e):
+            pts = [(v.x, v.y, v.z) for v in p.flattening(distance=HATCH_FLATTENING_DISTANCE)]
+            if len(pts) >= 3:
+                add_closed_polygon(layer, cfg, pts)
+
+    _reconstruct_buildings_from_line_fragments(zones, idx_by_type, building_lines, tf)
     _merge_corridors(zones, idx_by_type, corridors, tf)
     _merge_polygon_zones(zones, idx_by_type, polygon_zones, tf)
     return _clip_offsite_zones(zones, boundary)
@@ -633,8 +999,24 @@ def extract_point_objects(msp, tf):
     objects = []
     counters = Counter()
 
+    # Индекс по имени слоя строится один раз: POINT_LAYER_RULES теперь
+    # включает по записи на каждый вид из справочника (~250 правил вместо
+    # ~17, issue #50 follow-up) -- наивный проход по ВСЕМ сущностям
+    # modelspace на КАЖДОЕ правило на крупных сценах (десятки тысяч сущностей)
+    # был бы уже заметно медленнее. Различных имён слоёв на порядки меньше,
+    # чем сущностей, поэтому матчинг по ключевым словам делаем по ним, а
+    # сущности достаём из готового индекса.
+    entities_by_layer: dict[str, list] = {}
+    for e in msp:
+        entities_by_layer.setdefault(e.dxf.layer, []).append(e)
+
     for layer_keyword, cfg in POINT_LAYER_RULES:
-        entities = [e for e in msp if layer_matches(e.dxf.layer, [layer_keyword])]
+        entities = [
+            e
+            for layer_name, layer_entities in entities_by_layer.items()
+            if layer_matches(layer_name, [layer_keyword]) and not layer_matches(layer_name, POINT_LAYER_EXCLUDE_KEYWORDS)
+            for e in layer_entities
+        ]
         if not entities:
             continue
 
@@ -651,7 +1033,7 @@ def extract_point_objects(msp, tf):
                 "model": cfg["model"],
                 "position": tf.point(loc.x, loc.y, loc.z if e.dxftype() == "INSERT" else 0.0),
                 "rotation": math.radians(getattr(e.dxf, "rotation", 0.0)),
-                "scale": getattr(e.dxf, "xscale", 1.0),
+                "scale": _clamp_render_scale(getattr(e.dxf, "xscale", 1.0)),
                 "metadata": {"blockName": getattr(e.dxf, "name", None), "sourceLayer": e.dxf.layer},
             })
 
@@ -770,6 +1152,32 @@ def parse_dxf_doc(doc, scale=None, center=True):
     objects = buildings + points
     facade = extract_facade_quads(msp, tf)
     curbs = extract_curb_polylines(msp, tf)
+
+    # Без явного слоя границы (issue #50 follow-up: реальные DWG-батчи без
+    # слоя ГРАНИЦА -- см. предупреждение в docstring extract_restrictions про
+    # boundary про то, откуда берётся посторонняя геометрия) ничего выше не
+    # отсеивает единичные точки, случайно дотянутые из общегородской
+    # подложки/чужого тайла: одна такая точка растягивает bbox сцены в разы,
+    # и настоящая, корректно отмасштабированная посадка выглядит на экране
+    # крошечной точкой на фоне пустоты (реальный случай -- "13_kharkovskaya":
+    # 99% из 912 деревьев/кустов укладывались в область ~700×200м, но одно-два
+    # дерева оказались в 8-9 км от неё). Оцениваем плотное ядро координат и
+    # отсеиваем/обрезаем всё, что снаружи -- с реальной границей это уже
+    # делает _clip_offsite_zones для restrictions, здесь то же самое, но для
+    # всех трёх коллекций сразу и по оценке, а не по границе.
+    if boundary is None:
+        region = _estimate_fallback_region(objects, restrictions, curbs)
+        if region is not None:
+            objects = [o for o in objects if _point_in_region(o["position"]["x"], o["position"]["z"], region)]
+            fake_boundary = {"polygon": _region_to_polygon_points(region)}
+            restrictions = _clip_offsite_zones(restrictions, fake_boundary)
+            curbs = [c for c in curbs if all(_point_in_region(p["x"], p["z"], region) for p in c)]
+
+        # Без границы GreenPlan (characterize_site/partition_zones) не
+        # работает вообще -- см. docstring _estimate_boundary_from_content.
+        # Считаем её ПОСЛЕ отсева выбросов выше, чтобы редкая дальняя точка
+        # не растянула и сам контур.
+        boundary = _estimate_boundary_from_content(objects, restrictions, curbs)
 
     return {
         "boundary": boundary,

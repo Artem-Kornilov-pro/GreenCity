@@ -96,6 +96,88 @@ def test_parse_rejects_corrupt_dxf_content(client):
     assert "разобрать" in r.json()["detail"]
 
 
+# --- /api/parse-dwg (issue #50) ---------------------------------------------
+# dwg_batch_converter.merge_dwg_files подменяется целиком -- реального
+# dwg2dxf/LibreDWG на тестовой машине может не быть, а сама эта функция уже
+# покрыта отдельными юнит-тестами (test_dwg_batch_converter.py). Здесь --
+# только контракт эндпоинта: коды ответов, dwgConversionWarnings, метрики.
+
+
+def test_parse_dwg_rejects_upload_without_any_dwg_file(client):
+    r = client.post("/api/parse-dwg", files=[("files", ("test.txt", b"hello", "text/plain"))])
+    assert r.status_code == 400
+    assert "dwg" in r.json()["detail"].lower()
+
+
+def test_parse_dwg_returns_503_when_tool_missing(client, monkeypatch):
+    def _raise(dwg_paths, intermediate_dir):
+        raise main_module.dwg_batch_converter.Dwg2DxfNotFound("dwg2dxf не найден")
+
+    monkeypatch.setattr(main_module.dwg_batch_converter, "merge_dwg_files", _raise)
+    r = client.post("/api/parse-dwg", files=[("files", ("a.dwg", b"whatever", "application/octet-stream"))])
+    assert r.status_code == 503
+
+
+def test_parse_dwg_returns_400_when_every_file_fails(client, monkeypatch):
+    def _all_failed(dwg_paths, intermediate_dir):
+        import ezdxf
+
+        result = main_module.dwg_batch_converter.BatchConversionResult(doc=ezdxf.new())
+        result.failed = {p.name: "не удалось прочитать" for p in dwg_paths}
+        return result
+
+    monkeypatch.setattr(main_module.dwg_batch_converter, "merge_dwg_files", _all_failed)
+    r = client.post("/api/parse-dwg", files=[("files", ("a.dwg", b"whatever", "application/octet-stream"))])
+    assert r.status_code == 400
+    assert "a.dwg" in r.json()["detail"]
+
+
+def test_parse_dwg_success_returns_scene_with_warnings_for_failed_files(client, monkeypatch):
+    fake_scene = {"boundary": None, "restrictions": [], "objects": [], "windows": [], "canopies": [], "curbs": [],
+                  "meta": {"scale": 1.0, "insunits": 6, "origin": {"x": 0, "y": 0}, "buildingCount": 0, "pointObjectCount": 0}}
+
+    def _partial_success(dwg_paths, intermediate_dir):
+        import ezdxf
+
+        result = main_module.dwg_batch_converter.BatchConversionResult(doc=ezdxf.new())
+        result.converted = ["good.dwg"]
+        result.failed = {"bad.dwg": "unsupported object type"}
+        return result
+
+    monkeypatch.setattr(main_module.dwg_batch_converter, "merge_dwg_files", _partial_success)
+    monkeypatch.setattr(main_module, "parse_dxf_file", lambda path: dict(fake_scene))
+
+    r = client.post(
+        "/api/parse-dwg",
+        files=[
+            ("files", ("good.dwg", b"whatever", "application/octet-stream")),
+            ("files", ("bad.dwg", b"whatever", "application/octet-stream")),
+        ],
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["dwgConversionWarnings"] == [{"file": "bad.dwg", "error": "unsupported object type"}]
+
+
+def test_parse_dwg_success_without_failures_has_no_warnings_key(client, monkeypatch):
+    fake_scene = {"boundary": None, "restrictions": [], "objects": [], "windows": [], "canopies": [], "curbs": [],
+                  "meta": {"scale": 1.0, "insunits": 6, "origin": {"x": 0, "y": 0}, "buildingCount": 0, "pointObjectCount": 0}}
+
+    def _full_success(dwg_paths, intermediate_dir):
+        import ezdxf
+
+        result = main_module.dwg_batch_converter.BatchConversionResult(doc=ezdxf.new())
+        result.converted = [p.name for p in dwg_paths]
+        return result
+
+    monkeypatch.setattr(main_module.dwg_batch_converter, "merge_dwg_files", _full_success)
+    monkeypatch.setattr(main_module, "parse_dxf_file", lambda path: dict(fake_scene))
+
+    r = client.post("/api/parse-dwg", files=[("files", ("good.dwg", b"whatever", "application/octet-stream"))])
+    assert r.status_code == 200
+    assert "dwgConversionWarnings" not in r.json()
+
+
 # --- /api/generate-greenery --------------------------------------------------
 
 

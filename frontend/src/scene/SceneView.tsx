@@ -15,6 +15,7 @@ import { AreaSelectionDraw } from "./AreaSelectionDraw";
 
 export function SceneView({
   scene,
+  sceneLoadToken,
   catalogById,
   availableModels,
   selectedId,
@@ -27,6 +28,7 @@ export function SceneView({
   onAreaSelected,
 }: {
   scene: Scene;
+  sceneLoadToken: number;
   catalogById: Map<string, CatalogItem>;
   availableModels: Set<string>;
   selectedId: string | null;
@@ -66,7 +68,7 @@ export function SceneView({
       <color attach="background" args={["#cfe0e8"]} />
       <ambientLight intensity={0.7} />
       <directionalLight position={[30, 50, 20]} intensity={1.1} castShadow />
-      <FitCamera bounds={bounds} boundary={scene.boundary} />
+      <FitCamera bounds={bounds} sceneLoadToken={sceneLoadToken} />
       <Ground boundary={scene.boundary} />
       <RestrictionZones zones={displayZones} onHover={onHoverZone} />
       <Buildings objects={scene.objects} />

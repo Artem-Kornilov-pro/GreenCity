@@ -54,15 +54,22 @@ def main():
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # capture_output БЕЗ text=True -- dwg2dxf пишет в stderr предупреждения с
+    # именами слоёв/блоков в кодировке исходного DWG (не обязательно UTF-8),
+    # text=True декодирует поток как UTF-8 сам и падает с UnicodeDecodeError
+    # ещё до возврата из subprocess.run, даже если итоговый DXF получился
+    # нормальным. Декодируем вручную и терпимо, только когда нужно её показать.
     result = subprocess.run(
         [tool, "-o", str(out_path), str(in_path)],
-        capture_output=True, text=True,
+        capture_output=True,
     )
-    if result.stdout.strip():
-        print(result.stdout.strip())
+    stdout = result.stdout.decode("utf-8", errors="replace")
+    stderr = result.stderr.decode("utf-8", errors="replace")
+    if stdout.strip():
+        print(stdout.strip())
     if result.returncode != 0 or not out_path.exists():
         sys.exit(
-            f"dwg2dxf завершился с ошибкой (код {result.returncode}):\n{result.stderr.strip()}\n\n"
+            f"dwg2dxf завершился с ошибкой (код {result.returncode}):\n{stderr.strip()}\n\n"
             "Если файл читается официальным AutoCAD/DraftSight без проблем, но не "
             "конвертируется здесь -- велика вероятность, что дело в неполной "
             "поддержке конкретных объектов/версии формата в LibreDWG. "

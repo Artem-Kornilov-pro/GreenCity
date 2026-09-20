@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import {
   Leaf,
   UploadCloud,
+  FolderUp,
   Sparkles,
   Download,
   Save,
@@ -26,6 +27,7 @@ import type { TransformMode } from "../scene/PlacedObjects";
 import { CATEGORY_LABELS, fetchCatalog, fetchModelManifest, type CatalogCategory, type CatalogItem } from "../catalog";
 import {
   uploadDxf,
+  uploadDwgFolder,
   editWithText,
   exportDxf,
   createProject,
@@ -89,6 +91,16 @@ export default function EditorPage() {
   const { session, logout } = useAuth();
 
   const [scene, setScene] = useState<Scene | null>(null);
+  // Счётчик "загружена новая сцена" для FitCamera -- НЕ scene.boundary
+  // напрямую: у реальных DWG-проектов без слоя границы (issue #50 follow-up)
+  // boundary у ДВУХ РАЗНЫХ сцен подряд одинаково null, а null === null в JS
+  // -- SceneView/FitCamera раньше принимал это за "та же сцена" и молча не
+  // перецентровывал камеру на второй, третий и т.д. проект без границы,
+  // оставляя её там, где она была для самого первого. Инкрементируется
+  // только при загрузке ДЕЙСТВИТЕЛЬНО новой сцены (файл/папка/проект), не
+  // при редактировании текущей (drag, правка текстом, GreenPlan) -- иначе
+  // камера дёргалась бы на каждое такое действие.
+  const [sceneLoadToken, setSceneLoadToken] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [transformMode, setTransformMode] = useState<TransformMode>("translate");
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
@@ -99,6 +111,21 @@ export default function EditorPage() {
   const [loading, setLoading] = useState(false);
   const [exportingDxf, setExportingDxf] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Файлы .dwg, которые backend не смог сконвертировать при загрузке папки
+  // (issue #50) -- не ошибка (сцена уже загружена и отображена), просто
+  // предупреждение, отдельное от error, чтобы не выглядеть как сбой загрузки.
+  // totalDwgFiles -- сколько .dwg вообще было отправлено (известно только на
+  // клиенте, backend его не возвращает), для сообщения "N из M не удалось".
+  const [dwgWarnings, setDwgWarnings] = useState<{ file: string; error: string }[] | null>(null);
+  const [totalDwgFiles, setTotalDwgFiles] = useState(0);
+  // Только для сообщения во время загрузки -- backend не отдаёт прогресс
+  // по ходу конвертации (один HTTP-запрос на весь батч), а сама конвертация
+  // не быстрая (issue #50 follow-up: реальный замер -- конвертация .dwg
+  // сама по себе быстрая, ~1с/файл, а вот разбор итогового DXF занимает
+  // 3-4.5с/файл на крупных реальных файлах -- параллелить его надёжно не
+  // получилось, см. docstring backend/dwg_batch_converter.py). Оценка "~10с
+  // на файл" не точный прогресс, а ожидание, чтобы не выглядело зависшим.
+  const [dwgUploading, setDwgUploading] = useState(false);
 
   const [instruction, setInstruction] = useState("");
   const [editing, setEditing] = useState(false);
@@ -137,6 +164,7 @@ export default function EditorPage() {
       loadProject(session, projectId)
         .then((project) => {
           setScene(project.scene);
+          setSceneLoadToken((t) => t + 1);
           setProjectName(project.name);
           setSelectedId(null);
         })
@@ -149,14 +177,44 @@ export default function EditorPage() {
   const handleFile = useCallback(async (file: File) => {
     setLoading(true);
     setError(null);
+    setDwgWarnings(null);
     try {
       const parsed = await uploadDxf(file);
       setScene(parsed);
+      setSceneLoadToken((t) => t + 1);
       setSelectedId(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  // Папка .dwg целиком (issue #50) -- webkitdirectory отдаёт ВСЕ файлы папки
+  // (в реальных проектах Мосгеотреста рядом с .dwg лежат PDF/xlsx/фото),
+  // поэтому фильтруем по расширению уже на клиенте, до отправки на бэкенд.
+  const handleDwgFolder = useCallback(async (fileList: FileList) => {
+    const dwgFiles = Array.from(fileList).filter((f) => f.name.toLowerCase().endsWith(".dwg"));
+    if (dwgFiles.length === 0) {
+      setError("В выбранной папке нет файлов .dwg");
+      return;
+    }
+    setLoading(true);
+    setDwgUploading(true);
+    setError(null);
+    setDwgWarnings(null);
+    setTotalDwgFiles(dwgFiles.length);
+    try {
+      const parsed = await uploadDwgFolder(dwgFiles);
+      setScene(parsed);
+      setSceneLoadToken((t) => t + 1);
+      setSelectedId(null);
+      setDwgWarnings(parsed.dwgConversionWarnings ?? null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+      setDwgUploading(false);
     }
   }, []);
 
@@ -413,6 +471,26 @@ export default function EditorPage() {
               <input type="file" accept=".dxf" hidden onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
             </label>
 
+            <label title="Выбрать папку проекта с исходными .dwg -- каждый файл конвертируется в DXF на сервере и сливается в одну сцену (issue #50)">
+              <Button asChild variant="outline" size="sm">
+                <span className="cursor-pointer">
+                  {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FolderUp className="h-3.5 w-3.5" />}
+                  Загрузить DWG (папка)
+                </span>
+              </Button>
+              <input
+                type="file"
+                // webkitdirectory -- нестандартный, но широко поддерживаемый
+                // атрибут (Chrome/Firefox/Edge; Safari частично) для выбора
+                // папки целиком вместо отдельных файлов.
+                // @ts-expect-error -- webkitdirectory отсутствует в типах React для input
+                webkitdirectory=""
+                multiple
+                hidden
+                onChange={(e) => e.target.files && e.target.files.length > 0 && handleDwgFolder(e.target.files)}
+              />
+            </label>
+
             {scene && (
               <>
                 <Button
@@ -508,6 +586,27 @@ export default function EditorPage() {
           </div>
         )}
 
+        {!error && !projectError && dwgUploading && (
+          <div className="absolute inset-x-0 top-14 z-30 flex items-center gap-2 border-b border-brand-500/20 bg-brand-500/90 px-4 py-2 text-sm text-white backdrop-blur-sm">
+            <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+            <span>
+              Конвертация {totalDwgFiles} DWG-файлов в DXF на сервере -- на крупных реальных файлах это может занять до
+              минуты, не закрывайте страницу.
+            </span>
+          </div>
+        )}
+
+        {!error && !projectError && dwgWarnings && dwgWarnings.length > 0 && (
+          <div className="absolute inset-x-0 top-14 z-30 flex items-start justify-between gap-3 border-b border-warning-500/30 bg-warning-500/90 px-4 py-2 text-sm text-ink-900 backdrop-blur-sm">
+            <span>
+              Сцена загружена, но {dwgWarnings.length} из {totalDwgFiles} .dwg-файлов не удалось сконвертировать: {dwgWarnings.map((w) => w.file).join(", ")}
+            </span>
+            <button onClick={() => setDwgWarnings(null)} className="shrink-0 opacity-70 hover:opacity-100">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         {/* Контент -- обе боковые панели плавают поверх сцены (как и топбар),
             иначе сквозь них нечего блюрить, кроме однотонного фона страницы,
             и эффект стекла не виден. */}
@@ -515,6 +614,7 @@ export default function EditorPage() {
           {scene ? (
             <SceneView
               scene={scene}
+              sceneLoadToken={sceneLoadToken}
               catalogById={catalogById}
               availableModels={availableModels}
               selectedId={selectedId}

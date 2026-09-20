@@ -1,3 +1,30 @@
+# --- Стадия сборки LibreDWG --------------------------------------------------
+# dwg2dxf нужен /api/parse-dwg (backend/dwg_batch_converter.py, issue #50) для
+# конвертации .dwg в .dxf. LibreDWG НЕ запакетирован ни в Debian (trixie,
+# текущая база python:3.12-slim), ни в Ubuntu (noble, universe включён) --
+# `apt install libredwg-tools` из более старых заметок по проекту на практике
+# не находит пакет (проверено на обеих базах). Поэтому собираем из офиц.
+# релизного тарбола (в нём уже сгенерирован ./configure, autoreconf не нужен).
+# --disable-shared -- статически линкует саму библиотеку внутрь бинарника,
+# наружу торчат только системные libc/libm (см. ldd), поэтому в финальный
+# образ переносится один файл, без .so. Сборка src/ занимает ~2 минуты --
+# отдельная стадия и Docker layer cache дают то, что она не повторяется на
+# каждую пересборку, пока ARG LIBREDWG_VERSION не меняется.
+FROM python:3.12-slim AS libredwg-builder
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl ca-certificates build-essential pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+ARG LIBREDWG_VERSION=0.14
+RUN curl -sL -o /tmp/libredwg.tar.gz \
+        "https://github.com/LibreDWG/libredwg/releases/download/${LIBREDWG_VERSION}/libredwg-${LIBREDWG_VERSION}.tar.gz" \
+    && tar xzf /tmp/libredwg.tar.gz -C /tmp \
+    && cd "/tmp/libredwg-${LIBREDWG_VERSION}" \
+    && ./configure --disable-bindings --disable-shared \
+    && make -j"$(nproc)" -C src \
+    && make -j"$(nproc)" -C programs dwg2dxf \
+    && strip programs/dwg2dxf \
+    && cp programs/dwg2dxf /usr/local/bin/dwg2dxf
+
 # Собирать из корня репозитория (build context = .), не из backend/ --
 # main.py импортирует parser/parse_dxf.py по относительному пути
 # (Path(__file__).parent.parent / "parser"), поэтому оба каталога должны
@@ -5,6 +32,8 @@
 FROM python:3.12-slim
 
 WORKDIR /app
+
+COPY --from=libredwg-builder /usr/local/bin/dwg2dxf /usr/local/bin/dwg2dxf
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
