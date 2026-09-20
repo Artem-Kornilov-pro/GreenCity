@@ -36,7 +36,18 @@ from __future__ import annotations
 
 from pattern_assignment import ZoneAssignment, assign_patterns
 from pattern_library import PATTERN_LIBRARY, PatternSpec
-from placement import Placer, centerline_of, lines_of, pick_near, pick_spread, rotation_of, sample_line
+from placement import (
+    Placer,
+    centerline_of,
+    lines_of,
+    pick_near,
+    pick_spread,
+    rect_sides,
+    rotation_of,
+    rows_of,
+    sample_line,
+    wavy_line,
+)
 from plant_catalog import CatalogItem
 from schemas import Point3, Scene, SceneObject
 from shapely.geometry import Polygon
@@ -47,6 +58,23 @@ from zone_partitioning import GeometricZone, partition_zones
 # (кусты 1.4 м / деревья 12 м, ~8.5x) и 19_2ya_pryadilnaya (изгородь у дороги).
 LINEAR_BUSH_STEP_M = 1.4
 LINEAR_TREE_STEP_FACTOR = 8.5
+
+# Расстояние между параллельными рядами для linear-паттерна на open_area
+# (rows_of вместо одной центральной линии, см. её докстринг) -- то же
+# расстояние, что и у шага заливки массива (AREA_FILL_BUSH_SPACING_M ниже),
+# для сопоставимой плотности между линейными и площадными паттернами на
+# одном и том же виде зоны.
+OPEN_AREA_ROW_SPACING_M = 6.0
+# Верхняя граница числа рядов на одну open_area-зону -- без неё гигантская
+# зона (тот же реальный случай 646 279 м², что и у MAX_OBJECTS_PER_ZONE ниже)
+# даёт 36 рядов по многие сотни кустов КАЖДЫЙ (один длинный ряд сам по себе
+# уже плотный при шаге LINEAR_BUSH_STEP_M=1.4 м) -- полный пайплайн на этом
+# файле подскочил с ~11 до ~20 секунд и почти 9000 новых объектов на одну
+# сцену при добавлении rows_of (было: одна линия, тот же баг класса "гигант-
+# ская зона", что и у MAX_OBJECTS_PER_ZONE/MAX_GROUPS_PER_ZONE, только для
+# другого geometry_family). 10 рядов даёт сопоставимый с area_fill/clustered
+# порядок итоговой плотности на такой зоне вместо кратного превышения.
+MAX_ROWS_PER_ZONE = 10
 
 # Площадная заливка: шаг сетки кандидатов и во сколько раз реже деревья --
 # по 20_makeeva_s (кусты 6 м / деревья 12 м, 2x).
@@ -137,18 +165,77 @@ def _place_linear(
     trees: list[CatalogItem],
     bushes: list[CatalogItem],
 ) -> list[SceneObject]:
-    centerline = centerline_of(_polygon_of(zone))
-    if centerline is None:
+    poly = _polygon_of(zone)
+
+    if spec.line_shape == "ring":
+        # building_ring: зона -- узкая полоса-бублик вокруг здания
+        # (building_border из zone_partitioning.py). Линия через центроид
+        # (centerline_of/rows_of) срезала бы такую зону ХОРДОЙ по прямой,
+        # а не обходила здание по кругу -- визуально не "кольцо", а
+        # случайный отрезок внутри кольца. Собственный контур полигона --
+        # и есть то самое кольцо.
+        row_lines = [poly.exterior]
+    elif zone.kind == "open_area":
+        # open_area -- произвольной ширины двумерное пятно
+        # (zone_partitioning.py: "всё, что осталось: под площадные
+        # паттерны"), а не узкая полоса постоянной ширины вроде
+        # building_border/path_corridor/site_edge. Одна линия через
+        # середину покрывала только ряд посередине зоны, оставляя
+        # остальную ширину открытой площади пустой -- реальная находка
+        # ручного тестирования ("не заполняет всё пространство") на
+        # linear-паттернах (flowing_rows/diagonal_rows), которые retrieval
+        # назначает open_area наравне с площадными. rows_of() даёт столько
+        # параллельных рядов, сколько уместится по ширине зоны.
+        angle = spec.diagonal_angle_deg if spec.line_shape == "diagonal" else 0.0
+        row_lines = rows_of(poly, OPEN_AREA_ROW_SPACING_M, angle_offset_deg=angle)
+        if len(row_lines) > MAX_ROWS_PER_ZONE:
+            # Равномерная прорезка, а не первые MAX_ROWS_PER_ZONE -- rows_of
+            # выдаёт ряды по порядку поперёк всей ширины зоны, взять только
+            # первые N означало бы покрыть рядами одну сторону гигантской
+            # зоны, оставив другую совсем пустой.
+            step = len(row_lines) / MAX_ROWS_PER_ZONE
+            row_lines = [row_lines[round(i * step)] for i in range(MAX_ROWS_PER_ZONE)]
+    else:
+        angle = spec.diagonal_angle_deg if spec.line_shape == "diagonal" else 0.0
+        centerline = centerline_of(poly, angle_offset_deg=angle)
+        row_lines = [centerline] if centerline is not None else []
+
+    if spec.line_shape == "wavy" and spec.wave_amplitude_m > 0:
+        # Амплитуда из корпуса (4 м у 10_stary_gay) может быть шире самой
+        # зоны (path_corridor -- полоса ~3 м) -- тогда волна почти всё время
+        # уходила бы за пределы зоны и после обрезки по контуру рассыпалась
+        # бы на мелкие несвязные обрывки у каждого пересечения нуля синуса.
+        # Урезаем амплитуду под собственную ширину (короткую сторону)
+        # каждой конкретной зоны -- на открытой достаточно широкой зоне
+        # (open_area) применяется полная документированная амплитуда.
+        short_side = min(s[2] for s in rect_sides(poly))
+        amplitude = min(spec.wave_amplitude_m, short_side * 0.35)
+        wavy = [wavy_line(line, amplitude, spec.wave_length_m) for line in row_lines]
+        row_lines = [w.intersection(poly) for w in wavy if w is not None]
+
+    if not row_lines:
         return []
     offsets = (0.0,) if spec.double_row_offset_m <= 0 else (0.0, spec.double_row_offset_m)
     objects: list[SceneObject] = []
     bush_counter, tree_counter = [0], [0]
-    for line in lines_of(centerline):
-        for row_offset in offsets:
-            objects += _place_row(placer, zone, assignment, bushes, "bush", LINEAR_BUSH_STEP_M, row_offset, line, bush_counter)
-        objects += _place_row(
-            placer, zone, assignment, trees, "tree", LINEAR_BUSH_STEP_M * LINEAR_TREE_STEP_FACTOR, 0.0, line, tree_counter
-        )
+    for row_centerline in row_lines:
+        for line in lines_of(row_centerline):
+            # Деревья -- ПЕРЕД кустами на той же линии (offset=0.0 у обоих).
+            # Куст с шагом LINEAR_BUSH_STEP_M=1.4 м занимает буквально каждую
+            # точку центральной линии -- ближайший куст к любой другой точке
+            # той же линии всегда ближе OBJECT_CLEARANCE_M=1.0 м. Если сажать
+            # кусты первыми (как было раньше), ни одна точка-кандидат для
+            # дерева на этой же линии не проходит is_free -- деревья не
+            # появлялись ВООБЩЕ ни на одном линейном паттерне (issue:
+            # "деревья вообще не появляются", реальный баг с
+            # 01_single_building/02_courtyard). Деревья реже (шаг в
+            # LINEAR_TREE_STEP_FACTOR=8.5 раз больше) и сами по себе не
+            # мешают кустам занять остальную линию после них.
+            objects += _place_row(
+                placer, zone, assignment, trees, "tree", LINEAR_BUSH_STEP_M * LINEAR_TREE_STEP_FACTOR, 0.0, line, tree_counter
+            )
+            for row_offset in offsets:
+                objects += _place_row(placer, zone, assignment, bushes, "bush", LINEAR_BUSH_STEP_M, row_offset, line, bush_counter)
     return objects
 
 
