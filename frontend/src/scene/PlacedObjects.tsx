@@ -56,7 +56,13 @@ export function PlacedObjects({
           hasModel: item ? availableModels.has(item.model) : false,
           violated:
             !exemptFromViolations &&
-            violatesAt(obj.position.x, obj.position.z, index, plantKindOfObjectType(obj.type)),
+            violatesAt(
+              obj.position.x,
+              obj.position.z,
+              index,
+              plantKindOfObjectType(obj.type),
+              typeof obj.metadata.species === "string" ? obj.metadata.species : undefined
+            ),
         };
       });
   }, [objects, restrictions, catalogById, availableModels]);

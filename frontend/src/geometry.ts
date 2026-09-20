@@ -46,12 +46,13 @@ export function checkViolations(
   px: number,
   pz: number,
   zones: RestrictionZone[],
-  plantKind?: PlantKind
+  plantKind?: PlantKind,
+  species?: string
 ): ZoneViolation[] {
   const result: ZoneViolation[] = [];
   for (const zone of zones) {
     if (zone.severity === "allowed" || zone.polygon.length < 3) continue;
-    const minDistance = plantKind ? setbackFor(zone.type, plantKind, zone.minDistance) : zone.minDistance;
+    const minDistance = plantKind ? setbackFor(zone.type, plantKind, zone.minDistance, species) : zone.minDistance;
     if (pointInPolygon(px, pz, zone.polygon) || distanceToPolygonEdge(px, pz, zone.polygon) < minDistance) {
       result.push({ zone, minDistance });
     }
@@ -59,12 +60,15 @@ export function checkViolations(
   return result;
 }
 
-// Наибольшее значение в таблице норм (building/tree). setbackFor для зоны без
-// табличного значения возвращает её собственный minDistance, поэтому реально
-// применённый отступ никогда не превышает max(zone.minDistance, этой величины) --
-// на столько и нужно расширять габарит зоны в индексе, чтобы не потерять
-// нарушение у точки за её границей.
-const MAX_TABLE_SETBACK_M = 5.0;
+// Наибольшее значение среди SETBACK_NORMS И SPECIES_SETBACK_OVERRIDES
+// (issue #43: тополь/building = 8.0 м, больше базовых 5.0 м building/tree).
+// setbackFor для зоны без табличного значения возвращает её собственный
+// minDistance, поэтому реально применённый отступ никогда не превышает
+// max(zone.minDistance, этой величины) -- на столько и нужно расширять
+// габарит зоны в индексе, чтобы не потерять нарушение у точки за её границей
+// (иначе дерево с override'ом дальше 5 м, но ближе положенных ему 8 м, могло
+// бы пройти мимо индекса как "не нарушает").
+const MAX_TABLE_SETBACK_M = 8.0;
 
 // Сетка не длиннее этого по стороне: 256x256 ячеек -- потолок памяти индекса,
 // дальше выгоднее проверять чуть больше зон в ячейке, чем держать сетку.
@@ -152,7 +156,8 @@ export function violatesAt(
   px: number,
   pz: number,
   index: ZoneIndex,
-  plantKind?: PlantKind
+  plantKind?: PlantKind,
+  species?: string
 ): boolean {
   if (!index.cols) return false;
   const c = Math.floor((px - index.originX) / index.cell);
@@ -162,7 +167,7 @@ export function violatesAt(
   for (const item of index.buckets[r * index.cols + c]) {
     if (px < item.minX || px > item.maxX || pz < item.minZ || pz > item.maxZ) continue;
     const zone = item.zone;
-    const minDistance = plantKind ? setbackFor(zone.type, plantKind, zone.minDistance) : zone.minDistance;
+    const minDistance = plantKind ? setbackFor(zone.type, plantKind, zone.minDistance, species) : zone.minDistance;
     if (pointInPolygon(px, pz, zone.polygon) || distanceToPolygonEdge(px, pz, zone.polygon) < minDistance) {
       return true;
     }
