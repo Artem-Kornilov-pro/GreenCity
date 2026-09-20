@@ -94,7 +94,7 @@ Docker-compose поднимает 8 сервисов с healthcheck на каж�
 | 0. Справочники | `data/norms/` | Отступы готовы; xlsm-каталог видов/кодов решений — нет |
 | 1. Импорт DWG→DXF | `parser/parse_dxf.py` | Готово; джойн ведомости с деревьями по номеру — нет |
 | 2. Решения по существующим деревьям + компенсация | — | Не начато (ждёт внешних xlsm) |
-| 3. Характеризация + retrieval | `site_characterization.py`, `pattern_retrieval.py` | Готово, корпус — 14 реальных проектов (не 20 из ТЗ) |
+| 3. Характеризация + retrieval | `site_characterization.py`, `pattern_retrieval.py` | Готово, корпус — 14 реальных проектов|
 | 4. Назначение паттернов | `zone_partitioning.py`, `pattern_assignment.py` | Готово правилами; ранжирование LLM — нет |
 | 5. Расстановка | `deterministic_placement.py` (поверх `placement.py`) | Готово |
 | 6. Отчёт решений | `violation_report.py`, `assortment_report.py`, `decision_report.py` | Готово: нарушения + ассортимент + текст через локальную LLM |
