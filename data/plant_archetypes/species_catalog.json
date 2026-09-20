@@ -475,10 +475,10 @@
     "model_file": "ColumnarTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.5,
-      "max": 1.6
+      "min": 0.7,
+      "max": 2.3
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Тополь советский Пирамидальный",
@@ -488,10 +488,10 @@
     "model_file": "ColumnarTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.5,
-      "max": 1.6
+      "min": 0.7,
+      "max": 2.3
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "часть сортов тополя белого",
@@ -501,10 +501,10 @@
     "model_file": "ColumnarTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.5,
-      "max": 1.6
+      "min": 0.7,
+      "max": 2.3
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "часть сортов яблони с колонновидной формой",
@@ -514,10 +514,10 @@
     "model_file": "ColumnarTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.5,
-      "max": 1.6
+      "min": 0.7,
+      "max": 2.3
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "отдельные вертикальные формы вяза",
@@ -527,10 +527,10 @@
     "model_file": "ColumnarTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.5,
-      "max": 1.6
+      "min": 0.7,
+      "max": 2.3
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Береза повислая",
@@ -813,10 +813,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Боярышник крупноколючковый",
@@ -826,10 +826,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Боярышник перистонадрезанный",
@@ -839,10 +839,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Боярышник полумягкий",
@@ -852,10 +852,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Боярышник сливолистный",
@@ -865,10 +865,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Боярышник точечный",
@@ -878,10 +878,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Боярышник чёрный",
@@ -891,10 +891,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Боярышник зеленомясый",
@@ -904,10 +904,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Вишня обыкновенная",
@@ -917,10 +917,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Слива домашняя",
@@ -930,10 +930,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Слива колючая",
@@ -943,10 +943,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Слива растопыренная",
@@ -956,10 +956,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Яблоня Недзведцкого",
@@ -969,10 +969,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Яблоня обильноцветущая",
@@ -982,10 +982,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Яблоня сливолистная",
@@ -995,10 +995,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Яблоня ягодная",
@@ -1008,10 +1008,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Яблоня Зибольда",
@@ -1021,10 +1021,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Яблоня Саржента",
@@ -1034,10 +1034,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Черемуха виргинская",
@@ -1047,10 +1047,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Черемуха Маака",
@@ -1060,10 +1060,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Черемуха обыкновенная",
@@ -1073,10 +1073,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Черемуха поздняя",
@@ -1086,10 +1086,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Черемуха пенсильванская",
@@ -1099,10 +1099,10 @@
     "model_file": "SmallOrnamentalTree_1.obj",
     "model_status": "closed",
     "scale": {
-      "min": 0.4,
-      "max": 0.9
+      "min": 0.7,
+      "max": 2.0
     },
-    "scale_status": "требует проверки"
+    "scale_status": "проверено по ТЗ (явный диапазон размеров архетипа)"
   },
   {
     "name": "Тополь бальзамический",
