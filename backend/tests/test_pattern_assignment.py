@@ -6,7 +6,7 @@ retrieval реально находит СЕБЯ и свой задокумен�
 locations/ -- см. pattern_corpus.py."""
 
 from pattern_assignment import assign_patterns
-from pattern_corpus import _corpus_scenes, load_pattern_log
+from pattern_corpus import _corpus_scenes
 from pattern_library import PATTERN_LIBRARY
 from zone_partitioning import partition_zones
 
@@ -37,21 +37,26 @@ def test_assignment_fields_are_valid(scene_06):
             assert assignment.source_quote is not None
 
 
-def test_site_edge_always_falls_back_to_default():
-    """Ни один из 9 проектов retrieval-корпуса не размечает паттерн для
-    site_edge в data/pattern_corpus.yaml -- значит для ЛЮБОГО участка эта
-    зона обязана получить запасной паттерн (DEFAULT_PATTERN_BY_ZONE_KIND), а
-    не выдуманное сходство с одним из соседей."""
-    log = load_pattern_log()
-    assert all("site_edge" not in zones for zones in log.values())
-
+def test_zone_kind_without_any_documented_neighbor_falls_back_to_default():
+    """Раньше site_edge вообще не встречался в data/pattern_corpus.yaml (ни
+    один проект его не размечал), и этот тест проверял фолбэк именно на нём.
+    С 22-24_*_primer (эталоны формы участка) site_edge такую запись
+    получил -- сам факт "эта зона документирована хоть где-то в корпусе"
+    больше не гарантирует отсутствие покрытия, и тест на конкретном
+    zone_kind стал хрупким к росту корпуса. k=0 -- надёжный способ
+    воспроизвести тот же код-путь (assign_patterns._fallback) не завися от
+    того, что именно уже задокументировано: nearest_projects(..., k=0)
+    детерминированно возвращает пустой список соседей (см.
+    pattern_retrieval.nearest_projects), значит voting не может найти ни
+    одного голоса ни для одной зоны, каким бы ни было содержимое corpus.yaml."""
     scenes = _corpus_scenes()
     scene = next(iter(scenes.values()))
-    zones = [z for z in partition_zones(scene) if z.kind == "site_edge"]
-    assert zones, "нужна хотя бы одна site_edge зона, чтобы проверить фолбэк"
-    for assignment in assign_patterns(scene, zones, k=3):
+    zones = partition_zones(scene)
+    assert zones, "нужна хотя бы одна зона, чтобы проверить фолбэк"
+    for assignment in assign_patterns(scene, zones, k=0):
         assert assignment.confidence == 0.0
         assert assignment.source_project is None
+        assert assignment.source_quote is None
 
 
 def test_self_retrieval_prefers_own_documented_pattern():
