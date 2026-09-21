@@ -51,6 +51,7 @@ from placement import (
 from plant_catalog import CatalogItem
 from schemas import Point3, Scene, SceneObject
 from shapely.geometry import Polygon
+from site_characterization import characterize_site, usable_planting_area
 from zone_partitioning import GeometricZone, partition_zones
 
 # Шаг ряда кустов вдоль линейного паттерна и во сколько раз реже вдоль той же
@@ -340,8 +341,15 @@ def generate_for_scene(
     Этап 6 (отчёт "по аналогии с проектом X"), без переделки этой функции."""
     trees = trees or []
     bushes = bushes or []
-    zones = partition_zones(scene)
-    assignments = assign_patterns(scene, zones, k=k)
+    # usable_planting_area -- unary_union по всем forbidden/warning-зонам
+    # участка, самая дорогая геометрическая операция во всём проходе (на
+    # плотных реальных участках -- тысячи зон). partition_zones и
+    # assign_patterns (через characterize_site) считали её независимо, т.е.
+    # дважды за один и тот же запрос -- считаем один раз здесь и пробрасываем.
+    usable = usable_planting_area(scene)
+    zones = partition_zones(scene, usable=usable)
+    characteristics = characterize_site(scene, usable=usable)
+    assignments = assign_patterns(scene, zones, k=k, characteristics=characteristics)
     placer = Placer(scene)
 
     objects: list[SceneObject] = []

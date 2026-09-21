@@ -162,7 +162,13 @@ def _band_and_consume(
     return (None if band.is_empty else band), new_remaining
 
 
-def partition_zones(scene: Scene) -> list[GeometricZone]:
+def partition_zones(scene: Scene, usable: BaseGeometry | None = None) -> list[GeometricZone]:
+    """usable -- проброс уже посчитанного usable_planting_area(scene)
+    вызывающим кодом (deterministic_placement.generate_for_scene, который
+    считает его же для characterize_site): без этого параметра один и тот
+    же дорогой unary_union по всем forbidden/warning-зонам участка считался
+    бы в одном запросе дважды. Вызовы напрямую (тесты) как и раньше считают
+    его сами."""
     if scene.boundary is None or len(scene.boundary.polygon) < 3:
         return []
 
@@ -170,7 +176,7 @@ def partition_zones(scene: Scene) -> list[GeometricZone]:
     if not boundary_poly.is_valid or boundary_poly.area == 0:
         return []
 
-    remaining = usable_planting_area(scene)
+    remaining = usable if usable is not None else usable_planting_area(scene)
     if remaining.is_empty:
         return []
 

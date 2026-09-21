@@ -24,7 +24,7 @@ from pattern_library import DEFAULT_PATTERN_BY_ZONE_KIND, PATTERN_LIBRARY
 from pattern_retrieval import nearest_projects
 from pydantic import BaseModel
 from schemas import Scene
-from site_characterization import characterize_site
+from site_characterization import SiteCharacteristics, characterize_site
 from zone_partitioning import GeometricZone, ZoneKind
 
 
@@ -48,11 +48,23 @@ def _fallback(zone: GeometricZone) -> ZoneAssignment:
     )
 
 
-def assign_patterns(scene: Scene, zones: list[GeometricZone], k: int = 3) -> list[ZoneAssignment]:
+def assign_patterns(
+    scene: Scene,
+    zones: list[GeometricZone],
+    k: int = 3,
+    characteristics: SiteCharacteristics | None = None,
+) -> list[ZoneAssignment]:
+    """characteristics -- проброс уже посчитанного characterize_site(scene)
+    вызывающим кодом (deterministic_placement.generate_for_scene), который
+    и так вызывает его сам ради usable_planting_area: без этого параметра
+    один и тот же дорогой unary_union по зданиям/зонам участка считался бы
+    внутри одного запроса дважды. Указан явно (не просто дефолт None) --
+    вызовы напрямую (тесты, pattern_corpus.py) продолжают считать сами."""
     if not zones:
         return []
 
-    characteristics = characterize_site(scene)
+    if characteristics is None:
+        characteristics = characterize_site(scene)
     if characteristics is None:
         # Нет валидной границы участка -- retrieval считать не от чего же,
         # что и partition_zones уже проверил (иначе зон бы не было), но
