@@ -175,6 +175,37 @@ export function violatesAt(
   return false;
 }
 
+// То же самое, что checkViolations, но по уже построенному ZoneIndex --
+// нужна для панели выделенного объекта в EditorPage.tsx: там на КАЖДЫЙ
+// ре-рендер страницы (включая ре-рендеры от наведения мыши на другую зону,
+// не связанные с самим выделенным объектом) раньше заново перебирались все
+// зоны сцены линейно. violatesAt() рядом даёт только факт нарушения (булево)
+// -- этого достаточно для подсветки объекта в PlacedObjects.tsx, но здесь
+// нужен список конкретных нарушенных зон с их message/severity для панели.
+export function checkViolationsAt(
+  px: number,
+  pz: number,
+  index: ZoneIndex,
+  plantKind?: PlantKind,
+  species?: string
+): ZoneViolation[] {
+  if (!index.cols) return [];
+  const c = Math.floor((px - index.originX) / index.cell);
+  const r = Math.floor((pz - index.originZ) / index.cell);
+  if (c < 0 || r < 0 || c >= index.cols || r >= index.rows) return [];
+
+  const result: ZoneViolation[] = [];
+  for (const item of index.buckets[r * index.cols + c]) {
+    if (px < item.minX || px > item.maxX || pz < item.minZ || pz > item.maxZ) continue;
+    const zone = item.zone;
+    const minDistance = plantKind ? setbackFor(zone.type, plantKind, zone.minDistance, species) : zone.minDistance;
+    if (pointInPolygon(px, pz, zone.polygon) || distanceToPolygonEdge(px, pz, zone.polygon) < minDistance) {
+      result.push({ zone, minDistance });
+    }
+  }
+  return result;
+}
+
 export interface SceneBounds {
   minX: number;
   maxX: number;

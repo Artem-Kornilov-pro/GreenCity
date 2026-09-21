@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { RestrictionZone } from "../types";
 import { flatPolygonGeometry } from "./geometryHelpers";
@@ -147,6 +147,13 @@ export function RestrictionZones({
 }) {
   const groups = useMemo(() => buildGroups(zones), [zones]);
 
+  // onPointerMove у WebGL-канваса стреляет на КАЖДЫЙ пиксель движения мыши --
+  // без дедупликации наведение внутри одной и той же зоны раз за разом
+  // вызывало onHover с новым замыканием, что триггерило полный ре-рендер
+  // EditorPage (setHoveredZone) на каждое такое событие. Сравниваем с
+  // последней сообщённой зоной по id и молчим, если она не изменилась.
+  const lastHoveredIdRef = useRef<string | null>(null);
+
   // Слитые геометрии живут в памяти GPU, и React сам их не освобождает: без
   // явного dispose каждая загрузка новой сцены оставляла бы предыдущую висеть.
   useEffect(
@@ -173,10 +180,16 @@ export function RestrictionZones({
               renderOrder={order}
               onPointerMove={(e) => {
                 e.stopPropagation();
-                onHover(zoneAtFace(group, e.faceIndex));
+                const zone = zoneAtFace(group, e.faceIndex);
+                const id = zone?.id ?? null;
+                if (id === lastHoveredIdRef.current) return;
+                lastHoveredIdRef.current = id;
+                onHover(zone);
               }}
               onPointerOut={(e) => {
                 e.stopPropagation();
+                if (lastHoveredIdRef.current === null) return;
+                lastHoveredIdRef.current = null;
                 onHover(null);
               }}
             >
