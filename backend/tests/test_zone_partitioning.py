@@ -5,7 +5,6 @@ test_site_characterization.py: собрать вручную Scene с содер
 геометрией зданий/дорожек/границы дороже, чем взять готовые фикстуры."""
 
 import pytest
-
 from schemas import Point2, Scene, SceneMeta
 from site_characterization import usable_planting_area
 from zone_partitioning import MIN_ZONE_AREA_SQM, partition_zones
@@ -75,11 +74,10 @@ def test_site_edge_ring_has_no_hole_leak_on_compact_site():
     # участке ожидаемо приходит НЕСКОЛЬКИМИ GeometricZone, а не одной.
     import math
 
+    from schemas import Boundary
     from shapely.geometry import Point, Polygon
     from shapely.ops import unary_union
     from zone_partitioning import SITE_EDGE_BAND_M
-
-    from schemas import Boundary
 
     radius = 18.0
     n = 48
