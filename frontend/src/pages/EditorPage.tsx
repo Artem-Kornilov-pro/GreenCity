@@ -37,7 +37,7 @@ import {
   fetchGreenPlanReport,
   type GreenPlanGenerateResult,
 } from "../api";
-import { checkViolations, computeSceneBounds } from "../geometry";
+import { buildZoneIndex, checkViolationsAt, computeSceneBounds } from "../geometry";
 import { plantKindOfObjectType } from "../setbackNorms";
 import type { Point2, RestrictionZone, Scene, SceneObject } from "../types";
 import { useAuth } from "../context/useAuth";
@@ -430,16 +430,34 @@ export default function EditorPage() {
 
   const selectedArea = scene?.restrictions.find((z) => z.type === SELECTION_ZONE_TYPE) ?? null;
 
-  const selectedObj = scene?.objects.find((o) => o.id === selectedId) ?? null;
-  const selectedViolations = selectedObj
-    ? checkViolations(
-        selectedObj.position.x,
-        selectedObj.position.z,
-        scene?.restrictions ?? [],
-        plantKindOfObjectType(selectedObj.type),
-        typeof selectedObj.metadata.species === "string" ? selectedObj.metadata.species : undefined
-      )
-    : [];
+  // scene меняется по ссылке на каждое перемещение/добавление объекта, но
+  // restrictions -- только когда меняется сама разметка участка (загрузка
+  // DXF, GreenPlan) -- индекс не нужно перестраивать на каждый drag.
+  const restrictionZoneIndex = useMemo(() => buildZoneIndex(scene?.restrictions ?? []), [scene?.restrictions]);
+
+  // Раньше это пересчитывалось на КАЖДЫЙ ре-рендер страницы линейным
+  // checkViolations по всем зонам сцены (тысячи на реальных участках) -- в
+  // частности, на каждое наведение мыши на зону ограничения (см. onHover в
+  // RestrictionZones.tsx), не имеющее отношения к выделенному объекту.
+  // useMemo + индексированный checkViolationsAt пересчитывают только когда
+  // реально меняется само выделение или сцена.
+  const selectedObj = useMemo(
+    () => scene?.objects.find((o) => o.id === selectedId) ?? null,
+    [scene?.objects, selectedId]
+  );
+  const selectedViolations = useMemo(
+    () =>
+      selectedObj
+        ? checkViolationsAt(
+            selectedObj.position.x,
+            selectedObj.position.z,
+            restrictionZoneIndex,
+            plantKindOfObjectType(selectedObj.type),
+            typeof selectedObj.metadata.species === "string" ? selectedObj.metadata.species : undefined
+          )
+        : [],
+    [selectedObj, restrictionZoneIndex]
+  );
 
   return (
     <PageTransition>
