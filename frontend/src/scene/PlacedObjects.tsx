@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef, type RefObject } from "react";
+import { memo, Suspense, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import { TransformControls } from "@react-three/drei";
 import type { RestrictionZone, SceneObject } from "../types";
@@ -7,6 +7,7 @@ import { resolveCatalogItem } from "../catalog";
 import { buildZoneIndex, violatesAt } from "../geometry";
 import { plantKindOfObjectType } from "../setbackNorms";
 import { ObjectVisual } from "./ObjectVisual";
+import { InstancedVegetationGroup, type InstancePlacement } from "./InstancedVegetation";
 
 export type TransformMode = "translate" | "rotate";
 
@@ -67,9 +68,41 @@ export function PlacedObjects({
       });
   }, [objects, restrictions, catalogById, availableModels]);
 
+  // Разбивка на "рисуется поштучно" и "рисуется инстансированно" (perf
+  // follow-up) -- зависит от selectedId (выделенный объект ВСЕГДА рисуется
+  // поштучно, ему нужен TransformControls), поэтому отдельный useMemo от
+  // rows выше: пересобрать группировку на каждый клик дёшево (просто
+  // распределение по Map), а не пересчитывать нарушения по всем зонам
+  // заново, как предотвращает memo у rows.
+  const { individualRows, instancedGroups } = useMemo(() => {
+    const individualRows: typeof rows = [];
+    const groups = new Map<string, InstancePlacement[]>();
+    for (const row of rows) {
+      const { obj, item, hasModel, violated } = row;
+      // Инстансируем только то, что реально рисуется .glb-моделью как есть:
+      // нарушения (см. ObjectVisual) и объекты без модели рисуются
+      // процедурными примитивами Three.js-геометрией, которые тут не строим
+      // батчами -- их обычно на порядки меньше, чем деревьев/кустов.
+      if (hasModel && !violated && item && obj.id !== selectedId) {
+        const list = groups.get(item.model);
+        const placement: InstancePlacement = {
+          id: obj.id,
+          position: [obj.position.x, obj.position.y, obj.position.z],
+          rotation: obj.rotation,
+          scale: obj.scale,
+        };
+        if (list) list.push(placement);
+        else groups.set(item.model, [placement]);
+      } else {
+        individualRows.push(row);
+      }
+    }
+    return { individualRows, instancedGroups: groups };
+  }, [rows, selectedId]);
+
   return (
     <>
-      {rows.map(({ obj, item, hasModel, violated }) => (
+      {individualRows.map(({ obj, item, hasModel, violated }) => (
         <PlacedObjectItem
           key={obj.id}
           obj={obj}
@@ -83,6 +116,11 @@ export function PlacedObjects({
           onRotate={onRotate}
         />
       ))}
+      <Suspense fallback={null}>
+        {Array.from(instancedGroups.entries()).map(([url, placements]) => (
+          <InstancedVegetationGroup key={url} url={url} placements={placements} onSelect={onSelect} />
+        ))}
+      </Suspense>
     </>
   );
 }
