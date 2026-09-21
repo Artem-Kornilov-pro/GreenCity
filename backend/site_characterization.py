@@ -184,9 +184,16 @@ def _guess_territory_type(
     return "неопределено", True
 
 
-def characterize_site(scene: Scene) -> Optional[SiteCharacteristics]:
+def characterize_site(scene: Scene, usable: Optional[BaseGeometry] = None) -> Optional[SiteCharacteristics]:
     """None, если у сцены нет валидной границы участка -- считать признаки
-    не от чего, и это не ошибка вызывающего кода, а состояние сцены."""
+    не от чего, и это не ошибка вызывающего кода, а состояние сцены.
+
+    usable -- проброс уже посчитанного usable_planting_area(scene)
+    вызывающим кодом (deterministic_placement.generate_for_scene вызывает
+    его сам для partition_zones): без этого параметра один и тот же
+    дорогой unary_union по всем forbidden/warning-зонам участка считался бы
+    в одном запросе дважды. Вызовы напрямую (тесты, pattern_corpus.py)
+    как и раньше считают его сами."""
     if scene.boundary is None or len(scene.boundary.polygon) < 3:
         return None
 
@@ -195,7 +202,8 @@ def characterize_site(scene: Scene) -> Optional[SiteCharacteristics]:
         return None
 
     total_area = boundary_poly.area
-    usable = usable_planting_area(scene)
+    if usable is None:
+        usable = usable_planting_area(scene)
     plantable_area = 0.0 if usable.is_empty else usable.area
 
     zone_counts = dict(Counter(zone.type for zone in scene.restrictions))
