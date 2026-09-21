@@ -923,6 +923,76 @@ def test_parse_dxf_doc_without_any_boundary_layer_returns_none_boundary(empty_do
     assert result["meta"]["origin"] == {"x": 0.0, "y": 0.0}
 
 
+# --- _compute_ground_zone (issue #53) -------------------------------------------
+
+
+def _square_zone(zone_id, ztype, severity, x0, z0, x1, z1):
+    return {
+        "id": zone_id,
+        "type": ztype,
+        "name": "test",
+        "polygon": [{"x": x0, "z": z0}, {"x": x1, "z": z0}, {"x": x1, "z": z1}, {"x": x0, "z": z1}],
+        "severity": severity,
+        "minDistance": 0.0,
+        "message": "test",
+    }
+
+
+def test_compute_ground_zone_returns_empty_without_boundary():
+    assert parse_dxf._compute_ground_zone(None, []) == []
+
+
+def test_compute_ground_zone_fills_gap_left_by_known_zones():
+    # Участок 100x100, здание занимает только левую половину -- правая
+    # половина должна стать новой allowed-зоной.
+    boundary = {"polygon": [{"x": 0, "z": 0}, {"x": 100, "z": 0}, {"x": 100, "z": 100}, {"x": 0, "z": 100}]}
+    building = _square_zone("building_001", "building", "forbidden", 0, 0, 50, 100)
+    ground = parse_dxf._compute_ground_zone(boundary, [building])
+    assert len(ground) == 1
+    zone = ground[0]
+    assert zone["type"] == "protected_zone"
+    assert zone["severity"] == "allowed"
+    assert zone["name"] == parse_dxf.GROUND_ZONE_SOURCE_NAME
+    poly = Polygon([(p["x"], p["z"]) for p in zone["polygon"]])
+    assert poly.area == pytest.approx(5000.0, rel=0.01)
+
+
+def test_compute_ground_zone_empty_when_already_fully_covered():
+    # Газон уже покрывает весь участок -- вручную собранные locations/ с
+    # честным GROUND-слоем не должны получить дублирующую зону поверх.
+    boundary = {"polygon": [{"x": 0, "z": 0}, {"x": 100, "z": 0}, {"x": 100, "z": 100}, {"x": 0, "z": 100}]}
+    lawn = _square_zone("protected_zone_001", "protected_zone", "allowed", 0, 0, 100, 100)
+    assert parse_dxf._compute_ground_zone(boundary, [lawn]) == []
+
+
+def test_compute_ground_zone_drops_tiny_leftover_slivers():
+    boundary = {"polygon": [{"x": 0, "z": 0}, {"x": 100, "z": 0}, {"x": 100, "z": 100}, {"x": 0, "z": 100}]}
+    # Здание занимает участок почти целиком, оставляя полоску 100x0.01 (1м²)
+    # -- меньше _GROUND_ZONE_MIN_AREA_SQM, должно быть отброшено как обрывок.
+    building = _square_zone("building_001", "building", "forbidden", 0, 0, 100, 99.99)
+    assert parse_dxf._compute_ground_zone(boundary, [building]) == []
+
+
+def test_compute_ground_zone_ids_continue_after_existing_protected_zones():
+    # Один существующий protected_zone -- новая зона должна получить id
+    # "_002", а не "_001" (иначе id совпал бы с уже занятым).
+    boundary = {"polygon": [{"x": 0, "z": 0}, {"x": 100, "z": 0}, {"x": 100, "z": 100}, {"x": 0, "z": 100}]}
+    lawn = _square_zone("protected_zone_001", "protected_zone", "allowed", 0, 0, 40, 100)
+    ground = parse_dxf._compute_ground_zone(boundary, [lawn])
+    assert len(ground) == 1
+    assert ground[0]["id"] == "protected_zone_002"
+
+
+def test_parse_dxf_doc_adds_ground_zone_for_uncovered_area(empty_doc):
+    msp = empty_doc.modelspace()
+    msp.add_lwpolyline([(0, 0), (100, 0), (100, 100), (0, 100)], close=True, dxfattribs={"layer": "SITE_BOUNDARY"})
+    msp.add_lwpolyline([(0, 0), (50, 0), (50, 100), (0, 100)], close=True, dxfattribs={"layer": "BUILDING_1"})
+    result = parse_dxf_doc(empty_doc)
+    ground_zones = [z for z in result["restrictions"] if z["name"] == parse_dxf.GROUND_ZONE_SOURCE_NAME]
+    assert len(ground_zones) == 1
+    assert ground_zones[0]["severity"] == "allowed"
+
+
 @pytest.mark.parametrize("n", [1, 2, 3, 4, 5, 6])
 def test_parse_dxf_file_on_every_real_location_produces_sane_output(location_paths, n):
     result = parse_dxf_file(location_paths[n])

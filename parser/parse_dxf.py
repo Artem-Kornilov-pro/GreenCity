@@ -557,6 +557,78 @@ def _merge_polygon_zones(zones, idx_by_type, polygon_zones, tf):
                 _add_zone(zones, idx_by_type, cfg, layer, pts, tf)
 
 
+# Порог площади куска "открытой земли" после вычитания всех известных зон --
+# меньше отбрасываем как обрывок геометрии (погрешность буфера/пересечения
+# на стыке зон), не настоящий плантируемый кусок.
+_GROUND_ZONE_MIN_AREA_SQM = 5.0
+# Имя источника у автоматически вычисленной зоны -- по нему GreenPlan/фронтенд
+# может отличить её от зоны, реально найденной по слою DXF (issue #53).
+GROUND_ZONE_SOURCE_NAME = "__computed_ground__"
+
+
+def _compute_ground_zone(boundary, restrictions):
+    """Недостающая "открытая земля" = граница участка (настоящая или
+    оценённая, см. _estimate_boundary_from_content) минус объединение ВСЕХ
+    уже известных restriction-зон -- включая уже допустимые газоны (issue
+    #53). Там, где явный GROUND-слой/газон уже покрывает весь участок
+    (вручную собранные locations/), остаток естественно получается пустым
+    или незначительным -- ничего не дублируется. Там, где плана покрытий нет
+    вообще или он покрывает участок не полностью (реальные DWG-батчи,
+    issue #50), остаток становится новой allowed-зоной -- тот же смысл, что
+    у ключевого слова GROUND в POLYGON_RULES выше, просто найдено
+    геометрически, а не по имени слоя (см. GreenPlan/generate-greenery,
+    которые сажают ТОЛЬКО внутри severity=allowed -- без этой зоны
+    неклассифицированная открытая земля молча оставалась без посадки, хотя
+    визуально места было много).
+
+    Работает уже в ВЫХОДНЫХ координатах сцены (restrictions/boundary сюда
+    приходят уже трансформированными -- в отличие от _add_zone выше, здесь
+    NO tf.polygon() второй раз, иначе координаты исказились бы)."""
+    if boundary is None or len(boundary["polygon"]) < 3:
+        return []
+    boundary_poly = Polygon([(p["x"], p["z"]) for p in boundary["polygon"]])
+    if not boundary_poly.is_valid:
+        boundary_poly = boundary_poly.buffer(0)
+    if boundary_poly.is_empty or boundary_poly.area == 0:
+        return []
+
+    known_polys = []
+    for zone in restrictions:
+        if len(zone["polygon"]) < 3:
+            continue
+        poly = Polygon([(p["x"], p["z"]) for p in zone["polygon"]])
+        if not poly.is_valid:
+            poly = poly.buffer(0)
+        if not poly.is_empty and poly.area > 0:
+            known_polys.append(poly)
+
+    remaining = boundary_poly if not known_polys else boundary_poly.difference(shapely.union_all(known_polys))
+    if remaining.is_empty:
+        return []
+
+    parts = remaining.geoms if remaining.geom_type == "MultiPolygon" else [remaining]
+    existing_count = sum(1 for z in restrictions if z["type"] == "protected_zone")
+
+    result = []
+    for part in parts:
+        if part.geom_type != "Polygon" or part.area < _GROUND_ZONE_MIN_AREA_SQM:
+            continue
+        pts = list(part.exterior.coords)[:-1]
+        if len(pts) < 3:
+            continue
+        existing_count += 1
+        result.append({
+            "id": f"protected_zone_{existing_count:03d}",
+            "type": "protected_zone",
+            "name": GROUND_ZONE_SOURCE_NAME,
+            "polygon": [{"x": round(x, 3), "z": round(z, 3)} for x, z in pts],
+            "severity": "allowed",
+            "minDistance": 0.0,
+            "message": "Открытая земля — вычислено как участок минус здания/дорога/тротуар",
+        })
+    return result
+
+
 # Максимальная суммарная "дальнобойность" зоны от её собственной геометрии:
 # minDistance при разметке (максимум в POLYGON_RULES -- 3.0, sewer/water) +
 # отступ по виду посадки, добавляемый ПОЗЖЕ генератором (максимум в
@@ -1178,6 +1250,12 @@ def parse_dxf_doc(doc, scale=None, center=True):
         # Считаем её ПОСЛЕ отсева выбросов выше, чтобы редкая дальняя точка
         # не растянула и сам контур.
         boundary = _estimate_boundary_from_content(objects, restrictions, curbs)
+
+    # Открытая земля (issue #53) -- участок минус всё уже известное. Не
+    # только для сцен без явного слоя границы: план покрытий (газон/тротуар)
+    # в реальных DWG-проектах часто не покрывает весь участок, даже когда
+    # сама граница найдена по слою -- см. docstring _compute_ground_zone.
+    restrictions = restrictions + _compute_ground_zone(boundary, restrictions)
 
     return {
         "boundary": boundary,
