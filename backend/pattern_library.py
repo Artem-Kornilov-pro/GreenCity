@@ -22,7 +22,7 @@ deterministic_placement.place_zone:
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 from zone_partitioning import ZoneKind
@@ -62,13 +62,41 @@ class PatternSpec(BaseModel):
     #                середину -- для building_border, вытянутой узкой
     #                полосы-бублика вокруг здания, где линия через центроид
     #                срезает зону хордой, а не обходит здание по кругу.
-    line_shape: Literal["straight", "wavy", "diagonal", "ring"] = "straight"
+    #   concentric -- несколько вложенных колец вокруг ЦЕНТРОИДА зоны
+    #                (placement.concentric_rings_of), не вдоль длинной оси и
+    #                не по контуру зоны, для компактных open_area-пятен
+    #                (сквер/площадь вокруг центральной точки/водоёма).
+    line_shape: Literal["straight", "wavy", "diagonal", "ring", "concentric"] = "straight"
     # line_shape == "wavy": амплитуда и длина волны синус-модуляции, по
     # факту из 10_stary_gay (data/pattern_corpus.yaml, "flowing_rows").
     wave_amplitude_m: float = 0.0
     wave_length_m: float = 1.0  # не 0, чтобы не делить на ноль, если amplitude=0 (волна не применяется)
     # line_shape == "diagonal": угол между линией и длинной осью зоны.
     diagonal_angle_deg: float = 0.0
+    # geometry_family == "linear": только деревья на каждой линии, без ряда
+    # кустов -- формальный боскет (formal_bosque_grid) это открытая
+    # ортогональная сетка стволов с газоном/мощением под кроной, а не живая
+    # изгородь; смешивать туда кустарник тем же приёмом, что и у
+    # linear_hedge_row, было бы неверно по смыслу паттерна.
+    trees_only: bool = False
+    # geometry_family == "linear": шаг между деревьями ВДОЛЬ линии для этого
+    # конкретного паттерна, если он должен отличаться от общего
+    # LINEAR_BUSH_STEP_M*LINEAR_TREE_STEP_FACTOR (deterministic_placement.py)
+    # -- нужно, чтобы боскет получил КВАДРАТНУЮ сетку (шаг вдоль линии равен
+    # шагу между линиями, OPEN_AREA_ROW_SPACING_M), а не вытянутый прямоугольник,
+    # как получилось бы с общим (гораздо более редким) шагом дерева в ряду.
+    tree_step_m: Optional[float] = None
+    # line_shape == "concentric": шаг радиуса между соседними кольцами.
+    ring_spacing_m: float = 6.0
+    # geometry_family == "area_fill": пропустить pick_spread-прореживание и
+    # взять кандидатов ПРЯМО с гексагональной/треугольной решётки
+    # Placer.points_in_area на целевом шаге -- обычные area_fill-паттерны
+    # (poisson_scatter_fill/generic_fill) намеренно берут решётку МЕЛЬЧЕ
+    # целевого шага и прореживают её pick_spread до заданного числа точек
+    # (даёт более случайный на вид разброс), а формальной треугольной сетке
+    # (triangular_grid_fill) как раз нужна сама решётка без прореживания --
+    # видимый регулярный узор, не рассеянные точки.
+    dense_lattice: bool = False
 
 
 PATTERN_LIBRARY: dict[str, PatternSpec] = {
@@ -102,6 +130,34 @@ PATTERN_LIBRARY: dict[str, PatternSpec] = {
         line_shape="wavy",
         wave_amplitude_m=4.0,  # 10_stary_gay (data/pattern_corpus.yaml): амплитуда 4 м
         wave_length_m=40.0,  # 10_stary_gay: длина волны 40 м
+    ),
+    "formal_bosque_grid": PatternSpec(
+        id="formal_bosque_grid",
+        label="Формальный боскет -- строгая ортогональная сетка деревьев",
+        geometry_family="linear",
+        zone_kinds=frozenset({"open_area"}),
+        line_shape="straight",
+        trees_only=True,
+        # Квадратная сетка: тот же шаг, что и между рядами
+        # (OPEN_AREA_ROW_SPACING_M=6.0 в deterministic_placement.py) --
+        # продублировано числом, а не импортом, чтобы не тянуть сюда модуль,
+        # который сам импортирует pattern_library (цикл импорта).
+        tree_step_m=6.0,
+    ),
+    "concentric_rings": PatternSpec(
+        id="concentric_rings",
+        label="Концентрические кольца вокруг центра площадки",
+        geometry_family="linear",
+        zone_kinds=frozenset({"open_area"}),
+        line_shape="concentric",
+        ring_spacing_m=6.0,
+    ),
+    "triangular_grid_fill": PatternSpec(
+        id="triangular_grid_fill",
+        label="Треугольная (гексагональная) сетка -- квинкункс",
+        geometry_family="area_fill",
+        zone_kinds=frozenset({"open_area"}),
+        dense_lattice=True,
     ),
     "grove_clusters": PatternSpec(
         id="grove_clusters",

@@ -2,6 +2,9 @@
 руками (helpers.py) для точных ожиданий; локации из conftest.py -- для
 сквозной геометрической проверки на настоящих участках (0 нарушений норм)."""
 
+import math
+import random
+
 import greenery_generator as gg
 import pytest
 from helpers import make_object, make_scene, make_zone
@@ -169,6 +172,60 @@ def test_generate_trees_species_metadata_is_set():
     scene = make_scene(restrictions=[_lawn_zone()])
     trees = gg.generate_trees(scene, species="Дуб", grid_spacing_m=20.0)
     assert all(t.metadata["species"] == "Дуб" for t in trees)
+
+
+def test_generate_trees_mixes_species_when_not_specified():
+    # Без явного species (пользователь не выбрал вид в UI) генератор смешивает
+    # виды из DEFAULT_TREE_SPECIES_MIX -- монокультура выглядит неестественно.
+    scene = make_scene(restrictions=[_lawn_zone()])
+    trees = gg.generate_trees(scene, grid_spacing_m=3.0, min_tree_spacing_m=3.0)
+    species_seen = {t.metadata["species"] for t in trees}
+    assert len(trees) > 20  # нужно достаточно деревьев, чтобы смесь реально проявилась
+    assert len(species_seen) > 1
+    assert species_seen <= {s for s, _ in gg.DEFAULT_TREE_SPECIES_MIX}
+
+
+def test_generate_trees_positions_are_not_grid_aligned():
+    # Раньше деревья ложились строго на узлы регулярной сетки -- у РАЗНЫХ
+    # деревьев x-координата массово повторялась (одна колонка, много строк).
+    # Poisson-disk почти никогда не даёт двум точкам совпадающую координату.
+    scene = make_scene(restrictions=[_lawn_zone()])
+    trees = gg.generate_trees(scene, grid_spacing_m=4.0, min_tree_spacing_m=4.0)
+    assert len(trees) > 10
+    xs = [round(t.position.x, 6) for t in trees]
+    assert len(set(xs)) == len(xs)
+
+
+def test_generate_trees_is_deterministic_across_repeated_calls():
+    scene = make_scene(restrictions=[_lawn_zone()])
+    first = gg.generate_trees(scene, grid_spacing_m=3.0, min_tree_spacing_m=3.0)
+    second = gg.generate_trees(scene, grid_spacing_m=3.0, min_tree_spacing_m=3.0)
+    assert [(t.position.x, t.position.z, t.metadata["species"]) for t in first] == [
+        (t.position.x, t.position.z, t.metadata["species"]) for t in second
+    ]
+
+
+def test_poisson_disk_sample_respects_min_radius_between_all_points():
+    rng = random.Random(1)
+    points = gg._poisson_disk_sample(0, 0, 60, 60, 3.0, rng)
+    assert len(points) > 20
+    for i, p1 in enumerate(points):
+        for p2 in points[i + 1 :]:
+            assert math.hypot(p1[0] - p2[0], p1[1] - p2[1]) >= 3.0 - 1e-9
+
+
+def test_hash01_and_value_noise_are_pure_functions_of_position():
+    assert gg._hash01(1.0, 2.0, salt="x") == gg._hash01(1.0, 2.0, salt="x")
+    assert 0.0 <= gg._hash01(1.0, 2.0, salt="x") < 1.0
+    assert 0.0 <= gg._value_noise(12.3, -4.5, 10.0) <= 1.0
+    assert gg._value_noise(12.3, -4.5, 10.0) == gg._value_noise(12.3, -4.5, 10.0)
+
+
+def test_pick_species_returns_only_species_from_mix():
+    mix = [("A", 0.5), ("B", 0.5)]
+    seen = {gg._pick_species(x, 0.0, mix) for x in range(200)}
+    assert seen <= {"A", "B"}
+    assert len(seen) == 2
 
 
 def test_generate_trees_returns_empty_when_area_fully_occupied():

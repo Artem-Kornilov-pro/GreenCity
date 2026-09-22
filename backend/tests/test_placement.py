@@ -15,6 +15,7 @@ from placement import (
     _segment_visible,
     centerline_of,
     clamp,
+    concentric_rings_of,
     lines_of,
     pick_near,
     pick_spread,
@@ -801,6 +802,36 @@ def test_rows_of_single_row_for_narrow_band():
     band = Polygon([(0, 0), (40, 0), (40, 4), (0, 4)])
     rows = rows_of(band, spacing=6.0)
     assert len(rows) == 1
+
+
+def test_concentric_rings_of_gives_multiple_growing_radii():
+    # Компактная площадь 60x60 -- несколько вложенных колец вокруг центра
+    # (concentric_rings), не одна линия и не одно кольцо по контуру зоны
+    # (line_shape="ring", building_ring).
+    square = Polygon([(0, 0), (60, 0), (60, 60), (0, 60)])
+    rings = concentric_rings_of(square, spacing=6.0)
+    assert len(rings) >= 3
+    center = square.centroid
+    # Каждое следующее кольцо реально дальше от центра, чем предыдущее.
+    radii = [max(Point(c).distance(center) for c in lines_of(r)[0].coords) for r in rings]
+    assert radii == sorted(radii)
+    assert radii[0] < radii[-1]
+
+
+def test_concentric_rings_of_stays_within_the_zone_when_clipped():
+    # Неквадратная (треугольная) зона -- кольца обрезаются по контуру, а не
+    # выходят за его пределы, как rows_of/centerline_of для своих линий.
+    triangle = Polygon([(0, 0), (40, 0), (20, 34)])
+    rings = concentric_rings_of(triangle, spacing=5.0)
+    assert rings
+    for ring in rings:
+        for line in lines_of(ring):
+            for coord in line.coords:
+                assert triangle.buffer(1e-6).contains(Point(coord))
+
+
+def test_concentric_rings_of_empty_for_degenerate_polygon():
+    assert concentric_rings_of(Polygon(), spacing=6.0) == []
 
 
 def test_wavy_line_oscillates_by_amplitude_perpendicular_to_direction():

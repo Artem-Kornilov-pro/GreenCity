@@ -72,6 +72,9 @@ CORPUS_SLUGS = (
     "25_classical_building_ring_primer",
     "26_diagonal_garden_primer",
     "27_flowing_meadow_primer",
+    "28_formal_bosque_primer",
+    "29_concentric_rings_primer",
+    "30_triangular_grid_primer",
 )
 
 _CORPUS_YAML = ROOT / "data" / "pattern_corpus.yaml"

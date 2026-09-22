@@ -183,11 +183,12 @@ def test_place_area_fill_caps_object_count_on_a_huge_zone(catalog):
     trees, bushes = _trees_and_bushes(catalog)
     zone = _huge_square_zone("open_area")
     placer = Placer(_huge_scene())
+    spec = PATTERN_LIBRARY["poisson_scatter_fill"]
     assignment = ZoneAssignment(
         zone_id=zone.id, zone_kind="open_area", pattern_id="poisson_scatter_fill",
         source_project=None, source_quote=None, confidence=0.0,
     )
-    objects = _place_area_fill(placer, zone, assignment, trees, bushes)
+    objects = _place_area_fill(placer, zone, spec, assignment, trees, bushes)
     assert sum(1 for o in objects if o.type == "bush") <= MAX_OBJECTS_PER_ZONE
     assert sum(1 for o in objects if o.type == "tree") <= MAX_OBJECTS_PER_ZONE
 
@@ -291,3 +292,73 @@ def test_flowing_rows_places_points_off_the_straight_centerline(catalog):
     # разброс z вокруг него.
     zs = [o.position.z for o in objects]
     assert max(zs) - min(zs) > 0.5
+
+
+def test_formal_bosque_grid_places_only_trees_on_a_square_grid(catalog):
+    trees, bushes = _trees_and_bushes(catalog)
+    square = [(0, 0), (36, 0), (36, 36), (0, 36)]
+    zone = GeometricZone(
+        id="open_area_bosque_test", kind="open_area",
+        polygon=[Point2(x=x, z=z) for x, z in square], area_sqm=36.0 * 36.0,
+    )
+    placer = Placer(make_scene(boundary=make_boundary(-10, -10, 46, 46)))
+    spec = PATTERN_LIBRARY["formal_bosque_grid"]
+    assert spec.trees_only and spec.tree_step_m == 6.0
+    assignment = ZoneAssignment(
+        zone_id=zone.id, zone_kind="open_area", pattern_id="formal_bosque_grid",
+        source_project=None, source_quote=None, confidence=0.0,
+    )
+    objects = _place_linear(placer, zone, spec, assignment, trees, bushes)
+    assert objects
+    # trees_only -- ни одного куста, только деревья.
+    assert all(o.type == "tree" for o in objects)
+
+
+def test_concentric_rings_places_points_around_the_centroid(catalog):
+    trees, bushes = _trees_and_bushes(catalog)
+    square = [(0, 0), (60, 0), (60, 60), (0, 60)]
+    zone = GeometricZone(
+        id="open_area_concentric_test", kind="open_area",
+        polygon=[Point2(x=x, z=z) for x, z in square], area_sqm=60.0 * 60.0,
+    )
+    placer = Placer(make_scene(boundary=make_boundary(-10, -10, 70, 70)))
+    spec = PATTERN_LIBRARY["concentric_rings"]
+    assert spec.line_shape == "concentric"
+    assignment = ZoneAssignment(
+        zone_id=zone.id, zone_kind="open_area", pattern_id="concentric_rings",
+        source_project=None, source_quote=None, confidence=0.0,
+    )
+    objects = _place_linear(placer, zone, spec, assignment, trees, bushes)
+    assert objects
+    # Точки лежат на нескольких разных дистанциях от центра (кольца), а не
+    # на одном прямом ряду через середину -- разброс расстояний до центра
+    # должен быть заметным, а не колебанием вокруг одного значения.
+    center_x, center_z = 30.0, 30.0
+    distances = [math.hypot(o.position.x - center_x, o.position.z - center_z) for o in objects]
+    assert max(distances) - min(distances) > 5.0
+
+
+def test_triangular_grid_fill_uses_dense_lattice_without_pick_spread_thinning(catalog):
+    trees, bushes = _trees_and_bushes(catalog)
+    square = [(0, 0), (36, 0), (36, 36), (0, 36)]
+    zone = GeometricZone(
+        id="open_area_triangular_test", kind="open_area",
+        polygon=[Point2(x=x, z=z) for x, z in square], area_sqm=36.0 * 36.0,
+    )
+    placer = Placer(make_scene(boundary=make_boundary(-10, -10, 46, 46)))
+    spec = PATTERN_LIBRARY["triangular_grid_fill"]
+    assert spec.dense_lattice
+    assignment = ZoneAssignment(
+        zone_id=zone.id, zone_kind="open_area", pattern_id="triangular_grid_fill",
+        source_project=None, source_quote=None, confidence=0.0,
+    )
+    objects = _place_area_fill(placer, zone, spec, assignment, trees, bushes)
+    assert objects
+    # Треугольная решётка -- соседние ряды по z сдвинуты на полшага по x
+    # (row_height=step*sqrt(3)/2 в Placer.points_in_area) -- достаточно
+    # проверить, что среди принятых точек есть больше одного уникального x
+    # на разных z (не выровнены в один столбец, как дал бы простой перебор).
+    trees_only = [o for o in objects if o.type == "tree"]
+    assert len(trees_only) > 3
+    xs = {round(o.position.x, 1) for o in trees_only}
+    assert len(xs) > 1

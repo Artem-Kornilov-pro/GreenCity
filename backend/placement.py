@@ -835,3 +835,35 @@ def rows_of(poly: Polygon, spacing: float, angle_offset_deg: float = 0.0):
         if not clipped.is_empty:
             lines.append(clipped)
     return lines
+
+
+def concentric_rings_of(poly: Polygon, spacing: float):
+    """Несколько концентрических окружностей вокруг центроида зоны, с шагом
+    radius=spacing, 2*spacing, ... пока кольцо ещё пересекает полигон, каждое
+    обрезано по контуру (как и rows_of/centerline_of -- реальная форма зоны
+    может быть не идеальным кругом, обрезка отдаёт только ту дугу кольца,
+    что внутри зоны). Реальный приём ландшафтного дизайна -- концентрические
+    посадки вокруг центральной точки/водоёма ("Birch trees planted
+    concentrically around a basin", landezine.com/circles-disks-and-rings) --
+    геометрическая противоположность и параллельным рядам (rows_of), и
+    одному кольцу по контуру самой зоны (building_ring -- там кольцо ОДНО,
+    вдоль границы здания, а не несколько вложенных внутри открытой площади).
+
+    Максимальный радиус -- половина диагонали ограничивающего прямоугольника
+    (с запасом): дальше окружность гарантированно не пересечёт компактную
+    зону вообще, а для вытянутой зоны кольца всё равно обрежутся её контуром
+    до коротких дуг по краям, что и ожидаемо для не-круглой формы."""
+    if poly.is_empty or poly.area <= 0 or spacing <= 0:
+        return []
+    center = poly.centroid
+    min_x, min_z, max_x, max_z = poly.bounds
+    max_radius = math.hypot(max_x - min_x, max_z - min_z) / 2 + spacing
+    rings = []
+    radius = spacing
+    while radius <= max_radius:
+        ring = Point(center.x, center.y).buffer(radius, quad_segs=32).exterior
+        clipped = ring.intersection(poly)
+        if not clipped.is_empty:
+            rings.append(clipped)
+        radius += spacing
+    return rings

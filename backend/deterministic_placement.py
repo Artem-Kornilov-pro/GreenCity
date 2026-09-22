@@ -39,6 +39,7 @@ from pattern_library import PATTERN_LIBRARY, PatternSpec
 from placement import (
     Placer,
     centerline_of,
+    concentric_rings_of,
     lines_of,
     pick_near,
     pick_spread,
@@ -176,6 +177,14 @@ def _place_linear(
         # случайный отрезок внутри кольца. Собственный контур полигона --
         # и есть то самое кольцо.
         row_lines = [poly.exterior]
+    elif spec.line_shape == "concentric":
+        # concentric_rings: НЕСКОЛЬКО вложенных колец вокруг центроида зоны
+        # (в отличие от line_shape="ring" выше -- там ровно одно кольцо по
+        # контуру САМОЙ зоны). Своя ветка до проверки zone.kind ==
+        # "open_area", т.к. используется собственная функция вместо rows_of.
+        row_lines = concentric_rings_of(poly, spec.ring_spacing_m)
+        if len(row_lines) > MAX_ROWS_PER_ZONE:
+            row_lines = row_lines[:MAX_ROWS_PER_ZONE]  # ближайшие к центру кольца, не случайные
     elif zone.kind == "open_area":
         # open_area -- произвольной ширины двумерное пятно
         # (zone_partitioning.py: "всё, что осталось: под площадные
@@ -217,6 +226,7 @@ def _place_linear(
     if not row_lines:
         return []
     offsets = (0.0,) if spec.double_row_offset_m <= 0 else (0.0, spec.double_row_offset_m)
+    tree_step = spec.tree_step_m if spec.tree_step_m is not None else LINEAR_BUSH_STEP_M * LINEAR_TREE_STEP_FACTOR
     objects: list[SceneObject] = []
     bush_counter, tree_counter = [0], [0]
     for row_centerline in row_lines:
@@ -230,19 +240,22 @@ def _place_linear(
             # появлялись ВООБЩЕ ни на одном линейном паттерне (issue:
             # "деревья вообще не появляются", реальный баг с
             # 01_single_building/02_courtyard). Деревья реже (шаг в
-            # LINEAR_TREE_STEP_FACTOR=8.5 раз больше) и сами по себе не
-            # мешают кустам занять остальную линию после них.
-            objects += _place_row(
-                placer, zone, assignment, trees, "tree", LINEAR_BUSH_STEP_M * LINEAR_TREE_STEP_FACTOR, 0.0, line, tree_counter
-            )
-            for row_offset in offsets:
-                objects += _place_row(placer, zone, assignment, bushes, "bush", LINEAR_BUSH_STEP_M, row_offset, line, bush_counter)
+            # LINEAR_TREE_STEP_FACTOR=8.5 раз больше, если паттерн не задал
+            # свой tree_step_m) и сами по себе не мешают кустам занять
+            # остальную линию после них.
+            objects += _place_row(placer, zone, assignment, trees, "tree", tree_step, 0.0, line, tree_counter)
+            # trees_only (formal_bosque_grid) -- боскет это открытая сетка
+            # стволов, без кустарникового яруса под кроной по смыслу паттерна.
+            if not spec.trees_only:
+                for row_offset in offsets:
+                    objects += _place_row(placer, zone, assignment, bushes, "bush", LINEAR_BUSH_STEP_M, row_offset, line, bush_counter)
     return objects
 
 
 def _place_area_fill(
     placer: Placer,
     zone: GeometricZone,
+    spec: PatternSpec,
     assignment: ZoneAssignment,
     trees: list[CatalogItem],
     bushes: list[CatalogItem],
@@ -255,13 +268,21 @@ def _place_area_fill(
         (bushes, "bush", AREA_FILL_BUSH_SPACING_M),
         (trees, "tree", AREA_FILL_BUSH_SPACING_M * AREA_FILL_TREE_SPACING_M_FACTOR),
     ):
-        if not items:
+        if not items or (kind == "bush" and spec.trees_only):
             continue
         target = min(max(0, round(poly.area / spacing**2)), MAX_OBJECTS_PER_ZONE)
         if target == 0:
             continue
-        candidates = placer.points_in_area(kind, spacing / 2, within=poly, max_candidates=target * 20)
-        chosen = pick_spread(candidates, target, spacing * 0.8)
+        if spec.dense_lattice:
+            # triangular_grid_fill: решётка НА целевом шаге, без прореживания
+            # pick_spread -- pick_spread даёт случайный на вид равномерный
+            # разброс (poisson_scatter_fill/generic_fill), а треугольной
+            # сетке (квинкункс) нужен видимый регулярный узор -- сама
+            # гексагональная решётка Placer.points_in_area и есть этот узор.
+            chosen = placer.points_in_area(kind, spacing, within=poly, max_candidates=MAX_OBJECTS_PER_ZONE)
+        else:
+            candidates = placer.points_in_area(kind, spacing / 2, within=poly, max_candidates=target * 20)
+            chosen = pick_spread(candidates, target, spacing * 0.8)
         counter = [0]
         for x, z in chosen:
             item = items[counter[0] % len(items)]
@@ -324,7 +345,7 @@ def place_zone(
         return _place_linear(placer, zone, spec, assignment, trees, bushes)
     if spec.geometry_family == "clustered":
         return _place_clustered(placer, zone, spec, assignment, trees, bushes)
-    return _place_area_fill(placer, zone, assignment, trees, bushes)
+    return _place_area_fill(placer, zone, spec, assignment, trees, bushes)
 
 
 def generate_for_scene(

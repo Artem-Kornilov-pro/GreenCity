@@ -31,7 +31,9 @@ main.py вызывает только generate_trees(scene, species), контр
 
 from __future__ import annotations
 
+import hashlib
 import math
+import random
 from typing import Optional
 
 from placement import pick_spread
@@ -114,6 +116,173 @@ LAWN_EXISTING_CLEARANCE_M = 0.5  # маленький -- плитка газон
 # Та же защита от вырожденно большого результата, что и у кустов выше --
 # на большом открытом газоне плиток 4x4 м может набраться на сотни.
 MAX_GENERATED_LAWN_PATCHES = 150
+
+
+# --- Естественность посадки: органичный разброс + переменная плотность + ---
+# --- смесь видов (вместо регулярной сетки, одного вида и ровного ковра) ----
+#
+# Раньше кандидаты деревьев шли строго по узлам регулярной сетки с шагом
+# grid_spacing -- на глаз это стабильно читалось как ряды/решётка, даже после
+# прореживания по min_spacing (прореживание убирает лишние точки, но не
+# трогает то, что оставшиеся всё равно лежат на пересечениях сетки).
+# _poisson_disk_sample ниже даёт органичный ("blue noise") разброс с той же
+# гарантией минимального расстояния между соседями, но без выравнивания по
+# осям x/z. grid_spacing/min_tree_spacing_m сохраняют прежний смысл: первый
+# управляет плотностью кандидатов (теперь -- радиусом Poisson-disk), второй --
+# по-прежнему жёсткая гарантия минимального расстояния между стволами,
+# обеспечивается тем же _SpacingGrid greedy-отбором, что и раньше.
+
+# Фиксированный сид детерминированного ГСЧ Poisson-disk -- тот же принцип, что
+# и у остального генератора (докстринг модуля: "deterministic demo generator",
+# без случайности, чтобы результат был воспроизводим). Один и тот же Scene с
+# одними и теми же параметрами всегда даёт один и тот же список точек.
+_POISSON_SEED = 20260921
+_POISSON_MAX_ATTEMPTS = 30
+# Радиус Poisson-disk не может быть 0 (деление на 0 в размере фоновой сетки
+# алгоритма) -- нижний пол чуть ниже MIN_ALLOWED_GRID_SPACING_M/2, не влияет
+# на реальные вызовы (grid_spacing уже зажат сверху этим минимумом раньше).
+_POISSON_MIN_RADIUS_M = 0.2
+
+# Смешение видов, когда species НЕ передан явно вызывающим кодом (пользователь
+# не выбрал конкретный вид в UI) -- реальные посадки почти никогда
+# монокультурны. Виды и веса не выдуманы: все трое уже фигурируют как виды
+# ДЕРЕВЬЕВ в реальных документированных проектах retrieval-корпуса GreenPlan
+# (data/pattern_corpus.yaml) -- "Липа мелколистная" (02_peschany_pereulok,
+# и она же DEFAULT_TREE_SPECIES), "Клён остролистный" (07_nizhnie_polya),
+# "Берёза полезная" (20_makeeva_s). Ни у одного из трёх нет записи в
+# SPECIES_SETBACK_OVERRIDES -- отступ от ограничений не зависит от того,
+# какой из них достался конкретной точке, поэтому _keep_out_shapes по-прежнему
+# считается один раз для всего вызова (см. species_for_setback ниже), а не
+# отдельно на каждую точку.
+DEFAULT_TREE_SPECIES_MIX: list[tuple[str, float]] = [
+    (DEFAULT_TREE_SPECIES, 0.6),
+    ("Клён остролистный", 0.25),
+    ("Берёза полезная", 0.15),
+]
+
+# Шум плотности (см. _value_noise/_keep_probability): характерный размер
+# одного "пятна" гуще/реже посадки. Не привязан к grid_spacing -- это
+# отдельный, более крупный масштаб неоднородности, а не шаг между деревьями.
+_DENSITY_NOISE_CELL_M = 12.0
+# Нижняя граница вероятности сохранить точку в самом "разреженном" пятне -- не
+# 0, иначе в шумном минимуме получались бы настоящие проплешины без единого
+# дерева, а не естественная неровность плотности.
+_DENSITY_MIN_KEEP_PROBABILITY = 0.35
+
+
+def _hash01(*parts: float, salt: str) -> float:
+    """Детерминированное псевдослучайное число в [0, 1) -- ЧИСТАЯ функция
+    переданных координат/аргументов, не зависящая от порядка вызовов (в
+    отличие от random.Random, которым нельзя пользоваться здесь: шум
+    плотности и выбор вида должны давать один и тот же результат для одной и
+    той же точки независимо от того, в каком порядке Poisson-disk её посетил
+    и сколько раз к ней обращались)."""
+    key = salt + ":" + ":".join(f"{p:.6f}" for p in parts)
+    digest = hashlib.sha256(key.encode()).digest()
+    return int.from_bytes(digest[:8], "big") / 2**64
+
+
+def _value_noise(x: float, z: float, cell: float) -> float:
+    """Билинейно интерполированный value noise по хешированной решётке узлов
+    -- простое, без внешних зависимостей приближение шумового поля,
+    достаточное для "пятен" плотности демо-генератора. Чистая функция (x, z):
+    то же значение при повторном вызове с теми же координатами, каким бы
+    путём Poisson-disk до них ни дошёл."""
+    gx, gz = x / cell, z / cell
+    x0, z0 = math.floor(gx), math.floor(gz)
+    tx, tz = gx - x0, gz - z0
+
+    def corner(ix: float, iz: float) -> float:
+        return _hash01(ix, iz, salt="density-noise")
+
+    top = corner(x0, z0) * (1 - tx) + corner(x0 + 1, z0) * tx
+    bottom = corner(x0, z0 + 1) * (1 - tx) + corner(x0 + 1, z0 + 1) * tx
+    return top * (1 - tz) + bottom * tz
+
+
+def _keep_probability(x: float, z: float) -> float:
+    """Вероятность сохранить кандидатную точку (x, z) при прореживании по
+    плотности -- 1.0 в самых "густых" пятнах шумового поля, снижается до
+    _DENSITY_MIN_KEEP_PROBABILITY в самых "разреженных". Прореживание -- это
+    ТОЛЬКО удаление точек из уже готового Poisson-disk разброса, поэтому
+    гарантия минимального расстояния между оставшимися точками не портится
+    (уменьшить расстояние между двумя точками удаление не может)."""
+    noise = _value_noise(x, z, _DENSITY_NOISE_CELL_M)
+    return _DENSITY_MIN_KEEP_PROBABILITY + noise * (1.0 - _DENSITY_MIN_KEEP_PROBABILITY)
+
+
+def _pick_species(x: float, z: float, mix: list[tuple[str, float]]) -> str:
+    """Детерминированный выбор вида для точки (x, z) из взвешенного списка --
+    чистая функция координат (тот же вид при повторном вызове с теми же
+    координатами), веса нормализуются на случай, если не суммируются в 1.0."""
+    roll = _hash01(x, z, salt="species-mix")
+    total = sum(weight for _, weight in mix) or 1.0
+    acc = 0.0
+    for species, weight in mix:
+        acc += weight / total
+        if roll < acc:
+            return species
+    return mix[-1][0]
+
+
+def _poisson_disk_sample(
+    min_x: float, min_z: float, max_x: float, max_z: float, radius: float, rng: random.Random
+) -> list[tuple[float, float]]:
+    """Bridson Poisson-disk sampling ("Fast Poisson Disk Sampling in
+    Arbitrary Dimensions", 2007) -- органичный, но при этом равномерный
+    разброс точек с гарантированным минимальным расстоянием radius друг от
+    друга, без видимой сетки (в отличие от прежнего подхода "регулярная
+    сетка + жадный отбор по расстоянию"). rng -- ОДИН random.Random с
+    фиксированным сидом (_POISSON_SEED) на весь вызов generate_trees:
+    детерминированная последовательность операций с тем же сидом всегда даёт
+    тот же результат для одной и той же геометрии участка."""
+    radius = max(radius, _POISSON_MIN_RADIUS_M)
+    if max_x <= min_x or max_z <= min_z:
+        return []
+
+    cell = radius / math.sqrt(2)
+    grid: dict[tuple[int, int], tuple[float, float]] = {}
+
+    def grid_index(x: float, z: float) -> tuple[int, int]:
+        return (int((x - min_x) / cell), int((z - min_z) / cell))
+
+    def fits(x: float, z: float) -> bool:
+        gx, gz = grid_index(x, z)
+        for dx in range(-2, 3):
+            for dz in range(-2, 3):
+                neighbor = grid.get((gx + dx, gz + dz))
+                if neighbor is not None and math.hypot(neighbor[0] - x, neighbor[1] - z) < radius:
+                    return False
+        return True
+
+    first = (rng.uniform(min_x, max_x), rng.uniform(min_z, max_z))
+    samples = [first]
+    grid[grid_index(*first)] = first
+    active = [first]
+
+    while active:
+        idx = rng.randrange(len(active))
+        origin = active[idx]
+        placed = False
+        for _ in range(_POISSON_MAX_ATTEMPTS):
+            angle = rng.uniform(0, 2 * math.pi)
+            dist = rng.uniform(radius, 2 * radius)
+            x = origin[0] + dist * math.cos(angle)
+            z = origin[1] + dist * math.sin(angle)
+            if not (min_x <= x <= max_x and min_z <= z <= max_z):
+                continue
+            if not fits(x, z):
+                continue
+            point = (x, z)
+            samples.append(point)
+            grid[grid_index(x, z)] = point
+            active.append(point)
+            placed = True
+            break
+        if not placed:
+            active.pop(idx)
+
+    return samples
 
 
 class _SpacingGrid:
@@ -304,7 +473,12 @@ def generate_trees(
     if not boundary_poly.is_valid or boundary_poly.area == 0:
         return []
 
-    species = species or DEFAULT_TREE_SPECIES
+    # None -- вызывающий код не выбрал конкретный вид явно, генератор вправе
+    # смешивать виды на своё усмотрение (см. DEFAULT_TREE_SPECIES_MIX ниже).
+    # Если species передан явно -- это выбор пользователя (UI), им и остаётся
+    # для КАЖДОЙ точки, монокультурно, как и раньше.
+    requested_species = species
+    species_for_setback = requested_species or DEFAULT_TREE_SPECIES
 
     grid_spacing = grid_spacing_m if grid_spacing_m is not None else DEFAULT_GRID_SPACING_M
     grid_spacing = max(MIN_ALLOWED_GRID_SPACING_M, min(MAX_ALLOWED_GRID_SPACING_M, grid_spacing))
@@ -312,7 +486,7 @@ def generate_trees(
     min_spacing = min_tree_spacing_m if min_tree_spacing_m is not None else DEFAULT_MIN_TREE_SPACING_M
     min_spacing = max(0.0, min_spacing)
 
-    keep_out = _keep_out_shapes(scene.restrictions, "tree", species=species)
+    keep_out = _keep_out_shapes(scene.restrictions, "tree", species=species_for_setback)
     keep_out += _existing_object_shapes(scene.objects)
 
     planting_zones = _planting_zone_shapes(scene.restrictions)
@@ -327,8 +501,6 @@ def generate_trees(
     if allowed_area.is_empty:
         return []
 
-    min_x, min_z, max_x, max_z = boundary_poly.bounds
-
     # allowed_area на плотных реальных данных (тысячи зон ограничений) -- это
     # MultiPolygon с десятками тысяч вершин после unary_union/difference. Без
     # prepared-геометрии КАЖДЫЙ .contains(point) ниже перебирал бы все её
@@ -338,16 +510,23 @@ def generate_trees(
     # результат contains(), на порядки быстрее при повторных запросах.
     allowed_area_ready = prep(allowed_area)
 
-    # Регулярная сетка кандидатов -- детерминированно (ТЗ п.16: "deterministic
-    # demo generator"), без случайности, чтобы результат был воспроизводим.
-    candidates: list[tuple[float, float]] = []
-    x = min_x + grid_spacing / 2
-    while x < max_x:
-        z = min_z + grid_spacing / 2
-        while z < max_z:
-            candidates.append((x, z))
-            z += grid_spacing
-        x += grid_spacing
+    # Раньше -- регулярная сетка кандидатов с шагом grid_spacing (детерминированно,
+    # ТЗ п.16: "deterministic demo generator", без случайности). Смотрелось как
+    # ряды даже после прореживания по min_spacing. Теперь -- Poisson-disk
+    # (см. докстринг _poisson_disk_sample выше): органичный разброс кандидатов
+    # той же плотности, но без выравнивания по сетке; ГСЧ детерминированный
+    # (фиксированный сид), поэтому результат по-прежнему воспроизводим для
+    # одной и той же геометрии и параметров.
+    #
+    # Область генерации -- bbox САМОЙ allowed_area, а не всей границы участка:
+    # на вытянутых уличных проектах (реальный замер -- 02_peschany_pereulok,
+    # 518x940 м bbox границы) плантуемая площадь обычно узкая полоса вдоль
+    # дороги, а не весь bbox. Через boundary_poly.bounds Poisson-disk честно
+    # заполнял ВЕСЬ bbox (19к точек, 2.2 с только на сам разброс) ради узкой
+    # полосы, где реально приживалось меньше сотни -- через bbox allowed_area
+    # тот же результат почти без лишней работы.
+    min_x, min_z, max_x, max_z = allowed_area.bounds
+    candidates = _poisson_disk_sample(min_x, min_z, max_x, max_z, grid_spacing, random.Random(_POISSON_SEED))
 
     selected_grid = _SpacingGrid(min_spacing)
     selected: list[tuple[float, float]] = []
@@ -355,6 +534,12 @@ def generate_trees(
     for cx, cz in candidates:
         point = Point(cx, cz)
         if not allowed_area_ready.contains(point):
+            continue
+        # Естественная неоднородность плотности (пятна гуще/реже) -- см.
+        # докстринг _keep_probability. Только УДАЛЯЕТ точки из уже готового
+        # Poisson-disk разброса, поэтому min_spacing между оставшимися не
+        # нарушается.
+        if _hash01(cx, cz, salt="density-thin") > _keep_probability(cx, cz):
             continue
         if not selected_grid.is_far_enough(cx, cz, min_spacing):
             continue
@@ -370,6 +555,7 @@ def generate_trees(
 
     for cx, cz in selected:
         index = existing_tree_count + len(new_objects) + 1
+        point_species = requested_species or _pick_species(cx, cz, DEFAULT_TREE_SPECIES_MIX)
         new_objects.append(
             SceneObject(
                 id=f"tree_gen_{index:03d}",
@@ -379,7 +565,7 @@ def generate_trees(
                 rotation=0.0,
                 scale=1.0,
                 metadata={
-                    "species": species,
+                    "species": point_species,
                     "category": "vegetation",
                     "generated": True,
                     "reason": _placement_reason(cx, cz, zone_index),
