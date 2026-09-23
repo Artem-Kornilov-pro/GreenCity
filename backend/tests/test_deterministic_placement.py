@@ -19,14 +19,15 @@ from deterministic_placement import (
     _place_linear,
     generate_for_scene,
 )
-from helpers import make_boundary, make_scene
+from helpers import make_boundary, make_object, make_scene, make_zone
 from pattern_assignment import ZoneAssignment
 from pattern_corpus import _corpus_scenes
 from pattern_library import PATTERN_LIBRARY
 from placement import OBJECT_CLEARANCE_M, POINT_CLEARANCE_M, Placer
 from schemas import Point2
-from setback_norms import setback_for
+from setback_norms import MAX_SETBACK_M, setback_for
 from shapely.geometry import Point, Polygon
+from shapely.strtree import STRtree
 from zone_partitioning import GeometricZone, partition_zones
 
 
@@ -100,7 +101,14 @@ def _independent_zone_violations(scene, new_objects) -> list[tuple[str, str, flo
     """Пересчитывает нарушения зон с нуля по scene.restrictions (не через
     Placer.region()/is_free(), которыми уже пользуется сама расстановка) --
     так тест ловит настоящую ошибку в deterministic_placement.py, а не
-    повторяет её же проверку теми же средствами."""
+    повторяет её же проверку теми же средствами. С учётом породы
+    (metadata.species -> правила setback_norms.SPECIES_SETBACK_RULES).
+
+    Кандидаты "объект близко к зоне" -- через STRtree (запрос dwithin на
+    наибольший возможный отступ, MAX_SETBACK_M), а не перебором всех пар:
+    на реальном проекте десятки тысяч объектов и тысячи зон, и прямой
+    перебор в Python занимал минуты CI. Точное расстояние и норма -- по
+    каждой найденной паре, как и раньше."""
     zones = []
     for zone in scene.restrictions:
         if zone.severity == "allowed" or len(zone.polygon) < 3:
@@ -108,16 +116,20 @@ def _independent_zone_violations(scene, new_objects) -> list[tuple[str, str, flo
         poly = Polygon([(p.x, p.z) for p in zone.polygon])
         if poly.is_valid and poly.area > 0:
             zones.append((zone, poly))
+    plants = [obj for obj in new_objects if obj.type in ("tree", "bush")]
+    if not zones or not plants:
+        return []
 
+    points = [Point(obj.position.x, obj.position.z) for obj in plants]
+    tree = STRtree([poly for _, poly in zones])
+    point_idx, zone_idx = tree.query(points, predicate="dwithin", distance=MAX_SETBACK_M)
     violations = []
-    for obj in new_objects:
-        kind = "tree" if obj.type == "tree" else "bush"
-        point = Point(obj.position.x, obj.position.z)
-        for zone, poly in zones:
-            required = setback_for(zone.type, kind, zone.minDistance)
-            distance = poly.distance(point)
-            if distance < required - 1e-6:
-                violations.append((obj.id, zone.id, distance, required))
+    for i, j in zip(point_idx, zone_idx):
+        obj, (zone, poly) = plants[i], zones[j]
+        required = setback_for(zone.type, obj.type, zone.minDistance, species=obj.metadata.get("species"))
+        distance = poly.distance(points[i])
+        if distance < required - 1e-6:
+            violations.append((obj.id, zone.id, distance, required))
     return violations
 
 
@@ -125,18 +137,25 @@ def _independent_pairwise_violations(new_objects) -> list[tuple[str, str, float,
     """Расстояние между КАЖДОЙ парой новых точечных объектов не должно быть
     меньше применимой нормы (placement.OBJECT_CLEARANCE_M как минимум для
     любой пары, POINT_CLEARANCE_M для дерево-дерево) -- независимая от
-    Placer.blocker() проверка того же требования."""
+    Placer.blocker() (там своя сетка PointIndex) проверка того же
+    требования. Пары-кандидаты -- через STRtree на наибольшую из норм, а не
+    перебором всех N^2/2 пар: 54 тыс. объектов на реальном проекте -- это
+    полтора миллиарда пар и ~7 минут CI на одном этом тесте."""
+    plants = [obj for obj in new_objects if obj.type in ("tree", "bush")]
+    if len(plants) < 2:
+        return []
+    reach = max(OBJECT_CLEARANCE_M, *(d for norms in POINT_CLEARANCE_M.values() for d in norms.values()))
+    points = [Point(obj.position.x, obj.position.z) for obj in plants]
+    left, right = STRtree(points).query(points, predicate="dwithin", distance=reach)
     violations = []
-    for i, a in enumerate(new_objects):
-        if a.type not in ("tree", "bush"):
+    for i, j in zip(left, right):
+        if i >= j:  # каждая пара один раз, без пары объекта с самим собой
             continue
-        for b in new_objects[i + 1 :]:
-            if b.type not in ("tree", "bush"):
-                continue
-            required = max(OBJECT_CLEARANCE_M, POINT_CLEARANCE_M.get(a.type, {}).get(b.type, 0.0))
-            distance = math.hypot(a.position.x - b.position.x, a.position.z - b.position.z)
-            if distance < required - 1e-6:
-                violations.append((a.id, b.id, distance, required))
+        a, b = plants[i], plants[j]
+        required = max(OBJECT_CLEARANCE_M, POINT_CLEARANCE_M.get(a.type, {}).get(b.type, 0.0))
+        distance = math.hypot(a.position.x - b.position.x, a.position.z - b.position.z)
+        if distance < required - 1e-6:
+            violations.append((a.id, b.id, distance, required))
     return violations
 
 
@@ -362,3 +381,32 @@ def test_triangular_grid_fill_uses_dense_lattice_without_pick_spread_thinning(ca
     assert len(trees_only) > 3
     xs = {round(o.position.x, 1) for o in trees_only}
     assert len(xs) > 1
+
+
+# --- Сами независимые проверки должны ловить нарушения -----------------------
+#
+# test_real_corpus_has_zero_violations доверяет этим двум функциям "0
+# нарушений" -- если бы выборка кандидатов через STRtree что-то упускала,
+# тест проходил бы по ошибочной причине. Поэтому -- заведомо плохие случаи.
+
+
+def test_independent_zone_check_catches_planted_violations():
+    building = make_zone(type="building")  # [-5,5]x[-5,5]
+    close_tree = make_object("t_close", "tree", 8, 0)  # 3 м от стены, норма 5
+    linden = make_object("t_linden", "tree", 0, 12, metadata={"species": "Липа мелколистная"})  # 7 м, норма 10
+    far_tree = make_object("t_far", "tree", 0, -20)
+    scene = make_scene(restrictions=[building])
+    found = {v[0] for v in _independent_zone_violations(scene, [close_tree, linden, far_tree])}
+    assert found == {"t_close", "t_linden"}
+
+
+def test_independent_pairwise_check_catches_planted_violations():
+    objects = [
+        make_object("a", "tree", 0, 0),
+        make_object("b", "tree", 2.5, 0),  # дерево-дерево ближе 3 м
+        make_object("c", "bush", 20, 0),
+        make_object("d", "bush", 20.5, 0),  # куст-куст ближе 1 м
+        make_object("e", "tree", 50, 0),
+    ]
+    found = {(v[0], v[1]) for v in _independent_pairwise_violations(objects)}
+    assert found == {("a", "b"), ("c", "d")}

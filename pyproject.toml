@@ -40,7 +40,11 @@ extend-immutable-calls = ["fastapi.File", "fastapi.Query", "fastapi.Depends", "f
 # трюк вручную в каждом файле.
 pythonpath = ["backend", "parser", "backend/tests"]
 testpaths = ["backend/tests", "parser/tests"]
-addopts = "-ra"
+# -n auto (pytest-xdist): тесты по всем ядрам сразу -- и локально, и в CI
+# (GitHub/SourceCraft вызывают голый `pytest`, настройка отсюда). Один процесс
+# не справлялся: полный прогон в CI доходил до ~29 минут. Отладить один тест
+# без воркеров -- `pytest -n0 ...`.
+addopts = "-ra -n auto"
 # Весь стек асинхронный (AsyncMongoClient, redis.asyncio) -- auto-режим
 # запускает `async def test_...` без маркера @pytest.mark.asyncio на каждом.
 asyncio_mode = "auto"
