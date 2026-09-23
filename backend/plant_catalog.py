@@ -31,6 +31,7 @@ import json
 from pathlib import Path
 from typing import Literal, Optional
 
+from invasive_species import invasive_match
 from pydantic import BaseModel, ValidationError
 
 Category = Literal["tree", "bush", "groundcover", "paving", "furniture"]
@@ -219,14 +220,22 @@ def _load_generated() -> list[CatalogItem]:
 
 
 def load_catalog() -> list[CatalogItem]:
-    """Базовый каталог + записи из сконвертированного пака моделей.
+    """Базовый каталог + записи из сконвертированного пака моделей, без
+    инвазивных видов из перечня ППМ 369-ПП (invasive_species.py): сажать их
+    нельзя, поэтому их не должен предлагать ни один путь -- GreenPlan, правка
+    текстом, панель "Добавить объект". Проверяются только посадки (tree/
+    bush) -- у МАФ и мощения вида растения нет.
 
     Читается на каждый вызов, а не один раз при импорте: `uvicorn --reload`
     следит только за `.py`, поэтому появление catalog_generated.json иначе
     заметил бы лишь ручной перезапуск сервиса. Файл маленький, а эндпоинт
     дёргается редко -- перечитывать дешевле, чем требовать рестарт.
     """
-    return [*CATALOG, *_load_generated()]
+    return [
+        item
+        for item in (*CATALOG, *_load_generated())
+        if item.setback_kind is None or invasive_match(item.label) is None
+    ]
 
 
 def catalog_by_id() -> dict[str, CatalogItem]:
