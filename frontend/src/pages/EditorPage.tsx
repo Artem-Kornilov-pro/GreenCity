@@ -965,6 +965,13 @@ export default function EditorPage() {
                       ) : (
                         <p className="text-sm text-ink-400">Новых объектов не добавлено.</p>
                       )}
+                      {/* Основание подбора видов -- из самой расстановки (species_selection.py),
+                          без LLM: видно и тогда, когда текст-объяснение недоступен. */}
+                      {[...new Set(greenPlanResult.assignments.map((a) => a.species_basis).filter(Boolean))].map((basis) => (
+                        <p key={basis} className="mt-2 text-xs text-ink-500">
+                          Виды подобраны: {basis}
+                        </p>
+                      ))}
                     </section>
                   </>
                 )}

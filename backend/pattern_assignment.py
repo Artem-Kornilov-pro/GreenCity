@@ -35,6 +35,12 @@ class ZoneAssignment(BaseModel):
     source_project: str | None
     source_quote: str | None
     confidence: float
+    # Виды растений, подобранные для этой зоны (species_selection.py), и
+    # основание подбора -- заполняет deterministic_placement.generate_for_scene
+    # после расстановки; assign_patterns их не знает.
+    tree_species: list[str] = []
+    bush_species: list[str] = []
+    species_basis: str | None = None
 
 
 def _fallback(zone: GeometricZone) -> ZoneAssignment:

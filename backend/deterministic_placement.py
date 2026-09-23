@@ -28,9 +28,11 @@ setback_norms.py: липе 10 м от здания и т.п.), а не пост�
                каждого -- компактная группа соседей (pick_near), один вид
                растения на группу.
 
-Виды растений (species/CatalogItem) выбирает вызывающий код через параметры
-trees/bushes -- этот модуль знает только геометрию, не ассортимент (тот же
-принцип разделения, что в pattern_library.py).
+Виды растений: вызывающий код передаёт весь доступный каталог (trees/bushes),
+а generate_for_scene подбирает из него виды под каждую пару (вид зоны,
+паттерн) через species_selection.py -- по ассортименту Москвы для типа
+территории, без инвазивных видов 369-ПП. Функции place_zone/_place_* ниже
+знают только геометрию и сажают то, что им передали.
 """
 
 from __future__ import annotations
@@ -54,6 +56,7 @@ from plant_catalog import CatalogItem
 from schemas import Point3, Scene, SceneObject
 from shapely.geometry import Polygon
 from site_characterization import characterize_site, usable_planting_area
+from species_selection import SiteContext, SpeciesPalette, select_species
 from zone_partitioning import GeometricZone, partition_zones
 
 # Шаг ряда кустов вдоль линейного паттерна и во сколько раз реже вдоль той же
@@ -374,7 +377,42 @@ def generate_for_scene(
     assignments = assign_patterns(scene, zones, k=k, characteristics=characteristics)
     placer = Placer(scene)
 
+    # Виды -- по нормативному ассортименту для типа территории, форме,
+    # нужной паттерну, и без инвазивных (species_selection.py), а не весь
+    # переданный каталог по кругу. Один набор на пару (вид зоны, паттерн) на
+    # всём участке -- изгородь вдоль всех дорожек из одного вида.
+    site = SiteContext(
+        territory_type=characteristics.territory_type if characteristics else "неопределено",
+        has_playground=any(zone.type == "playground_zone" for zone in scene.restrictions),
+        site_key=_site_key(scene),
+    )
+    palettes: dict[tuple[str, str], SpeciesPalette] = {}
+
     objects: list[SceneObject] = []
+    placed_assignments: list[ZoneAssignment] = []
     for zone, assignment in zip(zones, assignments):
-        objects += place_zone(placer, zone, assignment, trees, bushes)
-    return objects, assignments
+        key = (zone.kind, assignment.pattern_id)
+        if key not in palettes:
+            palettes[key] = select_species(zone.kind, assignment.pattern_id, trees, bushes, site)
+        palette = palettes[key]
+        objects += place_zone(placer, zone, assignment, palette.trees, palette.bushes)
+        placed_assignments.append(
+            assignment.model_copy(
+                update={
+                    "tree_species": [item.label for item in palette.trees],
+                    "bush_species": [item.label for item in palette.bushes],
+                    "species_basis": palette.basis,
+                }
+            )
+        )
+    return objects, placed_assignments
+
+
+def _site_key(scene: Scene) -> str:
+    """Стабильный ключ участка для выбора среди равноценных видов (см.
+    species_selection._pick): один и тот же участок -- те же виды, разные
+    участки -- разные. Контур границы с округлением до дециметра, чтобы
+    float-шум парсера не менял выбор."""
+    if scene.boundary is None:
+        return "no-boundary"
+    return ";".join(f"{p.x:.1f},{p.z:.1f}" for p in scene.boundary.polygon)
