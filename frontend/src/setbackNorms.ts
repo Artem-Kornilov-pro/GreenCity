@@ -1,13 +1,17 @@
 // Нормативные отступы посадок от зданий и инженерных сетей различаются по
 // виду посадки (дерево/кустарник) — у дерева корни глубже и шире, крона
 // крупнее, поэтому ему требуется больший отступ, чем кустарнику. Источник:
-// табличные нормы СНиП 2.07.01-89*/СП 42.13330.2016 "Расстояния от зданий,
-// сооружений и объектов инженерного благоустройства до оси растения".
+// СП 42.13330.2016, п. 9.6, табл. 9.1 и совпадающая с ней табл. 3.6.1
+// ППМ 743-ПП "Расстояния от зданий, сооружений и объектов инженерного
+// благоустройства до оси растения".
 //
 // Это ДОПОЛНИТЕЛЬНЫЙ запас поверх уже нарисованной зоны (для труб/кабелей она
 // уже отбуферена на minDistance из parser/parse_dxf.py — это охранная зона
 // самой сети, не связанная с видом посадки). 0 означает "не нормируется" —
 // кустарник можно сажать вплотную к границе зоны.
+//
+// Портировано 1:1 из backend/setback_norms.py — синхронизация ручная, при
+// правке обновить оба файла. Обоснование каждого числа — там же.
 export type PlantKind = "tree" | "bush";
 
 interface SetbackRule {
@@ -21,33 +25,70 @@ const SETBACK_NORMS: Record<string, SetbackRule> = {
   gas_pipeline: { tree: 1.5, bush: 0 },
   sewer: { tree: 1.5, bush: 0 },
   water_pipeline: { tree: 2.0, bush: 0 },
+  // "Силовой кабель и кабель связи" — одна строка таблицы.
   electrical: { tree: 2.0, bush: 0.7 },
+  signal_cable: { tree: 2.0, bush: 0.7 },
+  heat_network: { tree: 2.0, bush: 1.0 },
   pedestrian_path: { tree: 0.7, bush: 0.5 },
 };
 
-// Портировано 1:1 из backend/setback_norms.py::SPECIES_SETBACK_OVERRIDES
-// (issue #43) — синхронизация ручная, при правке обновить оба файла. Ключи —
-// ровно то, что ожидается в metadata.species (с заглавной буквы), сравнение
-// регистрозависимое. Обоснование цифр — докстринг .py-версии.
-const SPECIES_SETBACK_OVERRIDES: Record<string, Partial<Record<string, number>>> = {
-  "Тополь чёрный": { building: 8.0, sewer: 3.0, water_pipeline: 3.0 },
-  "Тополь бальзамический": { building: 8.0, sewer: 3.0, water_pipeline: 3.0 },
-  "Ива белая": { building: 6.0, sewer: 3.5, water_pipeline: 3.5 },
-  "Ива ломкая": { building: 6.0, sewer: 3.5, water_pipeline: 3.5 },
-};
+// Правила по породе: задаются по РОДУ (первое слово названия вида, без учёта
+// регистра, ё == е) и только ужесточают табличную норму — берётся максимум.
+interface SpeciesSetbackRule {
+  genera: string[];
+  zoneType: string;
+  distance: number;
+  kinds: PlantKind[];
+}
+
+const WIDE_CROWN = ["липа", "клен", "дуб", "каштан", "тополь"]; // 743-ПП, табл. 3.6.1, прим. 3
+const THORNY = ["роза", "шиповник", "барбарис", "боярышник"]; // СП 82.13330.2016, п. 9.22
+const HEAT_2M = ["липа", "клен", "сирень", "жимолость"]; // МГСН 1.02-02, п. 4.2.8
+const HEAT_4M = ["тополь", "боярышник", "кизильник", "дерен", "лиственница", "береза"]; // МГСН 1.02-02, п. 4.2.8
+const BOTH: PlantKind[] = ["tree", "bush"];
+
+const SPECIES_SETBACK_RULES: SpeciesSetbackRule[] = [
+  { genera: WIDE_CROWN, zoneType: "building", distance: 10.0, kinds: ["tree"] },
+  { genera: THORNY, zoneType: "pedestrian_path", distance: 2.0, kinds: BOTH },
+  { genera: THORNY, zoneType: "playground_zone", distance: 2.0, kinds: BOTH },
+  { genera: HEAT_2M, zoneType: "heat_network", distance: 2.0, kinds: BOTH },
+  { genera: HEAT_4M, zoneType: "heat_network", distance: 4.0, kinds: BOTH },
+  // Экспертная оценка (issue #43), не норма акта.
+  { genera: ["тополь"], zoneType: "sewer", distance: 3.0, kinds: ["tree"] },
+  { genera: ["тополь"], zoneType: "water_pipeline", distance: 3.0, kinds: ["tree"] },
+  { genera: ["ива"], zoneType: "building", distance: 6.0, kinds: ["tree"] },
+  { genera: ["ива"], zoneType: "sewer", distance: 3.5, kinds: ["tree"] },
+  { genera: ["ива"], zoneType: "water_pipeline", distance: 3.5, kinds: ["tree"] },
+];
+
+// Наибольший отступ из обеих таблиц — на столько geometry.ts расширяет
+// габарит зоны в индексе, чтобы не потерять нарушение у точки за её границей.
+export const MAX_SETBACK_M = Math.max(
+  ...Object.values(SETBACK_NORMS).flatMap((rule) => [rule.tree, rule.bush]),
+  ...SPECIES_SETBACK_RULES.map((rule) => rule.distance)
+);
+
+export function genusOf(species?: string): string | undefined {
+  const first = species?.replace(/[(,]/g, " ").trim().split(/\s+/)[0];
+  return first ? first.toLowerCase().replace(/ё/g, "е") : undefined;
+}
 
 // Для зон без табличного значения (трансформатор, детская площадка, парковка,
 // охраняемая зона, наземная ЛЭП) — берём minDistance зоны как есть, без
-// выдумывания цифр, которые нечем подтвердить. species — опционален и
-// действует только для plantKind === "tree" (переопределение проверяется
-// ПЕРЕД общей таблицей, тот же порядок разрешения, что и в backend).
+// выдумывания цифр, которые нечем подтвердить. species — опционален: правила
+// по породе только ужесточают табличную норму.
 export function setbackFor(zoneType: string, plantKind: PlantKind, zoneMinDistance: number, species?: string): number {
-  if (plantKind === "tree" && species) {
-    const override = SPECIES_SETBACK_OVERRIDES[species]?.[zoneType];
-    if (override !== undefined) return override;
-  }
   const rule = SETBACK_NORMS[zoneType];
-  return rule ? rule[plantKind] : zoneMinDistance;
+  let distance = rule ? rule[plantKind] : zoneMinDistance;
+  const genus = genusOf(species);
+  if (genus) {
+    for (const speciesRule of SPECIES_SETBACK_RULES) {
+      if (speciesRule.zoneType === zoneType && speciesRule.kinds.includes(plantKind) && speciesRule.genera.includes(genus)) {
+        distance = Math.max(distance, speciesRule.distance);
+      }
+    }
+  }
+  return distance;
 }
 
 export function plantKindOfObjectType(type: string): PlantKind | undefined {

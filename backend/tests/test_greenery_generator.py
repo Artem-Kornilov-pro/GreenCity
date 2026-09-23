@@ -56,13 +56,22 @@ def test_keep_out_shapes_buffers_by_required_setback():
     assert not shapes[0].contains(Point(10.1, 0))
 
 
-def test_keep_out_shapes_species_override_changes_buffer(monkeypatch):
-    from setback_norms import SPECIES_SETBACK_OVERRIDES
-
-    monkeypatch.setitem(SPECIES_SETBACK_OVERRIDES, "тополь чёрный", {"building": 8.0})
+def test_keep_out_shapes_species_rule_changes_buffer():
+    # Липа -- широкая крона, 10 м от здания (743-ПП, табл. 3.6.1, прим. 3).
     zone = make_zone(type="building")
-    shapes = gg._keep_out_shapes([zone], "tree", species="тополь чёрный")
-    assert shapes[0].contains(Point(12.9, 0))
+    shapes = gg._keep_out_shapes([zone], "tree", species="Липа мелколистная")
+    assert shapes[0].contains(Point(14.9, 0))
+    assert not shapes[0].contains(Point(15.1, 0))
+
+
+def test_keep_out_shapes_species_mix_uses_strictest_species():
+    # Берёза сама по себе -- 5 м, но в смеси с липой любая точка может
+    # достаться липе, поэтому буфер -- по липе.
+    zone = make_zone(type="building")
+    birch_only = gg._keep_out_shapes([zone], "tree", species=["Берёза полезная"])
+    mix = gg._keep_out_shapes([zone], "tree", species=["Берёза полезная", "Липа мелколистная"])
+    assert not birch_only[0].contains(Point(12, 0))
+    assert mix[0].contains(Point(12, 0))
 
 
 def test_raw_zone_shapes_ignores_plant_setback_entirely():

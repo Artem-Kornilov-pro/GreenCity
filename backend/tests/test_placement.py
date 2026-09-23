@@ -856,3 +856,47 @@ def test_wavy_line_none_or_empty_is_safe():
     assert wavy_line(None, amplitude=4.0, wavelength=40.0) is None
     empty = LineString()
     assert wavy_line(empty, amplitude=4.0, wavelength=40.0) is empty
+
+
+# --- Правила отступа по породе (setback_norms.SPECIES_SETBACK_RULES) ---------
+
+
+def test_is_free_applies_wide_crown_rule_for_linden():
+    # Здание [-5,5]x[-5,5]. x=12 -- 7 м от стены: берёзе (5 м) можно, липе
+    # (10 м, 743-ПП, табл. 3.6.1, прим. 3) -- нет; x=16 -- 11 м, можно обеим.
+    placer = Placer(make_scene(restrictions=[make_zone(type="building")]))
+    assert placer.is_free(12, 0, "tree", species="Берёза повислая")
+    assert not placer.is_free(12, 0, "tree", species="Липа мелколистная")
+    assert placer.is_free(16, 0, "tree", species="Липа мелколистная")
+
+
+def test_is_free_without_species_keeps_table_norm():
+    placer = Placer(make_scene(restrictions=[make_zone(type="building")]))
+    assert placer.is_free(12, 0, "tree")
+
+
+def test_is_free_species_pool_takes_strictest():
+    placer = Placer(make_scene(restrictions=[make_zone(type="building")]))
+    assert not placer.is_free(12, 0, "tree", species=["Берёза повислая", "Липа мелколистная"])
+
+
+def test_region_cache_is_shared_by_species_without_rules():
+    # Кэш -- по набору правил, а не по названию: дорогой unary_union не
+    # должен пересчитываться на каждый из сотни видов каталога.
+    # У берёзы правило есть, но только для теплосети (МГСН 4.2.8) -- на
+    # участке без теплосети она делит область с рябиной (правил нет вовсе).
+    placer = Placer(make_scene(restrictions=[make_zone(type="building")]))
+    assert placer.region("tree", "Берёза повислая") is placer.region("tree", "Рябина обыкновенная")
+    assert placer.region("tree", "Липа мелколистная") is not placer.region("tree", "Берёза повислая")
+    heat = make_zone(id="h1", type="heat_network", name="HEAT", polygon=[Point2(x=20, z=-1), Point2(x=40, z=-1), Point2(x=40, z=1), Point2(x=20, z=1)])
+    placer = Placer(make_scene(restrictions=[make_zone(type="building"), heat]))
+    assert placer.region("tree", "Берёза повислая") is not placer.region("tree", "Рябина обыкновенная")
+
+
+def test_signal_cable_zone_needs_2m_for_a_tree():
+    # Раньше signal_cable не было в таблице отступов, и дерево вставало в
+    # 0.5 м от края коридора кабеля связи (СП 42 требует 2 м).
+    cable = make_zone(type="signal_cable", name="ELECTR_CABLE_COMM", severity="warning", min_distance=0.5)
+    placer = Placer(make_scene(restrictions=[cable]))
+    assert not placer.is_free(6.5, 0, "tree")
+    assert placer.is_free(7.5, 0, "tree")

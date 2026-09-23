@@ -45,7 +45,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 from schemas import Scene
-from setback_norms import plant_kind_of_object_type, setback_for
+from setback_norms import SPECIES_SETBACK_RULES, plant_kind_of_object_type, setback_for
 from shapely.geometry import Point, Polygon
 from shapely.strtree import STRtree
 
@@ -64,9 +64,10 @@ class Violation(BaseModel):
 def _build_zone_index(scene: Scene):
     """(STRtree по буферизованным зонам, параллельный список (zone, исходный
     полигон)) -- или (None, []), если проверять нечего. Буфер каждой зоны --
-    max(отступ для дерева, отступ для куста): худший случай по обоим видам
-    посадки, чтобы точный отбор кандидатов ниже не потерял ни одного реального
-    нарушения, каким бы ни был kind конкретного объекта."""
+    худший случай среди отступа для дерева, для куста и всех правил по
+    породе для этого типа зоны (setback_norms.SPECIES_SETBACK_RULES: липе
+    10 м от здания), чтобы точный отбор кандидатов ниже не потерял ни одного
+    реального нарушения, каким бы ни был вид конкретного объекта."""
     entries: list[tuple] = []
     buffered: list[Polygon] = []
     for zone in scene.restrictions:
@@ -75,7 +76,11 @@ def _build_zone_index(scene: Scene):
         poly = Polygon([(p.x, p.z) for p in zone.polygon])
         if not poly.is_valid or poly.area == 0:
             continue
-        reach = max(setback_for(zone.type, "tree", zone.minDistance), setback_for(zone.type, "bush", zone.minDistance))
+        reach = max(
+            setback_for(zone.type, "tree", zone.minDistance),
+            setback_for(zone.type, "bush", zone.minDistance),
+            *(rule.distance_m for rule in SPECIES_SETBACK_RULES if rule.zone_type == zone.type),
+        )
         entries.append((zone, poly))
         buffered.append(poly.buffer(reach) if reach > 0 else poly)
 
@@ -95,9 +100,10 @@ def find_violations(scene: Scene) -> list[Violation]:
         if kind is None:
             continue
         point = Point(obj.position.x, obj.position.z)
+        species = obj.metadata.get("species")
         for idx in tree.query(point):
             zone, poly = entries[idx]
-            required = setback_for(zone.type, kind, zone.minDistance)
+            required = setback_for(zone.type, kind, zone.minDistance, species=species)
             distance = poly.distance(point)
             if distance < required:
                 violations.append(

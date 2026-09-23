@@ -31,7 +31,7 @@ from typing import Optional
 
 import numpy as np
 from schemas import RestrictionZone, Scene
-from setback_norms import setback_for
+from setback_norms import SpeciesArg, SpeciesSetbackRule, setback_for, species_rules
 from shapely.geometry import LineString, MultiPoint, Point, Polygon
 from shapely.ops import nearest_points, unary_union
 from shapely.prepared import prep
@@ -57,8 +57,8 @@ PATH_SEGMENT_HALF_WIDTH_M = 0.7  # ширина уложенного мощен�
 FURNITURE_CLEARANCE_M = 0.3  # зазор МАФ и мощения от края любой зоны ограничений
 # (тип существующего объекта) -> {вид новой посадки: минимальное расстояние, м}.
 POINT_CLEARANCE_M: dict[str, dict[str, float]] = {
-    # СНиП 2.07.01-89*, табл. 4: от опоры осветительной сети до дерева 4 м
-    # (для кустарника не нормируется).
+    # СП 42.13330.2016, табл. 9.1 / 743-ПП, табл. 3.6.1: от опоры
+    # осветительной сети до дерева 4 м (для кустарника не нормируется).
     "lamp": {"tree": 4.0},
     # Не норма, а здравый смысл: посадка не должна загораживать подъезд.
     "entrance": {"tree": 5.0, "bush": 2.5},
@@ -172,6 +172,9 @@ class Placer:
             geom = _geometry(zone.polygon)
             if geom is not None:
                 self.zones.append((zone, geom))
+        # Типы зон, от которых отступаем (см. region) -- чтобы правило по
+        # породе для отсутствующей на участке зоны не плодило лишний кэш.
+        self._restricted_types = {zone.type for zone, _ in self.zones if zone.severity != "allowed"}
 
         self.site = _geometry(scene.boundary.polygon, single=True) if scene.boundary else None
         if self.site is None and self.zones:
@@ -199,26 +202,38 @@ class Placer:
     # --- Нормы и допустимая область ----------------------------------------
 
     @staticmethod
-    def required(zone: RestrictionZone, kind: Optional[str]) -> float:
+    def required(zone: RestrictionZone, kind: Optional[str], species: SpeciesArg = None) -> float:
         """Нормативный отступ посадки вида kind от зоны. МАФ и мощению (kind
         None) нормы для растений неприменимы, но небольшой запас всё равно
         нужен: раньше он проверялся с точностью до ~10 см и лавка могла
         встать вплотную к краю дорожки или ограждению сети, визуально на них
-        заходя."""
+        заходя. species -- название вида (или несколько, см.
+        setback_norms.SpeciesArg): у части пород отступ больше табличного
+        (липа -- 10 м от здания и т.п.)."""
         if kind in ("tree", "bush"):
-            return setback_for(zone.type, kind, zone.minDistance)
+            return setback_for(zone.type, kind, zone.minDistance, species=species)
         return FURNITURE_CLEARANCE_M
 
-    def region(self, kind: Optional[str]):
+    def region(self, kind: Optional[str], species: SpeciesArg = None):
         """(область, её prepared-версия), где можно ставить объект вида kind:
         участок минус запретные и предупреждающие зоны, расширенные на
-        нормативный отступ."""
-        if kind not in self._regions:
+        нормативный отступ. Кэш -- по (kind, набор правил по породе, которые
+        реально что-то меняют на ЭТОЙ сцене), а не по названию вида: сотня
+        видов каталога без собственных правил (или с правилами для зон,
+        которых на участке нет) делят одну область, и дорогой unary_union
+        считается не на каждый вид."""
+        rules = frozenset(
+            rule
+            for rule in species_rules(species)
+            if kind in rule.kinds and rule.zone_type in self._restricted_types
+        )
+        key = (kind, rules)
+        if key not in self._regions:
             area = None
             if self.site is not None:
                 area = self.site.buffer(-SITE_CLEARANCE_M)
                 keep_out = [
-                    geom.buffer(self.required(zone, kind) + REGION_EPS_M)
+                    geom.buffer(self._required_by_rules(zone, kind, rules) + REGION_EPS_M)
                     for zone, geom in self.zones
                     if zone.severity != "allowed"
                 ]
@@ -226,8 +241,20 @@ class Placer:
                     area = area.difference(unary_union(keep_out))
                 if area.is_empty:
                     area = None
-            self._regions[kind] = (area, prep(area) if area is not None else None)
-        return self._regions[kind]
+            self._regions[key] = (area, prep(area) if area is not None else None)
+        return self._regions[key]
+
+    @classmethod
+    def _required_by_rules(
+        cls, zone: RestrictionZone, kind: Optional[str], rules: frozenset[SpeciesSetbackRule]
+    ) -> float:
+        """То же, что required(), но по уже найденному набору правил --
+        region() кэширует именно по нему."""
+        distance = cls.required(zone, kind)
+        for rule in rules:
+            if rule.zone_type == zone.type and kind in rule.kinds:
+                distance = max(distance, rule.distance_m)
+        return distance
 
     def blocker(
         self,
@@ -252,18 +279,18 @@ class Placer:
                 return key, required, distance
         return None
 
-    def region_contains(self, shape, kind: Optional[str]) -> bool:
+    def region_contains(self, shape, kind: Optional[str], species: SpeciesArg = None) -> bool:
         """Фигура (точка ИЛИ полигон габарита объекта) целиком внутри
         допустимой области -- без учёта точечных объектов. Полигон нужен для
         вытянутых и широких МАФ (лавка, секция изгороди, клумба): проверка
         одной точки-центра пропускала случаи, когда сам объект стоял
         правильно, а его дальний край перекрывал дорожку или уходил за
         границу участка -- центр при этом лежал в допустимой области."""
-        _, prepared = self.region(kind)
+        _, prepared = self.region(kind, species)
         return prepared is not None and prepared.contains(shape)
 
-    def in_region(self, x: float, z: float, kind: Optional[str]) -> bool:
-        return self.region_contains(Point(x, z), kind)
+    def in_region(self, x: float, z: float, kind: Optional[str], species: SpeciesArg = None) -> bool:
+        return self.region_contains(Point(x, z), kind, species)
 
     def is_free(
         self,
@@ -272,12 +299,15 @@ class Placer:
         kind: Optional[str],
         clearance: float = OBJECT_CLEARANCE_M,
         obj_type: Optional[str] = None,
+        species: SpeciesArg = None,
     ) -> bool:
-        if not self.in_region(x, z, kind):
+        if not self.in_region(x, z, kind, species):
             return False
         return self.blocker(x, z, kind, clearance, obj_type) is None
 
-    def explain(self, x: float, z: float, kind: Optional[str], clearance: float = OBJECT_CLEARANCE_M) -> str:
+    def explain(
+        self, x: float, z: float, kind: Optional[str], clearance: float = OBJECT_CLEARANCE_M, species: SpeciesArg = None
+    ) -> str:
         """Человекочитаемая причина, почему в точке ставить нельзя. Точный
         разбор по зонам медленнее is_free(), поэтому только для точечных
         операций, где причина нужна в сообщении."""
@@ -292,7 +322,7 @@ class Placer:
                 continue
             if geom.contains(point):
                 return f"внутри зоны: {zone.message}"
-            required = self.required(zone, kind)
+            required = self.required(zone, kind, species)
             distance = geom.distance(point)
             if distance < required:
                 return f"{zone.message} (до зоны {distance:.1f} м, нужно {required:.1f} м)"
@@ -302,12 +332,14 @@ class Placer:
             return f"рядом {key} (до него {distance:.1f} м, нужно {required:.1f} м)"
         return "у самой границы зоны ограничений"
 
-    def nearest_free(self, x: float, z: float, kind: Optional[str], clearance: float = OBJECT_CLEARANCE_M):
+    def nearest_free(
+        self, x: float, z: float, kind: Optional[str], clearance: float = OBJECT_CLEARANCE_M, species: SpeciesArg = None
+    ):
         """Сама точка, если там можно, иначе ближайшая допустимая не дальше
         MAX_SNAP_DISTANCE_M; None -- если такой нет."""
-        if self.is_free(x, z, kind, clearance):
+        if self.is_free(x, z, kind, clearance, species=species):
             return x, z
-        area, _ = self.region(kind)
+        area, _ = self.region(kind, species)
         if area is None:
             return None
 
@@ -320,7 +352,7 @@ class Placer:
         if 0 < distance <= MAX_SNAP_DISTANCE_M:
             factor = (distance + 0.05) / distance
             nx, nz = x + (near.x - x) * factor, z + (near.y - z) * factor
-            if self.is_free(nx, nz, kind, clearance):
+            if self.is_free(nx, nz, kind, clearance, species=species):
                 return nx, nz
 
         # Не вышло (например, там фонарь) -- перебираем кольца вокруг точки,
@@ -331,7 +363,7 @@ class Placer:
             for k in range(samples):
                 angle = 2 * math.pi * k / samples
                 cx, cz = x + radius * math.cos(angle), z + radius * math.sin(angle)
-                if self.is_free(cx, cz, kind, clearance):
+                if self.is_free(cx, cz, kind, clearance, species=species):
                     return cx, cz
         return None
 
@@ -352,6 +384,8 @@ class Placer:
         if geom is None:
             return
         self.zones.append((zone, geom))
+        if zone.severity != "allowed":
+            self._restricted_types.add(zone.type)
         self._regions.clear()
         self._targets.clear()
         self._free_areas = None
@@ -360,7 +394,8 @@ class Placer:
 
     def _target_zones(self, target: str) -> list:
         if target == "parking":
-            # У парковки в парсере тип "custom" -- тот же, что у теплосети,
+            # У парковки в парсере тип "custom" -- общий для зон без
+            # собственного типа (неуточнённые подземные сети и т.п.),
             # поэтому различаем по слою.
             return [(zone, geom) for zone, geom in self.zones if "PARK" in zone.name.upper()]
         zone_type = "playground_zone" if target == "playground" else target
@@ -406,13 +441,13 @@ class Placer:
         point = Point(x, z)
         return geom.exterior.distance(point) if target == "site_boundary" else geom.distance(point)
 
-    def min_offset(self, target: str, kind: Optional[str], half_depth: float) -> float:
+    def min_offset(self, target: str, kind: Optional[str], half_depth: float, species: SpeciesArg = None) -> float:
         """Отступ ряда от контура цели: нормативный отступ плюс большая часть
         радиуса кроны, чтобы куст не нависал над дорожкой."""
         if target == "site_boundary":
             base = SITE_CLEARANCE_M
         else:
-            base = max((self.required(zone, kind) for zone, _ in self._target_zones(target)), default=0.0)
+            base = max((self.required(zone, kind, species) for zone, _ in self._target_zones(target)), default=0.0)
         return base + 2 * REGION_EPS_M + 0.8 * half_depth
 
     def points_along(self, target: str, spacing: float, offset: float) -> list[tuple[float, float, float]]:
@@ -451,11 +486,12 @@ class Placer:
         step: float,
         within=None,
         max_candidates: int = 2000,
+        species: SpeciesArg = None,
     ) -> list[tuple[float, float]]:
         """Кандидаты на гексагональной сетке внутри допустимой области (и
         внутри within, если задано). Шаг не мельче, чем нужно для
         max_candidates точек: на огромном участке иначе были бы миллионы."""
-        area, prepared = self.region(kind)
+        area, prepared = self.region(kind, species)
         if area is None:
             return []
         if within is not None:

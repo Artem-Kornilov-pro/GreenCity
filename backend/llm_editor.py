@@ -69,6 +69,7 @@ from plant_catalog import CATALOG as BASE_CATALOG
 from plant_catalog import CatalogItem, load_catalog
 from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 from schemas import Point2, Point3, RestrictionZone, Scene, SceneObject
+from setback_norms import SpeciesArg
 from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import nearest_points, unary_union
 
@@ -904,6 +905,12 @@ def _pool_kind(items: list[CatalogItem]) -> Optional[str]:
     return None
 
 
+def _pool_species(items: list[CatalogItem]) -> list[str]:
+    """Все виды набора: на любое место ряда/группы может встать любой из
+    них, поэтому отступ -- по самому строгому (setback_norms.SpeciesArg)."""
+    return [item.label for item in items]
+
+
 def _default_spacing(item: CatalogItem) -> float:
     """Шаг посадки в ряду по габаритам вида: кроны соседей смыкаются, но не
     наезжают; секции изгороди, мощения и газона идут встык."""
@@ -1027,7 +1034,7 @@ class _PlanApplier:
             position=Point3(x=x, y=0.0, z=z),
             rotation=math.radians(rotation_deg),
             scale=1.0,
-            metadata={"catalogId": item.id, "label": item.label, "source": "llm"},
+            metadata={"catalogId": item.id, "label": item.label, "species": item.label, "source": "llm"},
         )
         self.placer.occupy(new_id, x, z, item.object_type)
 
@@ -1039,11 +1046,11 @@ class _PlanApplier:
             self._create(item, spot[0], spot[1], rotation)
         return _labels(items[: len(spots)])
 
-    def _spot(self, x: float, z: float, kind: Optional[str], action: str, what: str):
+    def _spot(self, x: float, z: float, kind: Optional[str], action: str, what: str, species: SpeciesArg = None):
         """Точка для точечной операции: сама (x, z), если там можно, иначе
         ближайшая допустимая. None -- операция отклонена (причина записана)."""
-        reason = None if self.placer.is_free(x, z, kind) else self.placer.explain(x, z, kind)
-        spot = self.placer.nearest_free(x, z, kind)
+        reason = None if self.placer.is_free(x, z, kind, species=species) else self.placer.explain(x, z, kind, species=species)
+        spot = self.placer.nearest_free(x, z, kind, species=species)
         if spot is None:
             self.rejected.append(
                 f"{action} в ({x:.1f}, {z:.1f}): {reason}; в радиусе {MAX_SNAP_DISTANCE_M:.0f} м нет места без нарушений"
@@ -1075,12 +1082,22 @@ class _PlanApplier:
 
     # --- Точечные операции -------------------------------------------------
 
+
+    def _species(self, obj: SceneObject) -> Optional[str]:
+        """Вид существующего объекта -- для правил по породе
+        (setback_norms.py). metadata.species ставят парсер/GreenPlan/_create;
+        у объектов без него -- подпись каталожной записи."""
+        species = obj.metadata.get("species") or obj.metadata.get("label")
+        if species:
+            return str(species)
+        item = self.by_id.get(obj.metadata.get("catalogId"))
+        return item.label if item else None
     def add(self, op: AddOp) -> None:
         item = self.by_id.get(op.catalog_id)
         if item is None:
             self.rejected.append(f"add {op.catalog_id}: такого вида нет в каталоге")
             return
-        spot = self._spot(op.x, op.z, item.setback_kind, f"add «{item.label}»", f"«{item.label}»")
+        spot = self._spot(op.x, op.z, item.setback_kind, f"add «{item.label}»", f"«{item.label}»", species=item.label)
         if spot is None:
             return
         self._create(item, spot[0], spot[1], op.rotation_deg)
@@ -1100,7 +1117,7 @@ class _PlanApplier:
             return
         # Сам объект не должен мешать себе на новом месте.
         self.placer.release(obj.id)
-        spot = self._spot(op.x, op.z, self._setback_kind(obj), f"move {obj.id}", obj.id)
+        spot = self._spot(op.x, op.z, self._setback_kind(obj), f"move {obj.id}", obj.id, species=self._species(obj))
         if spot is None:
             self.placer.occupy(obj.id, obj.position.x, obj.position.z, obj.type)
             return
@@ -1131,8 +1148,9 @@ class _PlanApplier:
             return
 
         kind = _pool_kind(items)
+        species = _pool_species(items)
         spacing = _spacing_for(op.spacing_m, items)
-        offset = self.placer.min_offset(op.target, kind, max(_half_depth(item) for item in items))
+        offset = self.placer.min_offset(op.target, kind, max(_half_depth(item) for item in items), species)
         if op.offset_m is not None:
             if op.offset_m < offset - 0.05:
                 self.warnings.append(f"{what}: отступ {op.offset_m:.1f} м меньше нормы, взят {offset:.1f} м")
@@ -1157,9 +1175,9 @@ class _PlanApplier:
                     slots += 1
                 # Запасной ряд только заполняет пропуски основного: рядом с
                 # уже принятой точкой его кандидат отсекается по шагу.
-                if placed.has_within(x, z, 0.9 * spacing) or not self.placer.is_free(x, z, kind):
+                if placed.has_within(x, z, 0.9 * spacing) or not self.placer.is_free(x, z, kind, species=species):
                     continue
-                if half_length and not self._ends_fit(x, z, rotation, half_length, kind):
+                if half_length and not self._ends_fit(x, z, rotation, half_length, kind, species):
                     continue
                 placed.add(str(len(accepted)), x, z)
                 accepted.append((x, z, rotation))
@@ -1184,12 +1202,14 @@ class _PlanApplier:
                 "у сетей, зданий, парковок, фонарей или подъездов"
             )
 
-    def _ends_fit(self, x: float, z: float, rotation_deg: float, half_length: float, kind: Optional[str]) -> bool:
+    def _ends_fit(
+        self, x: float, z: float, rotation_deg: float, half_length: float, kind: Optional[str], species: SpeciesArg = None
+    ) -> bool:
         # Направление локальной оси X при повороте θ -- (cosθ, -sinθ), см.
         # Placer.points_along.
         angle = math.radians(rotation_deg)
         dx, dz = math.cos(angle) * half_length, -math.sin(angle) * half_length
-        return self.placer.in_region(x + dx, z + dz, kind) and self.placer.in_region(x - dx, z - dz, kind)
+        return self.placer.in_region(x + dx, z + dz, kind, species) and self.placer.in_region(x - dx, z - dz, kind, species)
 
     def _free_area(self, area_id: str):
         areas = self.placer.free_areas()
@@ -1210,6 +1230,7 @@ class _PlanApplier:
             return
         count = min(op.count, MAX_BULK_PLACEMENTS)
         kind = _pool_kind(items)
+        species = _pool_species(items)
         spacing = _spacing_for(op.spacing_m, items)
 
         area = None
@@ -1233,8 +1254,8 @@ class _PlanApplier:
                 area = inset
 
         if op.x is None or op.z is None:
-            candidates = self.placer.points_in_area(kind, spacing / 2, area, count * CANDIDATES_PER_PLACEMENT)
-            free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind)]
+            candidates = self.placer.points_in_area(kind, spacing / 2, area, count * CANDIDATES_PER_PLACEMENT, species)
+            free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind, species=species)]
             chosen = pick_spread(free, count, 0.9 * spacing)
         else:
             center = (op.x, op.z)
@@ -1244,8 +1265,8 @@ class _PlanApplier:
             for attempt in (radius, radius + MAX_SNAP_DISTANCE_M):
                 circle = Point(center).buffer(attempt)
                 within = circle if area is None else area.intersection(circle)
-                candidates = self.placer.points_in_area(kind, spacing / 4, within, CANDIDATES_NEAR_POINT)
-                free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind)]
+                candidates = self.placer.points_in_area(kind, spacing / 4, within, CANDIDATES_NEAR_POINT, species)
+                free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind, species=species)]
                 chosen = pick_near(free, count, 0.9 * spacing, center)
                 if len(chosen) >= count:
                     break
@@ -1529,7 +1550,7 @@ class _PlanApplier:
             new_item = items[i % len(items)]
             x, z = obj.position.x, obj.position.z
             self.placer.release(obj.id)
-            if not self.placer.is_free(x, z, new_item.setback_kind, obj_type=new_item.object_type):
+            if not self.placer.is_free(x, z, new_item.setback_kind, obj_type=new_item.object_type, species=new_item.label):
                 self.placer.occupy(obj.id, x, z, obj.type)
                 skipped += 1
                 continue
@@ -1629,7 +1650,7 @@ class _PlanApplier:
         sample = self.by_id.get(matches[0].metadata.get("catalogId"))
         kind = sample.setback_kind if sample else None
         spacing = clamp(op.spacing_m or (_default_spacing(sample) if sample else 3.0), MIN_SPACING_M, MAX_SPACING_M)
-        offset = self.placer.min_offset(op.target, kind, _half_depth(sample) if sample else 0.5)
+        offset = self.placer.min_offset(op.target, kind, _half_depth(sample) if sample else 0.5, sample.label if sample else None)
         if op.offset_m is not None:
             offset = max(offset, op.offset_m)
         oriented = _is_oriented(sample) if sample else False
@@ -1644,7 +1665,7 @@ class _PlanApplier:
             for x, z, rotation in sorted(points, key=lambda p: math.hypot(p[0] - obj.position.x, p[1] - obj.position.z)):
                 if used.has_within(x, z, 0.9 * spacing):
                     continue
-                if self.placer.is_free(x, z, self._setback_kind(obj), obj_type=obj.type):
+                if self.placer.is_free(x, z, self._setback_kind(obj), obj_type=obj.type, species=self._species(obj)):
                     best = (x, z, rotation)
                     break
             if best is None:
@@ -1681,6 +1702,7 @@ class _PlanApplier:
             return
 
         kind = _pool_kind(items)
+        species = _pool_species(items)
         spacing = _spacing_for(op.spacing_m, items)
         # Вытянутые объекты (секция изгороди) проверяем и по концам: центр
         # может стоять по норме, а край -- заходить на здание или в зону.
@@ -1692,7 +1714,9 @@ class _PlanApplier:
         for i in range(count + 1):
             d = i * length / count
             x, z = near_a.x + tx * d, near_a.y + tz * d
-            if self.placer.is_free(x, z, kind) and (not half_length or self._ends_fit(x, z, rotation, half_length, kind)):
+            if self.placer.is_free(x, z, kind, species=species) and (
+                not half_length or self._ends_fit(x, z, rotation, half_length, kind, species)
+            ):
                 spots.append((x, z, rotation))
         if not spots:
             self.rejected.append(f"{what}: нет места без нарушений норм по всей линии")
@@ -1708,6 +1732,7 @@ class _PlanApplier:
         if items is None:
             return
         kind = _pool_kind(items)
+        species = _pool_species(items)
         half_depth = max(_half_depth(item) for item in items)
 
         if op.around_target is not None:
@@ -1715,7 +1740,7 @@ class _PlanApplier:
             if geom is None:
                 self.rejected.append(f"{what}: на участке нет цели «{TARGET_LABELS.get(op.around_target, op.around_target)}»")
                 return
-            offset = op.offset_m if op.offset_m is not None else self.placer.min_offset(op.around_target, kind, half_depth)
+            offset = op.offset_m if op.offset_m is not None else self.placer.min_offset(op.around_target, kind, half_depth, species)
         else:
             center = self._resolve_endpoint(what, op.around_id, None, op.around_x, op.around_z, "центр")
             if center is None:
@@ -1744,7 +1769,9 @@ class _PlanApplier:
                 ahead = ring.interpolate((d + 0.5) % length)
                 tx, tz = ahead.x - p.x, ahead.y - p.y
                 rotation = math.degrees(math.atan2(-tz, tx)) if (tx or tz) else 0.0
-                if self.placer.is_free(p.x, p.y, kind) and (not half_length or self._ends_fit(p.x, p.y, rotation, half_length, kind)):
+                if self.placer.is_free(p.x, p.y, kind, species=species) and (
+                    not half_length or self._ends_fit(p.x, p.y, rotation, half_length, kind, species)
+                ):
                     accepted.append((p.x, p.y, rotation))
         if not accepted:
             self.rejected.append(f"{what}: нет места без нарушений норм по контуру")
@@ -1771,13 +1798,13 @@ class _PlanApplier:
         spacing = _default_spacing(item)
         if near.geom_type == "Point":
             within = near.buffer(max(8.0, spacing * count))
-            candidates = self.placer.points_in_area(kind, spacing / 4, within, CANDIDATES_NEAR_POINT)
-            free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind)]
+            candidates = self.placer.points_in_area(kind, spacing / 4, within, CANDIDATES_NEAR_POINT, item.label)
+            free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind, species=item.label)]
             chosen = pick_near(free, count, 0.9 * spacing, (near.x, near.y))
         else:
             within = near.buffer(10.0)
-            candidates = self.placer.points_in_area(kind, spacing / 4, within, CANDIDATES_NEAR_POINT)
-            free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind)]
+            candidates = self.placer.points_in_area(kind, spacing / 4, within, CANDIDATES_NEAR_POINT, item.label)
+            free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind, species=item.label)]
             chosen = pick_spread(free, count, 0.9 * spacing)
         if not chosen:
             self.rejected.append(f"{what}: рядом нет места без нарушений норм")
@@ -1814,16 +1841,17 @@ class _PlanApplier:
             return
 
         kind = _pool_kind(items)
+        species = _pool_species(items)
         spacing = _spacing_for(None, items)
         if op.x is not None and op.z is not None:
             radius = clamp(op.radius_m or max(10.0, 1.2 * spacing * math.sqrt(need)), 1.0, MAX_AREA_RADIUS_M)
             within = Point(op.x, op.z).buffer(radius)
-            candidates = self.placer.points_in_area(kind, spacing / 4, within, CANDIDATES_NEAR_POINT)
-            free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind)]
+            candidates = self.placer.points_in_area(kind, spacing / 4, within, CANDIDATES_NEAR_POINT, species)
+            free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind, species=species)]
             chosen = pick_near(free, need, 0.9 * spacing, (op.x, op.z))
         else:
-            candidates = self.placer.points_in_area(kind, spacing / 2, None, need * CANDIDATES_PER_PLACEMENT)
-            free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind)]
+            candidates = self.placer.points_in_area(kind, spacing / 2, None, need * CANDIDATES_PER_PLACEMENT, species)
+            free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind, species=species)]
             chosen = pick_spread(free, need, 0.9 * spacing)
         if not chosen:
             self.rejected.append(f"{what}{scope}: было {current}, добавить не удалось — нет места")

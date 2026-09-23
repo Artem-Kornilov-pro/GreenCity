@@ -1,5 +1,5 @@
 import type { Point2, RestrictionZone, Scene } from "./types";
-import { setbackFor, type PlantKind } from "./setbackNorms";
+import { MAX_SETBACK_M, setbackFor, type PlantKind } from "./setbackNorms";
 
 export function pointInPolygon(px: number, pz: number, poly: Point2[]): boolean {
   let inside = false;
@@ -60,15 +60,14 @@ export function checkViolations(
   return result;
 }
 
-// Наибольшее значение среди SETBACK_NORMS И SPECIES_SETBACK_OVERRIDES
-// (issue #43: тополь/building = 8.0 м, больше базовых 5.0 м building/tree).
+// Наибольший отступ среди табличных норм и правил по породе (MAX_SETBACK_M
+// из setbackNorms.ts: липа -- 10 м от здания, больше базовых 5 м).
 // setbackFor для зоны без табличного значения возвращает её собственный
 // minDistance, поэтому реально применённый отступ никогда не превышает
-// max(zone.minDistance, этой величины) -- на столько и нужно расширять
+// max(zone.minDistance, MAX_SETBACK_M) -- на столько и нужно расширять
 // габарит зоны в индексе, чтобы не потерять нарушение у точки за её границей
-// (иначе дерево с override'ом дальше 5 м, но ближе положенных ему 8 м, могло
-// бы пройти мимо индекса как "не нарушает").
-const MAX_TABLE_SETBACK_M = 8.0;
+// (иначе липа дальше 5 м, но ближе положенных ей 10 м, могла бы пройти мимо
+// индекса как "не нарушает").
 
 // Сетка не длиннее этого по стороне: 256x256 ячеек -- потолок памяти индекса,
 // дальше выгоднее проверять чуть больше зон в ячейке, чем держать сетку.
@@ -110,7 +109,7 @@ export function buildZoneIndex(zones: RestrictionZone[]): ZoneIndex {
       if (p.z < zMinZ) zMinZ = p.z;
       if (p.z > zMaxZ) zMaxZ = p.z;
     }
-    const pad = Math.max(zone.minDistance, MAX_TABLE_SETBACK_M);
+    const pad = Math.max(zone.minDistance, MAX_SETBACK_M);
     const item = { zone, minX: zMinX - pad, maxX: zMaxX + pad, minZ: zMinZ - pad, maxZ: zMaxZ + pad };
     items.push(item);
     if (item.minX < minX) minX = item.minX;

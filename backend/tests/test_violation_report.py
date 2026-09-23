@@ -93,3 +93,24 @@ def test_finds_all_zones_within_reach_not_just_the_nearest():
     scene = make_scene(restrictions=[building_a, building_b], objects=[tree])
     zone_ids = {v.zone_id for v in find_violations(scene)}
     assert zone_ids == {"a", "b"}
+
+
+def test_linden_within_10m_of_building_is_a_violation():
+    # 743-ПП, табл. 3.6.1, прим. 3: широкая крона (липа, клён, дуб, каштан,
+    # тополь) -- не ближе 10 м от здания. 7 м от стены -- берёзе можно, липе нет.
+    zone = make_zone(type="building", min_distance=1.5)
+    linden = make_object("t1", "tree", 12, 0, metadata={"species": "Липа мелколистная"})
+    birch = make_object("t2", "tree", 0, 12, metadata={"species": "Берёза повислая"})
+    violations = find_violations(make_scene(restrictions=[zone], objects=[linden, birch]))
+    assert [v.object_id for v in violations] == ["t1"]
+    assert violations[0].required_m == 10.0
+
+
+def test_thorny_bush_near_path_is_a_violation():
+    # СП 82.13330.2016, п. 9.22: колючие -- не ближе 2 м от пешеходных коммуникаций.
+    path = make_zone(type="pedestrian_path", name="PATH_1", severity="warning", min_distance=0.5)
+    rose = make_object("b1", "bush", 6, 0, metadata={"species": "Роза морщинистая"})
+    spirea = make_object("b2", "bush", 0, 6, metadata={"species": "Спирея серая"})
+    violations = find_violations(make_scene(restrictions=[path], objects=[rose, spirea]))
+    assert [v.object_id for v in violations] == ["b1"]
+    assert violations[0].required_m == 2.0
