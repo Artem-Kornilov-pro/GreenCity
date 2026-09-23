@@ -70,12 +70,14 @@ ZONE_KIND_LABELS: dict[ZoneKind, str] = {
 
 INSTRUCTIONS = """Ты помогаешь оформить отчёт по проекту озеленения городского участка.
 Тебе дан список УЖЕ ПРИНЯТЫХ решений: для каждого вида места на участке указано,
-какой приём озеленения выбран, на скольких зонах он применён, и (если есть)
-с какого похожего прошлого проекта этот приём взят и почему.
+какой приём озеленения выбран, на скольких зонах он применён, (если есть)
+с какого похожего прошлого проекта этот приём взят и почему, какие виды
+деревьев и кустарников подобраны и на каком основании.
 
 Правила:
 - Используй ТОЛЬКО перечисленные факты. Не придумывай виды растений, площади,
-  названия проектов, зон или причины, которых нет в списке.
+  названия проектов, зон или причины, которых нет в списке. Виды растений
+  называй ровно так, как они написаны в списке.
 - Если для решения не указан проект-источник -- это запасной вариант (типовое
   решение), а не заимствование; не приписывай ему проект.
 - Пиши связный текст на русском языке, несколько абзацев, как итоговое
@@ -91,6 +93,9 @@ class SummaryRow(BaseModel):
     zone_count: int
     source_quote: Optional[str]
     confidence: float
+    tree_species: list[str] = []
+    bush_species: list[str] = []
+    species_basis: Optional[str] = None
 
 
 class DecisionReportUnavailable(RuntimeError):
@@ -132,6 +137,11 @@ def _summarize(assignments: list[ZoneAssignment]) -> list[SummaryRow]:
                 zone_count=len(members),
                 source_quote=best.source_quote,
                 confidence=best.confidence,
+                # Виды подбираются на пару (вид зоны, паттерн) на весь
+                # участок (species_selection.py) -- у всех зон группы они одни.
+                tree_species=best.tree_species,
+                bush_species=best.bush_species,
+                species_basis=best.species_basis,
             )
         )
     rows.sort(key=lambda r: r.zone_count, reverse=True)
@@ -154,6 +164,15 @@ def _format_facts(rows: list[SummaryRow]) -> str:
                 line += f' ("{quote}")'
         else:
             line += " -- запасной вариант, без прямого прошлого проекта-образца"
+        species = []
+        if row.tree_species:
+            species.append("деревья: " + ", ".join(row.tree_species))
+        if row.bush_species:
+            species.append("кустарники: " + ", ".join(row.bush_species))
+        if species:
+            line += "; " + "; ".join(species)
+            if row.species_basis:
+                line += f" (виды подобраны: {row.species_basis})"
         lines.append(line)
     return "\n".join(lines)
 

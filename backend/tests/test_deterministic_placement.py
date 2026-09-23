@@ -410,3 +410,21 @@ def test_independent_pairwise_check_catches_planted_violations():
     ]
     found = {(v[0], v[1]) for v in _independent_pairwise_violations(objects)}
     assert found == {("a", "b"), ("c", "d")}
+
+
+# --- Подбор видов (species_selection.py) в полном проходе --------------------
+
+
+def test_generate_for_scene_plants_only_selected_species_and_reports_them(catalog):
+    trees, bushes = _trees_and_bushes(catalog)
+    scene = _corpus_scenes()["12_natashinsky_proezd"]
+    objects, assignments = generate_for_scene(scene, trees=trees, bushes=bushes, k=3)
+    assert objects
+    by_zone = {a.zone_id: a for a in assignments}
+    for obj in objects:
+        assignment = by_zone[obj.metadata["zone_id"]]
+        assert obj.metadata["species"] in (*assignment.tree_species, *assignment.bush_species)
+    for assignment in assignments:
+        assert assignment.species_basis
+    # Раньше каталог перебирался по кругу целиком -- десятки видов на участок.
+    assert len({o.metadata["species"] for o in objects}) <= 12

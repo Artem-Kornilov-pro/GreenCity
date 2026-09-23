@@ -139,7 +139,7 @@ make lint-fix    # автоисправление того, что чинитс�
 | 2. Применение решений | Вырубить/сохранить/пересадить + расчёт компенсации | Не начато |
 | 3. Характеризация + retrieval | Признаки участка (`backend/site_characterization.py`) + поиск похожих проектов (`backend/pattern_retrieval.py`) | Готово — retrieval-корпус: 14 задокументированных проектов `locations/*`, не полные 20 из ТЗ (второй корпус ещё не восстановлен) |
 | 4. Назначение паттернов | Разбиение на геометрические зоны (`backend/zone_partitioning.py`) + голосование ближайших соседей за паттерн (`backend/pattern_assignment.py`, `data/pattern_corpus.yaml`) | Готово правилами; опциональное ранжирование локальной LLM — нет |
-| 5. Расстановка | Точки/ряды/кластеры через геометрический планировщик (`backend/deterministic_placement.py`, переиспользует `backend/placement.py`) | Готово |
+| 5. Расстановка | Точки/ряды/кластеры через геометрический планировщик (`backend/deterministic_placement.py`, переиспользует `backend/placement.py`); виды — по ассортименту Москвы для типа территории, без инвазивных 369-ПП (`backend/species_selection.py`) | Готово |
 | 6. Отчёт решений | Список нарушений и ассортимент (`backend/violation_report.py`/`assortment_report.py`) + текст-объяснение через локальную LLM (`backend/decision_report.py`) | Готово |
 
 `POST /api/greenplan/generate` (быстро, без LLM) и `POST /api/greenplan/report`

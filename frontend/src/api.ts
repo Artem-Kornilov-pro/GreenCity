@@ -83,6 +83,10 @@ export interface GreenPlanZoneAssignment {
   source_project: string | null;
   source_quote: string | null;
   confidence: number;
+  // Подобранные виды и основание подбора (backend/species_selection.py).
+  tree_species?: string[];
+  bush_species?: string[];
+  species_basis?: string | null;
 }
 
 export interface GreenPlanViolation {
