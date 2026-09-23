@@ -601,7 +601,7 @@ class CourtyardDesigner:
         дорожке, идущей МИМО) для них неприменима."""
         kind = item.setback_kind
         shape = _footprint(item, x, z, rotation)
-        if not self.placer.region_contains(shape, kind):
+        if not self.placer.region_contains(shape, kind, item.label):
             return False
         if not on_axis and self._axis_distance(shape) < AXIS_CLEARANCE_M.get(item.object_type, 1.0):
             return False
@@ -695,16 +695,19 @@ class CourtyardDesigner:
         spacing = max(5.0, 2 * radius + 2.0)
         count = int(clamp(round(poly.area / TREE_SCATTER_AREA_PER_TREE_M2), TREE_SCATTER_MIN_COUNT, TREE_SCATTER_MAX_COUNT))
         axis_clearance = AXIS_CLEARANCE_M.get(biggest.object_type, 1.0)
+        # Отступ -- по самому строгому виду пула (липе 10 м от здания и т.п.,
+        # setback_norms.py), по той же причине, что и крона самого крупного.
+        species = [item.label for item in items]
 
         def valid(x: float, z: float) -> bool:
             shape = _footprint(biggest, x, z, 0.0)
             return (
-                self.placer.region_contains(shape, kind)
+                self.placer.region_contains(shape, kind, species)
                 and self._axis_distance(shape) >= axis_clearance
                 and self.placer.blocker(x, z, kind, obj_type=biggest.object_type) is None
             )
 
-        candidates = self.placer.points_in_area(kind, spacing / 2, poly, max_candidates=count * 20)
+        candidates = self.placer.points_in_area(kind, spacing / 2, poly, max_candidates=count * 20, species=species)
         free = [p for p in candidates if valid(*p)]
         chosen = pick_spread(free, count, 0.9 * spacing)
         for i, (x, z) in enumerate(chosen):

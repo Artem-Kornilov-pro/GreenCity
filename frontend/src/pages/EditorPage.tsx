@@ -244,7 +244,9 @@ export default function EditorPage() {
         position: { x: cx + offsetX, y: 0, z: cz + offsetZ },
         rotation: 0,
         scale: 1,
-        metadata: { catalogId: item.id, label: item.label },
+        // species -- для правил отступа по породе (setbackNorms.ts: липе
+        // 10 м от здания и т.п.); у МАФ и мощения нормы по породе нет.
+        metadata: { catalogId: item.id, label: item.label, ...(item.setback_kind ? { species: item.label } : {}) },
       };
       setSelectedId(newObject.id);
       setTransformMode("translate");

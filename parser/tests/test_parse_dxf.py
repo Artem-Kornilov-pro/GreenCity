@@ -1074,3 +1074,12 @@ def test_main_cli_no_center_flag_disables_centering(tmp_path, monkeypatch, locat
     boundary = json.loads((out_dir / "boundary.json").read_text())
     centered_boundary = parse_dxf_file(location_paths[1])["boundary"]
     assert boundary["polygon"] != centered_boundary["polygon"]
+
+
+def test_match_rule_heat_network_has_its_own_type():
+    # Раньше "custom" -- и строка таблицы отступов СП 42 / 743-ПП для
+    # теплосети (дерево 2 м, кустарник 1 м) не применялась вовсе.
+    for layer in ("HEAT", "Теплосеть", "сущ_сети_теплосеть", "Теплотрасса", "Теплопровод"):
+        assert match_rule(layer.upper(), POLYGON_RULES)["type"] == "heat_network", layer
+    # Специфичность не сломана: водопровод остаётся водопроводом.
+    assert match_rule("ВОДОПРОВОД", POLYGON_RULES)["type"] == "water_pipeline"

@@ -9,6 +9,7 @@ import math
 
 import placement
 import pytest
+from helpers import make_scene, make_zone
 from llm_editor import (
     LlmPlan,
     _build_context,
@@ -906,3 +907,27 @@ def test_build_context_truncates_objects_beyond_the_prompt_limit(monkeypatch, sc
     context = json.loads(_build_context(scene1, CATALOG, placer))
     assert len(context["objects"]) == 2
     assert context["objects_not_shown"] > 0
+
+
+
+# =============================================================================
+# Правила отступа по породе (setback_norms.SPECIES_SETBACK_RULES)
+# =============================================================================
+
+
+def test_add_linden_near_building_snaps_to_10m():
+    # Липа -- широкая крона, 10 м от здания (743-ПП). Модель просит поставить
+    # её в 7 м от стены -- планировщик сдвигает, а не оставляет с нарушением.
+    scene = make_scene(restrictions=[make_zone(type="building")])
+    result = run(scene, {"op": "add", "catalog_id": "species_lipa_melkolistnaya", "x": 12, "z": 0})
+    created = [o for o in result.scene.objects if o.metadata.get("catalogId") == "species_lipa_melkolistnaya"]
+    assert len(created) == 1
+    assert created[0].position.x >= 15.0 - 0.01
+    assert created[0].metadata["species"] == "Липа мелколистная"
+
+
+def test_add_birch_at_7m_from_building_stays_in_place():
+    scene = make_scene(restrictions=[make_zone(type="building")])
+    result = run(scene, {"op": "add", "catalog_id": "species_bereza_povislaya", "x": 12, "z": 0})
+    created = [o for o in result.scene.objects if o.metadata.get("catalogId") == "species_bereza_povislaya"]
+    assert created[0].position.x == pytest.approx(12)

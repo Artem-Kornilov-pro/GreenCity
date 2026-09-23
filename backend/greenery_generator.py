@@ -38,7 +38,7 @@ from typing import Optional
 
 from placement import pick_spread
 from schemas import Point3, RestrictionZone, Scene, SceneObject
-from setback_norms import DEFAULT_TREE_SPECIES, PlantKind, setback_for
+from setback_norms import DEFAULT_TREE_SPECIES, PlantKind, SpeciesArg, setback_for
 from shapely.geometry import Point, Polygon, box
 from shapely.ops import unary_union
 from shapely.prepared import prep
@@ -149,11 +149,12 @@ _POISSON_MIN_RADIUS_M = 0.2
 # ДЕРЕВЬЕВ в реальных документированных проектах retrieval-корпуса GreenPlan
 # (data/pattern_corpus.yaml) -- "Липа мелколистная" (02_peschany_pereulok,
 # и она же DEFAULT_TREE_SPECIES), "Клён остролистный" (07_nizhnie_polya),
-# "Берёза полезная" (20_makeeva_s). Ни у одного из трёх нет записи в
-# SPECIES_SETBACK_OVERRIDES -- отступ от ограничений не зависит от того,
-# какой из них достался конкретной точке, поэтому _keep_out_shapes по-прежнему
-# считается один раз для всего вызова (см. species_for_setback ниже), а не
-# отдельно на каждую точку.
+# "Берёза полезная" (20_makeeva_s). Отступы у них разные (липа и клён --
+# широкая крона, 10 м от здания по 743-ПП, см. setback_norms.py), а
+# _keep_out_shapes считается один раз на весь вызов, а не на каждую точку --
+# поэтому для смеси берётся самый строгий отступ среди её видов (см.
+# setback_species ниже): берёза тоже встанет не ближе 10 м к дому, зато ни
+# одна липа не окажется ближе нормы.
 DEFAULT_TREE_SPECIES_MIX: list[tuple[str, float]] = [
     (DEFAULT_TREE_SPECIES, 0.6),
     ("Клён остролистный", 0.25),
@@ -320,7 +321,7 @@ class _SpacingGrid:
 
 
 def _keep_out_shapes(
-    restrictions: list[RestrictionZone], plant_kind: PlantKind, species: Optional[str] = None
+    restrictions: list[RestrictionZone], plant_kind: PlantKind, species: SpeciesArg = None
 ) -> list[Polygon]:
     """Полигоны зон, куда автогенератор не должен сажать растения данного
     вида (дерево или кустарник), каждый расширен наружу на положенный ЭТОМУ
@@ -341,6 +342,9 @@ def _keep_out_shapes(
     функцию не использует и по-прежнему трактует warning как
     "разрешено с предупреждением" -- поведение интерактивной проверки не
     меняется, меняется только то, что генератор сам туда не полезет.
+
+    species -- все виды, которые могут встать на эту площадь; отступ от
+    каждой зоны -- наибольший среди них (setback_norms.setback_for).
     """
     shapes: list[Polygon] = []
     for zone in restrictions:
@@ -478,7 +482,7 @@ def generate_trees(
     # Если species передан явно -- это выбор пользователя (UI), им и остаётся
     # для КАЖДОЙ точки, монокультурно, как и раньше.
     requested_species = species
-    species_for_setback = requested_species or DEFAULT_TREE_SPECIES
+    setback_species = [requested_species] if requested_species else [name for name, _ in DEFAULT_TREE_SPECIES_MIX]
 
     grid_spacing = grid_spacing_m if grid_spacing_m is not None else DEFAULT_GRID_SPACING_M
     grid_spacing = max(MIN_ALLOWED_GRID_SPACING_M, min(MAX_ALLOWED_GRID_SPACING_M, grid_spacing))
@@ -486,7 +490,7 @@ def generate_trees(
     min_spacing = min_tree_spacing_m if min_tree_spacing_m is not None else DEFAULT_MIN_TREE_SPACING_M
     min_spacing = max(0.0, min_spacing)
 
-    keep_out = _keep_out_shapes(scene.restrictions, "tree", species=species_for_setback)
+    keep_out = _keep_out_shapes(scene.restrictions, "tree", species=setback_species)
     keep_out += _existing_object_shapes(scene.objects)
 
     planting_zones = _planting_zone_shapes(scene.restrictions)
@@ -584,10 +588,9 @@ def generate_bushes(
     """Сгенерировать группы кустов для свободной площади сцены (п.17 ТЗ:
     "кустарники -- меньшие расстояния и группировка").
 
-    В отличие от generate_trees, species-параметра нет: setback_for()
-    применяет SPECIES_SETBACK_OVERRIDES только для plant_kind == "tree" (см.
-    setback_norms.py) -- для кустарника вид ни на что не влияет, добавлять
-    параметр, который ничего не меняет, было бы лишним.
+    В отличие от generate_trees, species-параметра нет: у сгенерированных
+    кустов вид не задаётся (metadata без species), поэтому применяются
+    табличные нормы для кустарника без правил по породе (setback_norms.py).
 
     Ничего не меняет в scene -- возвращает только НОВЫЕ SceneObject (тот же
     контракт, что и generate_trees). Место каждой принятой группы -- полный

@@ -70,7 +70,11 @@ POLYGON_RULES = [
                           message="Наземная ЛЭП — ограничение по высоте посадки под проводом (~9м), не запрет на посадку как таковую")),
     ("POWER",       dict(type="electrical",           severity="forbidden", minDistance=2.0, message="Охранная зона электрокабеля")),
     ("CABLE",       dict(type="electrical",           severity="forbidden", minDistance=2.0, message="Охранная зона электрокабеля")),
-    ("HEAT",        dict(type="custom",               severity="forbidden", minDistance=2.0, message="Охранная зона теплосети")),
+    # Свой тип, а не "custom": у теплосети своя строка в таблице отступов
+    # (СП 42.13330, табл. 9.1; 743-ПП, табл. 3.6.1 -- дерево 2 м, кустарник
+    # 1 м) и свои правила по породе (МГСН 1.02-02, п. 4.2.8) -- см.
+    # backend/setback_norms.py. Под "custom" они не применялись вовсе.
+    ("HEAT",        dict(type="heat_network",         severity="forbidden", minDistance=2.0, message="Охранная зона теплосети")),
     ("WALKWAY",     dict(type="pedestrian_path",      severity="warning",   minDistance=0.5, message="Пешеходная дорожка")),
     ("PATH",        dict(type="pedestrian_path",      severity="warning",   minDistance=0.5, message="Пешеходная дорожка")),
     ("SIDEWALK",    dict(type="pedestrian_path",      severity="warning",   minDistance=0.5, message="Пешеходная дорожка")),
@@ -114,7 +118,11 @@ POLYGON_RULES = [
     ("ВОДОПРОВОД",  dict(type="water_pipeline",       severity="forbidden", minDistance=3.0, message="Охранная зона водопровода")),
     ("СВЯЗ",        dict(type="signal_cable",         severity="warning",   minDistance=0.5,
                           message="Кабель связи — слаботочная сеть, отступ меньше, чем у силового кабеля")),
-    ("ТЕПЛОСЕТ",    dict(type="custom",               severity="forbidden", minDistance=2.0, message="Охранная зона теплосети")),
+    ("ТЕПЛОСЕТ",    dict(type="heat_network",         severity="forbidden", minDistance=2.0, message="Охранная зона теплосети")),
+    # Так теплосеть называют сами нормативы (743-ПП -- "теплопровод", МГСН
+    # 1.02-02 -- "теплотрасса"); слой проектировщика может быть назван так же.
+    ("ТЕПЛОТРАСС",  dict(type="heat_network",         severity="forbidden", minDistance=2.0, message="Охранная зона теплосети")),
+    ("ТЕПЛОПРОВОД", dict(type="heat_network",         severity="forbidden", minDistance=2.0, message="Охранная зона теплосети")),
     ("ЛЭП",         dict(type="overhead_power_line",  severity="warning",   minDistance=2.0, maxHeight=4.0,
                           message="Наземная ЛЭП — ограничение по высоте посадки под проводом (~9м), не запрет на посадку как таковую")),
     ("ЭЛЕКТР",      dict(type="electrical",           severity="forbidden", minDistance=2.0, message="Охранная зона электросети")),

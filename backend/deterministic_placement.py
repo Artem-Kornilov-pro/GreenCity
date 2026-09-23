@@ -5,8 +5,9 @@
 (zone_partitioning.GeometricZone) уже получила паттерн от pattern_assignment
 (Этап 4); эта функция превращает пару (зона, паттерн) в список SceneObject,
 проверяя нормативный отступ у КАЖДОЙ точки через placer.is_free ВО ВРЕМЯ
-расстановки -- не постфактум-фильтром, как одноразовые скрипты прошлой
-сессии (см. память проекта про `post_filter.py`).
+расстановки, с учётом породы (species=item.label -- правила по роду в
+setback_norms.py: липе 10 м от здания и т.п.), а не постфактум-фильтром, как
+одноразовые скрипты прошлой сессии (см. память проекта про `post_filter.py`).
 
 `Placer` строится ОДИН РАЗ из того же `Scene`, что ушёл в `partition_zones` --
 вся геометрия (характеризация участка, разбиение на зоны, расстановка) сверяется
@@ -150,7 +151,7 @@ def _place_row(
     for x, z, tx, tz in sample_line(line, step):
         px, pz = x - tz * row_offset, z + tx * row_offset
         item = items[counter[0] % len(items)]
-        if not placer.is_free(px, pz, kind, obj_type=item.object_type):
+        if not placer.is_free(px, pz, kind, obj_type=item.object_type, species=item.label):
             continue
         counter[0] += 1
         key = f"{item.object_type}_{zone.id}_{counter[0]:03d}"
@@ -286,7 +287,7 @@ def _place_area_fill(
         counter = [0]
         for x, z in chosen:
             item = items[counter[0] % len(items)]
-            if not placer.is_free(x, z, kind, obj_type=item.object_type):
+            if not placer.is_free(x, z, kind, obj_type=item.object_type, species=item.label):
                 continue
             counter[0] += 1
             key = f"{item.object_type}_{zone.id}_{counter[0]:03d}"
@@ -324,7 +325,7 @@ def _place_clustered(
         target_size = spec.group_size[1]
         members = pick_near(pool, target_size, CLUSTER_MEMBER_SPACING_M, center)
         for x, z in members:
-            if not placer.is_free(x, z, kind, obj_type=item.object_type):
+            if not placer.is_free(x, z, kind, obj_type=item.object_type, species=item.label):
                 continue
             counter[0] += 1
             key = f"{item.object_type}_{zone.id}_{counter[0]:03d}"
