@@ -1,37 +1,30 @@
-> Это шаблонный README от Vite (тулинг фронтенда), не документация проекта.
-> Архитектура фронтенда, эндпоинты, GreenPlan — см.
-> [../docs/TECHNICAL_OVERVIEW.md](../docs/TECHNICAL_OVERVIEW.md) и
-> [../README.md](../README.md). 3D-модели — [public/models/README.md](public/models/README.md).
+# GreenCity frontend
 
-# React + TypeScript + Vite
+React 19 + TypeScript + Vite, 3D-сцена на react-three-fiber. Общая
+архитектура проекта, эндпоинты и GreenPlan — [../docs/TECHNICAL_OVERVIEW.md](../docs/TECHNICAL_OVERVIEW.md),
+3D-модели и как подключить свой пак — [public/models/README.md](public/models/README.md).
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+## Команды
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev              # dev-сервер на http://localhost:5173 (бэкенд -- http://localhost:8000)
+npx tsc -b --noEmit      # проверка типов (есть в CI)
+npx oxlint --deny-warnings
+npm run build            # production-сборка в dist/
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Устройство `src/`
+
+| Папка / файл | Что внутри |
+|---|---|
+| `pages/` | Лендинг, вход/регистрация, список проектов |
+| `pages/editor/` | Редактор: `EditorPage.tsx` (состояние и обработчики) и его части — `EditorTopBar`, `EditorSidebar` (каталог, выбранный объект, легенда), `AssistantPanel` (правка текстом), `GreenPlanPanel`, общая выезжающая панель `SlidePanel`, `SaveAsDialog`, `StatusBanners` |
+| `scene/` | 3D-сцена: здания, зоны ограничений, объекты (с GPU-инстансингом повторяющихся моделей), выделение области мышкой, камера |
+| `api.ts`, `auth.ts`, `catalog.ts` | Запросы к бэкенду, токены, каталог видов |
+| `geometry.ts`, `setbackNorms.ts` | Проверка нарушений отступов при перетаскивании; `setbackNorms.ts` — копия `backend/core/setback_norms.py` (синхронизируется вручную) |
+| `types.ts` | Формат сцены — тот же, что `backend/core/schemas.py` |
+| `components/ui/` | Кнопки, карточки, диалоги, меню |
+
+Страница редактора загружается лениво (`App.tsx`): three.js не попадает в
+основной бандл для посетителей лендинга.

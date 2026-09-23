@@ -1,6 +1,9 @@
 [tool.ruff]
 line-length = 120
 target-version = "py312"
+# Корни собственного кода: пакеты backend/ (core, greenplan, text_editor, ...)
+# и модули parser/ -- для isort это first-party, отдельный блок импортов.
+src = ["backend", "parser", "backend/tests"]
 extend-exclude = [".venv", "frontend", "locations/*/*.dxf"]
 
 [tool.ruff.lint]
@@ -48,6 +51,9 @@ addopts = "-ra -n auto"
 # Весь стек асинхронный (AsyncMongoClient, redis.asyncio) -- auto-режим
 # запускает `async def test_...` без маркера @pytest.mark.asyncio на каждом.
 asyncio_mode = "auto"
+markers = [
+    "e2e: сквозной сценарий через HTTP на настоящем приложении (backend/tests/e2e)",
+]
 filterwarnings = [
     # shapely/GEOS: minimum_rotated_rectangle (courtyard_design._rect_sides)
     # на уже осепараллельном прямоугольнике задевает вырожденный случай во

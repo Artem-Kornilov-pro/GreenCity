@@ -6,7 +6,7 @@ conftest.py, где геометрия настоящая, но неудобна
 
 from __future__ import annotations
 
-from schemas import Boundary, Point2, Point3, RestrictionZone, Scene, SceneMeta, SceneObject
+from core.schemas import Boundary, Point2, Point3, RestrictionZone, Scene, SceneMeta, SceneObject
 
 
 def rect_points(x0: float, z0: float, x1: float, z1: float) -> list[Point2]:

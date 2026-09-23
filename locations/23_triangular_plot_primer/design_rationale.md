@@ -3,7 +3,7 @@
 > **Это не реальный проект.** См. пояснение в
 > `locations/22_circular_plaza_primer/design_rationale.md` — та же роль:
 > эталонный участок для retrieval-корпуса GreenPlan
-> (`backend/pattern_corpus.py`), геометрия построена вручную по
+> (`backend/greenplan/pattern_corpus.py`), геометрия построена вручную по
 > `green-city-locations-primer-spec.md`, не по реальной ПСД.
 
 ## Композиция
@@ -31,7 +31,7 @@
 ## Почему `linear_hedge_row` + акцент
 
 Кольцо — тот же `linear_hedge_row` вдоль `site_edge`
-(`backend/pattern_library.py`), что и в `22_circular_plaza_primer`, просто
+(`backend/greenplan/pattern_library.py`), что и в `22_circular_plaza_primer`, просто
 для многоугольника с прямыми неравными сторонами вместо окружности.
 Три акцентных дерева в центре — единственная точка данных в текущем
 корпусе, где `open_area` компактного участка используется под редкую

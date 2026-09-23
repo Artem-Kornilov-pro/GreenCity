@@ -7,7 +7,7 @@
 
 ## Почему нужен ещё один паттерн
 
-У существующего `grove_clusters` (`backend/pattern_library.py`) органичные,
+У существующего `grove_clusters` (`backend/greenplan/pattern_library.py`) органичные,
 случайно расположенные группы деревьев — тот самый "образ русского пейзажа"
 (12/13_natashinsky/kharkovsky_proezd). Но retrieval для `open_area`
 периодически стабильно выпадает в `flowing_rows` (волнистые линии,
@@ -29,7 +29,7 @@
 
 ## Реализация
 
-Новый паттерн `formal_bosque_grid` (`backend/pattern_library.py`) переиспользует
+Новый паттерн `formal_bosque_grid` (`backend/greenplan/pattern_library.py`) переиспользует
 СУЩЕСТВУЮЩУЮ машинерию `geometry_family="linear"`: `deterministic_placement.py`
 уже умеет для `open_area`-зон класть НЕСКОЛЬКО параллельных прямых рядов на
 всю ширину зоны через `rows_of()` (не одну линию через середину — находка

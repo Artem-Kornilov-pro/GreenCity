@@ -44,7 +44,7 @@
    конвертирует `.obj → .glb` (`obj2gltf --binary --separateTextures`),
    **дополняя** (не перезаписывая) `manifest.json` и `catalog_generated.json`
    по `id` — это позволяло гонять деревья и МАФ отдельными запусками.
-2. `backend/plant_catalog.py::load_catalog()` отдаёт `[*CATALOG, *_load_generated()]`
+2. `backend/core/plant_catalog.py::load_catalog()` отдаёт `[*CATALOG, *_load_generated()]`
    — статических 19 записей (заглушки без реальных `.glb`, они и раньше не
    имели файлов моделей) плюс эти 46 сгенерированных. Бэкенд перечитывает
    `catalog_generated.json` на каждый запрос `/api/catalog` — правки видно

@@ -21,7 +21,7 @@
 
 ## Реализация
 
-Новый паттерн `concentric_rings` (`backend/pattern_library.py`) — новое
+Новый паттерн `concentric_rings` (`backend/greenplan/pattern_library.py`) — новое
 значение `line_shape="concentric"` плюс `placement.concentric_rings_of()`:
 несколько вложенных окружностей вокруг ЦЕНТРОИДА зоны с шагом радиуса
 `ring_spacing_m`, каждая обрезана по контуру зоны (та же идея, что и у

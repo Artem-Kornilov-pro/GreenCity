@@ -10,7 +10,7 @@
 
 ## Почему именно `diagonal_rows`
 
-Из семи паттернов в `backend/pattern_library.py` `diagonal_rows`
+Из семи паттернов в `backend/greenplan/pattern_library.py` `diagonal_rows`
 документирован в `data/pattern_corpus.yaml` РОВНО ОДНИМ реальным проектом
 — `06_kamchatskaya_ulitsa`. Если этот единственный сосед случайно не
 попадёт в top-k retrieval (например, участок сильно не похож по форме),
