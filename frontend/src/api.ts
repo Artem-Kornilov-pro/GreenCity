@@ -66,6 +66,28 @@ export async function exportDxf(scene: Scene): Promise<Blob> {
   return res.blob();
 }
 
+// Пояснительная записка GreenPlan в DOCX (backend/greenplan_document.py).
+// scene -- ТЕКУЩАЯ сцена редактора (с правками после GreenPlan), нарушения и
+// ведомость бэкенд пересчитывает по ней сам; report -- уже полученный текст
+// из /api/greenplan/report, заново LLM не вызывается.
+export async function downloadGreenPlanDocument(
+  scene: Scene,
+  assignments: GreenPlanZoneAssignment[],
+  report: string | null,
+  title: string | null
+): Promise<Blob> {
+  const res = await fetch(`${API_BASE}/api/greenplan/document`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scene, assignments, report, title }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Не удалось сформировать пояснительную записку (${res.status}): ${text || res.statusText}`);
+  }
+  return res.blob();
+}
+
 // GreenPlan -- автоозеленение по прошлым проектам (backend: pattern_assignment.py,
 // violation_report.py, assortment_report.py, decision_report.py). Решения
 // (assignments) считаются полностью детерминированно, без LLM, и быстро

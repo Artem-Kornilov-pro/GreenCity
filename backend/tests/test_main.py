@@ -541,3 +541,24 @@ def test_projects_return_503_when_mongo_unavailable(client, monkeypatch, method,
     monkeypatch.setattr(main_module.projects_service, service_fn, _raise)
     r = getattr(client, method)(f"/api/projects{path_suffix}", headers=headers, **({"json": body} if body is not None else {}))
     assert r.status_code == 503
+
+
+# --- /api/greenplan/document -------------------------------------------------
+
+
+def test_greenplan_document_returns_docx_for_generated_plan(client):
+    import io
+
+    from docx import Document
+
+    scene = _parsed_scene(client)
+    generated = client.post("/api/greenplan/generate", json=scene).json()
+    r = client.post(
+        "/api/greenplan/document",
+        json={"scene": generated["scene"], "assignments": generated["assignments"], "report": None, "title": "Двор"},
+    )
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("application/vnd.openxmlformats-officedocument.wordprocessingml")
+    assert "filename*=UTF-8''" in r.headers["content-disposition"]
+    doc = Document(io.BytesIO(r.content))
+    assert doc.paragraphs[0].text == "Пояснительная записка к проекту озеленения"

@@ -35,6 +35,9 @@ class ZoneAssignment(BaseModel):
     source_project: str | None
     source_quote: str | None
     confidence: float
+    # Площадь зоны, м² -- для документации (greenplan_document.py), чтобы не
+    # пересчитывать разбиение на зоны ради одной цифры.
+    zone_area_sqm: float = 0.0
     # Виды растений, подобранные для этой зоны (species_selection.py), и
     # основание подбора -- заполняет deterministic_placement.generate_for_scene
     # после расстановки; assign_patterns их не знает.
@@ -47,6 +50,7 @@ def _fallback(zone: GeometricZone) -> ZoneAssignment:
     return ZoneAssignment(
         zone_id=zone.id,
         zone_kind=zone.kind,
+        zone_area_sqm=zone.area_sqm,
         pattern_id=DEFAULT_PATTERN_BY_ZONE_KIND[zone.kind],
         source_project=None,
         source_quote=None,
@@ -112,6 +116,7 @@ def assign_patterns(
             ZoneAssignment(
                 zone_id=zone.id,
                 zone_kind=zone.kind,
+                zone_area_sqm=zone.area_sqm,
                 pattern_id=winner,
                 source_project=best[2],
                 source_quote=best[3],

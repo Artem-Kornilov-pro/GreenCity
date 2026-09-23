@@ -34,6 +34,11 @@ dxf_exports_total = Counter(
     "Экспорт сцены в DXF (/api/export-dxf)",
 )
 
+greenplan_documents_total = Counter(
+    "greencity_greenplan_documents_total",
+    "Выгруженные пояснительные записки GreenPlan в DOCX (/api/greenplan/document)",
+)
+
 dwg_batch_conversions_total = Counter(
     "greencity_dwg_batch_conversions_total",
     "Батч-конвертации папки .dwg (/api/parse-dwg) по итогу",
