@@ -35,6 +35,7 @@ import {
   saveProject,
   generateGreenPlan,
   fetchGreenPlanReport,
+  downloadGreenPlanDocument,
   type GreenPlanGenerateResult,
 } from "../api";
 import { buildZoneIndex, checkViolationsAt, computeSceneBounds } from "../geometry";
@@ -136,6 +137,7 @@ export default function EditorPage() {
   const [greenPlanPanelOpen, setGreenPlanPanelOpen] = useState(false);
   const [greenPlanResult, setGreenPlanResult] = useState<GreenPlanState | null>(null);
   const [greenPlanReportLoading, setGreenPlanReportLoading] = useState(false);
+  const [greenPlanDocBusy, setGreenPlanDocBusy] = useState(false);
 
   const [selectionMode, setSelectionMode] = useState(false);
 
@@ -377,6 +379,25 @@ export default function EditorPage() {
       setExportingDxf(false);
     }
   }, [scene]);
+
+  const handleDownloadGreenPlanDocument = useCallback(async () => {
+    if (!scene || !greenPlanResult) return;
+    setGreenPlanDocBusy(true);
+    setError(null);
+    try {
+      const blob = await downloadGreenPlanDocument(scene, greenPlanResult.assignments, greenPlanResult.report, projectName);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Пояснительная записка — ${projectName ?? "участок"}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setGreenPlanDocBusy(false);
+    }
+  }, [scene, greenPlanResult, projectName]);
 
   const handleSaveCurrent = useCallback(async () => {
     if (!session || !scene || !projectId) return;
@@ -916,6 +937,13 @@ export default function EditorPage() {
 
                 {greenPlanResult && (
                   <>
+                    {/* Пояснительная записка -- "сценарий выгрузки документации" из ТЗ.
+                        Можно и без текста от LLM: он идёт только приложением. */}
+                    <Button size="sm" variant="outline" onClick={handleDownloadGreenPlanDocument} disabled={greenPlanDocBusy}>
+                      {greenPlanDocBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                      Пояснительная записка (DOCX)
+                    </Button>
+
                     <section>
                       <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-400">Обоснование</h3>
                       {greenPlanReportLoading ? (

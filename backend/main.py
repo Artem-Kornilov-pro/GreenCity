@@ -33,6 +33,11 @@ FastAPI-бэкенд для веб-редактора озеленения. Эн
                                     списку из /api/greenplan/generate, через
                                     локальную LLM (mistral:7b/Ollama, ~30 с,
                                     отдельно, чтобы не блокировать генерацию)
+    POST /api/greenplan/document -- пояснительная записка в DOCX по
+                                    результату /api/greenplan/generate
+                                    (greenplan_document.py): решения с
+                                    происхождением, ведомость по форме 9
+                                    ГОСТ 21.508, проверка норм
     POST /api/auth/register,
     POST /api/auth/login        -- логин/пароль, без почты (auth.py, projects.py);
                                     выдают access- и refresh-токен (см. auth.py)
@@ -62,6 +67,7 @@ import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
+from urllib.parse import quote
 
 import cache
 import db
@@ -93,6 +99,7 @@ from greenery_generator import (
     generate_lawn,
     generate_trees,
 )
+from greenplan_document import build_document
 from llm_editor import (
     LlmError,
     LlmNotConfiguredError,
@@ -580,6 +587,41 @@ def greenplan_report(assignments: list[ZoneAssignment]):
         except DecisionReportUnavailable as e:
             metrics.greenplan_generate_total.labels(report_outcome="unavailable").inc()
             return GreenPlanReportResult(report=None, report_error=str(e))
+
+
+class GreenPlanDocumentRequest(BaseModel):
+    scene: Scene
+    assignments: list[ZoneAssignment]
+    # Текст из /api/greenplan/report, если фронтенд его уже получил: идёт в
+    # приложение с пометкой "текст ИИ -- проверить". Заново LLM не вызываем.
+    report: Optional[str] = None
+    title: Optional[str] = None
+
+
+DOCX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+
+# Синхронный def -- characterize_site и find_violations -- CPU-геометрия,
+# под тем же локом, что и генерация (см. _greenplan_generate_lock выше).
+@app.post("/api/greenplan/document")
+def greenplan_document(request: GreenPlanDocumentRequest):
+    """Пояснительная записка в DOCX ("сценарий выгрузки/генерации
+    документации для внедрения предложенного решения" из ТЗ) по сцене
+    с результатом /api/greenplan/generate и его решениям по зонам. Нарушения,
+    ведомость и характеристики участка пересчитываются здесь по присланной
+    сцене, а не берутся с фронтенда на веру."""
+    with _greenplan_generate_lock:
+        content = build_document(request.scene, request.assignments, report=request.report, title=request.title)
+    metrics.greenplan_documents_total.inc()
+    logging.getLogger("greencity.greenplan").info("выгружена пояснительная записка: %d зон", len(request.assignments))
+    # filename -- ASCII для старых клиентов, filename* -- с названием участка
+    # по RFC 5987 (кириллица в обычном filename ломает часть браузеров).
+    name = quote(f"Пояснительная записка — {request.title or 'участок'}.docx")
+    return Response(
+        content=content,
+        media_type=DOCX_MEDIA_TYPE,
+        headers={"Content-Disposition": f"attachment; filename=\"greenplan_note.docx\"; filename*=UTF-8''{name}"},
+    )
 
 
 # Синхронный def, а не async: клиент openai блокирующий, и FastAPI сам уводит
