@@ -1,6 +1,6 @@
 # Единственная цель -- сам бэкенд: GET /metrics регистрирует
 # prometheus-fastapi-instrumentator (стандартные HTTP-метрики) вместе с
-# бизнес-метриками из backend/metrics.py (см. backend/main.py).
+# бизнес-метриками из backend/monitoring/metrics.py (см. backend/main.py).
 global:
   scrape_interval: 15s
   evaluation_interval: 15s

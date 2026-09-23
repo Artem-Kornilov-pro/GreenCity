@@ -22,7 +22,7 @@
 
 ## Реализация
 
-Новый паттерн `triangular_grid_fill` (`backend/pattern_library.py`,
+Новый паттерн `triangular_grid_fill` (`backend/greenplan/pattern_library.py`,
 `geometry_family="area_fill"`) переиспользует СУЩЕСТВУЮЩУЮ гексагональную
 решётку `Placer.points_in_area()` (`placement.py`) — та самая формула
 (`row_height = step * sqrt(3) / 2`, чередующийся сдвиг по x через ряд) уже

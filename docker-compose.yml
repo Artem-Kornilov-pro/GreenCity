@@ -8,7 +8,7 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./parser:/app/parser
-      # GreenPlan (issue #23, Этапы 3-6): retrieval-корпус (backend/pattern_corpus.py)
+      # GreenPlan (issue #23, Этапы 3-6): retrieval-корпус (backend/greenplan/pattern_corpus.py)
       # читает locations/<slug>/<slug>.dxf и data/pattern_corpus.yaml по
       # относительному от backend/ пути -- без этих двух каталогов
       # /api/greenplan/generate падает с FileNotFoundError внутри контейнера,
@@ -26,7 +26,7 @@ services:
       # Ollama (mistral:7b, decision_report.py) не сервис compose -- он
       # запускается на хосте (`ollama serve`), не в этой сети. "localhost"
       # внутри контейнера -- это сам контейнер, а не хост, поэтому дефолт
-      # OLLAMA_BASE_URL (backend/decision_report.py) здесь не достучится;
+      # OLLAMA_BASE_URL (backend/greenplan/decision_report.py) здесь не достучится;
       # host.docker.internal -- специальный DNS-хост Docker Desktop, всегда
       # указывающий на хост-машину (macOS/Windows из коробки, на Linux --
       # добавлен extra_hosts ниже для docker-compose <=v20 без встроенной
@@ -168,7 +168,7 @@ services:
   # редактору, но по умолчанию поднимается весь проект целиком.
 
   # Собирает GET /metrics с backend (стандартные HTTP-метрики +
-  # бизнес-метрики из backend/metrics.py, см. observability/prometheus/).
+  # бизнес-метрики из backend/monitoring/metrics.py, см. observability/prometheus/).
   prometheus:
     image: prom/prometheus:v3.0.1
     volumes:
@@ -188,7 +188,7 @@ services:
     restart: unless-stopped
 
   # Хранилище логов -- backend пишет структурированные JSON-строки в stdout
-  # (backend/logging_config.py), promtail ниже их сюда доставляет.
+  # (backend/monitoring/logging_config.py), promtail ниже их сюда доставляет.
   loki:
     image: grafana/loki:3.3.2
     command: -config.file=/etc/loki/loki-config.yml

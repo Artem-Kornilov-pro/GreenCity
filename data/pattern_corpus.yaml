@@ -1,12 +1,12 @@
 # Retrieval-корпус для GreenPlan, Этап 3 (issue #23).
 #
 # По каждому из 9 реальных, документированных проектов в locations/ -- какой
-# паттерн из backend/pattern_library.py применён в каком виде геометрической
+# паттерн из backend/greenplan/pattern_library.py применён в каком виде геометрической
 # зоны (zone_partitioning.ZoneKind), и цитата/пересказ из соответствующего
 # locations/<slug>/design_rationale.md, откуда это взято. Это НЕ полный
 # корпус из 20 проектов, упомянутый в issue #23 -- тот восстанавливает другой
 # разработчик отдельно и в репозитории пока не появился (см.
-# backend/pattern_corpus.py). Здесь честно 14 проектов, у которых уже есть и
+# backend/greenplan/pattern_corpus.py). Здесь честно 14 проектов, у которых уже есть и
 # реальный DXF, и разобранная документация (9 из первой серии + 5 из
 # ветки new-convert).
 #
@@ -185,7 +185,7 @@
       деревьев).
 
 # --- Синтетические эталонные участки (green-city-locations-primer-spec.md) --
-# см. докстринг backend/pattern_corpus.py про суффикс "_primer". У этих
+# см. докстринг backend/greenplan/pattern_corpus.py про суффикс "_primer". У этих
 # записей source_quote цитирует не проектную документацию (её не
 # существует), а design_rationale.md самого синтетического участка.
 

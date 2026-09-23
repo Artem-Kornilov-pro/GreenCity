@@ -72,6 +72,6 @@ export interface Scene {
   meta: SceneMeta;
   // Заполняется только /api/parse-dwg (issue #50) -- файлы из загруженной
   // папки .dwg, которые не удалось сконвертировать (LibreDWG не всё умеет,
-  // см. backend/dwg_batch_converter.py). Отсутствует у сцен из /api/parse.
+  // см. backend/exchange/dwg_batch_converter.py). Отсутствует у сцен из /api/parse.
   dwgConversionWarnings?: { file: string; error: string }[];
 }

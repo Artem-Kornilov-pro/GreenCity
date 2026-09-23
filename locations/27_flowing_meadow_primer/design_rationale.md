@@ -25,7 +25,7 @@
 
 Амплитуда (4 м), длина волны (40 м) и отступ второго ряда (1.2 м) —
 НЕ придуманы заново, а взяты буквально из уже закодированных параметров
-`flowing_rows` в `backend/pattern_library.py`
+`flowing_rows` в `backend/greenplan/pattern_library.py`
 (`wave_amplitude_m=4.0, wave_length_m=40.0, double_row_offset_m=1.2`),
 которые в свою очередь взяты из реального `10_stary_gay`
 (`data/pattern_corpus.yaml`: «волнистые линии (синус-модуляция, амплитуда

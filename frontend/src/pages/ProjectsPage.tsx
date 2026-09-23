@@ -10,7 +10,7 @@ import { PageTransition } from "../components/PageTransition";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../components/ui/dialog";
 import { useAuth } from "../context/useAuth";
 
-const MAX_PROJECTS = 3; // держим в паре с backend/projects.py::MAX_PROJECTS_PER_USER — лимит проверяет бэкенд, тут только для подсказки
+const MAX_PROJECTS = 3; // держим в паре с backend/accounts/projects.py::MAX_PROJECTS_PER_USER — лимит проверяет бэкенд, тут только для подсказки
 
 function formatDate(iso: string): string {
   return new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));

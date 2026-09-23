@@ -16,7 +16,7 @@ rules:
       (таблица В.1)
     in_code: >-
       Расстояния -- та же таблица, что 743-ПП табл. 3.6.1 и СП 42 табл. 9.1
-      (backend/setback_norms.py::SETBACK_NORMS). Максимум плотности -- в коде
+      (backend/core/setback_norms.py::SETBACK_NORMS). Максимум плотности -- в коде
       не проверяется, только greening_density.yaml.
 
   - clause: "4.2.8"
@@ -28,7 +28,7 @@ rules:
       2 м, тополь, боярышник, кизильник, дерен, лиственницу, березу -- ближе
       3-4 м.
     in_code: >-
-      backend/setback_norms.py::SPECIES_SETBACK_RULES (HEAT_SENSITIVE_*). Для
+      backend/core/setback_norms.py::SPECIES_SETBACK_RULES (HEAT_SENSITIVE_*). Для
       второй группы берётся верхняя граница 4 м. Норма -- от оси теплотрассы,
       у нас -- от края её охранного коридора (ось + 2 м, parser/parse_dxf.py),
       то есть строже нормы на 2 м.

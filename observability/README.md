@@ -58,7 +58,7 @@ healthcheck, promtail -- раньше loki. У всех `restart: unless-stopped
 сохраняются и потеряются при пересоздании контейнера; менять сами графики
 на постоянной основе -- через правку JSON в этой папке.
 
-## Метрики (`backend/metrics.py`)
+## Метрики (`backend/monitoring/metrics.py`)
 
 Стандартные HTTP-метрики (запросы/с, латентность, размер запроса/ответа) даёт
 `prometheus-fastapi-instrumentator` без единой строки разметки в каждом
@@ -79,7 +79,7 @@ healthcheck, promtail -- раньше loki. У всех `restart: unless-stopped
 | `greencity_auth_logins_total` | Counter | `outcome` (success/rejected/rate_limited) | `/api/auth/login` |
 | `greencity_rate_limit_blocks_total` | Counter | `endpoint` (register/login) | Запрос отклонён `cache.check_rate_limit` |
 
-## Логи (`backend/logging_config.py`)
+## Логи (`backend/monitoring/logging_config.py`)
 
 `configure_logging()` (вызывается один раз при импорте `main.py`) заменяет
 собой прежний `logging.basicConfig` на JSON-форматтер: одна запись -- одна
@@ -106,7 +106,7 @@ healthcheck, promtail -- раньше loki. У всех `restart: unless-stopped
 | `greencity.parse` | Каждый `/api/parse` -- успех (кол-во объектов/зон) или причина отказа |
 | `greencity.generate` | Каждый `/api/generate-greenery` -- сколько объектов добавлено |
 | `greencity.export` | Каждый `/api/export-dxf` |
-| `greencity.llm` | Запросы к LLM (`llm_editor.py`, было и раньше) -- инструкция, применённые/отклонённые операции |
+| `greencity.llm` | Запросы к LLM (`text_editor/service.py`, было и раньше) -- инструкция, применённые/отклонённые операции |
 | `greencity.db` / `greencity.cache` | Недоступность MongoDB/Redis (было и раньше) |
 
 ## Проверить, что всё работает

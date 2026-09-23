@@ -7,7 +7,7 @@
 * Redis подменяется fakeredis.aioredis.FakeRedis -- тот же интерфейс, что и
   redis.asyncio.Redis в cache.py;
 * LLM НЕ вызывается ни в одном тесте -- реальные вызовы API стоят
-  пользователю денег (см. test_llm_editor_request.py, где сетевой вызов
+  пользователю денег (см. text_editor/test_llm_client.py, где сетевой вызов
   замещается фальшивым клиентом).
 
 db.py/projects.py импортируют коллекции по конкретным именам при своём
@@ -32,14 +32,14 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 
 sys.path[:0] = [str(ROOT / "parser"), str(ROOT / "backend")]
 
-import cache  # noqa: E402
-import db  # noqa: E402
-import projects as projects_module  # noqa: E402
 from fakeredis import aioredis as fakeredis_aioredis  # noqa: E402
 from mongomock_motor import AsyncMongoMockClient  # noqa: E402
+
+from accounts import projects as projects_module  # noqa: E402
+from core.plant_catalog import load_catalog  # noqa: E402
+from core.schemas import Scene  # noqa: E402
 from parse_dxf import parse_dxf_file  # noqa: E402
-from plant_catalog import load_catalog  # noqa: E402
-from schemas import Scene  # noqa: E402
+from storage import cache, db  # noqa: E402
 
 
 # Шесть исходных тестовых участков лежат в locations/location_old/ -- туда их
@@ -56,7 +56,7 @@ def _location_path(number: int) -> str:
 
 @pytest.fixture(autouse=True)
 def _clean_llm_env(monkeypatch):
-    """llm_editor.py грузит настоящий .env этой машины при импорте (load_dotenv)
+    """text_editor/llm_client.py грузит настоящий .env этой машины при импорте (load_dotenv)
     -- если он настроен на реального провайдера (например LLM_PROVIDER=gemini
     для ручного тестирования из редактора), эти переменные утекают в процесс
     pytest и остаются там до конца сессии. Тест, который чистит только

@@ -49,7 +49,7 @@ export async function generateGreenery(scene: Scene): Promise<Scene | null> {
   return res.json() as Promise<Scene | null>;
 }
 
-// Итоговый план -> файл .dxf (backend/export_dxf.py; ТЗ: "итоговый план
+// Итоговый план -> файл .dxf (backend/exchange/export_dxf.py; ТЗ: "итоговый план
 // должен экспортироваться обратно в формат DXF"). Возвращаем Blob, а не сами
 // триггерим скачивание -- так функцию можно переиспользовать (например для
 // предпросмотра), а вызывающий код (App.tsx) сам решает, что делать дальше.
@@ -66,7 +66,7 @@ export async function exportDxf(scene: Scene): Promise<Blob> {
   return res.blob();
 }
 
-// Пояснительная записка GreenPlan в DOCX (backend/greenplan_document.py).
+// Пояснительная записка GreenPlan в DOCX (backend/greenplan/document.py).
 // scene -- ТЕКУЩАЯ сцена редактора (с правками после GreenPlan), нарушения и
 // ведомость бэкенд пересчитывает по ней сам; report -- уже полученный текст
 // из /api/greenplan/report, заново LLM не вызывается.
@@ -105,7 +105,7 @@ export interface GreenPlanZoneAssignment {
   source_project: string | null;
   source_quote: string | null;
   confidence: number;
-  // Подобранные виды и основание подбора (backend/species_selection.py).
+  // Подобранные виды и основание подбора (backend/greenplan/species_selection.py).
   tree_species?: string[];
   bush_species?: string[];
   species_basis?: string | null;
@@ -174,7 +174,7 @@ export interface TextEditResult {
   warnings: string[];
 }
 
-// Правка плана текстом через LLM (backend/llm_editor.py). Модель отвечает
+// Правка плана текстом через LLM (backend/text_editor/service.py). Модель отвечает
 // несколько секунд -- вызывающему коду нужен индикатор ожидания.
 export async function editWithText(scene: Scene, instruction: string): Promise<TextEditResult> {
   const res = await fetch(`${API_BASE}/api/edit-with-text`, {
@@ -190,7 +190,7 @@ export async function editWithText(scene: Scene, instruction: string): Promise<T
   return res.json() as Promise<TextEditResult>;
 }
 
-// --- Проекты (backend/projects.py) -------------------------------------------
+// --- Проекты (backend/accounts/projects.py) -------------------------------------------
 //
 // Требуют вход в аккаунт -- гостевой режим их не касается: редактор выше
 // работает без сессии совсем. authHeader (auth.ts) сам получает свежий

@@ -10,7 +10,7 @@ import ProjectsPage from "./pages/ProjectsPage";
 // в package.json -- тянутся только сценой редактора (SceneView.tsx и всё под
 // scene/). Без lazy() они грузились бы в основной бандл даже для посетителя
 // лендинга, который 3D вообще не увидит.
-const EditorPage = lazy(() => import("./pages/EditorPage"));
+const EditorPage = lazy(() => import("./pages/editor/EditorPage"));
 
 function EditorFallback() {
   return (

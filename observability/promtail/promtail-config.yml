@@ -26,7 +26,7 @@ scrape_configs:
       - source_labels: ["__meta_docker_container_label_com_docker_compose_service"]
         target_label: "compose_service"
     pipeline_stages:
-      # Логи backend -- JSON (см. backend/logging_config.py). "level" -- в
+      # Логи backend -- JSON (см. backend/monitoring/logging_config.py). "level" -- в
       # метку: значений всего пять (DEBUG/INFO/WARNING/ERROR/CRITICAL), это
       # ровно тот случай, когда метка Loki оправдана (низкая кардинальность,
       # нужна для быстрого фильтра "покажи только ошибки"). Остальные поля

@@ -5,7 +5,7 @@
 > вручную по `green-city-locations-primer-spec.md` как эталонный пример
 > композиции для retrieval-корпуса GreenPlan. Та же роль, что у
 > `locations/location_old/` (синтетические тестовые участки), только не
-> для юнит-тестов парсера, а для `backend/pattern_corpus.py` — чтобы
+> для юнит-тестов парсера, а для `backend/greenplan/pattern_corpus.py` — чтобы
 > retrieval было с чем сравнивать компактный участок правильной формы, а
 > не только вытянутые узкие полосы вдоль улиц, как остальные 14+1 проекта
 > в корпусе.
@@ -30,7 +30,7 @@
 ## Почему `linear_hedge_row`
 
 Кольцевая посадка вдоль периметра — частный случай `linear_hedge_row` из
-`backend/pattern_library.py`, где `centerline_of()` строит осевую линию
+`backend/greenplan/pattern_library.py`, где `centerline_of()` строит осевую линию
 вдоль всей полосы `site_edge` (для круга — окружность, а не прямая).
 Тот же паттерн, что уже задокументирован для прямых полос
 (`02_peschany_pereulok`, `21_road_buffer_primer`), примененный к
@@ -39,7 +39,7 @@
 ## Найденный попутно баг (и почему он не блокирует этот участок)
 
 При проверке этого участка обнаружился реальный баг в
-`backend/zone_partitioning.py::_emit()`: для КОМПАКТНЫХ участков (в
+`backend/greenplan/zone_partitioning.py::_emit()`: для КОМПАКТНЫХ участков (в
 отличие от всех узких вытянутых реальных локаций в корпусе)
 `boundary.buffer(-SITE_EDGE_BAND_M)` не пуст, и `site_edge` получается
 кольцом — `Polygon` с дыркой. `_emit()` брал только `.exterior.coords`,
@@ -50,7 +50,7 @@
 кольцо на два простых куска без дыр линией через центр дырки — тот же
 приём, что и для нескольких несвязных зданий у building_border), плюс
 регрессионный тест `test_site_edge_ring_has_no_hole_leak_on_compact_site`
-в `backend/tests/test_zone_partitioning.py`.
+в `backend/tests/greenplan/test_zone_partitioning.py`.
 
 ## Проверено
 

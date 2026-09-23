@@ -1,0 +1,533 @@
+"""
+Геометрический планировщик для правок плана текстом (text_editor/service.py).
+
+Модель задаёт НАМЕРЕНИЕ -- "кустарники вдоль дорожек", "четыре дерева в центре
+двора", "убрать фонари у парковки", -- а координаты считает этот модуль.
+Первая версия заставляла модель выдавать координаты самой, и она с этим не
+справлялась: на "размести кустарники вдоль дорожек" поставила 5 кустов -- на
+дорожке, на парковке, у стены дома и вплотную к фонарям, хотя контуры дорожек
+были в контексте полностью. "Вдоль дорожки" -- это линия, смещённая от
+контура, шаг посадки и проверка каждой точки: такую геометрию надёжно считает
+код, а не языковая модель.
+
+Правила размещения одинаковы для всех операций:
+* внутри участка, не вплотную к его границе;
+* вне запретных (forbidden) И предупреждающих (warning) зон, расширенных на
+  нормативный отступ для вида посадки. Дорожка, парковка, детская площадка --
+  не место для куста, хоть это и не "запрет" в строгом смысле: раньше такое
+  разрешалось с предупреждением, и кусты вставали прямо на дорожку;
+* не ближе OBJECT_CLEARANCE_M к точечным объектам, а для пар из
+  POINT_CLEARANCE_M -- не ближе нормы (дерево -- 4 м от опоры освещения).
+
+Разрешённые зоны (газон) допустимую область не сужают: на всех тестовых
+локациях это один полигон на 89-100% участка, включающий пятна зданий и
+парковок, -- сверх запретов он ничего не отсекает.
+"""
+
+from __future__ import annotations
+
+import math
+from typing import Optional
+
+from shapely.geometry import MultiPoint, Point, Polygon
+from shapely.ops import nearest_points, unary_union
+from shapely.prepared import prep
+
+from core.schemas import RestrictionZone, Scene
+from core.setback_norms import SpeciesArg, SpeciesSetbackRule, setback_for, species_rules
+
+# Цели групповых операций (llm_editor.PlaceAlongOp и др.) и их подписи.
+TARGET_LABELS = {
+    "pedestrian_path": "пешеходные дорожки",
+    "road": "дороги",
+    "building": "здания",
+    "parking": "парковки",
+    "playground": "детские площадки",
+    "site_boundary": "граница участка",
+}
+_FIXED_TARGETS = frozenset(TARGET_LABELS)
+
+SITE_CLEARANCE_M = 0.5  # не ставим вплотную к границе участка
+# Запас от границы допустимой области: без него точка ложится ровно на границу
+# и не проходит проверку из-за погрешности float.
+REGION_EPS_M = 0.1
+
+OBJECT_CLEARANCE_M = 1.0  # минимум до любого точечного объекта
+PATH_SEGMENT_HALF_WIDTH_M = 0.7  # ширина уложенного мощения (path_segment 2x1.2 м) для его учёта как цели "pedestrian_path"
+FURNITURE_CLEARANCE_M = 0.3  # зазор МАФ и мощения от края любой зоны ограничений
+# (тип существующего объекта) -> {вид новой посадки: минимальное расстояние, м}.
+POINT_CLEARANCE_M: dict[str, dict[str, float]] = {
+    # СП 42.13330.2016, табл. 9.1 / 743-ПП, табл. 3.6.1: от опоры
+    # осветительной сети до дерева 4 м (для кустарника не нормируется).
+    "lamp": {"tree": 4.0},
+    # Не норма, а здравый смысл: посадка не должна загораживать подъезд.
+    "entrance": {"tree": 5.0, "bush": 2.5},
+    # Кроны соседних деревьев не должны срастаться.
+    "tree": {"tree": 3.0},
+}
+# Вид посадки существующего объекта по его типу -- чтобы нормы из
+# POINT_CLEARANCE_M действовали в обе стороны (см. Placer.blocker).
+_KIND_OF_TYPE = {"tree": "tree", "bush": "bush", "hedge_segment": "bush"}
+
+# Точку, указанную моделью с нарушением, сдвигаем не дальше этого: "у входа"
+# не должно превратиться в "на другом конце двора". Меньше брать нельзя: дерево
+# у подъезда по нормам ближе и не встанет -- 5 м от стены, в стороне от дорожки
+# к подъезду и в 4 м от фонаря у неё. С лимитом 6 м дерево "у входа"
+# отклонялось на всех тестовых локациях.
+MAX_SNAP_DISTANCE_M = 10.0
+
+# Запасной ряд чуть дальше от цели: куст, которому в основном ряду помешал
+# фонарь или подъезд, встаёт на метр дальше, а не выпадает из ряда.
+FALLBACK_ROW_STEP_M = 1.0
+
+# Границы параметров от модели -- защита от вырожденных запросов (шаг 1 см по
+# району в несколько километров -- миллионы точек).
+MIN_SPACING_M = 0.8
+MAX_SPACING_M = 50.0
+MAX_BULK_PLACEMENTS = 300
+MAX_AREA_RADIUS_M = 300.0
+
+_INDEX_CELL_M = 2.0
+
+
+def clamp(value: float, low: float, high: float) -> float:
+    return max(low, min(high, value))
+
+
+def _geometry(points: list, single: bool = False):
+    """Полигон из контура сцены. Самопересекающиеся контуры из DXF чинятся
+    buffer(0), а не отбрасываются: пропущенная запретная зона -- это посадка
+    прямо на газопровод."""
+    if len(points) < 3:
+        return None
+    geom = Polygon([(p.x, p.z) for p in points])
+    if not geom.is_valid:
+        geom = geom.buffer(0)
+    if geom.is_empty or geom.area <= 0:
+        return None
+    if single and geom.geom_type != "Polygon":
+        geom = max(geom.geoms, key=lambda g: g.area)
+    return geom
+
+
+def polygons(geom) -> list[Polygon]:
+    if geom is None or geom.is_empty:
+        return []
+    if geom.geom_type == "Polygon":
+        return [geom]
+    return [g for g in getattr(geom, "geoms", []) if g.geom_type == "Polygon"]
+
+
+class PointIndex:
+    """Сетка-хеш точек: "есть ли кто-то ближе r" без перебора всех объектов
+    сцены. В районе больше тысячи объектов, а групповая операция проверяет
+    тысячи кандидатов -- перебор был бы квадратичным."""
+
+    def __init__(self, cell: float = _INDEX_CELL_M):
+        self._cell = max(cell, 0.5)
+        self._cells: dict[tuple[int, int], dict[str, tuple[float, float, str]]] = {}
+        self._where: dict[str, tuple[int, int]] = {}
+
+    def _key(self, x: float, z: float) -> tuple[int, int]:
+        return math.floor(x / self._cell), math.floor(z / self._cell)
+
+    def add(self, key: str, x: float, z: float, obj_type: str = "") -> None:
+        self.remove(key)
+        cell = self._key(x, z)
+        self._cells.setdefault(cell, {})[key] = (x, z, obj_type)
+        self._where[key] = cell
+
+    def remove(self, key: str) -> None:
+        cell = self._where.pop(key, None)
+        if cell is not None:
+            self._cells[cell].pop(key, None)
+
+    def within(self, x: float, z: float, radius: float):
+        """(ключ, тип, расстояние) для всех точек ближе radius."""
+        ci, cj = self._key(x, z)
+        span = math.ceil(radius / self._cell)
+        for i in range(ci - span, ci + span + 1):
+            for j in range(cj - span, cj + span + 1):
+                bucket = self._cells.get((i, j))
+                if not bucket:
+                    continue
+                for key, (px, pz, obj_type) in bucket.items():
+                    distance = math.hypot(px - x, pz - z)
+                    if distance < radius:
+                        yield key, obj_type, distance
+
+    def has_within(self, x: float, z: float, radius: float) -> bool:
+        return next(self.within(x, z, radius), None) is not None
+
+
+class Placer:
+    """Допустимые места для объектов на одной сцене. Создаётся на запрос и
+    переиспользуется всеми операциями плана: допустимая область строится один
+    раз на вид посадки (объединение тысяч зон района -- дорогая операция), а
+    индекс объектов обновляется по мере добавления и удаления."""
+
+    def __init__(self, scene: Scene):
+        self.zones: list[tuple[RestrictionZone, object]] = []
+        for zone in scene.restrictions:
+            geom = _geometry(zone.polygon)
+            if geom is not None:
+                self.zones.append((zone, geom))
+        # Типы зон, от которых отступаем (см. region) -- чтобы правило по
+        # породе для отсутствующей на участке зоны не плодило лишний кэш.
+        self._restricted_types = {zone.type for zone, _ in self.zones if zone.severity != "allowed"}
+
+        self.site = _geometry(scene.boundary.polygon, single=True) if scene.boundary else None
+        if self.site is None and self.zones:
+            # Без границы участка -- рамка вокруг всех зон, чтобы правки
+            # текстом не отказывали целиком.
+            self.site = unary_union([geom for _, geom in self.zones]).envelope
+
+        self._regions: dict = {}
+        self._targets: dict = {}
+        self._free_areas: Optional[list[Polygon]] = None
+        self._objects = PointIndex()
+        # Уже уложенная плитка (design_area, предыдущий place_along/add) --
+        # тоже "пешеходная дорожка" для последующих правок: без этого "добавь
+        # фонари вдоль дорожек" после того, как дорожки уже построил
+        # design_area, искало бы только исходные контуры из DXF, которых на
+        # пустых заготовках (см. локацию 6) почти нет -- крохотные огрызки у
+        # самих дверей, где физически негде поставить фонарь.
+        self._existing_paths: list[tuple[float, float]] = []
+        for obj in scene.objects:
+            if obj.type != "building":
+                self._objects.add(obj.id, obj.position.x, obj.position.z, obj.type)
+            if obj.type == "path_segment":
+                self._existing_paths.append((obj.position.x, obj.position.z))
+
+    # --- Нормы и допустимая область ----------------------------------------
+
+    @staticmethod
+    def required(zone: RestrictionZone, kind: Optional[str], species: SpeciesArg = None) -> float:
+        """Нормативный отступ посадки вида kind от зоны. МАФ и мощению (kind
+        None) нормы для растений неприменимы, но небольшой запас всё равно
+        нужен: раньше он проверялся с точностью до ~10 см и лавка могла
+        встать вплотную к краю дорожки или ограждению сети, визуально на них
+        заходя. species -- название вида (или несколько, см.
+        setback_norms.SpeciesArg): у части пород отступ больше табличного
+        (липа -- 10 м от здания и т.п.)."""
+        if kind in ("tree", "bush"):
+            return setback_for(zone.type, kind, zone.minDistance, species=species)
+        return FURNITURE_CLEARANCE_M
+
+    def region(self, kind: Optional[str], species: SpeciesArg = None):
+        """(область, её prepared-версия), где можно ставить объект вида kind:
+        участок минус запретные и предупреждающие зоны, расширенные на
+        нормативный отступ. Кэш -- по (kind, набор правил по породе, которые
+        реально что-то меняют на ЭТОЙ сцене), а не по названию вида: сотня
+        видов каталога без собственных правил (или с правилами для зон,
+        которых на участке нет) делят одну область, и дорогой unary_union
+        считается не на каждый вид."""
+        rules = frozenset(
+            rule
+            for rule in species_rules(species)
+            if kind in rule.kinds and rule.zone_type in self._restricted_types
+        )
+        key = (kind, rules)
+        if key not in self._regions:
+            area = None
+            if self.site is not None:
+                area = self.site.buffer(-SITE_CLEARANCE_M)
+                keep_out = [
+                    geom.buffer(self._required_by_rules(zone, kind, rules) + REGION_EPS_M)
+                    for zone, geom in self.zones
+                    if zone.severity != "allowed"
+                ]
+                if keep_out:
+                    area = area.difference(unary_union(keep_out))
+                if area.is_empty:
+                    area = None
+            self._regions[key] = (area, prep(area) if area is not None else None)
+        return self._regions[key]
+
+    @classmethod
+    def _required_by_rules(
+        cls, zone: RestrictionZone, kind: Optional[str], rules: frozenset[SpeciesSetbackRule]
+    ) -> float:
+        """То же, что required(), но по уже найденному набору правил --
+        region() кэширует именно по нему."""
+        distance = cls.required(zone, kind)
+        for rule in rules:
+            if rule.zone_type == zone.type and kind in rule.kinds:
+                distance = max(distance, rule.distance_m)
+        return distance
+
+    def blocker(
+        self,
+        x: float,
+        z: float,
+        kind: Optional[str],
+        clearance: float = OBJECT_CLEARANCE_M,
+        obj_type: Optional[str] = None,
+    ):
+        """(id, нужное расстояние, фактическое) первого мешающего точечного
+        объекта или None. obj_type -- тип нового объекта: нормы действуют в обе
+        стороны, фонарь нельзя ставить в 4 м от дерева, как и дерево у фонаря."""
+        own = POINT_CLEARANCE_M.get(obj_type, {}) if obj_type else {}
+        reach = max([clearance, *(norms.get(kind, 0.0) for norms in POINT_CLEARANCE_M.values()), *own.values()])
+        for key, other_type, distance in self._objects.within(x, z, reach):
+            required = max(
+                clearance,
+                POINT_CLEARANCE_M.get(other_type, {}).get(kind, 0.0),
+                own.get(_KIND_OF_TYPE.get(other_type), 0.0),
+            )
+            if distance < required:
+                return key, required, distance
+        return None
+
+    def region_contains(self, shape, kind: Optional[str], species: SpeciesArg = None) -> bool:
+        """Фигура (точка ИЛИ полигон габарита объекта) целиком внутри
+        допустимой области -- без учёта точечных объектов. Полигон нужен для
+        вытянутых и широких МАФ (лавка, секция изгороди, клумба): проверка
+        одной точки-центра пропускала случаи, когда сам объект стоял
+        правильно, а его дальний край перекрывал дорожку или уходил за
+        границу участка -- центр при этом лежал в допустимой области."""
+        _, prepared = self.region(kind, species)
+        return prepared is not None and prepared.contains(shape)
+
+    def in_region(self, x: float, z: float, kind: Optional[str], species: SpeciesArg = None) -> bool:
+        return self.region_contains(Point(x, z), kind, species)
+
+    def is_free(
+        self,
+        x: float,
+        z: float,
+        kind: Optional[str],
+        clearance: float = OBJECT_CLEARANCE_M,
+        obj_type: Optional[str] = None,
+        species: SpeciesArg = None,
+    ) -> bool:
+        if not self.in_region(x, z, kind, species):
+            return False
+        return self.blocker(x, z, kind, clearance, obj_type) is None
+
+    def explain(
+        self, x: float, z: float, kind: Optional[str], clearance: float = OBJECT_CLEARANCE_M, species: SpeciesArg = None
+    ) -> str:
+        """Человекочитаемая причина, почему в точке ставить нельзя. Точный
+        разбор по зонам медленнее is_free(), поэтому только для точечных
+        операций, где причина нужна в сообщении."""
+        point = Point(x, z)
+        if self.site is not None:
+            if not self.site.contains(point):
+                return "за границей участка"
+            if self.site.exterior.distance(point) < SITE_CLEARANCE_M:
+                return "вплотную к границе участка"
+        for zone, geom in self.zones:
+            if zone.severity == "allowed":
+                continue
+            if geom.contains(point):
+                return f"внутри зоны: {zone.message}"
+            required = self.required(zone, kind, species)
+            distance = geom.distance(point)
+            if distance < required:
+                return f"{zone.message} (до зоны {distance:.1f} м, нужно {required:.1f} м)"
+        hit = self.blocker(x, z, kind, clearance)
+        if hit is not None:
+            key, required, distance = hit
+            return f"рядом {key} (до него {distance:.1f} м, нужно {required:.1f} м)"
+        return "у самой границы зоны ограничений"
+
+    def nearest_free(
+        self, x: float, z: float, kind: Optional[str], clearance: float = OBJECT_CLEARANCE_M, species: SpeciesArg = None
+    ):
+        """Сама точка, если там можно, иначе ближайшая допустимая не дальше
+        MAX_SNAP_DISTANCE_M; None -- если такой нет."""
+        if self.is_free(x, z, kind, clearance, species=species):
+            return x, z
+        area, _ = self.region(kind, species)
+        if area is None:
+            return None
+
+        # Сначала точная ближайшая точка области -- у стены это ровно
+        # нормативный отступ. Она лежит на самой границе, поэтому чуть
+        # заходим внутрь.
+        origin = Point(x, z)
+        _, near = nearest_points(origin, area)
+        distance = origin.distance(near)
+        if 0 < distance <= MAX_SNAP_DISTANCE_M:
+            factor = (distance + 0.05) / distance
+            nx, nz = x + (near.x - x) * factor, z + (near.y - z) * factor
+            if self.is_free(nx, nz, kind, clearance, species=species):
+                return nx, nz
+
+        # Не вышло (например, там фонарь) -- перебираем кольца вокруг точки,
+        # примерно через 0.5 м и по радиусу, и по дуге.
+        for step in range(1, int(MAX_SNAP_DISTANCE_M / 0.5) + 1):
+            radius = step * 0.5
+            samples = max(12, math.ceil(2 * math.pi * radius / 0.5))
+            for k in range(samples):
+                angle = 2 * math.pi * k / samples
+                cx, cz = x + radius * math.cos(angle), z + radius * math.sin(angle)
+                if self.is_free(cx, cz, kind, clearance, species=species):
+                    return cx, cz
+        return None
+
+    def occupy(self, key: str, x: float, z: float, obj_type: str) -> None:
+        self._objects.add(key, x, z, obj_type)
+
+    def release(self, key: str) -> None:
+        self._objects.remove(key)
+
+    def add_zone(self, zone: RestrictionZone) -> None:
+        """Добавить зону уже ПОСЛЕ создания Placer -- define_zone в
+        text_editor/service.py размечает новую зону по ходу применения плана, и
+        следующие операции того же плана (не только следующего запроса)
+        должны сразу её учитывать. Поэтому кэши (допустимые области, цели,
+        свободные участки) сбрасываются -- иначе они остались бы посчитаны
+        по старому набору зон."""
+        geom = _geometry(zone.polygon)
+        if geom is None:
+            return
+        self.zones.append((zone, geom))
+        if zone.severity != "allowed":
+            self._restricted_types.add(zone.type)
+        self._regions.clear()
+        self._targets.clear()
+        self._free_areas = None
+
+    # --- Цели групповых операций ------------------------------------------
+
+    def _target_zones(self, target: str) -> list:
+        if target == "parking":
+            # У парковки в парсере тип "custom" -- общий для зон без
+            # собственного типа (неуточнённые подземные сети и т.п.),
+            # поэтому различаем по слою.
+            return [(zone, geom) for zone, geom in self.zones if "PARK" in zone.name.upper()]
+        zone_type = "playground_zone" if target == "playground" else target
+        matches = [(zone, geom) for zone, geom in self.zones if zone.type == zone_type]
+        if matches or target in _FIXED_TARGETS:
+            return matches
+        # Не встроенный тип цели -- возможно, это имя зоны, выделенной
+        # define_zone ("выдели зону «Детская», посади там кусты"), а не один
+        # из стандартных target. Сравнение без регистра: модель может не
+        # повторить регистр в точности.
+        needle = target.strip().lower()
+        return [(zone, geom) for zone, geom in self.zones if zone.name.strip().lower() == needle]
+
+    def target_geometry(self, target: str):
+        """Геометрия цели или None, если такой цели на участке нет."""
+        if target not in self._targets:
+            if target == "site_boundary":
+                geom = self.site
+            else:
+                parts = [geom for _, geom in self._target_zones(target)]
+                if target == "pedestrian_path" and self._existing_paths:
+                    points = MultiPoint(self._existing_paths).buffer(PATH_SEGMENT_HALF_WIDTH_M)
+                    parts.append(points)
+                geom = unary_union(parts) if parts else None
+            self._targets[target] = geom if geom is not None and not geom.is_empty else None
+        return self._targets[target]
+
+    def target_summary(self, target: str) -> Optional[tuple[int, float]]:
+        """(сколько объектов, длина контура в метрах) -- для контекста модели."""
+        geom = self.target_geometry(target)
+        if geom is None:
+            return None
+        if target == "site_boundary":
+            return 1, geom.exterior.length
+        return len(self._target_zones(target)), geom.boundary.length
+
+    def target_distance(self, target: str, x: float, z: float) -> Optional[float]:
+        """Расстояние до цели; для границы участка -- до её линии, а не до
+        полигона, внутри которого стоят все объекты."""
+        geom = self.target_geometry(target)
+        if geom is None:
+            return None
+        point = Point(x, z)
+        return geom.exterior.distance(point) if target == "site_boundary" else geom.distance(point)
+
+    def min_offset(self, target: str, kind: Optional[str], half_depth: float, species: SpeciesArg = None) -> float:
+        """Отступ ряда от контура цели: нормативный отступ плюс большая часть
+        радиуса кроны, чтобы куст не нависал над дорожкой."""
+        if target == "site_boundary":
+            base = SITE_CLEARANCE_M
+        else:
+            base = max((self.required(zone, kind, species) for zone, _ in self._target_zones(target)), default=0.0)
+        return base + 2 * REGION_EPS_M + 0.8 * half_depth
+
+    def points_along(self, target: str, spacing: float, offset: float) -> list[tuple[float, float, float]]:
+        """Точки (x, z, поворот в градусах) на линии, смещённой от контура цели
+        на offset, с шагом не меньше spacing. Поворот -- по касательной к
+        линии: секции живой изгороди и лавки встают вдоль ряда, а не поперёк."""
+        geom = self.target_geometry(target)
+        if geom is None:
+            return []
+        band = geom.buffer(-offset) if target == "site_boundary" else geom.buffer(offset)
+
+        points: list[tuple[float, float, float]] = []
+        for poly in polygons(band):
+            for ring in (poly.exterior, *poly.interiors):
+                length = ring.length
+                if length < 1.0:
+                    continue
+                count = max(1, int(length // spacing))
+                for i in range(count):
+                    d = i * length / count
+                    p = ring.interpolate(d)
+                    ahead = ring.interpolate((d + 0.5) % length)
+                    tx, tz = ahead.x - p.x, ahead.y - p.y
+                    # Фронтенд рисует объект с rotation=[0, θ, 0], а в three.js
+                    # такой поворот переводит (1, 0, 0) в (cosθ, 0, -sinθ) --
+                    # так локальная ось X (длина секции изгороди) ложится по
+                    # касательной.
+                    rotation = math.degrees(math.atan2(-tz, tx)) if (tx or tz) else 0.0
+                    # shapely хранит точку как (x, y); наша плоскость земли -- (x, z).
+                    points.append((p.x, p.y, rotation))
+        return points
+
+    def points_in_area(
+        self,
+        kind: Optional[str],
+        step: float,
+        within=None,
+        max_candidates: int = 2000,
+        species: SpeciesArg = None,
+    ) -> list[tuple[float, float]]:
+        """Кандидаты на гексагональной сетке внутри допустимой области (и
+        внутри within, если задано). Шаг не мельче, чем нужно для
+        max_candidates точек: на огромном участке иначе были бы миллионы."""
+        area, prepared = self.region(kind, species)
+        if area is None:
+            return []
+        if within is not None:
+            area = area.intersection(within)
+            if area.is_empty:
+                return []
+            prepared = prep(area)
+
+        min_x, min_z, max_x, max_z = area.bounds
+        step = max(
+            step,
+            math.sqrt(area.area / max(max_candidates, 1)),
+            # Узкая диагональная полоса: площадь мала, а рамка огромна.
+            math.sqrt((max_x - min_x) * (max_z - min_z) / (20 * max(max_candidates, 1))),
+        )
+        row_height = step * math.sqrt(3) / 2
+        points: list[tuple[float, float]] = []
+        row = 0
+        z = min_z + row_height / 2
+        while z <= max_z:
+            x = min_x + step / 4 + (step / 2 if row % 2 else 0.0)
+            while x <= max_x:
+                if prepared.contains(Point(x, z)):
+                    points.append((x, z))
+                x += step
+            z += row_height
+            row += 1
+        return points
+
+    def free_areas(self, limit: int = 6, min_area_m2: float = 25.0) -> list[Polygon]:
+        """Крупнейшие связные куски области, где можно сажать деревья (самый
+        строгий вид). Модели -- "где во дворе есть место", place_in_area --
+        адресуемые области A1, A2, ... (порядок стабилен для одной сцены)."""
+        if self._free_areas is None:
+            area, _ = self.region("tree")
+            parts = [poly for poly in polygons(area) if poly.area >= min_area_m2]
+            parts.sort(key=lambda poly: -poly.area)
+            self._free_areas = parts[:limit]
+        return self._free_areas

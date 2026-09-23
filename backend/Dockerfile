@@ -1,5 +1,5 @@
 # --- Стадия сборки LibreDWG --------------------------------------------------
-# dwg2dxf нужен /api/parse-dwg (backend/dwg_batch_converter.py, issue #50) для
+# dwg2dxf нужен /api/parse-dwg (backend/exchange/dwg_batch_converter.py, issue #50) для
 # конвертации .dwg в .dxf. LibreDWG НЕ запакетирован ни в Debian (trixie,
 # текущая база python:3.12-slim), ни в Ubuntu (noble, universe включён) --
 # `apt install libredwg-tools` из более старых заметок по проекту на практике
@@ -40,7 +40,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY parser/ ./parser/
 COPY backend/ ./backend/
-# GreenPlan retrieval-корпус (backend/pattern_corpus.py читает
+# GreenPlan retrieval-корпус (backend/greenplan/pattern_corpus.py читает
 # locations/<slug>/<slug>.dxf и data/pattern_corpus.yaml по относительному от
 # backend/ пути) -- в dev-режиме (docker-compose, --reload) эти же два
 # каталога приходят volume-мountом поверх этой COPY, здесь она нужна для

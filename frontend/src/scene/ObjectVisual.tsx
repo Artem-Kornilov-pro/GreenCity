@@ -1,4 +1,4 @@
-// Отрисовка объекта сцены по записи каталога (backend/plant_catalog.py).
+// Отрисовка объекта сцены по записи каталога (backend/core/plant_catalog.py).
 //
 // Если для записи есть .glb (путь перечислен в frontend/public/models/
 // manifest.json, который пишет tools/convert_models.mjs) -- рисуется модель.

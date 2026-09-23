@@ -7,7 +7,7 @@
 > деревня/Проектное решение/Раздел 1.1-ПЗ.pdf`, раздел 4 «Основные
 > проектные решения» и раздел 5.1, п.3) — тот же принцип, что и у
 > `21_road_buffer_primer`/`22-24_*_primer`: эталонный участок для
-> retrieval-корпуса GreenPlan (`backend/pattern_corpus.py`), но здесь
+> retrieval-корпуса GreenPlan (`backend/greenplan/pattern_corpus.py`), но здесь
 > предмет примера не форма участка, а КОНКРЕТНОЕ реальное дизайнерское
 > решение, для которого пока не было ни одного примера в корпусе.
 
@@ -47,7 +47,7 @@
 ## Почему `building_ring`
 
 Кольцо вокруг здания — ровно `building_ring` из
-`backend/pattern_library.py` (`zone_kinds={"building_border"}`,
+`backend/greenplan/pattern_library.py` (`zone_kinds={"building_border"}`,
 `line_shape="ring"`), уже задокументированный у `02_peschany_pereulok`
 (кольцо снежноягодника вокруг 18 из 30 зданий) и `20_makeeva_s` (кольцо
 можжевельника вокруг 88 зданий) — но оба реальных примера описывают

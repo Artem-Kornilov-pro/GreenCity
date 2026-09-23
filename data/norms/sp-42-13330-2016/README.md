@@ -14,9 +14,9 @@
 
 ## Сверка с кодом
 
-Таблица `SETBACK_NORMS` в `backend/setback_norms.py` и её копия в
+Таблица `SETBACK_NORMS` в `backend/core/setback_norms.py` и её копия в
 `frontend/src/setbackNorms.ts` сверены со строками таблицы 9.1 построчно, и
-теперь это делает автотест `backend/tests/test_setback_norms.py::
+теперь это делает автотест `backend/tests/core/test_setback_norms.py::
 test_code_table_matches_sp42_table_9_1_csv`: каждый тип зоны из колонки
 `zone_type` в `setbacks.csv` обязан давать ровно числа своей строки, и в
 коде нет строки, не подкреплённой таблицей.
@@ -47,7 +47,7 @@ test_code_table_matches_sp42_table_9_1_csv`: каждый тип зоны из �
   кустарнику — тоже 2 м вместо 1. Теперь это `heat_network`, и к нему
   применяются ещё правила по породе из МГСН 1.02-02, п. 4.2.8.
 
-Отступ 4 м от опоры освещения в `backend/placement.py` (`POINT_CLEARANCE_M`)
+Отступ 4 м от опоры освещения в `backend/core/placement.py` (`POINT_CLEARANCE_M`)
 тоже совпал: «Мачта и опора осветительной сети… 4,0», для кустарника прочерк —
 и в коде записи для куста действительно нет.
 

@@ -3,7 +3,7 @@
 > **Это не реальный проект.** См. пояснение в
 > `locations/22_circular_plaza_primer/design_rationale.md` — та же роль:
 > эталонный участок для retrieval-корпуса GreenPlan
-> (`backend/pattern_corpus.py`), геометрия построена вручную по
+> (`backend/greenplan/pattern_corpus.py`), геометрия построена вручную по
 > `green-city-locations-primer-spec.md`, не по реальной ПСД.
 
 ## Композиция
@@ -27,7 +27,7 @@
 
 Тот же приём, что и у `22_circular_plaza_primer`/`23_triangular_plot_primer`
 — кольцо вдоль `site_edge`, геометрический аналог `linear_hedge_row` из
-`backend/pattern_library.py`.
+`backend/greenplan/pattern_library.py`.
 
 ## Найденный и исправленный баг: дырка в site_edge на компактных участках
 

@@ -8,7 +8,7 @@ OUT      ?= output
 CATEGORY ?= tree
 
 .PHONY: help venv backend frontend-install frontend frontend-build parse clean \
-        lint lint-py lint-web lint-fix models test test-cov \
+        lint lint-py lint-web lint-fix models test test-e2e test-cov \
         docker-build docker-up docker-down docker-logs
 
 help:
@@ -19,6 +19,7 @@ help:
 	@echo "make frontend-build    - собрать production-сборку фронтенда"
 	@echo "make parse FILE=path/to.dxf [OUT=output] - разобрать DXF в JSON парсером"
 	@echo "make test              - юнит-тесты backend/ и parser/ (pytest, без сети/докера)"
+	@echo "make test-e2e          - только сквозные сценарии (tests/e2e: DXF -> GreenPlan -> записка -> DXF)"
 	@echo "make test-cov          - то же самое + отчёт о покрытии (terminal + htmlcov/)"
 	@echo "make lint              - прогнать все линтеры (Python + фронтенд)"
 	@echo "make lint-py           - только Python (ruff, конфиг в pyproject.toml)"
@@ -67,6 +68,11 @@ parse: $(VENV)/bin/activate
 # запускайте $(PYTEST) конкретный_файл.py::тест напрямую, без make.
 test: $(VENV)/bin/activate
 	$(PYTEST) -n auto
+
+# Только сквозные сценарии (backend/tests/e2e): настоящее приложение через
+# HTTP, от загрузки DXF до выгрузки DXF и пояснительной записки.
+test-e2e: $(VENV)/bin/activate
+	$(PYTEST) -n auto -m e2e
 
 test-cov: $(VENV)/bin/activate
 	$(PYTEST) -n auto --cov --cov-report=term-missing --cov-report=html

@@ -23,7 +23,7 @@ placement_rules:
       боярышника) для ландшафтных композиций допускается на расстоянии не
       менее 2 м от площадок и пешеходных коммуникаций.
     in_code: >-
-      backend/setback_norms.py::SPECIES_SETBACK_RULES (THORNY_GENERA) -- 2 м
+      backend/core/setback_norms.py::SPECIES_SETBACK_RULES (THORNY_GENERA) -- 2 м
       от pedestrian_path и playground_zone, для дерева и куста. Шиповник
       добавлен как та же роза.
 

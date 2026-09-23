@@ -19,7 +19,7 @@ Connection → реестр". Без шагов ниже джоба `deploy-back
 нужно). Без:
 
 - **MongoDB/Redis** — `/api/auth/*` и `/api/projects/*` ответят понятной
-  503-ошибкой (см. `backend/db.py`/`backend/cache.py`), а сам редактор
+  503-ошибкой (см. `backend/storage/db.py`/`backend/storage/cache.py`), а сам редактор
   (парсинг DXF, генерация, правка текстом, GreenPlan) от них не зависит и
   работает как обычно — это штатное поведение, не поломка деплоя.
 - **Ollama/Mistral** — `POST /api/greenplan/report` ответит `report_error`

@@ -1,10 +1,10 @@
-// Аккаунты: логин/пароль, без подтверждения почты (backend/auth.py,
-// backend/projects.py). Гостевой режим — это просто отсутствие сессии:
+// Аккаунты: логин/пароль, без подтверждения почты (backend/accounts/auth.py,
+// backend/accounts/projects.py). Гостевой режим — это просто отсутствие сессии:
 // редактор (загрузка DXF, генерация, правка текстом) им не интересуется,
 // им пользуются только запросы к /api/projects (см. api.ts).
 //
 // Access + refresh, а не один токен: access живёт недолго (см.
-// ACCESS_TOKEN_LIFETIME_MS, держится в паре с backend/auth.py::
+// ACCESS_TOKEN_LIFETIME_MS, держится в паре с backend/accounts/auth.py::
 // ACCESS_TOKEN_TTL_SECONDS) и идёт в заголовке каждого запроса; в
 // localStorage переживает перезагрузку страницы только refresh-токен —
 // именно по нему при необходимости молча получается новый access, не
