@@ -233,6 +233,15 @@ def test_greenplan_generate_returns_full_deterministic_result(client):
     assert isinstance(body["assortment"], list)
 
 
+def test_greenplan_generate_plans_lawn_and_lists_it_in_square_metres(client):
+    body = client.post("/api/greenplan/generate", json=_parsed_scene(client)).json()
+    lawns = body["scene"]["lawns"]
+    assert lawns and all(a["area_sqm"] > 0 for a in lawns)
+    new_sqm = round(sum(a["area_sqm"] for a in lawns if a["status"] == "new"))
+    lawn_rows = [row for row in body["assortment"] if row["unit"] == "м²"]
+    assert lawn_rows == ([{"category": "газон", "species": "Газон обыкновенный", "count": new_sqm, "unit": "м²"}] if new_sqm else [])
+
+
 def test_greenplan_generate_rejects_k_out_of_range(client):
     scene = _parsed_scene(client)
     r = client.post("/api/greenplan/generate?k=0", json=scene)

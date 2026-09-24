@@ -33,6 +33,7 @@ import math
 from typing import Optional
 
 import ezdxf
+from ezdxf.lldxf import const
 
 from core.plant_catalog import CatalogItem, catalog_by_id
 from core.schemas import Scene, SceneObject
@@ -47,6 +48,8 @@ _ACI_BUILDING = 8  # серый
 _ACI_BOUNDARY = 7  # белый/чёрный, в зависимости от темы CAD
 _ACI_ENTRANCE = 5  # синий
 _ACI_DEFAULT_OBJECT = 3  # зелёный -- по умолчанию для растений; МАФ переопределяют ниже
+_ACI_LAWN = 82  # светло-зелёный -- заливка газона, отличается от зелёных контуров посадок
+LAWN_LAYER = "NEW_LAWN"
 _ACI_BY_OBJECT_TYPE = {
     "lamp": 2,
     "bench": 42,
@@ -246,6 +249,26 @@ def _write_curbs(doc, msp, polylines: list, layer_name: str, color: int) -> None
         msp.add_lwpolyline(points, close=False, dxfattribs={"layer": layer_name})
 
 
+def _write_lawns(doc, msp, scene: Scene) -> None:
+    """Новый газон GreenPlan -- сплошной заливкой (HATCH) на слое NEW_LAWN,
+    клумбы внутри -- дырками той же заливки. Существующий газон уже записан
+    своей зоной (_write_zones). Слой содержит подстроку LAWN, поэтому при
+    повторной загрузке парсер прочитает его как разрешённую зону газона --
+    вместе с клумбами (парсер объединяет все контуры заливки, дыры не
+    различает). Это безвредно: разрешённая зона -- "здесь можно озеленять",
+    а сами кусты загрузятся точками, и повторный GreenPlan снова вычтет их
+    клумбы из газона."""
+    lawns = [a for a in scene.lawns if a.status == "new"]
+    if not lawns:
+        return
+    _ensure_layer(doc, LAWN_LAYER, _ACI_LAWN)
+    for lawn in lawns:
+        hatch = msp.add_hatch(color=_ACI_LAWN, dxfattribs={"layer": LAWN_LAYER})
+        hatch.paths.add_polyline_path([(p.x, p.z) for p in lawn.polygon], is_closed=True, flags=const.BOUNDARY_PATH_EXTERNAL)
+        for hole in lawn.holes:
+            hatch.paths.add_polyline_path([(p.x, p.z) for p in hole], is_closed=True, flags=const.BOUNDARY_PATH_OUTERMOST)
+
+
 def scene_to_dxf(scene: Scene) -> ezdxf.document.Drawing:
     """JSON-сцена -> открытый ezdxf-документ, готовый к doc.write(...)."""
     doc = ezdxf.new(DXF_VERSION, setup=False)
@@ -265,6 +288,7 @@ def scene_to_dxf(scene: Scene) -> ezdxf.document.Drawing:
             continue  # уже записаны выше своей геометрией
         _write_point_object(doc, msp, obj, catalog)
 
+    _write_lawns(doc, msp, scene)
     _write_facade(doc, msp, scene.windows, "WINDOWS", 5)
     _write_facade(doc, msp, scene.canopies, "CANOPIES", 6)
     _write_curbs(doc, msp, scene.curbs, "CURBS", 9)

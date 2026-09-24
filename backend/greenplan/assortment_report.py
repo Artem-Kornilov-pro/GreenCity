@@ -18,7 +18,7 @@ from collections import Counter
 from pydantic import BaseModel
 
 from core.plant_catalog import CatalogItem
-from core.schemas import SceneObject
+from core.schemas import LawnArea, SceneObject
 
 CATEGORY_LABELS: dict[str, str] = {
     "tree": "дерево",
@@ -30,6 +30,9 @@ class AssortmentRow(BaseModel):
     category: str
     species: str
     count: int
+    # "шт." у деревьев и кустарников, "м²" у газона (ведомость по форме 9
+    # ГОСТ 21.508 так и считает газон -- площадью).
+    unit: str = "шт."
 
 
 def summarize_assortment(objects: list[SceneObject], catalog: dict[str, CatalogItem]) -> list[AssortmentRow]:
@@ -51,3 +54,13 @@ def summarize_assortment(objects: list[SceneObject], catalog: dict[str, CatalogI
     rows = [AssortmentRow(category=category, species=species, count=count) for (category, species), count in counts.items()]
     rows.sort(key=lambda r: (r.category, -r.count))
     return rows
+
+
+def lawn_assortment(lawns: list[LawnArea]) -> list[AssortmentRow]:
+    """Строка ведомости для газона: только новый газон (устройство на
+    открытой земле) -- существующий сохраняется и в объём работ не входит."""
+    new_area = round(sum(a.area_sqm for a in lawns if a.status == "new"))
+    if new_area <= 0:
+        return []
+    kind = next((a.kind for a in lawns if a.status == "new"), "Газон обыкновенный")
+    return [AssortmentRow(category="газон", species=kind, count=new_area, unit="м²")]

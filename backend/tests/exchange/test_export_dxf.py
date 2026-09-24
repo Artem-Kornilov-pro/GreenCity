@@ -392,3 +392,39 @@ def test_round_trip_does_not_explode_restriction_zone_count(location_scene, n):
     reparsed = parse_dxf_doc(reopened, scale=1.0, center=False)
 
     assert len(reparsed["restrictions"]) <= 3 * len(full_scene.restrictions) + 5
+
+
+# --- газон: новый -- заливкой на NEW_LAWN, существующий не дублируется --------
+
+
+def _lawn_scene():
+    from core.schemas import LawnArea
+    from helpers import rect_points
+
+    new = LawnArea(
+        id="lawn_new_001", polygon=rect_points(0, 0, 20, 10), holes=[rect_points(5, 3, 7, 5)], area_sqm=196, status="new",
+    )
+    existing = LawnArea(id="lawn_existing_001", polygon=rect_points(-20, 0, -10, 10), area_sqm=100, status="existing")
+    scene = make_scene()
+    scene.lawns = [new, existing]
+    return scene
+
+
+def test_new_lawn_is_written_as_hatch_with_holes():
+    doc = ed.scene_to_dxf(_lawn_scene())
+    hatches = list(doc.modelspace().query(f'HATCH[layer=="{ed.LAWN_LAYER}"]'))
+    assert len(hatches) == 1  # существующий газон -- не новая работа
+    assert len(hatches[0].paths) == 2  # контур + клумба-дырка
+
+
+def test_new_lawn_is_read_back_as_allowed_lawn_zone():
+    buf = io.StringIO()
+    ed.scene_to_dxf(_lawn_scene()).write(buf)
+    reparsed = parse_dxf_doc(ezdxf.read(io.StringIO(buf.getvalue())), scale=1.0, center=False)
+    lawn_zones = [z for z in reparsed["restrictions"] if ed.LAWN_LAYER in z["name"]]
+    assert [z["severity"] for z in lawn_zones] == ["allowed"]
+
+
+def test_scene_without_lawn_has_no_lawn_layer():
+    doc = ed.scene_to_dxf(make_scene())
+    assert ed.LAWN_LAYER not in doc.layers
