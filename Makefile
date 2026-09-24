@@ -8,7 +8,7 @@ OUT      ?= output
 CATEGORY ?= tree
 
 .PHONY: help venv backend frontend-install frontend frontend-build parse clean \
-        lint lint-py lint-web lint-fix models test test-e2e test-cov \
+        lint lint-py lint-web lint-fix models test test-e2e test-cov corpus-features \
         docker-build docker-up docker-down docker-logs
 
 help:
@@ -21,6 +21,7 @@ help:
 	@echo "make test              - юнит-тесты backend/ и parser/ (pytest, без сети/докера)"
 	@echo "make test-e2e          - только сквозные сценарии (tests/e2e: DXF -> GreenPlan -> записка -> DXF)"
 	@echo "make test-cov          - то же самое + отчёт о покрытии (terminal + htmlcov/)"
+	@echo "make corpus-features   - пересчитать data/pattern_corpus_features.json (после правки DXF корпуса)"
 	@echo "make lint              - прогнать все линтеры (Python + фронтенд)"
 	@echo "make lint-py           - только Python (ruff, конфиг в pyproject.toml)"
 	@echo "make lint-web          - только фронтенд (oxlint, конфиг .oxlintrc.json)"
@@ -73,6 +74,9 @@ test: $(VENV)/bin/activate
 # HTTP, от загрузки DXF до выгрузки DXF и пояснительной записки.
 test-e2e: $(VENV)/bin/activate
 	$(PYTEST) -n auto -m e2e
+
+corpus-features: $(VENV)/bin/activate
+	cd backend && $(PYTHON) -m greenplan.pattern_corpus
 
 test-cov: $(VENV)/bin/activate
 	$(PYTEST) -n auto --cov --cov-report=term-missing --cov-report=html

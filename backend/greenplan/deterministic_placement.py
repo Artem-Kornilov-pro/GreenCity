@@ -37,6 +37,8 @@ setback_norms.py: липе 10 м от здания и т.п.), а не пост�
 
 from __future__ import annotations
 
+import logging
+
 from shapely.geometry import Polygon
 
 from core.placement import Placer
@@ -59,6 +61,8 @@ from greenplan.pattern_library import PATTERN_LIBRARY, PatternSpec
 from greenplan.site_characterization import characterize_site, usable_planting_area
 from greenplan.species_selection import SiteContext, SpeciesPalette, select_species
 from greenplan.zone_partitioning import GeometricZone, partition_zones
+
+log = logging.getLogger("greencity.greenplan")
 
 # Шаг ряда кустов вдоль линейного паттерна и во сколько раз реже вдоль той же
 # линии идут деревья -- по реальному соотношению из 02_peschany_pereulok
@@ -110,6 +114,12 @@ CLUSTER_MEMBER_SPACING_M = 2.0
 # квадратный метр гигантской территории.
 MAX_OBJECTS_PER_ZONE = 400
 MAX_GROUPS_PER_ZONE = 60
+
+# Верхняя граница новой посадки на ВЕСЬ участок: потолок на зону не спасает,
+# когда зон сотни (05_klykova_avenue, 815 зон -- 54 тыс. объектов; газон,
+# проверка норм, браузер и DXF на таком объёме тормозили). Для сравнения: в
+# реальном проекте 02_peschany_pereulok на 48 га -- ~2,5 тыс. посадок.
+MAX_NEW_OBJECTS_PER_SITE = 10_000
 
 
 def _polygon_of(zone: GeometricZone) -> Polygon:
@@ -232,6 +242,16 @@ def _place_linear(
         return []
     offsets = (0.0,) if spec.double_row_offset_m <= 0 else (0.0, spec.double_row_offset_m)
     tree_step = spec.tree_step_m if spec.tree_step_m is not None else LINEAR_BUSH_STEP_M * LINEAR_TREE_STEP_FACTOR
+    # Тот же потолок MAX_OBJECTS_PER_ZONE, что у площадной заливки, -- через
+    # шаг, а не обрезкой рядов: 10 рядов по многие сотни метров на
+    # гигантской open_area давали до 6000 кустов на ОДНУ зону (02_peschany:
+    # 54 тыс. новых объектов на участок -- тормозили браузер, газон, DXF).
+    # Обрезка оставила бы засаженными только первые ряды; больший шаг
+    # сохраняет все ряды по всей зоне. Узкие полосы (изгородь вдоль дорожки)
+    # в потолок укладываются и остаются с шагом 1.4 м.
+    total_length = sum(line.length for line in row_lines)
+    tree_step = max(tree_step, total_length / MAX_OBJECTS_PER_ZONE)
+    bush_step = max(LINEAR_BUSH_STEP_M, total_length * len(offsets) / MAX_OBJECTS_PER_ZONE)
     objects: list[SceneObject] = []
     bush_counter, tree_counter = [0], [0]
     for row_centerline in row_lines:
@@ -253,7 +273,7 @@ def _place_linear(
             # стволов, без кустарникового яруса под кроной по смыслу паттерна.
             if not spec.trees_only:
                 for row_offset in offsets:
-                    objects += _place_row(placer, zone, assignment, bushes, "bush", LINEAR_BUSH_STEP_M, row_offset, line, bush_counter)
+                    objects += _place_row(placer, zone, assignment, bushes, "bush", bush_step, row_offset, line, bush_counter)
     return objects
 
 
@@ -406,7 +426,20 @@ def generate_for_scene(
                 }
             )
         )
-    return objects, placed_assignments
+    return _thin_to_site_cap(objects), placed_assignments
+
+
+def _thin_to_site_cap(objects: list[SceneObject]) -> list[SceneObject]:
+    """Равномерное прореживание сверх MAX_NEW_OBJECTS_PER_SITE: каждый n-й
+    объект в порядке расстановки (зона за зоной, вдоль рядов), поэтому доля
+    каждой зоны и соотношение деревьев и кустов сохраняются, а ряды
+    становятся реже, но не обрываются. Удаление посадки не может создать
+    нарушение отступов -- повторная проверка не нужна."""
+    if len(objects) <= MAX_NEW_OBJECTS_PER_SITE:
+        return objects
+    step = len(objects) / MAX_NEW_OBJECTS_PER_SITE
+    log.info("GreenPlan: %d новых объектов > %d на участок -- прорежено", len(objects), MAX_NEW_OBJECTS_PER_SITE)
+    return [objects[int(i * step)] for i in range(MAX_NEW_OBJECTS_PER_SITE)]
 
 
 def _site_key(scene: Scene) -> str:

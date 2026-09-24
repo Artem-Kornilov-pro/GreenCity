@@ -90,30 +90,13 @@ async def lifespan(app: FastAPI):
     # Индексы MongoDB создаются здесь, а не при импорте db.py: у асинхронного
     # клиента нет операций до работающего event loop (см. db.ensure_indexes).
     await db.ensure_indexes()
-    # Прогрев retrieval-корпуса GreenPlan (backend/greenplan/pattern_corpus.py) --
-    # первый вызов corpus_characteristics() парсит уже 14 реальных DXF (было
-    # 9 -- 5 добавлены из new-convert, среди них файлы на единицы мегабайт),
-    # а @lru_cache сам по себе не защищает от того, что НЕСКОЛЬКО первых
-    # одновременных запросов к /api/greenplan/generate до прогрева каждый
-    # начнут парсить все 14 файлов заново, не дожидаясь друг друга --
-    # реальный вклад в нестабильность под нагрузкой сразу после старта
-    # контейнера.
-    #
-    # ВАЖНО: create_task, а не await -- на 14 файлах прогрев занял ~15.5с на
-    # обычной машине разработчика (было ~7с на 9), а на CI-раннере (2 vCPU,
-    # ещё и делит его с mongo/redis, поднимающимися в то же время) вышел за
-    # бюджет healthcheck (start_period 10с + retries 5 x interval 10с = 60с)
-    # -- реальный сбой docker-build в CI после того, как корпус вырос до 14:
-    # `await` здесь блокировал ВЕСЬ `yield`, то есть GET /api/health не
-    # отвечал вообще, пока прогрев не закончится, и compose помечал
-    # контейнер unhealthy раньше, чем FastAPI успевал начать отвечать.
-    # create_task запускает прогрев в фоне и сразу отдаёт yield -- health
-    # отвечает немедленно, а cold-start thundering herd (ради которого
-    # прогрев вообще нужен) остаётся только на первые секунды после старта,
-    # не на всё время, пока контейнер считается живым.
-    # Ссылка на task сохраняется на app.state -- иначе не привязанный ни к
-    # чему Task рискует быть собран сборщиком мусора до завершения (известная
-    # ловушка asyncio.create_task без сохранённой ссылки).
+    # Прогрев retrieval-корпуса GreenPlan (greenplan/pattern_corpus.py):
+    # признаки проектов читаются из data/pattern_corpus_features.json и
+    # сверяются по sha256 с их DXF -- доли секунды. Если файл устарел,
+    # устаревшие проекты считаются по DXF (секунды на проект) -- поэтому всё
+    # равно в фоне (create_task, не await): /api/health должен отвечать сразу,
+    # иначе compose пометит контейнер unhealthy. Ссылка на task -- на
+    # app.state, чтобы сборщик мусора не снял его до завершения.
     app.state.corpus_warmup_task = asyncio.create_task(asyncio.to_thread(pattern_corpus.corpus_characteristics))
     yield
 

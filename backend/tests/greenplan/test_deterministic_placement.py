@@ -11,12 +11,14 @@
 import math
 from collections import Counter
 
+import pytest
 from shapely.geometry import Point, Polygon
 from shapely.strtree import STRtree
 
 from core.placement import OBJECT_CLEARANCE_M, POINT_CLEARANCE_M, Placer
 from core.schemas import Point2
 from core.setback_norms import MAX_SETBACK_M, setback_for
+from greenplan import deterministic_placement
 from greenplan.deterministic_placement import (
     MAX_GROUPS_PER_ZONE,
     MAX_OBJECTS_PER_ZONE,
@@ -224,6 +226,35 @@ def test_place_clustered_caps_group_count_on_a_huge_zone(catalog):
     )
     objects = _place_clustered(placer, zone, spec, assignment, trees, bushes)
     assert len(objects) <= MAX_GROUPS_PER_ZONE * spec.group_size[1]
+
+
+def test_place_linear_caps_object_count_on_a_huge_zone_by_stretching_the_step(catalog):
+    # 02_peschany_pereulok: 10 рядов flowing_rows по сотни метров давали до
+    # 6000 кустов на одну зону. Потолок -- как у заливки, но ряды остаются
+    # по всей ширине зоны (реже), а не обрываются после первых.
+    trees, bushes = _trees_and_bushes(catalog)
+    zone = _huge_square_zone("open_area")
+    placer = Placer(_huge_scene())
+    spec = PATTERN_LIBRARY["flowing_rows"]
+    assignment = ZoneAssignment(
+        zone_id=zone.id, zone_kind="open_area", pattern_id="flowing_rows",
+        source_project=None, source_quote=None, confidence=0.0,
+    )
+    objects = _place_linear(placer, zone, spec, assignment, trees, bushes)
+    assert sum(1 for o in objects if o.type == "bush") <= MAX_OBJECTS_PER_ZONE
+    assert sum(1 for o in objects if o.type == "tree") <= MAX_OBJECTS_PER_ZONE
+    zs = [o.position.z for o in objects]
+    assert max(zs) - min(zs) > 0.8 * math.sqrt(zone.area_sqm)  # засажена вся ширина
+
+
+def test_site_cap_thins_evenly_and_keeps_zone_shares(monkeypatch):
+    monkeypatch.setattr(deterministic_placement, "MAX_NEW_OBJECTS_PER_SITE", 100)
+    objects = [make_object(f"o{i}", "bush" if i % 4 else "tree", i, 0, metadata={"zone_id": f"z{i // 300}"}) for i in range(900)]
+    kept = deterministic_placement._thin_to_site_cap(objects)
+    assert len(kept) == 100
+    assert Counter(o.metadata["zone_id"] for o in kept) == pytest.approx({"z0": 33, "z1": 33, "z2": 34}, abs=1)
+    assert Counter(o.type for o in kept)["tree"] == 25
+    assert deterministic_placement._thin_to_site_cap(objects[:50]) == objects[:50]
 
 
 # --- Разнообразие линейных паттернов (issue "не только прямые засадки") -----

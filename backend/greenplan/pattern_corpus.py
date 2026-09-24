@@ -30,6 +30,9 @@ retrieval сравнивает по геометрии сайта, а не по 
 
 from __future__ import annotations
 
+import hashlib
+import json
+import logging
 from functools import lru_cache
 
 import yaml
@@ -74,6 +77,15 @@ CORPUS_SLUGS = (
 )
 
 _CORPUS_YAML = DATA_DIR / "pattern_corpus.yaml"
+# Признаки участков корпуса, посчитанные заранее (python -m
+# greenplan.pattern_corpus). Без файла первый запрос GreenPlan разбирал все
+# 24 DXF корпуса -- ~25 секунд на каждый новый процесс, и ещё раз на каждый
+# параллельный запрос, пришедший до конца прогрева (lru_cache не ждёт уже
+# идущее вычисление). Рядом с признаками -- sha256 исходного DXF: изменился
+# файл проекта -- признаки этого проекта пересчитываются на лету.
+FEATURES_JSON = DATA_DIR / "pattern_corpus_features.json"
+
+log = logging.getLogger("greencity.greenplan")
 
 
 class PatternRecord(BaseModel):
@@ -98,13 +110,48 @@ def _corpus_scenes() -> dict[str, Scene]:
     гонять парсинг на каждый вызов retrieval было бы расточительно."""
     scenes = {}
     for slug in CORPUS_SLUGS:
-        dxf_path = LOCATIONS_DIR / slug / f"{slug}.dxf"
-        scenes[slug] = Scene.model_validate(parse_dxf_file(str(dxf_path)))
+        scenes[slug] = Scene.model_validate(parse_dxf_file(str(_dxf_path(slug))))
     return scenes
+
+
+def _dxf_path(slug: str):
+    return LOCATIONS_DIR / slug / f"{slug}.dxf"
+
+
+def _dxf_sha256(slug: str) -> str:
+    return hashlib.sha256(_dxf_path(slug).read_bytes()).hexdigest()
+
+
+def compute_features() -> dict[str, dict]:
+    """Содержимое FEATURES_JSON: признаки каждого проекта корпуса по его DXF."""
+    return {
+        slug: {"dxf_sha256": _dxf_sha256(slug), "characteristics": characterize_site(scene).model_dump(mode="json")}
+        for slug, scene in _corpus_scenes().items()
+    }
+
+
+def write_features() -> None:
+    FEATURES_JSON.write_text(json.dumps(compute_features(), ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
 
 
 @lru_cache(maxsize=1)
 def corpus_characteristics() -> dict[str, SiteCharacteristics]:
     """slug -> SiteCharacteristics его реального DXF -- вектор для
-    pattern_retrieval.nearest_projects()."""
-    return {slug: characterize_site(scene) for slug, scene in _corpus_scenes().items()}
+    pattern_retrieval.nearest_projects(). Из FEATURES_JSON; проект, которого
+    там нет или чей DXF изменился, считается по DXF (и об этом пишется в лог:
+    файл признаков пора обновить)."""
+    stored = json.loads(FEATURES_JSON.read_text(encoding="utf-8")) if FEATURES_JSON.exists() else {}
+    result = {}
+    for slug in CORPUS_SLUGS:
+        entry = stored.get(slug)
+        if entry and entry["dxf_sha256"] == _dxf_sha256(slug):
+            result[slug] = SiteCharacteristics.model_validate(entry["characteristics"])
+        else:
+            log.warning("признаки проекта корпуса %s устарели -- считаю по DXF; обновите: make corpus-features", slug)
+            result[slug] = characterize_site(Scene.model_validate(parse_dxf_file(str(_dxf_path(slug)))))
+    return result
+
+
+if __name__ == "__main__":
+    write_features()
+    print(f"{FEATURES_JSON}: {len(CORPUS_SLUGS)} проектов")
