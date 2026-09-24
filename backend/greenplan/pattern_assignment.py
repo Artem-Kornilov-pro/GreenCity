@@ -6,9 +6,11 @@
 (Ollama) ещё не подключена нигде в проекте, это отдельная задача. Вместо неё
 голос ближайших соседей retrieval-корпуса (pattern_retrieval.nearest_projects)
 взвешенный их сходством и есть правило ранжирования: чем более похож
-прошлый проект, тем больше у его выбора вес.
+прошлый проект, тем больше у его выбора вес. Для каждого вида зоны голосуют
+k самых похожих проектов, у которых есть решение для этого вида, а зоны
+вида делятся между их паттернами пропорционально весу голосов (по площади).
 
-Если НИ ОДИН из k ближайших соседей не использовал этот вид зоны ни разу
+Если НИ ОДИН похожий проект не использовал этот вид зоны ни разу
 (zone.kind просто не встретился ни в одном похожем проекте) -- берётся
 паттерн по умолчанию из pattern_library.DEFAULT_PATTERN_BY_ZONE_KIND, а не
 молчаливая выдумка: у такого назначения confidence=0.0 и source_project=None,
@@ -22,9 +24,9 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 from core.schemas import Scene
-from greenplan.pattern_corpus import load_pattern_log
+from greenplan.pattern_corpus import CORPUS_SLUGS, PatternRecord, load_pattern_log
 from greenplan.pattern_library import DEFAULT_PATTERN_BY_ZONE_KIND, PATTERN_LIBRARY
-from greenplan.pattern_retrieval import nearest_projects
+from greenplan.pattern_retrieval import NeighborMatch, nearest_projects
 from greenplan.site_characterization import SiteCharacteristics, characterize_site
 from greenplan.zone_partitioning import GeometricZone, ZoneKind
 
@@ -82,46 +84,75 @@ def assign_patterns(
         # defensive: без границы честный ответ -- запасной паттерн для всех.
         return [_fallback(zone) for zone in zones]
 
-    neighbors = nearest_projects(characteristics, k)
+    ranked = nearest_projects(characteristics, len(CORPUS_SLUGS))
     pattern_log = load_pattern_log()
 
-    assignments: list[ZoneAssignment] = []
-    for zone in zones:
-        votes: list[tuple[str, float, str, str]] = []  # (pattern_id, similarity, slug, quote)
-        for neighbor in neighbors:
-            record = pattern_log.get(neighbor.slug, {}).get(zone.kind)
-            if record is None:
-                continue
-            # Защита от рассинхронизации data/pattern_corpus.yaml и
-            # pattern_library.py: паттерн, семантически не подходящий этому
-            # виду зоны, в голосовании не участвует, даже если в корпусе
-            # вдруг оказалась такая запись.
-            if zone.kind not in PATTERN_LIBRARY[record.pattern].zone_kinds:
-                continue
-            votes.append((record.pattern, neighbor.similarity, neighbor.slug, record.source_quote))
-
-        if not votes:
-            assignments.append(_fallback(zone))
+    chosen: dict[str, ZoneAssignment] = {}
+    for kind in dict.fromkeys(zone.kind for zone in zones):
+        of_kind = [zone for zone in zones if zone.kind == kind]
+        voters = _voters(kind, ranked, pattern_log, k)
+        if not voters:
+            for zone in of_kind:
+                chosen[zone.id] = _fallback(zone)
             continue
 
-        weight_by_pattern: dict[str, float] = {}
-        for pattern_id, similarity, _, _ in votes:
-            weight_by_pattern[pattern_id] = weight_by_pattern.get(pattern_id, 0.0) + similarity
-        winner = max(weight_by_pattern, key=lambda p: weight_by_pattern[p])
+        weight: dict[str, float] = {}
+        for neighbor, record in voters:
+            weight[record.pattern] = weight.get(record.pattern, 0.0) + neighbor.similarity
+        total_weight = sum(weight.values())
 
-        winner_votes = [v for v in votes if v[0] == winner]
-        # Источник для отчёта -- сосед, отдавший голос за победивший паттерн
-        # и наиболее похожий на новый участок среди них.
-        best = max(winner_votes, key=lambda v: v[1])
-        assignments.append(
-            ZoneAssignment(
+        # Зоны раздаются между паттернами соседей по площади, пропорционально
+        # весу голосов: крупнейшие зоны первыми, каждая -- паттерну, сильнее
+        # всех недобравшему свою долю площади. Раньше все зоны вида получали
+        # один победивший паттерн, и участок целиком заливался одним приёмом
+        # (типичный двор -- сплошь волнами 10_stary_gay).
+        assigned_area = dict.fromkeys(weight, 0.0)
+        for zone in sorted(of_kind, key=lambda z: -z.area_sqm):
+            area_after = sum(assigned_area.values()) + zone.area_sqm
+            pattern = max(
+                weight,
+                key=lambda p: (weight[p] / total_weight * area_after - assigned_area[p], weight[p]),
+            )
+            assigned_area[pattern] += zone.area_sqm
+            backers = [(n, r) for n, r in voters if r.pattern == pattern]
+            best_neighbor, best_record = max(backers, key=lambda v: v[0].similarity)
+            chosen[zone.id] = ZoneAssignment(
                 zone_id=zone.id,
                 zone_kind=zone.kind,
                 zone_area_sqm=zone.area_sqm,
-                pattern_id=winner,
-                source_project=best[2],
-                source_quote=best[3],
-                confidence=len(winner_votes) / len(neighbors),
+                pattern_id=pattern,
+                source_project=best_neighbor.slug,
+                source_quote=best_record.source_quote,
+                confidence=len(backers) / len(voters),
             )
-        )
-    return assignments
+    return [chosen[zone.id] for zone in zones]
+
+
+def _voters(
+    kind: ZoneKind,
+    ranked: list[NeighborMatch],
+    pattern_log: dict[str, dict[ZoneKind, PatternRecord]],
+    k: int,
+) -> list[tuple[NeighborMatch, PatternRecord]]:
+    """k самых похожих проектов, у которых есть решение для зоны этого вида.
+    Раньше брались k ближайших вообще, и проект без записи для вида (например
+    02_peschany_pereulok без open_area) просто занимал место соседа -- за
+    open_area типичного двора голосовал один 10_stary_gay, и волны выигрывали
+    без конкуренции. Проекты с неположительным сходством не голосуют: это не
+    похожий участок, а противоположный."""
+    voters: list[tuple[NeighborMatch, PatternRecord]] = []
+    if k <= 0:
+        return voters
+    for neighbor in ranked:
+        if neighbor.similarity <= 0:
+            break
+        record = pattern_log.get(neighbor.slug, {}).get(kind)
+        # Защита от рассинхронизации data/pattern_corpus.yaml и
+        # pattern_library.py: паттерн, семантически не подходящий этому виду
+        # зоны, в голосовании не участвует.
+        if record is None or kind not in PATTERN_LIBRARY[record.pattern].zone_kinds:
+            continue
+        voters.append((neighbor, record))
+        if len(voters) == k:
+            break
+    return voters
