@@ -57,7 +57,7 @@ tasks:
   - name: lint-frontend-task
     cubes:
       - name: lint-frontend
-        image: docker.io/library/node:20-alpine
+        image: docker.io/library/node:24-alpine
         script:
           - cd frontend && npm ci && npx oxlint --deny-warnings && npx tsc -b --noEmit
 

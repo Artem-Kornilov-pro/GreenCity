@@ -1,7 +1,7 @@
 # Dev-режим (vite dev server), не production-сборка -- на этапе хакатона
 # удобнее видеть правки сразу, а не пересобирать образ на каждый чих.
 # docker-compose.yml монтирует ./frontend поверх /app для hot-reload.
-FROM node:20-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 

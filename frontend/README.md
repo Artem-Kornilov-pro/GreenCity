@@ -6,6 +6,8 @@ React 19 + TypeScript + Vite, 3D-сцена на react-three-fiber. Общая
 
 ## Команды
 
+Нужен Node.js 24 (LTS) — та же версия, что в CI и `frontend/Dockerfile`.
+
 ```bash
 npm install
 npm run dev              # dev-сервер на http://localhost:5173 (бэкенд -- http://localhost:8000)
