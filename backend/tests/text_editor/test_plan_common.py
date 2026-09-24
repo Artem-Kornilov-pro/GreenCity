@@ -15,14 +15,12 @@ from text_editor.plan_common import (
     _pool_kind,
     _spacing_for,
 )
-from text_editor.prompt import (
-    _editable_types,
-    _pack_substitutes,
-)
+from text_editor.prompt import _editable_types
 from text_editor.service import LlmPlan, apply_plan
 
 CATALOG = load_catalog()
 BY_ID = catalog_by_id()
+TREE_ID = "species_lipa_melkolistnaya"
 
 
 @pytest.fixture
@@ -87,7 +85,7 @@ def test_plural_russian_pluralization_rules():
 
 
 def test_labels_joins_with_semicolons_and_truncates_after_three():
-    items = [BY_ID["bush_medium"], BY_ID["bush_tall"], BY_ID["bush_short"], BY_ID["tree_medium"]]
+    items = [BY_ID["bush_medium"], BY_ID["bush_tall"], BY_ID["bush_short"], BY_ID[TREE_ID]]
     label = _labels(items)
     assert "и ещё 1" in label
     assert label.count(";") == 2
@@ -99,7 +97,7 @@ def test_labels_no_truncation_for_three_or_fewer():
 
 
 def test_pool_kind_prefers_tree_over_bush():
-    assert _pool_kind([BY_ID["bush_medium"], BY_ID["tree_medium"]]) == "tree"
+    assert _pool_kind([BY_ID["bush_medium"], BY_ID[TREE_ID]]) == "tree"
 
 
 def test_pool_kind_bush_when_no_tree_present():
@@ -111,7 +109,7 @@ def test_pool_kind_none_for_furniture_only():
 
 
 def test_default_spacing_tree_scales_with_crown_radius():
-    assert _default_spacing(BY_ID["tree_tall"]) == max(5.0, 2 * BY_ID["tree_tall"].dimensions.radius + 2.0)
+    assert _default_spacing(BY_ID[TREE_ID]) == max(5.0, 2 * BY_ID[TREE_ID].dimensions.radius + 2.0)
 
 
 def test_default_spacing_furniture_uses_fixed_table():
@@ -141,7 +139,7 @@ def test_spacing_for_clamps_to_allowed_range():
 
 
 def test_half_depth_prefers_radius_then_depth_then_default():
-    assert _half_depth(BY_ID["tree_medium"]) == BY_ID["tree_medium"].dimensions.radius
+    assert _half_depth(BY_ID[TREE_ID]) == BY_ID[TREE_ID].dimensions.radius
     assert _half_depth(BY_ID["hedge_segment"]) == BY_ID["hedge_segment"].dimensions.depth / 2
     bare = CatalogItem(
         id="bare", category="furniture", label="bare", object_type="bare", model="/x.glb",
@@ -152,7 +150,7 @@ def test_half_depth_prefers_radius_then_depth_then_default():
 
 def test_is_oriented_true_for_width_based_items_false_for_round():
     assert _is_oriented(BY_ID["hedge_segment"]) is True
-    assert _is_oriented(BY_ID["tree_medium"]) is False
+    assert _is_oriented(BY_ID[TREE_ID]) is False
 
 
 def test_editable_types_covers_every_catalog_object_type():
@@ -160,32 +158,3 @@ def test_editable_types_covers_every_catalog_object_type():
     assert "tree" in types
     assert "bench" in types
     assert "building" not in types  # здания не в каталоге посадок/МАФ
-
-
-def test_pack_substitutes_empty_without_a_generated_pack():
-    from core.plant_catalog import CATALOG as BASE_CATALOG
-
-    assert _pack_substitutes(BASE_CATALOG) == {}
-
-
-def _fake_pack_item(id: str, size_class: str, crown_class: str) -> CatalogItem:
-    return CatalogItem(
-        id=id, category="tree", label=id, size_class=size_class, crown_class=crown_class,
-        setback_kind="tree", object_type="tree", model=f"/models/{id}.glb",
-        dimensions=CatalogItemDimensions(height=3.0, radius=1.0), render=CatalogItemRender(shape="cluster", color="#2e7d3a"),
-    )
-
-
-def test_pack_substitutes_maps_base_trees_to_matching_pack_item():
-    # Пак не гарантированно подключён в окружении (catalog_generated.json
-    # генерируется отдельно, tools/convert_models.mjs, и не лежит в git --
-    # см. .gitignore) -- строим свой минимальный пак, а не полагаемся на
-    # файловую систему конкретной машины/CI.
-    from core.plant_catalog import CATALOG as BASE_CATALOG
-
-    pack_item = _fake_pack_item("pack_tree_1", size_class="medium", crown_class="regular")
-    fake_catalog = [*BASE_CATALOG, pack_item]
-    substitutes = _pack_substitutes(fake_catalog)
-    assert substitutes
-    for base_id, sub in substitutes.items():
-        assert sub.id not in {i.id for i in BASE_CATALOG if i.id == base_id}

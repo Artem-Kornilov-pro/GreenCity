@@ -53,7 +53,7 @@ from text_editor.operations import (
 from text_editor.ops_editing import EditingOpsMixin
 from text_editor.ops_placement import PlacementOpsMixin
 from text_editor.plan_common import GOLDEN_ANGLE_DEG, _is_oriented, _labels, _normalize
-from text_editor.prompt import _editable_types, _pack_substitutes
+from text_editor.prompt import _editable_types
 
 # Без этого лога причину сбоя правки текстом было не узнать: в логе доступа
 # uvicorn видна только строка "502 Bad Gateway".
@@ -65,8 +65,6 @@ class PlanApplier(PlacementOpsMixin, EditingOpsMixin):
         self.scene = scene
         self.catalog = catalog
         self.by_id = {item.id: item for item in catalog}
-        # Если модель всё же назовёт базовое дерево -- сажаем похожее из пака.
-        self.by_id.update(_pack_substitutes(catalog))
         self.editable = _editable_types(catalog)
         self.placer = placer
         self.objects = {o.id: o for o in scene.objects}

@@ -87,18 +87,12 @@ def test_inner_center_falls_back_to_representative_point_for_u_shape():
     assert u_shape.contains(Point(center[0], center[1]))
 
 
-def test_catalog_for_prompt_hides_base_trees_when_pack_is_available():
-    # Как и в _pack_substitutes выше -- пак не гарантирован в окружении
-    # (catalog_generated.json не в git), строим свой минимальный.
+def test_catalog_for_prompt_includes_pack_trees():
     from core.plant_catalog import CATALOG as BASE_CATALOG
 
     pack_item = _fake_pack_item("pack_tree_1", size_class="medium", crown_class="regular")
-    fake_catalog = [*BASE_CATALOG, pack_item]
-    rows = _catalog_for_prompt(fake_catalog)
-    ids_in_prompt = {row[0] for row in rows}
-    base_tree_ids = {item.id for item in BASE_CATALOG if item.category == "tree"}
-    assert base_tree_ids.isdisjoint(ids_in_prompt)  # пак подключён -- базовые деревья скрыты
-    assert "pack_tree_1" in ids_in_prompt
+    rows = _catalog_for_prompt([*BASE_CATALOG, pack_item])
+    assert "pack_tree_1" in {row[0] for row in rows}
 
 
 def test_catalog_for_prompt_keeps_base_non_tree_items():
@@ -130,17 +124,6 @@ def test_catalog_for_prompt_limits_pack_items_per_shape_class():
         if item.id not in base_ids:
             per_class[(item.category, item.size_class, item.crown_class)] += 1
     assert per_class[("tree", "medium", "regular")] == MAX_PACK_ITEMS_PER_SHAPE_CLASS
-
-
-def test_catalog_for_prompt_without_pack_shows_base_trees(monkeypatch):
-    from text_editor import prompt
-
-    monkeypatch.setattr(prompt, "_pack_substitutes", lambda catalog: {})
-    from core.plant_catalog import CATALOG as BASE_CATALOG
-
-    rows = _catalog_for_prompt(BASE_CATALOG)
-    ids_in_prompt = {row[0] for row in rows}
-    assert "tree_medium" in ids_in_prompt
 
 
 def test_build_context_is_valid_json_with_expected_top_level_keys(scene1):

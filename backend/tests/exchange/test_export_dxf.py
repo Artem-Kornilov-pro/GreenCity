@@ -265,10 +265,11 @@ def test_write_point_object_plain_tree_gets_point_and_circle_marker():
 def test_write_point_object_uses_catalog_radius_when_available():
     doc, msp = _doc_and_msp()
     catalog = catalog_by_id()
-    tree = make_object("t1", "tree", 0, 0, metadata={"catalogId": "tree_tall"})
+    # Радиус меньше потолка маркера (1.5 м в _write_point_object).
+    tree = make_object("t1", "tree", 0, 0, metadata={"catalogId": "species_klen_manchzhurskiy"})
     ed._write_point_object(doc, msp, tree, catalog)
     circle = next(iter(msp.query("CIRCLE")))
-    assert circle.dxf.radius == catalog["tree_tall"].dimensions.radius
+    assert circle.dxf.radius == catalog["species_klen_manchzhurskiy"].dimensions.radius
 
 
 def test_write_point_object_caps_marker_radius_at_1_5m():

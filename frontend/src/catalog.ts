@@ -79,7 +79,7 @@ export function editableTypesFrom(catalog: CatalogItem[]): Set<string> {
 // Дефолтная позиция в каталоге для объектов, пришедших из DXF или от
 // генератора -- у них нет metadata.catalogId, но нарисовать их надо.
 const DEFAULT_ITEM_BY_TYPE: Record<string, string> = {
-  tree: "tree_medium",
+  tree: "species_lipa_melkolistnaya",
   bush: "bush_medium",
   bench: "bench",
   lamp: "lamp",

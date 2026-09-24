@@ -11,6 +11,8 @@ from text_editor.service import LlmPlan, apply_plan
 
 CATALOG = load_catalog()
 BY_ID = catalog_by_id()
+TREE_ID = "species_lipa_melkolistnaya"
+OTHER_TREE_ID = "species_klen_ostrolistnyy"
 
 
 @pytest.fixture
@@ -94,7 +96,7 @@ def test_place_in_area_around_point(scene1):
 
 
 def test_place_in_area_spread_over_whole_site(scene1):
-    result = run(scene1, {"op": "place_in_area", "catalog_ids": ["tree_medium"], "count": 5})
+    result = run(scene1, {"op": "place_in_area", "catalog_ids": [TREE_ID], "count": 5})
     assert result.applied
 
 
@@ -103,7 +105,7 @@ def test_place_in_area_defaults_count_to_five_when_model_omits_it(scene1):
     разнообразие, без числа -- модель иногда пропускает count целиком, и
     раньше вся операция отклонялась с "count: Field required", хотя
     explanation модель всё равно писала так, будто посадка удалась."""
-    result = run(scene1, {"op": "place_in_area", "catalog_ids": ["tree_medium", "tree_tall"]})
+    result = run(scene1, {"op": "place_in_area", "catalog_ids": [TREE_ID, OTHER_TREE_ID]})
     assert not result.rejected
     new_trees = [o for o in result.scene.objects if o.metadata.get("source") == "llm"]
     assert 0 < len(new_trees) <= 5
@@ -133,14 +135,14 @@ def test_place_in_area_named_zone_keeps_full_crown_inside_not_just_center(scene1
     центром у самого края маленькой именованной зоны (define_zone или
     выделение мышкой -- сырой полигон без единого отступа, в отличие от
     free_areas) визуально вылезало за её границу."""
-    item = catalog_by_id()["tree_medium"]
+    item = catalog_by_id()[TREE_ID]
     crown_radius = item.dimensions.radius
     zone_center = Point(30.0, 0.0)
     zone_radius = 6.0
     result = run(
         scene1,
         {"op": "define_zone", "name": "Маленькая зона", "x": 30.0, "z": 0.0, "radius_m": zone_radius, "severity": "allowed"},
-        {"op": "place_in_area", "catalog_ids": ["tree_medium"], "count": 30, "area": "Маленькая зона"},
+        {"op": "place_in_area", "catalog_ids": [TREE_ID], "count": 30, "area": "Маленькая зона"},
     )
     zone_poly = zone_center.buffer(zone_radius)
     new_trees = [o for o in result.scene.objects if o.metadata.get("source") == "llm"]

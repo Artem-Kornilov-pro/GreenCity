@@ -76,35 +76,16 @@ def _editable_types(catalog: list[CatalogItem]) -> set[str]:
     return {item.object_type for item in catalog}
 
 
-def _pack_substitutes(catalog: list[CatalogItem]) -> dict[str, CatalogItem]:
-    """Базовое дерево-примитив -> модель из пака того же размера и кроны (или
-    любая из пака). Деревья сажаем только из пака; базовые -- крайний случай,
-    когда пак не сконвертирован. Пусто, если пака нет."""
-    base_ids = {item.id for item in BASE_CATALOG}
-    pack = [item for item in catalog if item.category == "tree" and item.id not in base_ids]
-    if not pack:
-        return {}
-    substitutes = {}
-    for item in catalog:
-        if item.category == "tree" and item.id in base_ids:
-            same = [p for p in pack if p.size_class == item.size_class and p.crown_class == item.crown_class]
-            substitutes[item.id] = (same or pack)[0]
-    return substitutes
-
-
 def _catalog_for_prompt(catalog: list[CatalogItem]) -> list[list]:
     """Каталог таблицей (строки-массивы, заголовок -- в catalog_columns), а не
     списком словарей: повторяющиеся ключи в 217 записях и были основным
     объёмом. Модели из пака -- выборкой по классу формы, в порядке файла, чтобы
     выборка была стабильной от запроса к запросу."""
     base_ids = {item.id for item in BASE_CATALOG}
-    hide_base_trees = bool(_pack_substitutes(catalog))
     per_class: dict[tuple, int] = {}
     rows: list[list] = []
     for item in catalog:
         is_base = item.id in base_ids
-        if is_base and item.category == "tree" and hide_base_trees:
-            continue
         if not is_base:
             key = (item.category, item.size_class, item.crown_class)
             if per_class.get(key, 0) >= MAX_PACK_ITEMS_PER_SHAPE_CLASS:

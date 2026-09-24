@@ -315,111 +315,6 @@
     }
   },
   {
-    "id": "spruce_1",
-    "category": "tree",
-    "label": "Ель (дерево, высокое, обычная крона, 7.32 м)",
-    "size_class": "tall",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/spruce_1.glb",
-    "dimensions": {
-      "height": 7.32,
-      "radius": 2.47,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "fir_1",
-    "category": "tree",
-    "label": "Пихта (дерево, высокое, обычная крона, 7.39 м)",
-    "size_class": "tall",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/fir_1.glb",
-    "dimensions": {
-      "height": 7.39,
-      "radius": 2,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "larch_1",
-    "category": "tree",
-    "label": "Лиственница (дерево, высокое, обычная крона, 8.72 м)",
-    "size_class": "tall",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/larch_1.glb",
-    "dimensions": {
-      "height": 8.72,
-      "radius": 3.21,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "columnartree_1",
-    "category": "tree",
-    "label": "Дерево колонновидное (дерево, среднее, колонновидное, 6.0 м)",
-    "size_class": "medium",
-    "crown_class": "columnar",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/columnartree_1.glb",
-    "dimensions": {
-      "height": 6,
-      "radius": 0.81,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "poplartree_1",
-    "category": "tree",
-    "label": "Тополь (дерево, высокое, колонновидное, 8.0 м)",
-    "size_class": "tall",
-    "crown_class": "columnar",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/poplartree_1.glb",
-    "dimensions": {
-      "height": 8,
-      "radius": 1.09,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
     "id": "thuja_1",
     "category": "tree",
     "label": "Туя (дерево, низкое, колонновидное, 2.0 м)",
@@ -431,27 +326,6 @@
     "dimensions": {
       "height": 2,
       "radius": 0.37,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "smallornamentaltree_1",
-    "category": "tree",
-    "label": "Малое декоративное дерево (дерево, среднее, раскидистое, 3.59 м)",
-    "size_class": "medium",
-    "crown_class": "spreading",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/smallornamentaltree_1.glb",
-    "dimensions": {
-      "height": 3.59,
-      "radius": 1.39,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -690,27 +564,6 @@
     "render": {
       "shape": "sphere",
       "color": "#4a9450"
-    }
-  },
-  {
-    "id": "weepingtree_1",
-    "category": "tree",
-    "label": "Плакучее дерево (архетип tree_weeping, заглушка)",
-    "size_class": "low",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/weepingtree_1.glb",
-    "dimensions": {
-      "height": 2.45,
-      "radius": 0.9,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
     }
   },
   {
@@ -1141,10 +994,10 @@
     "crown_class": "spreading",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/commontree_1.glb",
+    "model": "/models/dub.glb",
     "dimensions": {
-      "height": 2.73,
-      "radius": 1.53,
+      "height": 8.0,
+      "radius": 4.28,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -1162,10 +1015,10 @@
     "crown_class": "spreading",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/commontree_1.glb",
+    "model": "/models/dub.glb",
     "dimensions": {
-      "height": 2.73,
-      "radius": 1.53,
+      "height": 8.0,
+      "radius": 4.28,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -1183,10 +1036,10 @@
     "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/commontree_3.glb",
+    "model": "/models/grib-sr.glb",
     "dimensions": {
-      "height": 3.29,
-      "radius": 0.74,
+      "height": 5.0,
+      "radius": 1.91,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -1204,10 +1057,10 @@
     "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/commontree_3.glb",
+    "model": "/models/grib-sr.glb",
     "dimensions": {
-      "height": 3.29,
-      "radius": 0.74,
+      "height": 5.0,
+      "radius": 1.91,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -1225,10 +1078,10 @@
     "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/commontree_3.glb",
+    "model": "/models/grib-sr.glb",
     "dimensions": {
-      "height": 3.29,
-      "radius": 0.74,
+      "height": 5.0,
+      "radius": 1.91,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2296,10 +2149,10 @@
     "crown_class": "spreading",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/smallornamentaltree_1.glb",
+    "model": "/models/grib-sm.glb",
     "dimensions": {
-      "height": 4.85,
-      "radius": 1.88,
+      "height": 3.5,
+      "radius": 1.28,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2317,10 +2170,10 @@
     "crown_class": "spreading",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/smallornamentaltree_1.glb",
+    "model": "/models/grib-sm.glb",
     "dimensions": {
-      "height": 4.85,
-      "radius": 1.88,
+      "height": 3.5,
+      "radius": 1.28,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2338,10 +2191,10 @@
     "crown_class": "spreading",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/smallornamentaltree_1.glb",
+    "model": "/models/grib-sm.glb",
     "dimensions": {
-      "height": 4.85,
-      "radius": 1.88,
+      "height": 3.5,
+      "radius": 1.28,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2359,10 +2212,10 @@
     "crown_class": "spreading",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/smallornamentaltree_1.glb",
+    "model": "/models/grib-sm.glb",
     "dimensions": {
-      "height": 4.85,
-      "radius": 1.88,
+      "height": 3.5,
+      "radius": 1.28,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2380,10 +2233,10 @@
     "crown_class": "spreading",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/smallornamentaltree_1.glb",
+    "model": "/models/grib-sm.glb",
     "dimensions": {
-      "height": 4.85,
-      "radius": 1.88,
+      "height": 3.5,
+      "radius": 1.28,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2401,10 +2254,10 @@
     "crown_class": "spreading",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/smallornamentaltree_1.glb",
+    "model": "/models/grib-sm.glb",
     "dimensions": {
-      "height": 4.85,
-      "radius": 1.88,
+      "height": 3.5,
+      "radius": 1.28,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2422,10 +2275,10 @@
     "crown_class": "spreading",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/smallornamentaltree_1.glb",
+    "model": "/models/grib-sr.glb",
     "dimensions": {
-      "height": 4.85,
-      "radius": 1.88,
+      "height": 5.0,
+      "radius": 1.91,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2443,10 +2296,10 @@
     "crown_class": "spreading",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/smallornamentaltree_1.glb",
+    "model": "/models/grib-sr.glb",
     "dimensions": {
-      "height": 4.85,
-      "radius": 1.88,
+      "height": 5.0,
+      "radius": 1.91,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2464,10 +2317,10 @@
     "crown_class": "spreading",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/smallornamentaltree_1.glb",
+    "model": "/models/grib-sm.glb",
     "dimensions": {
-      "height": 4.85,
-      "radius": 1.88,
+      "height": 3.5,
+      "radius": 1.28,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2485,10 +2338,10 @@
     "crown_class": "spreading",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/smallornamentaltree_1.glb",
+    "model": "/models/grib-sm.glb",
     "dimensions": {
-      "height": 4.85,
-      "radius": 1.88,
+      "height": 3.5,
+      "radius": 1.28,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2821,10 +2674,10 @@
     "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/spruce_1.glb",
+    "model": "/models/yolka-sh.glb",
     "dimensions": {
-      "height": 8.78,
-      "radius": 2.96,
+      "height": 7.3,
+      "radius": 2.52,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2842,10 +2695,10 @@
     "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/spruce_1.glb",
+    "model": "/models/yolka-sh.glb",
     "dimensions": {
-      "height": 8.78,
-      "radius": 2.96,
+      "height": 7.3,
+      "radius": 2.52,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2863,10 +2716,10 @@
     "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/spruce_1.glb",
+    "model": "/models/yolka-uz.glb",
     "dimensions": {
-      "height": 8.78,
-      "radius": 2.96,
+      "height": 7.3,
+      "radius": 1.47,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2884,10 +2737,10 @@
     "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/spruce_1.glb",
+    "model": "/models/yolka-uz.glb",
     "dimensions": {
-      "height": 8.78,
-      "radius": 2.96,
+      "height": 7.3,
+      "radius": 1.47,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2905,10 +2758,10 @@
     "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/spruce_1.glb",
+    "model": "/models/yolka-sh.glb",
     "dimensions": {
-      "height": 8.78,
-      "radius": 2.96,
+      "height": 7.3,
+      "radius": 2.52,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -2926,10 +2779,10 @@
     "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/spruce_1.glb",
+    "model": "/models/yolka-uz.glb",
     "dimensions": {
-      "height": 8.78,
-      "radius": 2.96,
+      "height": 7.3,
+      "radius": 1.47,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -3220,10 +3073,10 @@
     "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/fir_1.glb",
+    "model": "/models/yolka-uz.glb",
     "dimensions": {
-      "height": 8.5,
-      "radius": 2.3,
+      "height": 7.3,
+      "radius": 1.47,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -3241,10 +3094,10 @@
     "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/fir_1.glb",
+    "model": "/models/yolka-uz.glb",
     "dimensions": {
-      "height": 8.5,
-      "radius": 2.3,
+      "height": 7.3,
+      "radius": 1.47,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -3262,10 +3115,10 @@
     "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/fir_1.glb",
+    "model": "/models/yolka-sh.glb",
     "dimensions": {
-      "height": 8.5,
-      "radius": 2.3,
+      "height": 7.3,
+      "radius": 2.52,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -3283,10 +3136,10 @@
     "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/fir_1.glb",
+    "model": "/models/yolka-uz.glb",
     "dimensions": {
-      "height": 8.5,
-      "radius": 2.3,
+      "height": 7.3,
+      "radius": 1.47,
       "trunk_height": 1.2,
       "width": null,
       "depth": null
@@ -3304,10 +3157,10 @@
     "crown_class": "regular",
     "setback_kind": "tree",
     "object_type": "tree",
-    "model": "/models/fir_1.glb",
+    "model": "/models/yolka-sh.glb",
     "dimensions": {
-      "height": 8.5,
-      "radius": 2.3,
+      "height": 7.3,
+      "radius": 2.52,
       "trunk_height": 1.2,
       "width": null,
       "depth": null

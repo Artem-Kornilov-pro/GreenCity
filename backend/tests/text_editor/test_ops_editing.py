@@ -188,6 +188,6 @@ def test_design_area_via_run_dispatch(scene1):
 def test_design_area_with_explicit_tree_and_bush_ids(scene1):
     result = run(
         scene1,
-        {"op": "design_area", "elements": ["trees", "bushes"], "tree_ids": ["tree_medium"], "bush_ids": ["bush_medium"]},
+        {"op": "design_area", "elements": ["trees", "bushes"], "tree_ids": ["species_lipa_melkolistnaya"], "bush_ids": ["bush_medium"]},
     )
     assert result.applied or result.rejected

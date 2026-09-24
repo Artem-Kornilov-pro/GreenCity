@@ -52,7 +52,6 @@ from text_editor.plan_common import (
     _labels,
     _plural,
 )
-from text_editor.prompt import _pack_substitutes
 
 # Без этого лога причину сбоя правки текстом было не узнать: в логе доступа
 # uvicorn видна только строка "502 Bad Gateway".
@@ -462,11 +461,15 @@ class EditingOpsMixin:
             self.rejected.append(f"{what}: в каталоге нет {', '.join(missing)}")
             return
 
-        # Деревья по умолчанию -- из пака (средние, обычные и колонновидные).
-        substitutes = _pack_substitutes(self.catalog)
-        default_trees = list({s.id: s for s in (substitutes.get(t) for t in ("tree_medium", "tree_pine")) if s}.values())
+        # Деревья по умолчанию -- средние: одно с обычной кроной, одно колонновидное.
+        all_trees = [item for item in self.catalog if item.category == "tree"]
+        default_trees = []
+        for crown in ("regular", "columnar"):
+            same = [t for t in all_trees if t.size_class == "medium" and t.crown_class == crown]
+            if same or all_trees:
+                default_trees.append((same or all_trees)[0])
+        default_trees = list({t.id: t for t in default_trees}.values())
         trees = (self._pool(op.tree_ids, what) if op.tree_ids else None) or default_trees
-        trees = trees or [item for item in self.catalog if item.category == "tree"][:3]
         bushes = (self._pool(op.bush_ids, what) if op.bush_ids else None) or [
             item for item in self.catalog if item.object_type == "bush"
         ]

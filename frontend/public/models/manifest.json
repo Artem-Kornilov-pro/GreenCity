@@ -15,8 +15,6 @@
     "/models/bench_c.glb",
     "/models/bench_d.glb",
     "/models/bench_e.glb",
-    "/models/spruce_1.glb",
-    "/models/fir_1.glb",
     "/models/larch_1.glb",
     "/models/columnartree_1.glb",
     "/models/poplartree_1.glb",
@@ -45,6 +43,11 @@
     "/models/willow_2.glb",
     "/models/pinetree_2.glb",
     "/models/bush_1.glb",
-    "/models/bush_2.glb"
+    "/models/bush_2.glb",
+    "/models/yolka-uz.glb",
+    "/models/yolka-sh.glb",
+    "/models/dub.glb",
+    "/models/grib-sm.glb",
+    "/models/grib-sr.glb"
   ]
 }

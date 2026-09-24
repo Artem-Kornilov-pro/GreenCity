@@ -82,43 +82,8 @@ class CatalogItem(BaseModel):
 
 
 CATALOG: list[CatalogItem] = [
-    # --- Деревья -----------------------------------------------------------
-    CatalogItem(
-        id="tree_medium", size_class="medium", crown_class="regular", category="tree", label="Дерево — среднее",
-        setback_kind="tree", object_type="tree", model="/models/tree_medium.glb",
-        dimensions=CatalogItemDimensions(height=3.0, radius=0.9, trunk_height=1.2),
-        render=CatalogItemRender(shape="cone", color="#2e7d3a"),
-    ),
-    CatalogItem(
-        id="tree_tall", size_class="medium", crown_class="regular", category="tree", label="Дерево — высокое",
-        setback_kind="tree", object_type="tree", model="/models/tree_tall.glb",
-        dimensions=CatalogItemDimensions(height=4.6, radius=1.1, trunk_height=2.0),
-        render=CatalogItemRender(shape="cone", color="#2e7d3a"),
-    ),
-    CatalogItem(
-        id="tree_short", size_class="low", crown_class="regular", category="tree", label="Дерево — низкое",
-        setback_kind="tree", object_type="tree", model="/models/tree_short.glb",
-        dimensions=CatalogItemDimensions(height=1.6, radius=0.6, trunk_height=0.6),
-        render=CatalogItemRender(shape="cone", color="#3f9146"),
-    ),
-    CatalogItem(
-        id="tree_pine", size_class="medium", crown_class="columnar", category="tree", label="Сосна (конусовая)",
-        setback_kind="tree", object_type="tree", model="/models/tree_pine.glb",
-        dimensions=CatalogItemDimensions(height=4.6, radius=0.7, trunk_height=1.4),
-        render=CatalogItemRender(shape="pine", color="#1f5c33"),
-    ),
-    CatalogItem(
-        id="tree_round", size_class="low", crown_class="regular", category="tree", label="Дерево — круглая крона",
-        setback_kind="tree", object_type="tree", model="/models/tree_round.glb",
-        dimensions=CatalogItemDimensions(height=2.8, radius=0.85, trunk_height=1.2),
-        render=CatalogItemRender(shape="cluster", color="#3a8f45"),
-    ),
-    CatalogItem(
-        id="tree_round_large", size_class="medium", crown_class="regular", category="tree", label="Дерево — крупная круглая крона",
-        setback_kind="tree", object_type="tree", model="/models/tree_round_large.glb",
-        dimensions=CatalogItemDimensions(height=3.8, radius=1.35, trunk_height=1.6),
-        render=CatalogItemRender(shape="cluster", color="#357f40"),
-    ),
+    # Деревьев в базовом списке нет: все деревья -- конкретные виды из пака
+    # моделей (catalog_generated.json).
     # --- Кустарники --------------------------------------------------------
     CatalogItem(
         id="bush_medium", size_class="low", category="bush", label="Кустарник — средний",

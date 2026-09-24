@@ -78,7 +78,7 @@ def test_add_unknown_catalog_id_is_rejected(scene1):
 
 def test_add_snaps_when_requested_point_violates_setback(scene1):
     # (0, 0) внутри здания в локации 1 -- должно сдвинуть или отклонить, не упасть.
-    result = run(scene1, {"op": "add", "catalog_id": "tree_medium", "x": 0.0, "z": 0.0})
+    result = run(scene1, {"op": "add", "catalog_id": "species_lipa_melkolistnaya", "x": 0.0, "z": 0.0})
     assert result.applied or result.rejected
 
 

@@ -34,7 +34,12 @@ def test_items_by_category_filters_correctly():
 
 def test_base_catalog_has_all_expected_object_types():
     object_types = {item.object_type for item in CATALOG}
-    assert {"tree", "bush", "hedge_segment", "lawn_patch", "flowerbed_patch", "path_segment", "bench", "lamp", "trash", "fountain"} <= object_types
+    assert {"bush", "hedge_segment", "lawn_patch", "flowerbed_patch", "path_segment", "bench", "lamp", "trash", "fountain"} <= object_types
+
+
+def test_trees_come_only_from_generated_catalog():
+    assert not [item for item in CATALOG if item.category == "tree"]
+    assert [item for item in load_catalog() if item.category == "tree"]
 
 
 def test_missing_generated_file_falls_back_to_base_catalog_only(monkeypatch, tmp_path):
