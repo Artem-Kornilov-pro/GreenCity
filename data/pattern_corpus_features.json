@@ -1,0 +1,494 @@
+{
+ "02_peschany_pereulok": {
+  "characteristics": {
+   "building_count": 30,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 435469.3,
+   "plantable_ratio": 0.8947,
+   "restriction_zone_counts": {
+    "building": 30,
+    "electrical": 7,
+    "gas_pipeline": 12,
+    "overhead_power_line": 3,
+    "pedestrian_path": 38,
+    "protected_zone": 3,
+    "road": 2,
+    "sewer": 8,
+    "signal_cable": 8,
+    "water_pipeline": 13
+   },
+   "territory_type": "неопределено",
+   "territory_type_is_heuristic": true,
+   "total_area_sqm": 486699.3
+  },
+  "dxf_sha256": "0adeea8e44ddfda9a7b8cc7c7d260b91c5f4fb18e1c70670ddd3dc38db061520"
+ },
+ "04_kharkovskaya_ulitsa": {
+  "characteristics": {
+   "building_count": 2,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 16760.1,
+   "plantable_ratio": 0.3083,
+   "restriction_zone_counts": {
+    "building": 2,
+    "electrical": 404,
+    "gas_pipeline": 4,
+    "heat_network": 14,
+    "overhead_power_line": 37,
+    "pedestrian_path": 14,
+    "protected_zone": 161,
+    "road": 13,
+    "sewer": 66,
+    "signal_cable": 467,
+    "water_pipeline": 6
+   },
+   "territory_type": "неопределено",
+   "territory_type_is_heuristic": true,
+   "total_area_sqm": 54369.5
+  },
+  "dxf_sha256": "833cac0f0422f4a0a10ccafb733715bdeba71f7e3dd73028323590f0dc02bdf2"
+ },
+ "05_bagritskogo_ulitsa": {
+  "characteristics": {
+   "building_count": 17,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 4209.2,
+   "plantable_ratio": 0.1057,
+   "restriction_zone_counts": {
+    "building": 17,
+    "electrical": 268,
+    "gas_pipeline": 36,
+    "heat_network": 28,
+    "overhead_power_line": 38,
+    "pedestrian_path": 31,
+    "protected_zone": 147,
+    "road": 7,
+    "sewer": 37,
+    "signal_cable": 996,
+    "water_pipeline": 8
+   },
+   "territory_type": "улица",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 39818.7
+  },
+  "dxf_sha256": "f303c1bd0db7ec8603a05c96c9a546f55455fad33569134c7c11696fd6287e80"
+ },
+ "06_kamchatskaya_ulitsa": {
+  "characteristics": {
+   "building_count": 22,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 828.6,
+   "plantable_ratio": 0.0262,
+   "restriction_zone_counts": {
+    "building": 22,
+    "electrical": 7,
+    "heat_network": 7,
+    "overhead_power_line": 7,
+    "pedestrian_path": 218,
+    "protected_zone": 13,
+    "road": 7,
+    "sewer": 8,
+    "signal_cable": 7,
+    "water_pipeline": 9
+   },
+   "territory_type": "улица",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 31631.8
+  },
+  "dxf_sha256": "4e9741e69dbf61e76881665651df52ae26a1504b9168d45523e70de89129715a"
+ },
+ "07_nizhnie_polya": {
+  "characteristics": {
+   "building_count": 5,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 17351.0,
+   "plantable_ratio": 0.1568,
+   "restriction_zone_counts": {
+    "building": 5,
+    "electrical": 9,
+    "gas_pipeline": 10,
+    "heat_network": 8,
+    "overhead_power_line": 6,
+    "pedestrian_path": 45,
+    "protected_zone": 95,
+    "road": 4,
+    "sewer": 8,
+    "signal_cable": 6,
+    "water_pipeline": 7
+   },
+   "territory_type": "улица",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 110656.5
+  },
+  "dxf_sha256": "d7e7c59a6c5e226db3f08419389780f10c5a7d2e5ce1851b4908fbe1fdcb8307"
+ },
+ "08_lodochnaya": {
+  "characteristics": {
+   "building_count": 0,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 12343.7,
+   "plantable_ratio": 0.11,
+   "restriction_zone_counts": {
+    "electrical": 1079,
+    "gas_pipeline": 112,
+    "heat_network": 51,
+    "overhead_power_line": 211,
+    "pedestrian_path": 62,
+    "protected_zone": 313,
+    "road": 19,
+    "sewer": 91,
+    "signal_cable": 2479,
+    "water_pipeline": 86
+   },
+   "territory_type": "промышленная_охранная",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 112167.3
+  },
+  "dxf_sha256": "f4afc1bc44280920867b3661ddf8336baeacbe6db670f6a26c04174705d982da"
+ },
+ "09_izmaylovskaya_ploshad": {
+  "characteristics": {
+   "building_count": 0,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 1293.2,
+   "plantable_ratio": 0.0414,
+   "restriction_zone_counts": {
+    "electrical": 241,
+    "gas_pipeline": 33,
+    "heat_network": 54,
+    "overhead_power_line": 45,
+    "pedestrian_path": 25,
+    "protected_zone": 145,
+    "road": 1,
+    "sewer": 47,
+    "signal_cable": 633,
+    "water_pipeline": 19
+   },
+   "territory_type": "промышленная_охранная",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 31209.4
+  },
+  "dxf_sha256": "ac69266671462fc7a846f08cd8c6812706c6c723419cb43ed5cc73f6dea6ab1f"
+ },
+ "10_stary_gay": {
+  "characteristics": {
+   "building_count": 8,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 6655.4,
+   "plantable_ratio": 0.3768,
+   "restriction_zone_counts": {
+    "building": 8,
+    "electrical": 8,
+    "gas_pipeline": 12,
+    "heat_network": 5,
+    "overhead_power_line": 10,
+    "pedestrian_path": 6,
+    "protected_zone": 54,
+    "road": 6,
+    "sewer": 18,
+    "signal_cable": 168,
+    "water_pipeline": 16
+   },
+   "territory_type": "неопределено",
+   "territory_type_is_heuristic": true,
+   "total_area_sqm": 17665.2
+  },
+  "dxf_sha256": "e097652c197432587da1160bd388cdafe93b1ceb6e570acbb4d7031b55b504ff"
+ },
+ "11_frunzenskaya_naberezhnaya": {
+  "characteristics": {
+   "building_count": 12,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 3524.8,
+   "plantable_ratio": 0.0839,
+   "restriction_zone_counts": {
+    "building": 12,
+    "electrical": 94,
+    "gas_pipeline": 16,
+    "heat_network": 4,
+    "overhead_power_line": 34,
+    "pedestrian_path": 21,
+    "protected_zone": 92,
+    "road": 1,
+    "sewer": 39,
+    "signal_cable": 322,
+    "water_pipeline": 50
+   },
+   "territory_type": "улица",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 42023.7
+  },
+  "dxf_sha256": "3a3013d8561f05005f037647c7c1fc92e7f8a769bb8e23a984631b534c22f78a"
+ },
+ "12_natashinsky_proezd": {
+  "characteristics": {
+   "building_count": 18,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 6704.4,
+   "plantable_ratio": 0.1816,
+   "restriction_zone_counts": {
+    "building": 18,
+    "electrical": 58,
+    "heat_network": 4,
+    "overhead_power_line": 9,
+    "protected_zone": 67,
+    "road": 1,
+    "sewer": 1,
+    "signal_cable": 202,
+    "water_pipeline": 10
+   },
+   "territory_type": "неопределено",
+   "territory_type_is_heuristic": true,
+   "total_area_sqm": 36915.1
+  },
+  "dxf_sha256": "e934c09d928c7400af03deb71439ff9e4280689a26b76956bb1423b111646fdd"
+ },
+ "13_kharkovsky_proezd": {
+  "characteristics": {
+   "building_count": 8,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 504.8,
+   "plantable_ratio": 0.0424,
+   "restriction_zone_counts": {
+    "building": 8,
+    "electrical": 57,
+    "gas_pipeline": 15,
+    "heat_network": 9,
+    "overhead_power_line": 14,
+    "protected_zone": 30,
+    "road": 1,
+    "sewer": 1,
+    "water_pipeline": 7
+   },
+   "territory_type": "неопределено",
+   "territory_type_is_heuristic": true,
+   "total_area_sqm": 11897.8
+  },
+  "dxf_sha256": "b0c68155dc064aa2b81c1863ca77441057ef1848f9a4d052c131fb07fedd9c94"
+ },
+ "17_gruzinskaya_m": {
+  "characteristics": {
+   "building_count": 57,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 934.2,
+   "plantable_ratio": 0.0308,
+   "restriction_zone_counts": {
+    "building": 57,
+    "electrical": 316,
+    "gas_pipeline": 41,
+    "heat_network": 56,
+    "pedestrian_path": 26,
+    "protected_zone": 178,
+    "road": 8,
+    "sewer": 15,
+    "signal_cable": 1936,
+    "water_pipeline": 18
+   },
+   "territory_type": "улица",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 30317.2
+  },
+  "dxf_sha256": "a50d9fbbe0ea191d7e7e7beafb933fc6095a0299b690bf8a6de5093d5dae6f35"
+ },
+ "19_2ya_pryadilnaya": {
+  "characteristics": {
+   "building_count": 36,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 4854.0,
+   "plantable_ratio": 0.1164,
+   "restriction_zone_counts": {
+    "building": 36,
+    "electrical": 199,
+    "gas_pipeline": 43,
+    "heat_network": 94,
+    "overhead_power_line": 31,
+    "pedestrian_path": 53,
+    "protected_zone": 162,
+    "road": 2,
+    "sewer": 174,
+    "signal_cable": 813,
+    "water_pipeline": 42
+   },
+   "territory_type": "улица",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 41684.4
+  },
+  "dxf_sha256": "1bfd4292bd86b146962030b0eb998332ebc1005171a4732949041a9db799e26e"
+ },
+ "20_makeeva_s": {
+  "characteristics": {
+   "building_count": 88,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 2552.9,
+   "plantable_ratio": 0.0129,
+   "restriction_zone_counts": {
+    "building": 88,
+    "electrical": 294,
+    "gas_pipeline": 19,
+    "heat_network": 37,
+    "pedestrian_path": 39,
+    "protected_zone": 127,
+    "road": 2,
+    "sewer": 91,
+    "signal_cable": 1917,
+    "water_pipeline": 17
+   },
+   "territory_type": "улица",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 197942.2
+  },
+  "dxf_sha256": "a6279108ec4d180ee49944bc59f1b0bd55b850d3030282b6a2c11c8510a65803"
+ },
+ "21_road_buffer_primer": {
+  "characteristics": {
+   "building_count": 0,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 1615.0,
+   "plantable_ratio": 0.7727,
+   "restriction_zone_counts": {
+    "protected_zone": 1,
+    "road": 1
+   },
+   "territory_type": "улица",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 2090.0
+  },
+  "dxf_sha256": "740144b5d90cb870d1057c60b32dc9a67770006c510214e8d58018150dc085d3"
+ },
+ "22_circular_plaza_primer": {
+  "characteristics": {
+   "building_count": 0,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 1015.0,
+   "plantable_ratio": 1.0,
+   "restriction_zone_counts": {
+    "protected_zone": 1
+   },
+   "territory_type": "неопределено",
+   "territory_type_is_heuristic": true,
+   "total_area_sqm": 1015.0
+  },
+  "dxf_sha256": "9f18622a633dbd27d2b59642f514ac8d6190eafc77b26bd42b6ff88c81bbaca5"
+ },
+ "23_triangular_plot_primer": {
+  "characteristics": {
+   "building_count": 0,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 720.0,
+   "plantable_ratio": 1.0,
+   "restriction_zone_counts": {
+    "protected_zone": 1
+   },
+   "territory_type": "неопределено",
+   "territory_type_is_heuristic": true,
+   "total_area_sqm": 720.0
+  },
+  "dxf_sha256": "dc9e5a4e79b6c21cd7671e5359952e0ceed2118c2d047f243b752443fb20f09e"
+ },
+ "24_hexagon_courtyard_primer": {
+  "characteristics": {
+   "building_count": 0,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 1039.3,
+   "plantable_ratio": 1.0,
+   "restriction_zone_counts": {
+    "protected_zone": 1
+   },
+   "territory_type": "неопределено",
+   "territory_type_is_heuristic": true,
+   "total_area_sqm": 1039.3
+  },
+  "dxf_sha256": "9e82dd2daf750e4b4a8293435fa58fd473cf63b773d8ddb35fa3237d5fb4991b"
+ },
+ "25_classical_building_ring_primer": {
+  "characteristics": {
+   "building_count": 1,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 1601.6,
+   "plantable_ratio": 0.5932,
+   "restriction_zone_counts": {
+    "building": 1,
+    "protected_zone": 1
+   },
+   "territory_type": "неопределено",
+   "territory_type_is_heuristic": true,
+   "total_area_sqm": 2700.0
+  },
+  "dxf_sha256": "7b8f04ff2038fdbc15466ca713444617286ef5d20f494636486ff22f0ee48c3e"
+ },
+ "26_diagonal_garden_primer": {
+  "characteristics": {
+   "building_count": 0,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 1800.0,
+   "plantable_ratio": 1.0,
+   "restriction_zone_counts": {
+    "protected_zone": 1
+   },
+   "territory_type": "неопределено",
+   "territory_type_is_heuristic": true,
+   "total_area_sqm": 1800.0
+  },
+  "dxf_sha256": "49ccea239f4941dba9aeec931607a39bfd2c8b77d283ae58061657c0573c24ba"
+ },
+ "27_flowing_meadow_primer": {
+  "characteristics": {
+   "building_count": 0,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 3500.0,
+   "plantable_ratio": 1.0,
+   "restriction_zone_counts": {
+    "protected_zone": 1
+   },
+   "territory_type": "парк_сквер",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 3500.0
+  },
+  "dxf_sha256": "0468cb63b3ca226fd9d80b1151b2295b77c3995a251ff874a9b5698457958764"
+ },
+ "28_formal_bosque_primer": {
+  "characteristics": {
+   "building_count": 0,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 2304.0,
+   "plantable_ratio": 1.0,
+   "restriction_zone_counts": {
+    "protected_zone": 1
+   },
+   "territory_type": "парк_сквер",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 2304.0
+  },
+  "dxf_sha256": "0dec0bea316e37ce51e4ef448b6ab76b7257f6096c0be88a7ee873f32f56a309"
+ },
+ "29_concentric_rings_primer": {
+  "characteristics": {
+   "building_count": 0,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 3600.0,
+   "plantable_ratio": 1.0,
+   "restriction_zone_counts": {
+    "protected_zone": 1
+   },
+   "territory_type": "парк_сквер",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 3600.0
+  },
+  "dxf_sha256": "3ba991ae14e1c4042a9a97296bd884b05ab42abbc891cd9a3dfddefac150c022"
+ },
+ "30_triangular_grid_primer": {
+  "characteristics": {
+   "building_count": 0,
+   "existing_tree_species": {},
+   "plantable_area_sqm": 1512.0,
+   "plantable_ratio": 1.0,
+   "restriction_zone_counts": {
+    "protected_zone": 1
+   },
+   "territory_type": "неопределено",
+   "territory_type_is_heuristic": true,
+   "total_area_sqm": 1512.0
+  },
+  "dxf_sha256": "db532f015724ca56b7d99386b6246ee1463abbb0b7cb291d2a0f5b1e23baebb0"
+ }
+}

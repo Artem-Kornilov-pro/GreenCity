@@ -2,6 +2,7 @@
 линии для рядов и паттернов."""
 
 import math
+import warnings
 
 import pytest
 from shapely.geometry import LineString, MultiLineString, Point, Polygon
@@ -14,6 +15,7 @@ from core.placement_geometry import (
     lines_of,
     pick_near,
     pick_spread,
+    rect_corners,
     rect_sides,
     rotation_of,
     rows_of,
@@ -330,3 +332,13 @@ def test_wavy_line_none_or_empty_is_safe():
     assert wavy_line(None, amplitude=4.0, wavelength=40.0) is None
     empty = LineString()
     assert wavy_line(empty, amplitude=4.0, wavelength=40.0) is empty
+
+
+def test_rect_corners_is_quiet_on_duplicate_vertices():
+    # Повторённая вершина (обычное дело в реальных DXF) -- GEOS поднимает
+    # флаг плавающей точки, прямоугольник при этом верный.
+    poly = Polygon([(0, 0), (10, 0), (10, 0), (10, 5), (0, 5)])
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        corners = rect_corners(poly)
+    assert Polygon(corners).area == pytest.approx(50)

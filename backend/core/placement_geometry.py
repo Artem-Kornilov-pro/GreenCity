@@ -234,10 +234,20 @@ def sample_line(line: LineString, step: float):
         yield p.x, p.y, tx / norm, tz / norm
 
 
+def rect_corners(poly: Polygon) -> list[tuple[float, float]]:
+    """Углы минимального описанного прямоугольника. На контурах с почти
+    совпадающими соседними вершинами (реальные DXF) GEOS поднимает флаг
+    плавающей точки, и shapely печатает "RuntimeWarning: invalid value
+    encountered in oriented_envelope" -- сам прямоугольник при этом верный
+    (сверено с оболочкой), а лог сервера засыпало десятками строк на запрос."""
+    with np.errstate(invalid="ignore", divide="ignore"):
+        return list(poly.minimum_rotated_rectangle.exterior.coords)[:-1]
+
+
 def rect_sides(poly: Polygon) -> list[tuple[float, float, float]]:
     """Две смежные стороны минимального описанного прямоугольника, как
     (единичный вектор x, единичный вектор z, длина стороны)."""
-    coords = list(poly.minimum_rotated_rectangle.exterior.coords)[:-1]
+    coords = rect_corners(poly)
     sides = []
     for i in range(2):
         (ax, az), (bx, bz) = coords[i], coords[i + 1]

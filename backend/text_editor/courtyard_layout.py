@@ -15,7 +15,7 @@ from shapely.geometry import LineString, Point
 from shapely.ops import nearest_points, polylabel, unary_union
 
 from core.placement import polygons
-from core.placement_geometry import lines_of, rect_sides
+from core.placement_geometry import lines_of, rect_corners, rect_sides
 
 # Шаблоны каркаса дорожек. "auto" -- выбрать по форме двора (_choose_style);
 # среди авто-кандидатов "diagonal" нет -- он декоративный, только по просьбе.
@@ -237,7 +237,7 @@ class CourtyardLayoutMixin:
     def _network_diagonal(self, poly, depth: float, center: Point):
         plaza = min(max(0.25 * depth, 3.0), 6.0) if depth >= PLAZA_MIN_DEPTH_M else 0.0
         inner = poly.buffer(-2.5)
-        corners = list(poly.minimum_rotated_rectangle.exterior.coords)[:-1]
+        corners = rect_corners(poly)
         network = []
         for a, b in ((corners[0], corners[2]), (corners[1], corners[3])):
             piece = LineString([a, b]).intersection(inner)
