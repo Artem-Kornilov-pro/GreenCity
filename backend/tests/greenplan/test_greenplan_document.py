@@ -85,9 +85,29 @@ def test_schedule_follows_gost_form_9_and_counts_only_new_plants():
         "Поз.", "Наименование породы или вида насаждения", "Возраст, лет", "Кол.", "Примечание",
     ]
     rows = {row.cells[1].text: row.cells[3].text for row in schedule.rows[1:]}
+    lawn = rows.pop("Газон обыкновенный")
     assert rows == {"Клен остролистный": "1", "Спирея японская": "2"}
-    # Деревья -- первыми, как в примере формы.
+    # Деревья -- первыми, как в примере формы, газон -- последним и в м².
     assert schedule.rows[1].cells[1].text == "Клен остролистный"
+    assert schedule.rows[-1].cells[1].text == "Газон обыкновенный"
+    assert lawn.endswith(" м²") and int(lawn.removesuffix(" м²").replace(" ", "")) > 9000
+    assert "травосмеси" in schedule.rows[-1].cells[4].text
+
+
+def test_new_lawn_brings_seeding_and_watering_requirements():
+    text = _text(build_document(_scene(), [_assignment()]))
+    assert "устройство нового" in text
+    assert "п. 9.24: норма высева газонных трав" in text
+    assert "полив газона — 10 л/м²" in text
+    assert "Газон допускается над инженерными сетями" in text
+
+
+def test_lawn_is_recomputed_not_taken_from_request():
+    # Сцена пришла без газона (старый клиент или ручные правки после
+    # GreenPlan) -- записка всё равно считает газон по текущим посадкам.
+    scene = _scene()
+    assert scene.lawns == []
+    assert "Газон обыкновенный" in _text(build_document(scene, [_assignment()]))
 
 
 def test_violations_split_new_and_existing():

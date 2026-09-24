@@ -11,6 +11,7 @@ import { PlacedObjects, type TransformMode } from "./PlacedObjects";
 import { FitCamera } from "./FitCamera";
 import { Windows, Canopies } from "./FacadeFeatures";
 import { Curbs } from "./CurbStrips";
+import { Lawns } from "./Lawns";
 import { AreaSelectionDraw } from "./AreaSelectionDraw";
 
 export function SceneView({
@@ -82,6 +83,7 @@ export function SceneView({
       <directionalLight position={[30, 50, 20]} intensity={1.1} castShadow />
       <FitCamera bounds={bounds} sceneLoadToken={sceneLoadToken} />
       <Ground boundary={scene.boundary} />
+      <Lawns lawns={scene.lawns ?? []} />
       <RestrictionZones zones={displayZones} onHover={onHoverZone} />
       <Buildings objects={scene.objects} />
       <Windows quads={scene.windows ?? []} />

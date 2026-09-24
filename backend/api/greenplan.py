@@ -17,10 +17,11 @@ from pydantic import BaseModel
 
 from core.plant_catalog import catalog_by_id, load_catalog
 from core.schemas import Scene
-from greenplan.assortment_report import AssortmentRow, summarize_assortment
+from greenplan.assortment_report import AssortmentRow, lawn_assortment, summarize_assortment
 from greenplan.decision_report import DecisionReportUnavailable, generate_report
 from greenplan.deterministic_placement import generate_for_scene
 from greenplan.document import build_document
+from greenplan.lawn import plan_lawns
 from greenplan.pattern_assignment import ZoneAssignment
 from greenplan.violation_report import Violation, find_violations
 from monitoring import metrics
@@ -81,16 +82,19 @@ def greenplan_generate(scene: Scene, k: int = Query(default=3, ge=1, le=9, descr
 
         new_objects, assignments = generate_for_scene(scene, trees, bushes, k)
         scene.objects = [*scene.objects, *new_objects]
+        # Газон -- после посадок: клумбы кустарника из газона вычитаются.
+        by_id = catalog_by_id()
+        scene.lawns = plan_lawns(scene, by_id)
 
         logging.getLogger("greencity.greenplan").info(
-            "GreenPlan: %d новых объектов, %d зон", len(new_objects), len(assignments)
+            "GreenPlan: %d новых объектов, %d зон, газон %d участков", len(new_objects), len(assignments), len(scene.lawns)
         )
 
         return GreenPlanGenerateResult(
             scene=scene,
             assignments=assignments,
             violations=find_violations(scene),
-            assortment=summarize_assortment(new_objects, catalog_by_id()),
+            assortment=summarize_assortment(new_objects, by_id) + lawn_assortment(scene.lawns),
         )
 
 

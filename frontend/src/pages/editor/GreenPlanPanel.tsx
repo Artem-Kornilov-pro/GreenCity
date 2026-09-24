@@ -25,6 +25,7 @@ export function GreenPlanPanel({
   documentBusy: boolean;
   onDownloadDocument: () => void;
 }) {
+  const existingLawnSqm = (result?.scene.lawns ?? []).filter((l) => l.status === "existing").reduce((sum, l) => sum + l.area_sqm, 0);
   return (
     <SlidePanel open={open} onToggle={onToggle} onClose={onClose} icon={<Trees className="h-4.5 w-4.5 text-brand-600" />} title="GreenPlan">
       <div className="scrollbar-thin flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-4">
@@ -76,7 +77,7 @@ export function GreenPlanPanel({
             </section>
 
             <section>
-              <h3 className={SECTION_TITLE}>Новая посадка по видам</h3>
+              <h3 className={SECTION_TITLE}>Новая посадка по видам и газон</h3>
               {result.assortment.length > 0 ? (
                 <div className="flex flex-col gap-1 text-sm text-ink-700">
                   {result.assortment.map((row, i) => (
@@ -84,12 +85,19 @@ export function GreenPlanPanel({
                       <span>
                         {row.species} <span className="text-ink-400">({row.category})</span>
                       </span>
-                      <span className="font-medium">{row.count}</span>
+                      <span className="font-medium">
+                        {row.unit === "м²" ? `${row.count.toLocaleString("ru-RU")} м²` : row.count}
+                      </span>
                     </div>
                   ))}
                 </div>
               ) : (
                 <p className="text-sm text-ink-400">Новых объектов не добавлено.</p>
+              )}
+              {existingLawnSqm > 0 && (
+                <p className="mt-2 text-xs text-ink-500">
+                  Существующий газон сохраняется: {Math.round(existingLawnSqm).toLocaleString("ru-RU")} м²
+                </p>
               )}
               {/* Основание подбора видов -- из самой расстановки (greenplan/species_selection.py),
                   без LLM: видно и тогда, когда текст-объяснение недоступен. */}

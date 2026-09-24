@@ -70,3 +70,32 @@ def test_sorted_by_category_then_count_descending():
     objects = [_tree("t1"), _tree("t2"), _tree("t3", catalog_id="tree_tall")]
     rows = summarize_assortment(objects, catalog)
     assert rows[0].count >= rows[-1].count
+
+
+# --- lawn_assortment: газон в ведомости -- в м², только новый ----------------
+
+
+def _lawn(status, area):
+    from core.schemas import LawnArea, Point2
+
+    square = [Point2(x=0, z=0), Point2(x=1, z=0), Point2(x=1, z=1)]
+    return LawnArea(id=f"lawn_{status}", polygon=square, area_sqm=area, status=status)
+
+
+def test_lawn_row_counts_only_new_lawn_in_square_metres():
+    from greenplan.assortment_report import lawn_assortment
+
+    [row] = lawn_assortment([_lawn("new", 120.4), _lawn("new", 30.3), _lawn("existing", 5000)])
+    assert (row.category, row.species, row.count, row.unit) == ("газон", "Газон обыкновенный", 151, "м²")
+
+
+def test_no_lawn_row_without_new_lawn():
+    from greenplan.assortment_report import lawn_assortment
+
+    assert lawn_assortment([_lawn("existing", 5000)]) == []
+    assert lawn_assortment([]) == []
+
+
+def test_plants_are_counted_in_pieces():
+    rows = summarize_assortment([_tree("t1")], _catalog())
+    assert rows[0].unit == "шт."

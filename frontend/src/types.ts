@@ -57,6 +57,18 @@ export type FacadeQuad = Point3[];
 // FacadeQuad: не самостоятельный объект, схематичная ribbon-геометрия.
 export type CurbPolyline = Point2[];
 
+// Газон GreenPlan (backend/greenplan/lawn.py) -- площадь, а не объекты:
+// полигон с дырками (клумбы кустарника), в м². new -- устройство газона на
+// открытой земле (идёт в ведомость), existing -- сохраняемый газон исходного плана.
+export interface LawnArea {
+  id: string;
+  polygon: Point2[];
+  holes: Point2[][];
+  area_sqm: number;
+  status: "new" | "existing";
+  kind: string;
+}
+
 export interface Scene {
   boundary: Boundary | null;
   restrictions: RestrictionZone[];
@@ -69,6 +81,9 @@ export interface Scene {
   // идут: она применяет нормы к зоне "building" из restrictions сама.
   // Опционально -- у сцен, сохранённых до появления поля, его нет.
   buildingSetbacks?: RestrictionZone[];
+  // Заполняет только GreenPlan; у сцен из /api/parse и сохранённых до
+  // появления газона поля нет.
+  lawns?: LawnArea[];
   meta: SceneMeta;
   // Заполняется только /api/parse-dwg (issue #50) -- файлы из загруженной
   // папки .dwg, которые не удалось сконвертировать (LibreDWG не всё умеет,

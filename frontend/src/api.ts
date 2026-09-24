@@ -126,6 +126,8 @@ export interface GreenPlanAssortmentRow {
   category: string;
   species: string;
   count: number;
+  // "шт." у деревьев и кустарников, "м²" у газона.
+  unit: string;
 }
 
 export interface GreenPlanGenerateResult {

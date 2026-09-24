@@ -55,6 +55,21 @@ class SceneMeta(BaseModel):
     pointObjectCount: int
 
 
+class LawnArea(BaseModel):
+    """Газон -- площадь, а не объекты: в проекте газон считают в м² (ведомость
+    элементов озеленения, ГОСТ 21.508, форма 9), а не штуками. Считает
+    greenplan/lawn.py."""
+
+    id: str
+    polygon: list[Point2]
+    holes: list[list[Point2]] = []  # клумбы кустарника внутри газона
+    area_sqm: float
+    # new -- устройство газона на открытой земле (идёт в ведомость и объём
+    # посева); existing -- существующий газон из исходного плана, сохраняется.
+    status: Literal["new", "existing"]
+    kind: str = "Газон обыкновенный"
+
+
 class Scene(BaseModel):
     boundary: Optional[Boundary]
     restrictions: list[RestrictionZone]
@@ -67,4 +82,7 @@ class Scene(BaseModel):
     # нарушений применяет нормы к настоящей зоне "building" сама, и попади эти
     # кольца в restrictions, каждое нарушение у дома считалось бы дважды.
     buildingSetbacks: list[RestrictionZone] = []
+    # Газон, предложенный GreenPlan (greenplan/lawn.py). Пусто у сцен из
+    # парсера и у сохранённых до появления поля.
+    lawns: list[LawnArea] = []
     meta: SceneMeta

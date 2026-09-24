@@ -42,8 +42,9 @@ from core.paths import LOCATIONS_DIR, NORMS_DIR
 from core.plant_catalog import catalog_by_id
 from core.schemas import Scene
 from core.setback_norms import SETBACK_NORMS, species_rules
-from greenplan.assortment_report import AssortmentRow, summarize_assortment
+from greenplan.assortment_report import AssortmentRow, lawn_assortment, summarize_assortment
 from greenplan.decision_report import ZONE_KIND_LABELS
+from greenplan.lawn import lawn_totals, plan_lawns
 from greenplan.pattern_assignment import ZoneAssignment
 from greenplan.pattern_library import PATTERN_LIBRARY
 from greenplan.site_characterization import SiteCharacteristics, characterize_site
@@ -107,6 +108,9 @@ LIMITATIONS: list[str] = [
     "с кроной более 5 м (прим. 1), свободная высота 2,1 м над пешеходными путями (СП 59.13330.2020, п. 5.1.7).",
     "Отступы от инженерных сетей отсчитаны от края их охранного коридора, а не от оси сети, — то есть с "
     "запасом относительно нормы.",
+    "Газон допускается над инженерными сетями: таблица 9.1 СП 42.13330 и 3.6.1 ППМ 743-ПП нормируют расстояния "
+    "только для деревьев и кустарников. Газон исключён с проездов, дорожек, площадок и из клумб кустарника; "
+    "приствольные лунки деревьев из площади газона не вычитались.",
     "Возраст и параметры посадочного материала в ведомости указаны только для видов базового ассортимента "
     "ППМ 515-ПП; для остальных уточняются на стадии рабочей документации.",
 ]
@@ -282,6 +286,9 @@ def _section_general(doc, title: str, c: Optional[SiteCharacteristics], scene: S
         ["Существующих деревьев / кустарников", f"{existing.get('tree', 0)} / {existing.get('bush', 0)}"],
         ["Предложено новых посадок", str(new_count)],
     ]
+    if scene.lawns:
+        new_lawn, existing_lawn = lawn_totals(scene.lawns)
+        rows.append(["Газон", f"устройство нового — {_fmt_area(new_lawn)} м², существующий сохраняется — {_fmt_area(existing_lawn)} м²"])
     _table(doc, ["Показатель", "Значение"], rows, [70, 100])
 
 
@@ -362,18 +369,32 @@ def _section_schedule(doc, assortment: list[AssortmentRow]) -> None:
     if not assortment:
         doc.add_paragraph("Новых посадок нет.")
         return
-    ordered = sorted(assortment, key=lambda r: (r.category != "дерево", -r.count, r.species))
+    # Порядок как в примере формы 9: деревья, кустарники, затем газон.
+    order = {"дерево": 0, "кустарник": 1, "газон": 2}
+    ordered = sorted(assortment, key=lambda r: (order.get(r.category, 3), -r.count, r.species))
     # Примечание: параметры посадочного материала (высота, ком) есть только у
     # видов базового ассортимента 515-ПП (data/norms/515-pp/assortment_base.csv).
     base_515 = {item.label for item in catalog_by_id().values() if in_base_515(item)}
     rows = [
-        [str(i), r.species, "—", str(r.count), "по ППМ 515-ПП, табл. 4" if r.species in base_515 else "—"]
+        [str(i), r.species, "—", _schedule_quantity(r), _schedule_note(r, base_515)]
         for i, r in enumerate(ordered, 1)
     ]
     _table(doc, ["Поз.", "Наименование породы или вида насаждения", "Возраст, лет", "Кол.", "Примечание"], rows, [12, 80, 20, 15, 43])
     trees = sum(r.count for r in assortment if r.category == "дерево")
     bushes = sum(r.count for r in assortment if r.category == "кустарник")
-    doc.add_paragraph(f"Итого: деревьев — {trees}, кустарников — {bushes}.")
+    lawn = sum(r.count for r in assortment if r.unit == "м²")
+    total = f"Итого: деревьев — {trees}, кустарников — {bushes}"
+    doc.add_paragraph(total + (f", газона (устройство) — {_fmt_area(lawn)} м²." if lawn else "."))
+
+
+def _schedule_quantity(row: AssortmentRow) -> str:
+    return f"{_fmt_area(row.count)} м²" if row.unit == "м²" else str(row.count)
+
+
+def _schedule_note(row: AssortmentRow, base_515: set[str]) -> str:
+    if row.unit == "м²":
+        return "посев из устойчивой травосмеси (ППМ 515-ПП, табл. 4)"
+    return "по ППМ 515-ПП, табл. 4" if row.species in base_515 else "—"
 
 
 def _section_violations(doc, violations: list[Violation], generated_ids: set[str]) -> None:
@@ -413,7 +434,7 @@ def _severity(value: str) -> str:
     return "запрет" if value == "forbidden" else "предупреждение"
 
 
-def _section_technical(doc, has_hedges: bool) -> None:
+def _section_technical(doc, has_hedges: bool, has_new_lawn: bool = False) -> None:
     doc.add_heading("6. Технические требования к посадке", level=1)
     data = _sp82()
     doc.add_paragraph("По СП 82.13330.2016 «Благоустройство территорий».")
@@ -426,6 +447,11 @@ def _section_technical(doc, has_hedges: bool) -> None:
         f"{w['tree_root_ball_up_to_1x1_m']} л на дерево с комом до 1×1 м, {w['tree_root_ball_1x1_m_and_more']} л — "
         f"с комом 1×1 м и более, {w['bush']} л на куст."
     )
+    if has_new_lawn:
+        seeding = data["lawn_seeding_g_per_m2"]
+        norms = "; ".join(f"{name.lower()} — {_num(grams)} г/м²" for name, grams in seeding.items() if name not in ("clause", "note"))
+        items.append(f"п. {seeding['clause']}: норма высева газонных трав на 1 м² не менее: {norms}.")
+        items.append(f"п. {w['clause']}: полив газона — {w['flower_seedlings_or_lawn_per_m2']} л/м².")
     items += [f"п. {data['acceptance']['clause']}: {text}." for text in data["acceptance"]["items"]]
     for text in items:
         doc.add_paragraph(_text(text), style="List Bullet")
@@ -462,11 +488,15 @@ def build_document(scene: Scene, assignments: list[ZoneAssignment], report: Opti
     """DOCX пояснительной записки по уже посчитанной сцене GreenPlan (с
     новыми объектами, metadata.generated) и её решениям по зонам."""
     title = (title or "").strip() or "Участок озеленения"
+    by_id = catalog_by_id()
+    # Газон -- производная от посадок и покрытий: пересчитываем, а не берём
+    # из запроса, чтобы записка совпадала с планом после ручных правок.
+    scene = scene.model_copy(update={"lawns": plan_lawns(scene, by_id)})
     base = _without_generated(scene)
     characteristics = characterize_site(base)
     generated = [o for o in scene.objects if o.metadata.get("generated")]
     violations = find_violations(scene)
-    assortment = summarize_assortment(generated, catalog_by_id())
+    assortment = summarize_assortment(generated, by_id) + lawn_assortment(scene.lawns)
 
     doc = _new_document()
     heading = doc.add_heading("Пояснительная записка к проекту озеленения", level=0)
@@ -482,7 +512,11 @@ def build_document(scene: Scene, assignments: list[ZoneAssignment], report: Opti
     _section_decisions(doc, assignments)
     _section_schedule(doc, assortment)
     _section_violations(doc, violations, {o.id for o in generated})
-    _section_technical(doc, has_hedges=any(a.pattern_id in ("linear_hedge_row", "building_ring") for a in assignments))
+    _section_technical(
+        doc,
+        has_hedges=any(a.pattern_id in ("linear_hedge_row", "building_ring") for a in assignments),
+        has_new_lawn=lawn_totals(scene.lawns)[0] > 0,
+    )
     _section_limitations(doc, assignments, characteristics)
     _section_ai_text(doc, report)
 
