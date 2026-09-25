@@ -293,8 +293,11 @@ export default function LandingPage() {
         <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center px-6 text-center">
           <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.4 }} variants={fadeUp}>
             <h2 className="text-4xl font-bold text-ink-900 md:text-5xl">Готовы озеленить свой двор?</h2>
-            <p className="mx-auto mt-4 max-w-lg text-lg text-ink-500">
-              Аккаунт бесплатный, почта не нужна — только имя пользователя и пароль.
+            {/* text-balance -- строки примерно равной длины вместо длинной первой
+                и одинокого "пароль." на второй; неразрывный пробел не даёт тире
+                начать строку. */}
+            <p className="mx-auto mt-4 max-w-lg text-balance text-lg text-ink-500">
+              Аккаунт бесплатный, почта не нужна&nbsp;— только имя пользователя и пароль.
             </p>
             <div className="relative mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <motion.span
