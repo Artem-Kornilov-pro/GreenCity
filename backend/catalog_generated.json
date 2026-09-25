@@ -1470,69 +1470,6 @@
     }
   },
   {
-    "id": "species_chast_sortov_topolya_belogo",
-    "category": "tree",
-    "label": "часть сортов тополя белого",
-    "size_class": "tall",
-    "crown_class": "columnar",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/columnartree_1.glb",
-    "dimensions": {
-      "height": 9.0,
-      "radius": 1.22,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "species_chast_sortov_yabloni_s_kolonnovidnoy_formoy",
-    "category": "tree",
-    "label": "часть сортов яблони с колонновидной формой",
-    "size_class": "tall",
-    "crown_class": "columnar",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/columnartree_1.glb",
-    "dimensions": {
-      "height": 9.0,
-      "radius": 1.22,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "species_otdelnye_vertikalnye_formy_vyaza",
-    "category": "tree",
-    "label": "отдельные вертикальные формы вяза",
-    "size_class": "tall",
-    "crown_class": "columnar",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/columnartree_1.glb",
-    "dimensions": {
-      "height": 9.0,
-      "radius": 1.22,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
     "id": "species_bereza_povislaya",
     "category": "tree",
     "label": "Береза повислая",
@@ -1767,27 +1704,6 @@
     "id": "species_iva_shverina",
     "category": "tree",
     "label": "Ива Шверина",
-    "size_class": "low",
-    "crown_class": "regular",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/weepingtree_1.glb",
-    "dimensions": {
-      "height": 2.57,
-      "radius": 0.95,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "species_otdelnye_sorta_ivy_kozey",
-    "category": "tree",
-    "label": "отдельные сорта ивы козьей",
     "size_class": "low",
     "crown_class": "regular",
     "setback_kind": "tree",
@@ -3171,30 +3087,9 @@
     }
   },
   {
-    "id": "species_tuya_zapadnaya_otdelnaya_model",
+    "id": "species_tuya_zapadnaya",
     "category": "tree",
-    "label": "Туя западная — отдельная модель",
-    "size_class": "low",
-    "crown_class": "columnar",
-    "setback_kind": "tree",
-    "object_type": "tree",
-    "model": "/models/thuja_1.glb",
-    "dimensions": {
-      "height": 1.5,
-      "radius": 0.28,
-      "trunk_height": 1.2,
-      "width": null,
-      "depth": null
-    },
-    "render": {
-      "shape": "cluster",
-      "color": "#3a8f45"
-    }
-  },
-  {
-    "id": "species_vizualno_harakterna_dlya_gorodskogo_ozeleneniya",
-    "category": "tree",
-    "label": "визуально характерна для городского озеленения",
+    "label": "Туя западная",
     "size_class": "low",
     "crown_class": "columnar",
     "setback_kind": "tree",

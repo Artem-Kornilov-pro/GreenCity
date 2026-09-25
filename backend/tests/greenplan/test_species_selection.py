@@ -14,9 +14,12 @@ from greenplan.species_selection import (
     SiteContext,
     _expand_names,
     assortment_entry,
+    courtyard_palette,
+    in_base_515,
     model_group,
     select_species,
 )
+from helpers import make_scene, make_zone
 
 CATALOG = load_catalog()
 TREES = [c for c in CATALOG if c.category == "tree"]
@@ -152,3 +155,27 @@ def test_catalog_outside_assortment_falls_back_to_given_items_and_says_so():
     palette = select_species("open_area", "generic_fill", [fake], [], _site())
     assert palette.trees == [fake]
     assert "вне ассортимента" in palette.basis
+
+
+# --- courtyard_palette: виды по умолчанию для design_area ИИ-редактора ---------
+
+
+def test_courtyard_palette_takes_yard_assortment_with_515_priority():
+    palette = courtyard_palette(make_scene(), TREES, BUSHES)
+    column = TERRITORY_COLUMN["двор"]
+    assert len(palette.trees) == 3 and palette.bushes
+    for item in (*palette.trees, *palette.bushes):
+        assert assortment_entry(item).territories[column] == "+"
+    assert any(in_base_515(item) for item in palette.trees)
+    assert len({genus_of(item.label) for item in palette.trees}) == 3
+
+
+def test_courtyard_palette_hedge_along_paths_is_not_thorny():
+    palette = courtyard_palette(make_scene(), TREES, BUSHES)
+    assert all(genus_of(item.label) not in THORNY_GENERA for item in palette.bushes)
+
+
+def test_courtyard_palette_respects_playground_code_2():
+    playground = make_zone(type="playground_zone", name="PLAYGROUND", severity="warning")
+    palette = courtyard_palette(make_scene(restrictions=[playground]), TREES, BUSHES)
+    assert all("2" not in assortment_entry(item).codes for item in (*palette.trees, *palette.bushes))

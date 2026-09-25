@@ -5,6 +5,7 @@ design_area через apply_plan."""
 import pytest
 
 from core.plant_catalog import catalog_by_id, load_catalog
+from greenplan.species_selection import TERRITORY_COLUMN, assortment_entry
 from text_editor.service import LlmPlan, apply_plan
 
 CATALOG = load_catalog()
@@ -183,6 +184,16 @@ def test_align_along_no_nearby_objects_is_rejected(scene1):
 def test_design_area_via_run_dispatch(scene1):
     result = run(scene1, {"op": "design_area"})
     assert result.applied or result.rejected
+
+
+def test_design_area_default_trees_come_from_yard_assortment(scene1):
+    # Раньше без tree_ids брались первые записи каталога подходящей формы --
+    # груша уссурийская и туя.
+    result = run(scene1, {"op": "design_area", "elements": ["trees"]})
+    planted = {o.metadata["species"] for o in result.scene.objects if o.type == "tree" and o.metadata.get("source") == "llm"}
+    by_label = {item.label: item for item in CATALOG}
+    assert len(planted) == 3
+    assert all(assortment_entry(by_label[label]).territories[TERRITORY_COLUMN["двор"]] == "+" for label in planted)
 
 
 def test_design_area_with_explicit_tree_and_bush_ids(scene1):

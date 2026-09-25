@@ -49,6 +49,7 @@ from pydantic import BaseModel
 from core.invasive_species import invasive_match, normalize_species_name
 from core.paths import DATA_DIR, NORMS_DIR
 from core.plant_catalog import CatalogItem
+from core.schemas import Scene
 from core.setback_norms import THORNY_GENERA, genus_of, setback_for
 from greenplan.site_characterization import TerritoryType
 from greenplan.zone_partitioning import ZoneKind
@@ -243,6 +244,16 @@ def in_base_515(item: CatalogItem) -> bool:
     return any(name in names for name in _names_of(item)) or genus_of(item.label) in genera
 
 
+def site_key(scene: Scene) -> str:
+    """Стабильный ключ участка для выбора среди равноценных видов (см.
+    _pick): один и тот же участок -- те же виды, разные участки -- разные.
+    Контур границы с округлением до дециметра, чтобы float-шум парсера не
+    менял выбор."""
+    if scene.boundary is None:
+        return "no-boundary"
+    return ";".join(f"{p.x:.1f},{p.z:.1f}" for p in scene.boundary.polygon)
+
+
 class SiteContext(BaseModel):
     """То, что влияет на подбор видов на всём участке."""
 
@@ -362,3 +373,19 @@ def select_species(
         parts.append("в приоритете базовый ассортимент ППМ 515-ПП")
     parts.append("без инвазивных видов ППМ 369-ПП")
     return SpeciesPalette(trees=chosen_trees, bushes=chosen_bushes, basis="; ".join(parts))
+
+
+def courtyard_palette(scene: Scene, trees: list[CatalogItem], bushes: list[CatalogItem]) -> SpeciesPalette:
+    """Виды по умолчанию для дизайна двора в ИИ-редакторе (design_area), когда
+    модель не назвала их сама: тот же подбор, что у GreenPlan, для дворовой
+    территории. Деревья design_area разбрасывает по двору -- роль свободной
+    посадки на открытой зоне; кусты сажает рядами вдоль дорожек -- роль
+    изгороди в полосе у дорожки (без колючих и чувствительных к реагентам)."""
+    site = SiteContext(
+        territory_type="двор",
+        has_playground=any(zone.type == "playground_zone" for zone in scene.restrictions),
+        site_key=site_key(scene),
+    )
+    tree_palette = select_species("open_area", "poisson_scatter_fill", trees, [], site)
+    bush_palette = select_species("path_corridor", "linear_hedge_row", [], bushes, site)
+    return SpeciesPalette(trees=tree_palette.trees, bushes=bush_palette.bushes, basis=tree_palette.basis)
