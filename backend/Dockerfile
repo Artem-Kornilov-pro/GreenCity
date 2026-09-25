@@ -51,10 +51,13 @@ COPY data/ ./data/
 WORKDIR /app/backend
 EXPOSE 8000
 
-# Число процессов uvicorn. Значение по умолчанию (1) сохраняет привычный
-# дев-режим с --reload: правки в смонтированном ./backend подхватываются на
-# лету. Совместить одно с другим нельзя -- uvicorn не поддерживает --reload
-# вместе с --workers, поэтому и развилка.
+# Режим запуска. По умолчанию образ -- продакшен: UVICORN_WORKERS процессов,
+# без --reload. Дев-режим (правки в смонтированном ./backend подхватываются на
+# лету) включает UVICORN_RELOAD=1 -- его выставляет docker-compose.yml.
+# Совместить --reload с несколькими процессами uvicorn не умеет, поэтому при
+# UVICORN_WORKERS>1 он выключается и в деве (нагрузочные прогоны). Раньше
+# --reload включался сам при UVICORN_WORKERS=1, и сервер с одним процессом
+# работал в дев-режиме -- следил за файлами и перезапускался от их изменений.
 #
 # Зачем вообще: тяжёлые эндпоинты (/api/parse, /api/generate-greenery,
 # /api/export-dxf) -- чистая CPU-геометрия на shapely, и потоками она НЕ
@@ -65,11 +68,12 @@ EXPOSE 8000
 # а по очереди делили одно ядро. Настоящий параллелизм здесь даёт только
 # несколько ПРОЦЕССОВ: UVICORN_WORKERS=4 (по числу свободных ядер) поднимает
 # потолок примерно во столько же раз. Ставить >1 имеет смысл для нагрузочных
-# прогонов и продакшена, где --reload всё равно не нужен.
-ENV UVICORN_WORKERS=1
+# прогонов и продакшена. 2 по умолчанию -- минимальный сервер (2 vCPU).
+ENV UVICORN_WORKERS=2
+ENV UVICORN_RELOAD=0
 
-CMD if [ "${UVICORN_WORKERS:-1}" -gt 1 ]; then \
-      exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers "$UVICORN_WORKERS"; \
-    else \
+CMD if [ "${UVICORN_RELOAD:-0}" = "1" ] && [ "${UVICORN_WORKERS:-1}" -le 1 ]; then \
       exec uvicorn main:app --host 0.0.0.0 --port 8000 --reload; \
+    else \
+      exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers "${UVICORN_WORKERS:-2}"; \
     fi

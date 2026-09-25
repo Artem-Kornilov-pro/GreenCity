@@ -574,3 +574,20 @@ def test_greenplan_document_returns_docx_for_generated_plan(client):
     assert "filename*=UTF-8''" in r.headers["content-disposition"]
     doc = Document(io.BytesIO(r.content))
     assert doc.paragraphs[0].text == "Пояснительная записка к проекту озеленения"
+
+
+# --- Сжатие ответов (GZipMiddleware) ------------------------------------------
+
+
+def test_scene_response_is_gzipped_when_client_accepts_it(client):
+    # Сцена реального участка -- сотни КБ JSON, в gzip в 5-6 раз меньше.
+    with open(ROOT_LOCATIONS[0], "rb") as f:
+        r = client.post("/api/parse", files={"file": ("test.dxf", f, "application/dxf")}, headers={"Accept-Encoding": "gzip"})
+    assert r.status_code == 200
+    assert r.headers["content-encoding"] == "gzip"
+    assert r.json()["boundary"] is not None  # httpx сам распаковывает
+
+
+def test_small_responses_are_not_compressed(client):
+    r = client.get("/api/health", headers={"Accept-Encoding": "gzip"})
+    assert "content-encoding" not in r.headers

@@ -1,0 +1,25 @@
+# Продакшен-образ фронтенда: статическая сборка (vite build) за nginx.
+# Dockerfile рядом -- дев-режим (vite dev server, горячая перезагрузка,
+# ~1,2 ГиБ памяти), для сервера он не годится.
+#
+# API -- тот же адрес, что и сайт: nginx проксирует /api/ на бэкенд
+# (BACKEND_URL), поэтому VITE_API_BASE при сборке пустой (относительные пути
+# /api/...), без CORS и без жёстко вшитого адреса бэкенда.
+FROM node:24-alpine AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY . .
+ARG VITE_API_BASE=""
+ENV VITE_API_BASE=${VITE_API_BASE}
+RUN npm run build
+
+FROM nginx:1.27-alpine
+# Шаблон конфигурации: официальный образ nginx при старте подставляет
+# переменные окружения (${BACKEND_URL}) в /etc/nginx/templates/*.template.
+COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
+COPY --from=build /app/dist /usr/share/nginx/html
+ENV BACKEND_URL=http://backend:8000
+EXPOSE 80
+HEALTHCHECK --interval=10s --timeout=5s --retries=5 --start-period=5s \
+  CMD wget --spider -q http://127.0.0.1/ || exit 1

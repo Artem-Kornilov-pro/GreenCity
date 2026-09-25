@@ -28,5 +28,10 @@ npm run build            # production-сборка в dist/
 | `types.ts` | Формат сцены — тот же, что `backend/core/schemas.py` |
 | `components/ui/` | Кнопки, карточки, диалоги, меню |
 
+Продакшен-образ — `Dockerfile.prod`: `npm run build` и статика за nginx
+(`nginx/default.conf.template`: сжатие, кеширование сборки, `/api/` —
+прокси на бэкенд по `BACKEND_URL`). `Dockerfile` рядом — дев-режим (vite dev
+server), для сервера не годится.
+
 Страница редактора загружается лениво (`App.tsx`): three.js не попадает в
 основной бандл для посетителей лендинга.

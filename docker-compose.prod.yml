@@ -1,0 +1,41 @@
+# Продакшен-режим поверх docker-compose.yml (дев-режим остаётся как есть):
+#
+#     docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Что меняется:
+#   - frontend: статическая сборка за nginx (frontend/Dockerfile.prod) на
+#     порту 80 вместо vite dev server на 5173; /api/ nginx проксирует на
+#     бэкенд -- сайт и API на одном адресе;
+#   - backend: код из образа, без смонтированных каталогов и без --reload,
+#     UVICORN_WORKERS процессов (по умолчанию 2 -- минимальный сервер
+#     2 vCPU / 4 ГБ; на 4 vCPU / 8 ГБ -- 4); наружу не открыт, только через
+#     nginx;
+#   - mongo: кеш WiredTiger ограничен 0,25 ГБ (по умолчанию -- половина
+#     оперативной памяти сервера).
+# Мониторинг (Prometheus, Loki, Promtail, Grafana) -- без изменений.
+services:
+  backend:
+    volumes: !reset []
+    ports: !reset []
+    environment:
+      - UVICORN_WORKERS=${UVICORN_WORKERS:-2}
+      - UVICORN_RELOAD=0
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    volumes: !reset []
+    environment: !reset []
+    ports: !override
+      - "80:80"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    mem_limit: 256m
+
+  mongo:
+    command: ["--wiredTigerCacheSizeGB", "0.25"]

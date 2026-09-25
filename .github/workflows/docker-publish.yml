@@ -27,9 +27,11 @@ jobs:
           - image: backend
             context: .
             dockerfile: backend/Dockerfile
+          # Продакшен-образ: статическая сборка за nginx (Dockerfile.prod),
+          # а не дев-режим vite dev server из frontend/Dockerfile.
           - image: frontend
             context: ./frontend
-            dockerfile: frontend/Dockerfile
+            dockerfile: frontend/Dockerfile.prod
     steps:
       - uses: actions/checkout@v5
 

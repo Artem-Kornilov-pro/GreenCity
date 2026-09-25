@@ -66,6 +66,14 @@ jobs:
       - name: Собрать образы backend и frontend
         run: docker compose build
 
+      # Продакшен-вариант: образ фронтенда (статика за nginx) -- его же
+      # публикует docker-publish.yml -- и итоговая конфигурация
+      # docker-compose.yml + docker-compose.prod.yml.
+      - name: Собрать продакшен-образ фронтенда
+        run: docker build -f frontend/Dockerfile.prod frontend
+      - name: Проверить продакшен-конфигурацию docker compose
+        run: docker compose -f docker-compose.yml -f docker-compose.prod.yml config -q
+
       # Полная проверка: реально поднять весь стек (все восемь сервисов, тот
       # же docker-compose.yml, что и у разработчика) и дождаться, что каждый
       # прошёл свой healthcheck -- не только "образ собрался", а "проект

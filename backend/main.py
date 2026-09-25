@@ -68,6 +68,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from api import accounts as accounts_api
@@ -115,6 +116,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Сжатие ответов: сцена -- JSON, у реальных участков 1-13 МБ, в gzip в 5-6
+# раз меньше (10_stary_gay: 805 КБ -> 145 КБ). Мелкие ответы (/api/health,
+# ошибки) не сжимаются -- выигрыша нет.
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 # Стандартные HTTP-метрики (запросы/с, латентность по хендлеру и коду ответа,
 # запросы в процессе обработки) -- без ручной разметки каждого эндпоинта.
