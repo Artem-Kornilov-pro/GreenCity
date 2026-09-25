@@ -41,7 +41,7 @@ DXF-файл → parser/parse_dxf.py → Scene (JSON) → backend (FastAPI) → 
 
 Импорты — абсолютные от `backend/` (`from core.schemas import Scene`), пути к данным — только через `core/paths.py`.
 
-Docker-compose поднимает 8 сервисов с healthcheck на каждом и `depends_on: condition: service_healthy` — backend стартует только когда mongo/redis реально приняли соединение. Код смонтирован volume'ами — правки в `backend/`/`parser/`/`frontend/` подхватываются на лету, без пересборки образа (новые зависимости в `requirements.txt` — нет, там нужен `--build`). Для сервера — `docker-compose.prod.yml` поверх основного файла (`make docker-prod-up`): статика за nginx на :80, backend без смонтированного кода и `--reload`, кеш MongoDB 0,25 ГБ.
+Docker-compose поднимает 8 сервисов с healthcheck на каждом и `depends_on: condition: service_healthy` — backend стартует только когда mongo/redis реально приняли соединение. Код смонтирован volume'ами — правки в `backend/`/`parser/`/`frontend/` подхватываются на лету, без пересборки образа (новые зависимости в `requirements.txt` — нет, там нужен `--build`). Для сервера — `docker-compose.prod.yml` поверх основного файла (`make docker-prod-up`): статика за nginx на :80, backend без смонтированного кода и `--reload` (3 процесса, 3 ядра, до 3 ГБ), кеш MongoDB 0,5 ГБ, ротация логов контейнеров; рассчитан на сервер 4 vCPU / 8 ГБ / 40 ГБ SSD (README, «Docker на сервере»).
 
 ## 3. Модель данных: `Scene`
 

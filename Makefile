@@ -9,7 +9,7 @@ CATEGORY ?= tree
 
 .PHONY: help venv backend frontend-install frontend frontend-build parse clean \
         lint lint-py lint-web lint-fix models test test-e2e test-cov corpus-features \
-        docker-build docker-up docker-down docker-logs docker-prod-up docker-prod-down
+        docker-build docker-up docker-down docker-logs docker-prod-up docker-prod-down docker-prune
 
 help:
 	@echo "make venv              - создать venv и поставить Python-зависимости"
@@ -34,6 +34,7 @@ help:
 	@echo "make docker-logs       - логи обоих сервисов (docker compose up без -d)"
 	@echo "make docker-prod-up    - продакшен-режим: статика за nginx на :80, без --reload (docker-compose.prod.yml)"
 	@echo "make docker-prod-down  - остановить продакшен-режим"
+	@echo "make docker-prune      - удалить старые образы и кеш сборки старше недели (место на диске сервера)"
 
 # venv пересоздаётся только если список зависимостей новее .venv/bin/activate
 $(VENV)/bin/activate: requirements.txt requirements-dev.txt
@@ -130,3 +131,10 @@ docker-prod-up:
 
 docker-prod-down:
 	$(PROD_COMPOSE) down
+
+# После каждой пересборки старые образы и слои кеша сборки остаются на диске
+# (каждая сборка фронтенда и бэкенда -- сотни МБ). Тома с данными (mongo,
+# prometheus, loki, grafana) не трогаются.
+docker-prune:
+	docker image prune -f
+	docker builder prune -f --filter until=168h

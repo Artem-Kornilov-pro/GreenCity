@@ -1,25 +1,44 @@
 # Продакшен-режим поверх docker-compose.yml (дев-режим остаётся как есть):
 #
-#     docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#     make docker-prod-up
+#     # = docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 #
-# Что меняется:
+# Рассчитан на сервер 4 vCPU (2 ГГц) / 8 ГБ ОЗУ / 40 ГБ SSD. Бюджет памяти:
+#   backend 3 ГБ (3 процесса, до ~750 МиБ каждый на крупном участке)
+#   + mongo 1 ГБ + redis 256 МБ + frontend 128 МБ
+#   + мониторинг ~0,6 ГБ + система и Docker ~0,8 ГБ  =  ~5,8 ГБ,
+#   остальное -- запас и файловый кеш.
+# CPU: backend -- 3 ядра (тяжёлый запрос занимает одно ядро на 2-30 с при
+# 2 ГГц), четвёртое -- mongo, nginx, мониторинг и система, чтобы сайт
+# отвечал, пока все три процесса считают GreenPlan.
+#
+# Что меняется относительно дев-режима:
 #   - frontend: статическая сборка за nginx (frontend/Dockerfile.prod) на
 #     порту 80 вместо vite dev server на 5173; /api/ nginx проксирует на
 #     бэкенд -- сайт и API на одном адресе;
 #   - backend: код из образа, без смонтированных каталогов и без --reload,
-#     UVICORN_WORKERS процессов (по умолчанию 2 -- минимальный сервер
-#     2 vCPU / 4 ГБ; на 4 vCPU / 8 ГБ -- 4); наружу не открыт, только через
-#     nginx;
-#   - mongo: кеш WiredTiger ограничен 0,25 ГБ (по умолчанию -- половина
-#     оперативной памяти сервера).
+#     UVICORN_WORKERS процессов (3); наружу не открыт, только через nginx;
+#   - mongo: кеш WiredTiger 0,5 ГБ (по умолчанию -- половина ОЗУ сервера);
+#   - логи контейнеров ограничены (3 файла по 10 МБ на сервис) -- Docker по
+#     умолчанию хранит их без предела, на 40 ГБ диска за недели это заметно.
 # Мониторинг (Prometheus, Loki, Promtail, Grafana) -- без изменений.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   backend:
     volumes: !reset []
     ports: !reset []
     environment:
-      - UVICORN_WORKERS=${UVICORN_WORKERS:-2}
+      - UVICORN_WORKERS=${UVICORN_WORKERS:-3}
       - UVICORN_RELOAD=0
+    cpus: 3.0
+    mem_limit: 3g
+    logging: *logging
 
   frontend:
     build:
@@ -35,7 +54,14 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
-    mem_limit: 256m
+    mem_limit: 128m
+    logging: *logging
 
   mongo:
-    command: ["--wiredTigerCacheSizeGB", "0.25"]
+    command: ["--wiredTigerCacheSizeGB", "0.5"]
+    mem_limit: 1g
+    logging: *logging
+
+  redis:
+    mem_limit: 256m
+    logging: *logging

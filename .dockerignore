@@ -9,3 +9,8 @@ frontend/dist
 # Секреты не должны попадать в контекст сборки образа
 .env
 .env.local
+
+# Исходные материалы проектов (PDF концепций, сканы ведомостей) -- 56 МБ,
+# один PDF на 41 МБ. Бэкенд читает из locations/ только <участок>.dxf и
+# design_rationale.md (pattern_corpus.py, document.py).
+locations/*/data
