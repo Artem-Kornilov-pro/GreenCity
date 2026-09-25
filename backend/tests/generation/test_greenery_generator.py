@@ -121,15 +121,17 @@ def test_placement_reason_handles_no_zones_at_all():
     assert reasons == ["внутри допустимой зоны озеленения"]
 
 
-def test_placement_reason_skips_degenerate_and_invalid_zones():
+def test_placement_reason_skips_degenerate_but_repairs_self_intersecting_zones():
+    # Самопересекающийся контур из DXF -- настоящая зона: раньше её молча
+    # пропускали, и генератор мог посадить дерево прямо на неё.
     too_few_points = make_zone(type="building", name="BAD1", polygon=[Point2(x=0, z=0), Point2(x=1, z=0)])
-    self_intersecting = make_zone(type="building", name="BAD2", polygon=[
+    self_intersecting = make_zone(type="building", name="BOWTIE", polygon=[
         Point2(x=0, z=0), Point2(x=10, z=10), Point2(x=10, z=0), Point2(x=0, z=10)
     ])
     good = make_zone(type="building", name="GOOD")
     reasons = area._placement_reason(20, 0, area._ZoneIndex([too_few_points, self_intersecting, good]))
-    assert any("GOOD" in r for r in reasons)
-    assert not any("BAD1" in r or "BAD2" in r for r in reasons)
+    assert any("BOWTIE" in r for r in reasons)  # ближе всего к точке (20, 0)
+    assert not any("BAD1" in r for r in reasons)
 
 
 # --- generate_trees ------------------------------------------------------

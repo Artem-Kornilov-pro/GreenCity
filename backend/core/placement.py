@@ -35,6 +35,7 @@ from shapely.prepared import prep
 
 from core.schemas import RestrictionZone, Scene
 from core.setback_norms import SpeciesArg, SpeciesSetbackRule, setback_for, species_rules
+from core.shapes import polygon_from_points
 
 # Цели групповых операций (llm_editor.PlaceAlongOp и др.) и их подписи.
 TARGET_LABELS = {
@@ -95,19 +96,10 @@ def clamp(value: float, low: float, high: float) -> float:
 
 
 def _geometry(points: list, single: bool = False):
-    """Полигон из контура сцены. Самопересекающиеся контуры из DXF чинятся
-    buffer(0), а не отбрасываются: пропущенная запретная зона -- это посадка
-    прямо на газопровод."""
-    if len(points) < 3:
-        return None
-    geom = Polygon([(p.x, p.z) for p in points])
-    if not geom.is_valid:
-        geom = geom.buffer(0)
-    if geom.is_empty or geom.area <= 0:
-        return None
-    if single and geom.geom_type != "Polygon":
-        geom = max(geom.geoms, key=lambda g: g.area)
-    return geom
+    """Полигон из контура сцены: самопересекающиеся контуры из DXF чинятся,
+    а не отбрасываются -- пропущенная запретная зона -- это посадка прямо на
+    газопровод (см. core/shapes.py)."""
+    return polygon_from_points(points, single=single)
 
 
 def polygons(geom) -> list[Polygon]:

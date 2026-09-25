@@ -35,12 +35,13 @@ import math
 import random
 from typing import Optional
 
-from shapely.geometry import Point, Polygon, box
+from shapely.geometry import Point, box
 from shapely.ops import unary_union
 from shapely.prepared import prep
 
 from core.placement_geometry import pick_spread
 from core.schemas import Point3, Scene, SceneObject
+from core.shapes import polygon_from_points
 from generation.natural_sampling import (
     _POISSON_SEED,
     DEFAULT_TREE_SPECIES_MIX,
@@ -155,8 +156,9 @@ def generate_trees(
     if scene.boundary is None or len(scene.boundary.polygon) < 3:
         return []
 
-    boundary_poly = Polygon([(p.x, p.z) for p in scene.boundary.polygon])
-    if not boundary_poly.is_valid or boundary_poly.area == 0:
+    boundary_poly = polygon_from_points(scene.boundary.polygon, single=True)
+
+    if boundary_poly is None:
         return []
 
     # None -- вызывающий код не выбрал конкретный вид явно, генератор вправе
@@ -284,8 +286,9 @@ def generate_bushes(
     if scene.boundary is None or len(scene.boundary.polygon) < 3:
         return []
 
-    boundary_poly = Polygon([(p.x, p.z) for p in scene.boundary.polygon])
-    if not boundary_poly.is_valid or boundary_poly.area == 0:
+    boundary_poly = polygon_from_points(scene.boundary.polygon, single=True)
+
+    if boundary_poly is None:
         return []
 
     grid_spacing = grid_spacing_m if grid_spacing_m is not None else DEFAULT_BUSH_GRID_SPACING_M
@@ -393,8 +396,9 @@ def generate_lawn(scene: Scene, patch_size_m: Optional[float] = None) -> list[Sc
     if scene.boundary is None or len(scene.boundary.polygon) < 3:
         return []
 
-    boundary_poly = Polygon([(p.x, p.z) for p in scene.boundary.polygon])
-    if not boundary_poly.is_valid or boundary_poly.area == 0:
+    boundary_poly = polygon_from_points(scene.boundary.polygon, single=True)
+
+    if boundary_poly is None:
         return []
 
     size = patch_size_m if patch_size_m is not None else DEFAULT_LAWN_PATCH_SIZE_M

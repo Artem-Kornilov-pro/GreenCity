@@ -34,6 +34,7 @@ from shapely.ops import unary_union
 
 from core.plant_catalog import CatalogItem
 from core.schemas import LawnArea, Point2, RestrictionZone, Scene
+from core.shapes import polygon_from_points
 
 LAWN_KIND = "Газон обыкновенный"
 
@@ -61,12 +62,7 @@ LAWN_COVER_LAYER_KEYWORDS = ("GRASS", "LAWN", "ГАЗОН")
 
 
 def _poly(points) -> BaseGeometry | None:
-    if len(points) < 3:
-        return None
-    geom = Polygon([(p.x, p.z) for p in points])
-    if not geom.is_valid:
-        geom = geom.buffer(0)
-    return None if geom.is_empty or geom.area <= 0 else geom
+    return polygon_from_points(points)
 
 
 def _is_hard_surface(zone: RestrictionZone) -> bool:
