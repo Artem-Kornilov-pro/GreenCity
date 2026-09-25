@@ -59,7 +59,7 @@ from core.schemas import Point3, Scene, SceneObject
 from greenplan.pattern_assignment import ZoneAssignment, assign_patterns
 from greenplan.pattern_library import PATTERN_LIBRARY, PatternSpec
 from greenplan.site_characterization import characterize_site, usable_planting_area
-from greenplan.species_selection import SiteContext, SpeciesPalette, select_species, site_key
+from greenplan.species_selection import SiteContext, SpeciesPalette, select_site_species, site_key
 from greenplan.zone_partitioning import GeometricZone, partition_zones
 
 log = logging.getLogger("greencity.greenplan")
@@ -407,15 +407,19 @@ def generate_for_scene(
         has_playground=any(zone.type == "playground_zone" for zone in scene.restrictions),
         site_key=site_key(scene),
     )
-    palettes: dict[tuple[str, str], SpeciesPalette] = {}
+    # Единая палитра видов на участок: крупнейшие решения задают её первыми.
+    area_by_key: dict[tuple[str, str], float] = {}
+    for zone, assignment in zip(zones, assignments):
+        key = (zone.kind, assignment.pattern_id)
+        area_by_key[key] = area_by_key.get(key, 0.0) + zone.area_sqm
+    palettes: dict[tuple[str, str], SpeciesPalette] = select_site_species(
+        sorted(area_by_key, key=lambda key: -area_by_key[key]), trees, bushes, site
+    )
 
     objects: list[SceneObject] = []
     placed_assignments: list[ZoneAssignment] = []
     for zone, assignment in zip(zones, assignments):
-        key = (zone.kind, assignment.pattern_id)
-        if key not in palettes:
-            palettes[key] = select_species(zone.kind, assignment.pattern_id, trees, bushes, site)
-        palette = palettes[key]
+        palette = palettes[(zone.kind, assignment.pattern_id)]
         objects += place_zone(placer, zone, assignment, palette.trees, palette.bushes)
         placed_assignments.append(
             assignment.model_copy(

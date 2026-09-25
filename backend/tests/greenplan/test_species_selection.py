@@ -9,6 +9,8 @@ from core.plant_catalog import CatalogItem, CatalogItemDimensions, CatalogItemRe
 from core.setback_norms import THORNY_GENERA, genus_of, setback_for
 from greenplan.pattern_library import PATTERN_LIBRARY
 from greenplan.species_selection import (
+    MAX_SITE_BUSH_SPECIES,
+    MAX_SITE_TREE_SPECIES,
     PATTERN_ROLES,
     TERRITORY_COLUMN,
     SiteContext,
@@ -17,6 +19,7 @@ from greenplan.species_selection import (
     courtyard_palette,
     in_base_515,
     model_group,
+    select_site_species,
     select_species,
 )
 from helpers import make_scene, make_zone
@@ -179,3 +182,27 @@ def test_courtyard_palette_respects_playground_code_2():
     playground = make_zone(type="playground_zone", name="PLAYGROUND", severity="warning")
     palette = courtyard_palette(make_scene(restrictions=[playground]), TREES, BUSHES)
     assert all("2" not in assortment_entry(item).codes for item in (*palette.trees, *palette.bushes))
+
+
+# --- select_site_species: единая палитра видов на участок ---------------------
+
+
+def test_site_palette_reuses_species_and_respects_the_cap():
+    requests = [(kind, pattern) for pattern, spec in PATTERN_LIBRARY.items() for kind in sorted(spec.zone_kinds)]
+    per_pair = {key: select_species(*key, TREES, BUSHES, _site()) for key in requests}
+    site = select_site_species(requests, TREES, BUSHES, _site())
+    independent_trees = {t.label for p in per_pair.values() for t in p.trees}
+    site_trees = {t.label for p in site.values() for t in p.trees}
+    site_bushes = {b.label for p in site.values() for b in p.bushes}
+    assert len(site_trees) < len(independent_trees)
+    # Предел мягкий (роль без подходящего по форме вида палитры получает свой),
+    # но по всем 10 приёмам сразу видов остаётся немного.
+    assert len(site_trees) <= MAX_SITE_TREE_SPECIES + 3
+    assert len(site_bushes) <= MAX_SITE_BUSH_SPECIES + 3
+
+
+def test_site_palette_first_request_is_unchanged():
+    key = ("open_area", "grove_clusters")
+    site = select_site_species([key, ("path_corridor", "linear_hedge_row")], TREES, BUSHES, _site())
+    alone = select_species(*key, TREES, BUSHES, _site())
+    assert [t.label for t in site[key].trees] == [t.label for t in alone.trees]

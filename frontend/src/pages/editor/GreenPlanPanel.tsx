@@ -5,6 +5,7 @@ import type { GreenPlanState } from "./editorTypes";
 import { SlidePanel } from "./SlidePanel";
 
 const SECTION_TITLE = "mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-400";
+const STYLE_LABELS: Record<string, string> = { regular: "регулярный", landscape: "пейзажный" };
 
 // Результат GreenPlan: без чат-формы, только отчёт по уже готовой расстановке --
 // пояснительная записка, обоснование (LLM), нарушения норм и ведомость.
@@ -44,6 +45,19 @@ export function GreenPlanPanel({
               {documentBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
               Пояснительная записка (DOCX)
             </Button>
+
+            {/* Общее решение на участок -- до решений по зонам: сначала стиль,
+                потом приёмы в этом стиле (greenplan/pattern_assignment.py). */}
+            {result.assignments[0] && (
+              <section>
+                <h3 className={SECTION_TITLE}>Стиль участка</h3>
+                <p className="text-sm text-ink-700">
+                  {result.assignments[0].site_style
+                    ? `${STYLE_LABELS[result.assignments[0].site_style]}${result.assignments[0].lead_project ? `, ведущий аналог — ${result.assignments[0].lead_project}` : ""}`
+                    : "не определён — у похожих проектов нет решений определённого стиля"}
+                </p>
+              </section>
+            )}
 
             <section>
               <h3 className={SECTION_TITLE}>Обоснование</h3>

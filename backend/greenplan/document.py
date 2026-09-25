@@ -46,7 +46,7 @@ from greenplan.assortment_report import AssortmentRow, lawn_assortment, summariz
 from greenplan.decision_report import ZONE_KIND_LABELS
 from greenplan.lawn import lawn_totals, plan_lawns
 from greenplan.pattern_assignment import ZoneAssignment
-from greenplan.pattern_library import PATTERN_LIBRARY
+from greenplan.pattern_library import PATTERN_LIBRARY, STYLE_LABELS
 from greenplan.site_characterization import SiteCharacteristics, characterize_site
 from greenplan.species_selection import in_base_515
 from greenplan.violation_report import Violation, find_violations
@@ -142,6 +142,8 @@ def _sp82() -> dict:
 def provenance(assignment: ZoneAssignment) -> str:
     if assignment.source_project:
         return f"по аналогии с проектом «{project_title(assignment.source_project)}»"
+    if assignment.site_style:
+        return f"типовое решение в стиле участка ({STYLE_LABELS[assignment.site_style]}) — проверить"
     return "типовое решение (похожие проекты такую зону не размечали) — проверить"
 
 
@@ -322,16 +324,25 @@ def _section_norms(doc, scene: Scene, assignments: list[ZoneAssignment]) -> None
         _table(doc, ["Вид", "От чего", "Не ближе, м", "Источник"], species_rows, [50, 45, 22, 53])
 
 
+def _site_decision(a: ZoneAssignment) -> str:
+    if a.site_style is None:
+        return "Стиль участка: не определён — у похожих проектов нет решений определённого стиля для таких зон."
+    lead = f", ведущий аналог — проект «{project_title(a.lead_project)}»" if a.lead_project else ""
+    return f"Стиль участка: {STYLE_LABELS[a.site_style]}{lead}. Приёмы зон подобраны в этом стиле."
+
+
 def _section_decisions(doc, assignments: list[ZoneAssignment]) -> None:
     doc.add_heading("3. Принятые решения", level=1)
     doc.add_paragraph(
-        "Участок разбит на геометрические зоны; для каждой зоны приём озеленения выбран по аналогии с "
-        "похожими реализованными проектами (поиск ближайших по признакам участка), виды растений — по "
-        "ассортименту и нормам. Расстановка рассчитана детерминированно, с проверкой отступов в каждой точке."
+        "Сначала принято общее решение на участок — стиль озеленения по похожим реализованным проектам и "
+        "единая палитра видов; затем для каждой геометрической зоны выбран приём в этом стиле. Виды "
+        "растений — по ассортименту и нормам. Расстановка рассчитана детерминированно, с проверкой отступов "
+        "в каждой точке."
     )
     if not assignments:
         doc.add_paragraph("Зон, пригодных для посадки, на участке нет.")
         return
+    doc.add_paragraph(_site_decision(assignments[0]))
     rows = []
     for g in _groups(assignments):
         a = g.first

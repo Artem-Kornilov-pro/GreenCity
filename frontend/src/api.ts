@@ -109,6 +109,10 @@ export interface GreenPlanZoneAssignment {
   tree_species?: string[];
   bush_species?: string[];
   species_basis?: string | null;
+  // Общее решение на участок (backend/greenplan/pattern_assignment.py), у
+  // всех зон одинаковое: стиль и ведущий проект-аналог.
+  site_style?: "regular" | "landscape" | null;
+  lead_project?: string | null;
 }
 
 export interface GreenPlanViolation {

@@ -42,7 +42,7 @@ import openai
 from pydantic import BaseModel
 
 from greenplan.pattern_assignment import ZoneAssignment
-from greenplan.pattern_library import PATTERN_LIBRARY
+from greenplan.pattern_library import PATTERN_LIBRARY, STYLE_LABELS
 from greenplan.zone_partitioning import ZoneKind
 
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434/v1")
@@ -70,7 +70,8 @@ ZONE_KIND_LABELS: dict[ZoneKind, str] = {
 }
 
 INSTRUCTIONS = """Ты помогаешь оформить отчёт по проекту озеленения городского участка.
-Тебе дан список УЖЕ ПРИНЯТЫХ решений: для каждого вида места на участке указано,
+Тебе дано общее решение на участок (стиль озеленения и ведущий проект-аналог)
+и список УЖЕ ПРИНЯТЫХ решений по местам: для каждого вида места на участке указано,
 какой приём озеленения выбран, на скольких зонах он применён, (если есть)
 с какого похожего прошлого проекта этот приём взят и почему, какие виды
 деревьев и кустарников подобраны и на каком основании.
@@ -82,7 +83,8 @@ INSTRUCTIONS = """Ты помогаешь оформить отчёт по пр�
 - Если для решения не указан проект-источник -- это запасной вариант (типовое
   решение), а не заимствование; не приписывай ему проект.
 - Пиши связный текст на русском языке, несколько абзацев, как итоговое
-  объяснение для заказчика -- не список и не таблица.
+  объяснение для заказчика -- не список и не таблица. Начни с общего решения
+  (стиль участка), затем объясни решения по местам как части этого замысла.
 - Не упоминай, что ты языковая модель, и не добавляй ничего от себя вне
   пересказа данных фактов."""
 
@@ -149,6 +151,15 @@ def _summarize(assignments: list[ZoneAssignment]) -> list[SummaryRow]:
     return rows
 
 
+def _site_fact(assignment: ZoneAssignment) -> str:
+    if assignment.site_style is None:
+        return "Общее решение: стиль участка не определён (у похожих проектов нет решений определённого стиля)."
+    line = f"Общее решение: стиль участка -- {STYLE_LABELS[assignment.site_style]}"
+    if assignment.lead_project:
+        line += f", ведущий проект-аналог -- {assignment.lead_project}"
+    return line + "; приёмы по местам подобраны в этом стиле."
+
+
 def _format_facts(rows: list[SummaryRow]) -> str:
     lines = []
     for row in rows:
@@ -185,7 +196,7 @@ def generate_report(assignments: list[ZoneAssignment]) -> Optional[str]:
     if not assignments:
         return None
 
-    facts = _format_facts(_summarize(assignments))
+    facts = _site_fact(assignments[0]) + "\n" + _format_facts(_summarize(assignments))
     try:
         response = _client().chat.completions.create(
             model=OLLAMA_MODEL,

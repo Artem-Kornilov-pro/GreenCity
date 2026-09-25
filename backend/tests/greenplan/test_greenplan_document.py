@@ -155,3 +155,15 @@ def test_empty_assignments_still_produce_a_document():
 )
 def test_project_title_from_rationale(slug, title):
     assert project_title(slug) == title
+
+
+def test_site_style_goes_before_zone_decisions():
+    styled = _assignment(site_style="landscape", lead_project="12_natashinsky_proezd")
+    text = _text(build_document(_scene(), [styled]))
+    assert "Стиль участка: пейзажный, ведущий аналог — проект «" in text
+    assert text.index("Стиль участка") < text.index("Место | Приём")
+
+
+def test_fallback_in_site_style_says_so():
+    fallback = _assignment(source_project=None, source_quote=None, confidence=0.0, site_style="regular")
+    assert provenance(fallback) == "типовое решение в стиле участка (регулярный) — проверить"
