@@ -1,0 +1,49 @@
+# nginx для продакшен-образа фронтенда (Dockerfile.prod). ${BACKEND_URL}
+# подставляется из окружения при старте контейнера.
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+
+    # Сжатие статики (js/css/svg/json). Ответы API сжимает сам бэкенд
+    # (GZipMiddleware) -- уже сжатое nginx повторно не трогает.
+    gzip on;
+    gzip_comp_level 6;
+    gzip_min_length 1024;
+    gzip_vary on;
+    gzip_types text/css application/javascript application/json image/svg+xml text/plain;
+
+    # API -- на бэкенд. Загрузка DXF и папки DWG -- десятки мегабайт;
+    # GreenPlan на крупном участке считается до ~30 с на облачном vCPU.
+    location /api/ {
+        proxy_pass ${BACKEND_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 200m;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+
+    # Файлы сборки с хешем в имени -- неизменяемы, кешируются надолго.
+    location /assets/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        try_files $uri =404;
+    }
+
+    # 3D-модели и текстуры -- без хеша в имени, кешируются на сутки.
+    location /models/ {
+        add_header Cache-Control "public, max-age=86400";
+        try_files $uri =404;
+    }
+
+    # Одностраничное приложение: любой путь (/editor, /projects) -- index.html,
+    # маршрут разбирает React Router. index.html не кешируется, чтобы после
+    # выкладки браузер сразу получил новые имена файлов сборки.
+    location / {
+        add_header Cache-Control "no-cache";
+        try_files $uri $uri/ /index.html;
+    }
+}

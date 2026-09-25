@@ -15,8 +15,8 @@ Connection → реестр". Без шагов ниже джоба `deploy-back
 ## Что деплоится, а что нет
 
 Разворачивается **только backend** (`backend/Dockerfile`, уже готов к проду —
-`UVICORN_WORKERS>1` в окружении отключает `--reload`, ничего менять не
-нужно). Без:
+образ по умолчанию запускается без `--reload`, `UVICORN_WORKERS` процессов;
+дев-режим включает только `UVICORN_RELOAD=1`). Без:
 
 - **MongoDB/Redis** — `/api/auth/*` и `/api/projects/*` ответят понятной
   503-ошибкой (см. `backend/storage/db.py`/`backend/storage/cache.py`), а сам редактор
@@ -24,9 +24,11 @@ Connection → реестр". Без шагов ниже джоба `deploy-back
   работает как обычно — это штатное поведение, не поломка деплоя.
 - **Ollama/Mistral** — `POST /api/greenplan/report` ответит `report_error`
   вместо текста, расстановка (`/api/greenplan/generate`) не пострадает.
-- **Frontend** — его `Dockerfile` сейчас dev-режим (`vite dev server`), для
-  деплоя нужна отдельная production-сборка (`vite build` + статика). Это
-  следующий шаг, не часть текущего CI.
+- **Frontend** — продакшен-образ `frontend/Dockerfile.prod` (статика за nginx,
+  `/api/` проксируется на адрес из `BACKEND_URL`) собирается в CI и
+  публикуется в ghcr.io (`docker-publish.yml`), но в этот workflow SourceCraft
+  не входит. Проще всего поднять весь стек на одной ВМ:
+  `make docker-prod-up` (см. README, «Docker на сервере»).
 
 Для полноценного демо с аккаунтами/LLM нужно отдельно поднять MongoDB/Redis
 (например тоже в Yandex Cloud) и передать `MONGO_URI`/`REDIS_URL`/

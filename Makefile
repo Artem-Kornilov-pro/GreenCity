@@ -9,7 +9,7 @@ CATEGORY ?= tree
 
 .PHONY: help venv backend frontend-install frontend frontend-build parse clean \
         lint lint-py lint-web lint-fix models test test-e2e test-cov corpus-features \
-        docker-build docker-up docker-down docker-logs
+        docker-build docker-up docker-down docker-logs docker-prod-up docker-prod-down
 
 help:
 	@echo "make venv              - создать venv и поставить Python-зависимости"
@@ -32,6 +32,8 @@ help:
 	@echo "make docker-up         - поднять оба сервиса через docker compose"
 	@echo "make docker-down       - остановить и удалить контейнеры"
 	@echo "make docker-logs       - логи обоих сервисов (docker compose up без -d)"
+	@echo "make docker-prod-up    - продакшен-режим: статика за nginx на :80, без --reload (docker-compose.prod.yml)"
+	@echo "make docker-prod-down  - остановить продакшен-режим"
 
 # venv пересоздаётся только если список зависимостей новее .venv/bin/activate
 $(VENV)/bin/activate: requirements.txt requirements-dev.txt
@@ -120,3 +122,11 @@ docker-down:
 
 docker-logs:
 	docker compose up --build
+
+PROD_COMPOSE := docker compose -f docker-compose.yml -f docker-compose.prod.yml
+
+docker-prod-up:
+	$(PROD_COMPOSE) up -d --build
+
+docker-prod-down:
+	$(PROD_COMPOSE) down

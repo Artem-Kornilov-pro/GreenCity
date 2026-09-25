@@ -17,8 +17,8 @@
 DXF-файл → parser/parse_dxf.py → Scene (JSON) → backend (FastAPI) → frontend (React + react-three-fiber, 3D)
 ```
 
-- **backend/** — FastAPI, вся геометрия на `shapely`. Один процесс с `--reload` в деве (`UVICORN_WORKERS=1`), т.к. GIL не даёт параллелить CPU-геометрию потоками — для нагрузки нужны отдельные процессы. Код разложен по пакетам (карта ниже).
-- **frontend/** — React + TypeScript + react-three-fiber (3D-сцена), Vite dev server. Страница редактора — `src/pages/editor/` (сама страница с состоянием и обработчиками + панели: топбар, левая панель, Ассистент, GreenPlan, диалог сохранения).
+- **backend/** — FastAPI, вся геометрия на `shapely`. В деве — один процесс с `--reload` (`UVICORN_RELOAD=1`, `UVICORN_WORKERS=1`); в продакшене (`docker-compose.prod.yml`, образ по умолчанию) — `UVICORN_WORKERS` процессов без `--reload`, т.к. GIL не даёт параллелить CPU-геометрию потоками — для нагрузки нужны отдельные процессы. Ответы сжимаются (`GZipMiddleware`). Код разложен по пакетам (карта ниже).
+- **frontend/** — React + TypeScript + react-three-fiber (3D-сцена); в деве — Vite dev server, в продакшене — статическая сборка за nginx (`frontend/Dockerfile.prod`, `/api/` проксируется на backend). Страница редактора — `src/pages/editor/` (сама страница с состоянием и обработчиками + панели: топбар, левая панель, Ассистент, GreenPlan, диалог сохранения).
 - **parser/** — `parse_dxf.py` (сборка сцены и командная строка) + `dxf_parsing/` (правила слоёв, геометрия, зоны и граница, здания и точечные объекты), общее ядро для CLI и `/api/parse`.
 - **converters/** — GeoJSON/SHP/DWG → DXF для внешних источников (Мосгеотрест и т.п.).
 - **data/norms/** — нормативы в машиночитаемом виде, обособленно от кода (чтобы юрист/архитектор мог проверить число по первоисточнику, а не по Python).
@@ -41,7 +41,7 @@ DXF-файл → parser/parse_dxf.py → Scene (JSON) → backend (FastAPI) → 
 
 Импорты — абсолютные от `backend/` (`from core.schemas import Scene`), пути к данным — только через `core/paths.py`.
 
-Docker-compose поднимает 8 сервисов с healthcheck на каждом и `depends_on: condition: service_healthy` — backend стартует только когда mongo/redis реально приняли соединение. Код смонтирован volume'ами — правки в `backend/`/`parser/`/`frontend/` подхватываются на лету, без пересборки образа (новые зависимости в `requirements.txt` — нет, там нужен `--build`).
+Docker-compose поднимает 8 сервисов с healthcheck на каждом и `depends_on: condition: service_healthy` — backend стартует только когда mongo/redis реально приняли соединение. Код смонтирован volume'ами — правки в `backend/`/`parser/`/`frontend/` подхватываются на лету, без пересборки образа (новые зависимости в `requirements.txt` — нет, там нужен `--build`). Для сервера — `docker-compose.prod.yml` поверх основного файла (`make docker-prod-up`): статика за nginx на :80, backend без смонтированного кода и `--reload`, кеш MongoDB 0,25 ГБ.
 
 ## 3. Модель данных: `Scene`
 

@@ -42,6 +42,9 @@ services:
       # Через переменную окружения, чтобы не править файл ради одного прогона:
       #     UVICORN_WORKERS=4 docker compose up -d backend
       - UVICORN_WORKERS=${UVICORN_WORKERS:-1}
+      # Дев-режим: --reload (при UVICORN_WORKERS=1). Продакшен --
+      # docker-compose.prod.yml, там 0.
+      - UVICORN_RELOAD=${UVICORN_RELOAD:-1}
     # Ключи LLM и (опционально) свой JWT_SECRET -- см. .env.example.
     # required: false -- без .env сервис всё равно поднимется: текстовое
     # редактирование ответит понятной ошибкой, а не упадёт весь compose;
