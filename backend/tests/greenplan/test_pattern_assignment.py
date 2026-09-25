@@ -8,7 +8,7 @@ locations/ -- см. pattern_corpus.py."""
 from greenplan import pattern_assignment
 from greenplan.pattern_assignment import assign_patterns
 from greenplan.pattern_corpus import PatternRecord, _corpus_scenes
-from greenplan.pattern_library import PATTERN_LIBRARY
+from greenplan.pattern_library import DEFAULT_PATTERN_BY_ZONE_KIND, PATTERN_LIBRARY
 from greenplan.pattern_retrieval import NeighborMatch
 from greenplan.site_characterization import SiteCharacteristics
 from greenplan.zone_partitioning import GeometricZone, partition_zones
@@ -139,3 +139,24 @@ def test_neighbors_with_non_positive_similarity_do_not_vote(monkeypatch):
     (assignment,) = _assign([_open_area("a", 10.0)], k=3)
     assert assignment.confidence == 0.0
     assert assignment.source_project is None
+
+
+def test_weak_analogy_does_not_vote_and_zone_is_marked_for_review(monkeypatch):
+    # Сходство 0.09 -- не аналог: в записке это было бы "по аналогии с
+    # проектом X". Без голосов -- запасной паттерн без источника.
+    weak = pattern_assignment.MIN_VOTE_SIMILARITY - 0.01
+    _with_neighbors(monkeypatch, [("weak", weak, "flowing_rows"), ("weaker", 0.09, "grove_clusters")])
+    (assignment,) = _assign([_open_area("a", 10.0)], k=3)
+    assert assignment.confidence == 0.0
+    assert assignment.source_project is None
+    assert assignment.pattern_id == DEFAULT_PATTERN_BY_ZONE_KIND["open_area"]
+
+
+def test_weak_analogy_is_skipped_but_strong_ones_still_vote(monkeypatch):
+    _with_neighbors(monkeypatch, [
+        ("strong", 0.8, "grove_clusters"), ("ok", pattern_assignment.MIN_VOTE_SIMILARITY, "grove_clusters"),
+        ("weak", 0.1, "flowing_rows"),
+    ])
+    assignments = _assign([_open_area("a", 60.0), _open_area("b", 40.0)], k=3)
+    assert {a.pattern_id for a in assignments} == {"grove_clusters"}
+    assert {a.confidence for a in assignments} == {1.0}

@@ -10,8 +10,8 @@
 k самых похожих проектов, у которых есть решение для этого вида, а зоны
 вида делятся между их паттернами пропорционально весу голосов (по площади).
 
-Если НИ ОДИН похожий проект не использовал этот вид зоны ни разу
-(zone.kind просто не встретился ни в одном похожем проекте) -- берётся
+Если НИ ОДИН похожий проект (сходство не ниже MIN_VOTE_SIMILARITY) не
+использовал этот вид зоны ни разу -- берётся
 паттерн по умолчанию из pattern_library.DEFAULT_PATTERN_BY_ZONE_KIND, а не
 молчаливая выдумка: у такого назначения confidence=0.0 и source_project=None,
 и по этим полям видно, что это запасной вариант, а не результат retrieval.
@@ -29,6 +29,16 @@ from greenplan.pattern_library import DEFAULT_PATTERN_BY_ZONE_KIND, PATTERN_LIBR
 from greenplan.pattern_retrieval import NeighborMatch, nearest_projects
 from greenplan.site_characterization import SiteCharacteristics, characterize_site
 from greenplan.zone_partitioning import GeometricZone, ZoneKind
+
+# Ниже этого косинусного сходства проект -- не аналог, а просто ближайший из
+# далёких: его приём попал бы в записку как "по аналогии с проектом X" при
+# сходстве 0.09 (так эталон 25_classical_building_ring_primer получал
+# открытые зоны от 28_formal_bosque_primer). Такие соседи не голосуют; не
+# осталось никого -- паттерн по умолчанию с пометкой "проверить". Замер
+# (корпус leave-one-out + location_old, k=3): доля площади зон на запасном
+# паттерне 3.8% без порога, 5.6% при 0.2, 7.3% при 0.3 -- но при 0.3 три
+# участка целиком остаются без аналогов. Медиана сходства голосующих -- 0.43.
+MIN_VOTE_SIMILARITY = 0.2
 
 
 class ZoneAssignment(BaseModel):
@@ -138,13 +148,13 @@ def _voters(
     Раньше брались k ближайших вообще, и проект без записи для вида (например
     02_peschany_pereulok без open_area) просто занимал место соседа -- за
     open_area типичного двора голосовал один 10_stary_gay, и волны выигрывали
-    без конкуренции. Проекты с неположительным сходством не голосуют: это не
-    похожий участок, а противоположный."""
+    без конкуренции. Проекты со сходством ниже MIN_VOTE_SIMILARITY не
+    голосуют: это не аналог (ниже нуля -- и вовсе противоположный участок)."""
     voters: list[tuple[NeighborMatch, PatternRecord]] = []
     if k <= 0:
         return voters
     for neighbor in ranked:
-        if neighbor.similarity <= 0:
+        if neighbor.similarity < MIN_VOTE_SIMILARITY:
             break
         record = pattern_log.get(neighbor.slug, {}).get(kind)
         # Защита от рассинхронизации data/pattern_corpus.yaml и
