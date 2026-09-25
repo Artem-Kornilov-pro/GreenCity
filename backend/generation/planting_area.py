@@ -12,6 +12,7 @@ from shapely.strtree import STRtree
 
 from core.schemas import RestrictionZone, SceneObject
 from core.setback_norms import PlantKind, SpeciesArg, setback_for
+from core.shapes import polygon_from_points
 
 # Небольшой запретный радиус вокруг уже существующих непостроечных объектов
 # (лавочки, фонари, вручную расставленные деревья/кусты и т.п.), чтобы
@@ -50,8 +51,8 @@ def _keep_out_shapes(
     for zone in restrictions:
         if zone.severity not in ("forbidden", "warning") or len(zone.polygon) < 3:
             continue
-        poly = Polygon([(p.x, p.z) for p in zone.polygon])
-        if not poly.is_valid or poly.area == 0:
+        poly = polygon_from_points(zone.polygon)
+        if poly is None:
             continue
         setback = setback_for(zone.type, plant_kind, zone.minDistance, species=species)
         shapes.append(poly.buffer(setback) if setback > 0 else poly)
@@ -68,8 +69,8 @@ def _raw_zone_shapes(restrictions: list[RestrictionZone]) -> list[Polygon]:
     for zone in restrictions:
         if zone.severity not in ("forbidden", "warning") or len(zone.polygon) < 3:
             continue
-        poly = Polygon([(p.x, p.z) for p in zone.polygon])
-        if poly.is_valid and poly.area > 0:
+        poly = polygon_from_points(zone.polygon)
+        if poly is not None:
             shapes.append(poly)
     return shapes
 
@@ -87,8 +88,8 @@ def _planting_zone_shapes(restrictions: list[RestrictionZone]) -> list[Polygon]:
     for zone in restrictions:
         if zone.severity != "allowed" or len(zone.polygon) < 3:
             continue
-        poly = Polygon([(p.x, p.z) for p in zone.polygon])
-        if poly.is_valid and poly.area > 0:
+        poly = polygon_from_points(zone.polygon)
+        if poly is not None:
             shapes.append(poly)
     return shapes
 
@@ -126,8 +127,8 @@ class _ZoneIndex:
         for zone in restrictions:
             if len(zone.polygon) < 3:
                 continue
-            poly = Polygon([(p.x, p.z) for p in zone.polygon])
-            if not poly.is_valid:
+            poly = polygon_from_points(zone.polygon)
+            if poly is None:
                 continue
             self.polys.append(poly)
             self.zones.append(zone)
@@ -144,6 +145,8 @@ def _placement_reason(x: float, z: float, zone_index: _ZoneIndex) -> list[str]:
         idx = int(zone_index.tree.nearest(pt))
         poly = zone_index.polys[idx]
         zone = zone_index.zones[idx]
-        distance = 0.0 if poly.contains(pt) else poly.exterior.distance(pt)
+        # boundary, а не exterior: починенный самопересекающийся контур --
+        # мультиполигон (core/shapes.py).
+        distance = 0.0 if poly.contains(pt) else poly.boundary.distance(pt)
         reasons.append(f"{distance:.1f} м до ближайшего ограничения ({zone.name})")
     return reasons

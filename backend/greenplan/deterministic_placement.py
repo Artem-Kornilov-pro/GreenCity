@@ -148,6 +148,17 @@ def _scene_object(
     )
 
 
+def _free_points(placer: Placer, points: list[tuple[float, float]], kind: str, obj_type: str) -> list[tuple[float, float]]:
+    """Кандидаты, не занятые уже стоящими объектами. points_in_area отбирает
+    точки только по зонам ограничений: на участке с сотнями существующих
+    деревьев (13_kharkovsky_proezd -- 287) центр рощи или точка заливки
+    почти всегда попадали вплотную к старому дереву, вся группа отклонялась
+    и роща не вставала вовсе, хотя рядом было место. Порода здесь не
+    учитывается (область по таблице) -- её отступ проверяет is_free при
+    посадке каждого вида."""
+    return [(x, z) for x, z in points if placer.is_free(x, z, kind, obj_type=obj_type)]
+
+
 def _place_row(
     placer: Placer,
     zone: GeometricZone,
@@ -307,6 +318,7 @@ def _place_area_fill(
             chosen = placer.points_in_area(kind, spacing, within=poly, max_candidates=MAX_OBJECTS_PER_ZONE)
         else:
             candidates = placer.points_in_area(kind, spacing / 2, within=poly, max_candidates=target * 20)
+            candidates = _free_points(placer, candidates, kind, items[0].object_type)
             chosen = pick_spread(candidates, target, spacing * 0.8)
         counter = [0]
         for x, z in chosen:
@@ -338,6 +350,7 @@ def _place_clustered(
 
     group_count = min(max(1, round(poly.area / CLUSTER_AREA_PER_GROUP_SQM)), MAX_GROUPS_PER_ZONE)
     pool = placer.points_in_area(kind, CLUSTER_MEMBER_SPACING_M / 2, within=poly, max_candidates=group_count * 60)
+    pool = _free_points(placer, pool, kind, items[0].object_type)
     if not pool:
         return []
     centers = pick_spread(pool, group_count, CLUSTER_CENTER_SPACING_M)

@@ -3,8 +3,8 @@
   "characteristics": {
    "building_count": 30,
    "existing_tree_species": {},
-   "plantable_area_sqm": 435469.3,
-   "plantable_ratio": 0.8947,
+   "plantable_area_sqm": 426575.3,
+   "plantable_ratio": 0.8765,
    "restriction_zone_counts": {
     "building": 30,
     "electrical": 7,
@@ -27,8 +27,8 @@
   "characteristics": {
    "building_count": 2,
    "existing_tree_species": {},
-   "plantable_area_sqm": 16760.1,
-   "plantable_ratio": 0.3083,
+   "plantable_area_sqm": 10912.3,
+   "plantable_ratio": 0.2007,
    "restriction_zone_counts": {
     "building": 2,
     "electrical": 404,
@@ -52,8 +52,8 @@
   "characteristics": {
    "building_count": 17,
    "existing_tree_species": {},
-   "plantable_area_sqm": 4209.2,
-   "plantable_ratio": 0.1057,
+   "plantable_area_sqm": 897.8,
+   "plantable_ratio": 0.0225,
    "restriction_zone_counts": {
     "building": 17,
     "electrical": 268,
@@ -77,8 +77,8 @@
   "characteristics": {
    "building_count": 22,
    "existing_tree_species": {},
-   "plantable_area_sqm": 828.6,
-   "plantable_ratio": 0.0262,
+   "plantable_area_sqm": 6319.8,
+   "plantable_ratio": 0.1998,
    "restriction_zone_counts": {
     "building": 22,
     "electrical": 7,
@@ -101,8 +101,8 @@
   "characteristics": {
    "building_count": 5,
    "existing_tree_species": {},
-   "plantable_area_sqm": 17351.0,
-   "plantable_ratio": 0.1568,
+   "plantable_area_sqm": 16014.8,
+   "plantable_ratio": 0.1447,
    "restriction_zone_counts": {
     "building": 5,
     "electrical": 9,
@@ -126,8 +126,8 @@
   "characteristics": {
    "building_count": 0,
    "existing_tree_species": {},
-   "plantable_area_sqm": 12343.7,
-   "plantable_ratio": 0.11,
+   "plantable_area_sqm": 7833.7,
+   "plantable_ratio": 0.0698,
    "restriction_zone_counts": {
     "electrical": 1079,
     "gas_pipeline": 112,
@@ -150,8 +150,8 @@
   "characteristics": {
    "building_count": 0,
    "existing_tree_species": {},
-   "plantable_area_sqm": 1293.2,
-   "plantable_ratio": 0.0414,
+   "plantable_area_sqm": 332.7,
+   "plantable_ratio": 0.0107,
    "restriction_zone_counts": {
     "electrical": 241,
     "gas_pipeline": 33,
@@ -174,8 +174,8 @@
   "characteristics": {
    "building_count": 8,
    "existing_tree_species": {},
-   "plantable_area_sqm": 6655.4,
-   "plantable_ratio": 0.3768,
+   "plantable_area_sqm": 6067.3,
+   "plantable_ratio": 0.3435,
    "restriction_zone_counts": {
     "building": 8,
     "electrical": 8,
@@ -199,8 +199,8 @@
   "characteristics": {
    "building_count": 12,
    "existing_tree_species": {},
-   "plantable_area_sqm": 3524.8,
-   "plantable_ratio": 0.0839,
+   "plantable_area_sqm": 2667.5,
+   "plantable_ratio": 0.0635,
    "restriction_zone_counts": {
     "building": 12,
     "electrical": 94,
@@ -224,8 +224,8 @@
   "characteristics": {
    "building_count": 18,
    "existing_tree_species": {},
-   "plantable_area_sqm": 6704.4,
-   "plantable_ratio": 0.1816,
+   "plantable_area_sqm": 5670.6,
+   "plantable_ratio": 0.1536,
    "restriction_zone_counts": {
     "building": 18,
     "electrical": 58,
@@ -247,8 +247,8 @@
   "characteristics": {
    "building_count": 8,
    "existing_tree_species": {},
-   "plantable_area_sqm": 504.8,
-   "plantable_ratio": 0.0424,
+   "plantable_area_sqm": 594.5,
+   "plantable_ratio": 0.05,
    "restriction_zone_counts": {
     "building": 8,
     "electrical": 57,
@@ -270,8 +270,8 @@
   "characteristics": {
    "building_count": 57,
    "existing_tree_species": {},
-   "plantable_area_sqm": 934.2,
-   "plantable_ratio": 0.0308,
+   "plantable_area_sqm": 11.8,
+   "plantable_ratio": 0.0004,
    "restriction_zone_counts": {
     "building": 57,
     "electrical": 316,
@@ -294,8 +294,8 @@
   "characteristics": {
    "building_count": 36,
    "existing_tree_species": {},
-   "plantable_area_sqm": 4854.0,
-   "plantable_ratio": 0.1164,
+   "plantable_area_sqm": 2932.0,
+   "plantable_ratio": 0.0703,
    "restriction_zone_counts": {
     "building": 36,
     "electrical": 199,
@@ -319,8 +319,8 @@
   "characteristics": {
    "building_count": 88,
    "existing_tree_species": {},
-   "plantable_area_sqm": 2552.9,
-   "plantable_ratio": 0.0129,
+   "plantable_area_sqm": 66874.0,
+   "plantable_ratio": 0.3378,
    "restriction_zone_counts": {
     "building": 88,
     "electrical": 294,

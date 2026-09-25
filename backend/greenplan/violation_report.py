@@ -49,6 +49,7 @@ from shapely.strtree import STRtree
 
 from core.schemas import Scene
 from core.setback_norms import SPECIES_SETBACK_RULES, plant_kind_of_object_type, setback_for
+from core.shapes import polygon_from_points
 
 
 class Violation(BaseModel):
@@ -74,8 +75,8 @@ def _build_zone_index(scene: Scene):
     for zone in scene.restrictions:
         if zone.severity == "allowed" or len(zone.polygon) < 3:
             continue
-        poly = Polygon([(p.x, p.z) for p in zone.polygon])
-        if not poly.is_valid or poly.area == 0:
+        poly = polygon_from_points(zone.polygon)
+        if poly is None:
             continue
         reach = max(
             setback_for(zone.type, "tree", zone.minDistance),

@@ -114,3 +114,11 @@ def test_thorny_bush_near_path_is_a_violation():
     violations = find_violations(make_scene(restrictions=[path], objects=[rose, spirea]))
     assert [v.object_id for v in violations] == ["b1"]
     assert violations[0].required_m == 2.0
+
+
+def test_self_intersecting_forbidden_zone_is_still_checked():
+    # Раньше невалидный контур молча пропускался -- нарушение внутри такой
+    # зоны не находилось (на 20_makeeva_s -- 113 тыс. м² запретных зон).
+    bowtie = [Point2(x=0, z=0), Point2(x=10, z=10), Point2(x=10, z=0), Point2(x=0, z=10)]
+    scene = make_scene(restrictions=[make_zone(type="gas_pipeline", polygon=bowtie)], objects=[make_object("t", "tree", 2, 5)])
+    assert [v.object_id for v in find_violations(scene)] == ["t"]

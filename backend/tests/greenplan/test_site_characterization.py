@@ -3,6 +3,9 @@
 (locations/location_old/), т.к. синтетических Scene с валидной геометрией
 границ вручную не построить дёшево -- только эти шесть у нас и есть."""
 
+import pytest
+from shapely.geometry import Polygon
+
 from core.schemas import Boundary, Point2, RestrictionZone, Scene, SceneMeta
 from greenplan.site_characterization import characterize_site, usable_planting_area
 
@@ -130,3 +133,19 @@ def test_territory_type_guess_undetermined_without_signals(scene_02):
 def test_usable_planting_area_empty_without_boundary():
     scene = Scene(boundary=None, restrictions=[], objects=[], meta=_meta())
     assert usable_planting_area(scene).is_empty
+
+
+def test_usable_area_repairs_self_intersecting_zones_instead_of_dropping_them():
+    # 20_makeeva_s: невалидные контуры разрешённой земли выбрасывались, и
+    # пригодная площадь была 2,5 тыс. м² вместо 67 тыс. -- GreenPlan не
+    # сажал ни одного дерева.
+    from helpers import make_scene, make_zone
+
+    def bowtie(x0):
+        return [Point2(x=x0, z=0), Point2(x=x0 + 20, z=20), Point2(x=x0 + 20, z=0), Point2(x=x0, z=20)]
+
+    allowed = make_zone(id="a", type="protected_zone", name="GROUND", severity="allowed", polygon=bowtie(-40))
+    forbidden = make_zone(id="f", type="building", polygon=bowtie(10))
+    usable = usable_planting_area(make_scene(restrictions=[allowed, forbidden]))
+    assert usable.area == pytest.approx(200, rel=0.01)  # две половинки "бабочки" по 100 м²
+    assert usable.intersection(Polygon([(10, 0), (30, 0), (30, 20), (10, 20)])).area == 0

@@ -16,6 +16,7 @@ from shapely.geometry import Point, Polygon
 from shapely.strtree import STRtree
 
 from core.placement import OBJECT_CLEARANCE_M, POINT_CLEARANCE_M, Placer
+from core.plant_catalog import load_catalog
 from core.schemas import Point2
 from core.setback_norms import MAX_SETBACK_M, setback_for
 from greenplan import deterministic_placement
@@ -460,3 +461,33 @@ def test_generate_for_scene_plants_only_selected_species_and_reports_them(catalo
         assert assignment.species_basis
     # Раньше каталог перебирался по кругу целиком -- десятки видов на участок.
     assert len({o.metadata["species"] for o in objects}) <= 12
+
+
+def test_grove_finds_room_among_existing_trees(catalog):
+    # 13_kharkovsky_proezd: 287 существующих деревьев. Кандидаты рощи
+    # раньше не учитывали уже стоящие объекты -- центр группы попадал к
+    # старому дереву, вся группа отклонялась, и роща не вставала вовсе.
+    trees, _ = _trees_and_bushes(catalog)
+    existing = [make_object(f"old_{i}_{j}", "tree", -9 + 3 * i, -9 + 3 * j) for i in range(4) for j in range(7)]
+    scene = make_scene(boundary=make_boundary(-10, -10, 10, 10), objects=existing)
+    zone = GeometricZone(
+        id="grove", kind="open_area", area_sqm=200.0,
+        polygon=[Point2(x=-10, z=-10), Point2(x=10, z=-10), Point2(x=10, z=10), Point2(x=-10, z=10)],
+    )
+    spec = PATTERN_LIBRARY["grove_clusters"]
+    assignment = ZoneAssignment(
+        zone_id=zone.id, zone_kind="open_area", pattern_id="grove_clusters",
+        source_project=None, source_quote=None, confidence=0.0,
+    )
+    compact = [t for t in trees if not any(g in t.label for g in ("Липа", "Клен", "Дуб", "Каштан", "Тополь"))]
+    objects = _place_clustered(Placer(scene), zone, spec, assignment, compact, [])
+    assert objects, "справа от старых деревьев свободна полоса 8 м -- роща должна встать"
+
+
+def test_dense_real_site_gets_trees():
+    # 20_makeeva_s -- реальный проект с деревьями; GreenPlan сажал 0 деревьев
+    # из-за невалидных контуров разрешённой земли (см. core/shapes.py).
+    scene = _corpus_scenes()["20_makeeva_s"]
+    trees, bushes = _trees_and_bushes(load_catalog())
+    objects, _ = generate_for_scene(scene, trees, bushes)
+    assert sum(1 for o in objects if o.type == "tree") > 100

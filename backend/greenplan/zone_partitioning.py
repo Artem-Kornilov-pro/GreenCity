@@ -42,6 +42,7 @@ from shapely.ops import unary_union
 
 from core.schemas import Point2, RestrictionZone, Scene
 from core.setback_norms import setback_for
+from core.shapes import polygon_from_points
 from greenplan.site_characterization import usable_planting_area
 
 ZoneKind = Literal["building_border", "path_corridor", "site_edge", "open_area"]
@@ -149,8 +150,8 @@ def _band_and_consume(
     for zone in restrictions:
         if zone.type not in types or len(zone.polygon) < 3:
             continue
-        poly = Polygon([(p.x, p.z) for p in zone.polygon])
-        if not poly.is_valid or poly.area == 0:
+        poly = polygon_from_points(zone.polygon)
+        if poly is None:
             continue
         setback = setback_for(zone.type, "tree", zone.minDistance)
         buffered.append(poly.buffer(setback + band_width))
@@ -173,8 +174,9 @@ def partition_zones(scene: Scene, usable: BaseGeometry | None = None) -> list[Ge
     if scene.boundary is None or len(scene.boundary.polygon) < 3:
         return []
 
-    boundary_poly = Polygon([(p.x, p.z) for p in scene.boundary.polygon])
-    if not boundary_poly.is_valid or boundary_poly.area == 0:
+    boundary_poly = polygon_from_points(scene.boundary.polygon, single=True)
+
+    if boundary_poly is None:
         return []
 
     remaining = usable if usable is not None else usable_planting_area(scene)

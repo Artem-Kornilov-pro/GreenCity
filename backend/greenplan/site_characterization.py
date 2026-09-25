@@ -64,6 +64,7 @@ from shapely.ops import unary_union
 from core.placement_geometry import rect_sides
 from core.schemas import Scene
 from core.setback_norms import setback_for
+from core.shapes import polygon_from_points
 
 TerritoryType = Literal["двор", "улица", "площадь", "парк_сквер", "промышленная_охранная", "неопределено"]
 
@@ -114,24 +115,24 @@ def usable_planting_area(scene: Scene) -> BaseGeometry:
     if scene.boundary is None or len(scene.boundary.polygon) < 3:
         return Polygon()
 
-    boundary_poly = Polygon([(p.x, p.z) for p in scene.boundary.polygon])
-    if not boundary_poly.is_valid or boundary_poly.area == 0:
+    boundary_poly = polygon_from_points(scene.boundary.polygon, single=True)
+
+    if boundary_poly is None:
         return Polygon()
 
     allowed = [
-        Polygon([(p.x, p.z) for p in zone.polygon])
-        for zone in scene.restrictions
-        if zone.severity == "allowed" and len(zone.polygon) >= 3
+        poly
+        for poly in (polygon_from_points(zone.polygon) for zone in scene.restrictions if zone.severity == "allowed")
+        if poly is not None
     ]
-    allowed = [p for p in allowed if p.is_valid and p.area > 0]
     base = unary_union(allowed) if allowed else boundary_poly
 
     keep_out = []
     for zone in scene.restrictions:
         if zone.severity not in ("forbidden", "warning") or len(zone.polygon) < 3:
             continue
-        poly = Polygon([(p.x, p.z) for p in zone.polygon])
-        if not poly.is_valid or poly.area == 0:
+        poly = polygon_from_points(zone.polygon)
+        if poly is None:
             continue
         setback = setback_for(zone.type, "tree", zone.minDistance)
         keep_out.append(poly.buffer(setback) if setback > 0 else poly)
@@ -198,8 +199,9 @@ def characterize_site(scene: Scene, usable: Optional[BaseGeometry] = None) -> Op
     if scene.boundary is None or len(scene.boundary.polygon) < 3:
         return None
 
-    boundary_poly = Polygon([(p.x, p.z) for p in scene.boundary.polygon])
-    if not boundary_poly.is_valid or boundary_poly.area == 0:
+    boundary_poly = polygon_from_points(scene.boundary.polygon, single=True)
+
+    if boundary_poly is None:
         return None
 
     total_area = boundary_poly.area
@@ -212,8 +214,8 @@ def characterize_site(scene: Scene, usable: Optional[BaseGeometry] = None) -> Op
     for zone in scene.restrictions:
         if len(zone.polygon) < 3:
             continue
-        poly = Polygon([(p.x, p.z) for p in zone.polygon])
-        if poly.is_valid and poly.area > 0:
+        poly = polygon_from_points(zone.polygon)
+        if poly is not None:
             zone_areas[zone.type] += poly.area
 
     species_counts: Counter[str] = Counter()
