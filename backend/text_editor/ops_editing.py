@@ -26,6 +26,7 @@ from core.placement import (
 )
 from core.placement_geometry import shortest_path
 from core.schemas import Point2, Point3, RestrictionZone, SceneObject
+from greenplan.species_selection import courtyard_palette
 from text_editor.courtyard_design import DEFAULT_ELEMENTS, DESIGN_ITEM_IDS, ELEMENTS, CourtyardDesigner
 from text_editor.courtyard_layout import STYLES
 from text_editor.operations import (
@@ -461,18 +462,17 @@ class EditingOpsMixin:
             self.rejected.append(f"{what}: в каталоге нет {', '.join(missing)}")
             return
 
-        # Деревья по умолчанию -- средние: одно с обычной кроной, одно колонновидное.
-        all_trees = [item for item in self.catalog if item.category == "tree"]
-        default_trees = []
-        for crown in ("regular", "columnar"):
-            same = [t for t in all_trees if t.size_class == "medium" and t.crown_class == crown]
-            if same or all_trees:
-                default_trees.append((same or all_trees)[0])
-        default_trees = list({t.id: t for t in default_trees}.values())
-        trees = (self._pool(op.tree_ids, what) if op.tree_ids else None) or default_trees
-        bushes = (self._pool(op.bush_ids, what) if op.bush_ids else None) or [
-            item for item in self.catalog if item.object_type == "bush"
-        ]
+        # Виды, которые модель не назвала, -- по ассортименту для дворов, как
+        # у GreenPlan (приоритет -- базовый ассортимент 515-ПП). Раньше брались
+        # первые записи каталога подходящей формы: "озелени двор" сажал
+        # грушу уссурийскую и тую.
+        palette = courtyard_palette(
+            self.scene,
+            [item for item in self.catalog if item.category == "tree"],
+            [item for item in self.catalog if item.object_type == "bush"],
+        )
+        trees = (self._pool(op.tree_ids, what) if op.tree_ids else None) or palette.trees
+        bushes = (self._pool(op.bush_ids, what) if op.bush_ids else None) or palette.bushes
 
         style = op.style if op.style in STYLES else "auto"
         if op.style and op.style not in STYLES:

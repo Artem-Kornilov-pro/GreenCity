@@ -87,3 +87,13 @@ def test_dimensions_validation_requires_height():
         assert "height" in str(e)
     else:
         raise AssertionError("height обязателен в CatalogItemDimensions")
+
+
+def test_species_labels_are_species_not_note_fragments():
+    # Разбор примечаний исходного списка давал "виды" вроде "визуально
+    # характерна для городского озеленения" и "часть сортов тополя белого" --
+    # они попадали в "Добавить объект" и в каталог для ИИ-редактора.
+    species = [item for item in load_catalog() if item.id.startswith("species_")]
+    fragments = [item.label for item in species if item.label[:1].islower() or " — " in item.label]
+    assert fragments == []
+    assert "Туя западная" in {item.label for item in species}

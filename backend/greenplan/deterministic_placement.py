@@ -59,7 +59,7 @@ from core.schemas import Point3, Scene, SceneObject
 from greenplan.pattern_assignment import ZoneAssignment, assign_patterns
 from greenplan.pattern_library import PATTERN_LIBRARY, PatternSpec
 from greenplan.site_characterization import characterize_site, usable_planting_area
-from greenplan.species_selection import SiteContext, SpeciesPalette, select_species
+from greenplan.species_selection import SiteContext, SpeciesPalette, select_species, site_key
 from greenplan.zone_partitioning import GeometricZone, partition_zones
 
 log = logging.getLogger("greencity.greenplan")
@@ -405,7 +405,7 @@ def generate_for_scene(
     site = SiteContext(
         territory_type=characteristics.territory_type if characteristics else "неопределено",
         has_playground=any(zone.type == "playground_zone" for zone in scene.restrictions),
-        site_key=_site_key(scene),
+        site_key=site_key(scene),
     )
     palettes: dict[tuple[str, str], SpeciesPalette] = {}
 
@@ -440,13 +440,3 @@ def _thin_to_site_cap(objects: list[SceneObject]) -> list[SceneObject]:
     step = len(objects) / MAX_NEW_OBJECTS_PER_SITE
     log.info("GreenPlan: %d новых объектов > %d на участок -- прорежено", len(objects), MAX_NEW_OBJECTS_PER_SITE)
     return [objects[int(i * step)] for i in range(MAX_NEW_OBJECTS_PER_SITE)]
-
-
-def _site_key(scene: Scene) -> str:
-    """Стабильный ключ участка для выбора среди равноценных видов (см.
-    species_selection._pick): один и тот же участок -- те же виды, разные
-    участки -- разные. Контур границы с округлением до дециметра, чтобы
-    float-шум парсера не менял выбор."""
-    if scene.boundary is None:
-        return "no-boundary"
-    return ";".join(f"{p.x:.1f},{p.z:.1f}" for p in scene.boundary.polygon)
