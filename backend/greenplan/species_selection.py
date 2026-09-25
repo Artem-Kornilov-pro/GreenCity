@@ -313,17 +313,29 @@ def _stable_hash(*parts: str) -> int:
 
 
 def _pick(
-    candidates: list[tuple[CatalogItem, AssortmentEntry]], role: Role, site: SiteContext, role_key: str
+    candidates: list[tuple[CatalogItem, AssortmentEntry]],
+    role: Role,
+    site: SiteContext,
+    role_key: str,
+    palette: Optional[list[CatalogItem]] = None,
+    cap: Optional[int] = None,
 ) -> list[CatalogItem]:
     """До role.count видов: сначала из самой предпочтительной группы формы,
     при нехватке -- из следующих; внутри -- базовый ассортимент 515-ПП (для
-    двора), класс ассортимента, затем стабильный хеш участка."""
+    двора), класс ассортимента, затем стабильный хеш участка.
+
+    palette -- виды, уже выбранные на этом участке (единая палитра, см.
+    select_site_species): подходящие по форме берутся в первую очередь, а
+    когда палитра достигла cap, новые виды не добавляются, если хоть один
+    вид палитры подходит роли."""
     prefer_515 = site.territory_type in ("двор", "неопределено")
+    in_palette = {item.label for item in palette or []}
 
     def rank(pair: tuple[CatalogItem, AssortmentEntry]) -> tuple:
         item, entry = pair
         group = model_group(item)
         return (
+            0 if item.label in in_palette else 1,
             role.groups.index(group),
             0 if prefer_515 and in_base_515(item) else 1,
             _CLASS_RANK.get(entry.assortment_class, 9),
@@ -331,6 +343,8 @@ def _pick(
         )
 
     fitting = [pair[0] for pair in sorted((p for p in candidates if model_group(p[0]) in role.groups), key=rank)]
+    if cap is not None and len(in_palette) >= cap and any(item.label in in_palette for item in fitting):
+        fitting = [item for item in fitting if item.label in in_palette]
     chosen: list[CatalogItem] = []
     # Сначала -- разные роды: смесь из трёх жимолостей или двух лип
     # разнообразием только называется. Род повторяется, лишь если разных
@@ -347,17 +361,35 @@ def _pick(
     return chosen
 
 
+# Единая палитра участка: сколько разных видов деревьев и кустарников
+# GreenPlan сажает на одном участке (select_site_species). Без предела каждая
+# пара (вид зоны, приём) подбирала свои виды, и двор получал 15-17 видов --
+# набор, а не замысел. Предел мягкий: роль, которой по форме не подходит ни
+# один вид палитры, всё равно получает свой вид.
+MAX_SITE_TREE_SPECIES = 4
+MAX_SITE_BUSH_SPECIES = 4
+
+
 def select_species(
     zone_kind: ZoneKind,
     pattern_id: str,
     trees: list[CatalogItem],
     bushes: list[CatalogItem],
     site: SiteContext,
+    tree_palette: Optional[list[CatalogItem]] = None,
+    bush_palette: Optional[list[CatalogItem]] = None,
 ) -> SpeciesPalette:
-    """Виды для пары (вид зоны, паттерн) на этом участке."""
+    """Виды для пары (вид зоны, паттерн) на этом участке. tree_palette /
+    bush_palette -- уже выбранные на участке виды (см. select_site_species)."""
     tree_role, bush_role = PATTERN_ROLES[pattern_id]
-    chosen_trees = _pick(_eligible(trees, zone_kind, site), tree_role, site, f"{zone_kind}:{pattern_id}:tree")
-    chosen_bushes = _pick(_eligible(bushes, zone_kind, site), bush_role, site, f"{zone_kind}:{pattern_id}:bush")
+    chosen_trees = _pick(
+        _eligible(trees, zone_kind, site), tree_role, site, f"{zone_kind}:{pattern_id}:tree",
+        tree_palette, MAX_SITE_TREE_SPECIES if tree_palette is not None else None,
+    )
+    chosen_bushes = _pick(
+        _eligible(bushes, zone_kind, site), bush_role, site, f"{zone_kind}:{pattern_id}:bush",
+        bush_palette, MAX_SITE_BUSH_SPECIES if bush_palette is not None else None,
+    )
 
     if not chosen_trees and not chosen_bushes and (trees or bushes):
         # Ни один вид переданного каталога не прошёл фильтры -- работаем тем,
@@ -373,6 +405,29 @@ def select_species(
         parts.append("в приоритете базовый ассортимент ППМ 515-ПП")
     parts.append("без инвазивных видов ППМ 369-ПП")
     return SpeciesPalette(trees=chosen_trees, bushes=chosen_bushes, basis="; ".join(parts))
+
+
+def select_site_species(
+    requests: list[tuple[ZoneKind, str]],
+    trees: list[CatalogItem],
+    bushes: list[CatalogItem],
+    site: SiteContext,
+) -> dict[tuple[ZoneKind, str], SpeciesPalette]:
+    """Виды для всех пар (вид зоны, приём) участка из единой палитры.
+    requests -- в порядке важности (вызывающий код сортирует по площади):
+    крупнейшие решения задают палитру, следующие берут из неё виды своей
+    формы и добавляют новые, только пока палитра не заполнена."""
+    tree_palette: list[CatalogItem] = []
+    bush_palette: list[CatalogItem] = []
+    result: dict[tuple[ZoneKind, str], SpeciesPalette] = {}
+    for zone_kind, pattern_id in requests:
+        if (zone_kind, pattern_id) in result:
+            continue
+        palette = select_species(zone_kind, pattern_id, trees, bushes, site, tree_palette, bush_palette)
+        for chosen, pool in ((palette.trees, tree_palette), (palette.bushes, bush_palette)):
+            pool.extend(item for item in chosen if item.label not in {p.label for p in pool} and assortment_entry(item))
+        result[(zone_kind, pattern_id)] = palette
+    return result
 
 
 def courtyard_palette(scene: Scene, trees: list[CatalogItem], bushes: list[CatalogItem]) -> SpeciesPalette:

@@ -6,13 +6,28 @@
 (Ollama) ещё не подключена нигде в проекте, это отдельная задача. Вместо неё
 голос ближайших соседей retrieval-корпуса (pattern_retrieval.nearest_projects)
 взвешенный их сходством и есть правило ранжирования: чем более похож
-прошлый проект, тем больше у его выбора вес. Для каждого вида зоны голосуют
-k самых похожих проектов, у которых есть решение для этого вида, а зоны
-вида делятся между их паттернами пропорционально весу голосов (по площади).
+прошлый проект, тем больше у его выбора вес.
+
+Решение в два уровня -- сначала общее на участок, потом по зонам, чтобы у
+участка был единый стиль:
+
+1. Стиль участка (site_style): k самых похожих проектов, у которых есть
+   решение в определённом стиле (регулярный / пейзажный, см.
+   pattern_library.PatternStyle) для видов зон этого участка, голосуют
+   сходством. Ведущий проект -- самый похожий проект победившего стиля.
+   Раньше стиля не было вовсе: каждый вид зоны голосовал сам по себе, а
+   проекты корпуса описаны частично (одним-двумя видами зон), и участок
+   собирался из приёмов трёх-четырёх проектов разного стиля -- волны
+   рядом с диагональными рядами в одном дворе.
+2. Приёмы зон: для каждого вида зоны голосуют k самых похожих проектов с
+   решением для этого вида В СТИЛЕ УЧАСТКА (или нейтральным -- изгородь,
+   кольцо у здания), зоны вида делятся между их приёмами пропорционально
+   весу голосов (по площади). Заливка без замысла (generic_fill) голосует,
+   только если других решений нет.
 
 Если НИ ОДИН похожий проект (сходство не ниже MIN_VOTE_SIMILARITY) не
-использовал этот вид зоны ни разу -- берётся
-паттерн по умолчанию из pattern_library.DEFAULT_PATTERN_BY_ZONE_KIND, а не
+использовал этот вид зоны в стиле участка -- берётся типовой приём этого
+стиля (pattern_library.default_pattern), а не
 молчаливая выдумка: у такого назначения confidence=0.0 и source_project=None,
 и по этим полям видно, что это запасной вариант, а не результат retrieval.
 Это ровно то поле, на которое ляжет Этап 6 (отчёт решений, "по аналогии с
@@ -25,7 +40,7 @@ from pydantic import BaseModel
 
 from core.schemas import Scene
 from greenplan.pattern_corpus import CORPUS_SLUGS, PatternRecord, load_pattern_log
-from greenplan.pattern_library import DEFAULT_PATTERN_BY_ZONE_KIND, PATTERN_LIBRARY
+from greenplan.pattern_library import PATTERN_LIBRARY, default_pattern
 from greenplan.pattern_retrieval import NeighborMatch, nearest_projects
 from greenplan.site_characterization import SiteCharacteristics, characterize_site
 from greenplan.zone_partitioning import GeometricZone, ZoneKind
@@ -57,17 +72,24 @@ class ZoneAssignment(BaseModel):
     tree_species: list[str] = []
     bush_species: list[str] = []
     species_basis: str | None = None
+    # Общее решение на участок (одинаково у всех зон): стиль ("regular" /
+    # "landscape", None -- у похожих проектов стиль не определён) и ведущий
+    # проект-аналог этого стиля.
+    site_style: str | None = None
+    lead_project: str | None = None
 
 
-def _fallback(zone: GeometricZone) -> ZoneAssignment:
+def _fallback(zone: GeometricZone, site_style: str | None = None, lead_project: str | None = None) -> ZoneAssignment:
     return ZoneAssignment(
         zone_id=zone.id,
         zone_kind=zone.kind,
         zone_area_sqm=zone.area_sqm,
-        pattern_id=DEFAULT_PATTERN_BY_ZONE_KIND[zone.kind],
+        pattern_id=default_pattern(zone.kind, site_style),
         source_project=None,
         source_quote=None,
         confidence=0.0,
+        site_style=site_style,
+        lead_project=lead_project,
     )
 
 
@@ -96,14 +118,16 @@ def assign_patterns(
 
     ranked = nearest_projects(characteristics, len(CORPUS_SLUGS))
     pattern_log = load_pattern_log()
+    kinds = list(dict.fromkeys(zone.kind for zone in zones))
+    site_style, lead_project = _site_style(set(kinds), ranked, pattern_log, k)
 
     chosen: dict[str, ZoneAssignment] = {}
-    for kind in dict.fromkeys(zone.kind for zone in zones):
+    for kind in kinds:
         of_kind = [zone for zone in zones if zone.kind == kind]
-        voters = _voters(kind, ranked, pattern_log, k)
+        voters = _voters(kind, ranked, pattern_log, k, site_style)
         if not voters:
             for zone in of_kind:
-                chosen[zone.id] = _fallback(zone)
+                chosen[zone.id] = _fallback(zone, site_style, lead_project)
             continue
 
         weight: dict[str, float] = {}
@@ -134,8 +158,44 @@ def assign_patterns(
                 source_project=best_neighbor.slug,
                 source_quote=best_record.source_quote,
                 confidence=len(backers) / len(voters),
+                site_style=site_style,
+                lead_project=lead_project,
             )
     return [chosen[zone.id] for zone in zones]
+
+
+def _site_style(
+    kinds: set[ZoneKind],
+    ranked: list[NeighborMatch],
+    pattern_log: dict[str, dict[ZoneKind, PatternRecord]],
+    k: int,
+) -> tuple[str | None, str | None]:
+    """(стиль участка, ведущий проект) -- голос k самых похожих проектов, у
+    которых для видов зон ЭТОГО участка есть решение определённого стиля
+    (нейтральные изгородь и кольцо стиль не задают). Проект с решениями
+    разных стилей делит свой голос между ними поровну. (None, None) -- ни у
+    одного достаточно похожего проекта стиль не определён."""
+    weight: dict[str, float] = {}
+    lead: dict[str, str] = {}
+    counted = 0
+    for neighbor in ranked:
+        if counted >= k or neighbor.similarity < MIN_VOTE_SIMILARITY:
+            break
+        styles = {
+            PATTERN_LIBRARY[record.pattern].style
+            for kind, record in pattern_log.get(neighbor.slug, {}).items()
+            if kind in kinds and kind in PATTERN_LIBRARY[record.pattern].zone_kinds
+        } - {"neutral"}
+        if not styles:
+            continue
+        for style in sorted(styles):
+            weight[style] = weight.get(style, 0.0) + neighbor.similarity / len(styles)
+            lead.setdefault(style, neighbor.slug)
+        counted += 1
+    if not weight:
+        return None, None
+    style = max(sorted(weight), key=lambda st: weight[st])
+    return style, lead[style]
 
 
 def _voters(
@@ -143,8 +203,10 @@ def _voters(
     ranked: list[NeighborMatch],
     pattern_log: dict[str, dict[ZoneKind, PatternRecord]],
     k: int,
+    site_style: str | None = None,
 ) -> list[tuple[NeighborMatch, PatternRecord]]:
-    """k самых похожих проектов, у которых есть решение для зоны этого вида.
+    """k самых похожих проектов, у которых есть решение для зоны этого вида в
+    стиле участка (или нейтральное).
     Раньше брались k ближайших вообще, и проект без записи для вида (например
     02_peschany_pereulok без open_area) просто занимал место соседа -- за
     open_area типичного двора голосовал один 10_stary_gay, и волны выигрывали
@@ -162,7 +224,12 @@ def _voters(
         # зоны, в голосовании не участвует.
         if record is None or kind not in PATTERN_LIBRARY[record.pattern].zone_kinds:
             continue
+        # Единый стиль: приём другого стиля в этом участке не голосует.
+        if site_style is not None and PATTERN_LIBRARY[record.pattern].style not in (site_style, "neutral"):
+            continue
         voters.append((neighbor, record))
         if len(voters) == k:
             break
-    return voters
+    # Заливка без замысла -- только если других решений для вида нет.
+    with_concept = [(n, r) for n, r in voters if r.pattern != "generic_fill"]
+    return with_concept or voters

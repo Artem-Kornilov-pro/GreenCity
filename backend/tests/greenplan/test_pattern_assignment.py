@@ -160,3 +160,99 @@ def test_weak_analogy_is_skipped_but_strong_ones_still_vote(monkeypatch):
     assignments = _assign([_open_area("a", 60.0), _open_area("b", 40.0)], k=3)
     assert {a.pattern_id for a in assignments} == {"grove_clusters"}
     assert {a.confidence for a in assignments} == {1.0}
+
+
+# --- Общее решение на участок: стиль, потом приёмы зон ------------------------
+
+
+def _with_records(monkeypatch, neighbors: list[tuple[str, float, dict[str, str]]]) -> None:
+    """Подставные соседи: (слаг, сходство, {вид зоны: паттерн})."""
+    monkeypatch.setattr(
+        pattern_assignment, "nearest_projects",
+        lambda characteristics, k: [NeighborMatch(slug=s, similarity=sim) for s, sim, _ in neighbors],
+    )
+    monkeypatch.setattr(
+        pattern_assignment, "load_pattern_log",
+        lambda: {
+            s: {kind: PatternRecord(pattern=p, source_quote=f"цитата {s}") for kind, p in records.items()}
+            for s, _, records in neighbors
+        },
+    )
+
+
+def _zone(zone_id: str, kind: str, area: float = 10.0) -> GeometricZone:
+    return GeometricZone(id=zone_id, kind=kind, polygon=[], area_sqm=area)
+
+
+def test_site_style_is_decided_once_and_other_style_does_not_vote(monkeypatch):
+    # Ближайший проект -- регулярный, но двое следующих пейзажные и вместе
+    # весомее: стиль участка пейзажный, диагонали в зоны не попадают.
+    _with_records(monkeypatch, [
+        ("diag", 0.9, {"open_area": "diagonal_rows"}),
+        ("waves", 0.8, {"open_area": "flowing_rows"}),
+        ("groves", 0.7, {"open_area": "grove_clusters"}),
+    ])
+    assignments = _assign([_open_area("a", 60.0), _open_area("b", 30.0), _open_area("c", 10.0)], k=3)
+    assert {a.site_style for a in assignments} == {"landscape"}
+    assert {a.lead_project for a in assignments} == {"waves"}
+    assert {a.pattern_id for a in assignments} <= {"flowing_rows", "grove_clusters"}
+
+
+def test_neutral_patterns_do_not_decide_style_but_stay_allowed(monkeypatch):
+    _with_records(monkeypatch, [
+        ("hedges", 0.9, {"path_corridor": "linear_hedge_row", "building_border": "building_ring"}),
+        ("bosque", 0.6, {"open_area": "formal_bosque_grid"}),
+    ])
+    zones = [_zone("p", "path_corridor"), _zone("b", "building_border"), _zone("o", "open_area")]
+    by_id = {a.zone_id: a for a in _assign(zones, k=3)}
+    assert by_id["o"].site_style == "regular" and by_id["o"].lead_project == "bosque"
+    assert by_id["p"].pattern_id == "linear_hedge_row" and by_id["p"].source_project == "hedges"
+    assert by_id["b"].pattern_id == "building_ring"
+
+
+def test_style_is_taken_only_from_zone_kinds_present_on_the_site(monkeypatch):
+    # У ближайшего проекта регулярные открытые зоны, но на участке их нет --
+    # стиль задают те, у кого есть решение для зон, которые есть на участке.
+    _with_records(monkeypatch, [
+        ("bosque", 0.9, {"open_area": "formal_bosque_grid"}),
+        ("wavy_paths", 0.5, {"path_corridor": "flowing_rows"}),
+    ])
+    (assignment,) = _assign([_zone("p", "path_corridor")], k=3)
+    assert assignment.site_style == "landscape"
+    assert assignment.pattern_id == "flowing_rows"
+
+
+def test_zone_without_analogue_in_site_style_gets_the_style_default(monkeypatch):
+    # Стиль участка регулярный (его задали диагонали вдоль дорожек);
+    # пейзажные рощи в открытую зону не пускаются, регулярного решения для
+    # неё у соседей нет -- типовой регулярный приём, а не заливка без замысла.
+    _with_records(monkeypatch, [
+        ("diag_paths", 0.9, {"path_corridor": "diagonal_rows"}),
+        ("groves", 0.5, {"open_area": "grove_clusters"}),
+    ])
+    by_id = {a.zone_id: a for a in _assign([_zone("p", "path_corridor", 50.0), _zone("o", "open_area")], k=3)}
+    assert by_id["p"].site_style == "regular"
+    assert by_id["o"].pattern_id == "triangular_grid_fill"
+    assert by_id["o"].source_project is None and by_id["o"].confidence == 0.0
+
+
+def test_generic_fill_votes_only_without_other_decisions(monkeypatch):
+    _with_records(monkeypatch, [
+        ("plain", 0.9, {"open_area": "generic_fill"}),
+        ("groves", 0.6, {"open_area": "grove_clusters"}),
+    ])
+    assignments = _assign([_open_area("a", 60.0), _open_area("b", 40.0)], k=3)
+    assert {a.pattern_id for a in assignments} == {"grove_clusters"}
+
+
+def test_real_sites_get_a_single_style():
+    # Раньше 02_courtyard_3buildings получал на открытых зонах волны,
+    # диагональные ряды и заливку одновременно -- от трёх проектов.
+    for scene in list(_corpus_scenes().values())[:12]:
+        zones = partition_zones(scene)
+        assignments = assign_patterns(scene, zones, k=3)
+        styles = {PATTERN_LIBRARY[a.pattern_id].style for a in assignments} - {"neutral"}
+        assert len(styles) <= 1
+        assert len({a.site_style for a in assignments}) <= 1
+        if assignments and assignments[0].site_style:
+            assert styles <= {assignments[0].site_style}

@@ -30,6 +30,17 @@ from greenplan.zone_partitioning import ZoneKind
 
 GeometryFamily = Literal["linear", "area_fill", "clustered"]
 
+# Стиль приёма -- для единого замысла на весь участок (pattern_assignment:
+# сначала стиль участка, потом приёмы зон в этом стиле).
+#   regular   -- регулярный: строгая геометрия (боскет, сетка, диагонали,
+#                концентрические кольца);
+#   landscape -- пейзажный: свободные формы (волны, рощи, свободный разброс);
+#   neutral   -- уместен в любом стиле: изгородь вдоль дорожки и кольцо у
+#                здания встречаются и в регулярных, и в пейзажных дворах;
+#                generic_fill -- заливка без замысла.
+PatternStyle = Literal["regular", "landscape", "neutral"]
+STYLE_LABELS: dict[str, str] = {"regular": "регулярный", "landscape": "пейзажный"}
+
 
 class PatternSpec(BaseModel):
     id: str
@@ -39,6 +50,7 @@ class PatternSpec(BaseModel):
     # при назначении (pattern_assignment.py не назначит building_ring зоне
     # типа open_area, даже если в корпусе почему-то нашлась бы такая запись).
     zone_kinds: frozenset[ZoneKind]
+    style: PatternStyle = "neutral"
     # geometry_family == "linear": вторая линия в double_row_offset_m от
     # первой (0.0 -- однорядно).
     double_row_offset_m: float = 0.0
@@ -116,6 +128,7 @@ PATTERN_LIBRARY: dict[str, PatternSpec] = {
     ),
     "diagonal_rows": PatternSpec(
         id="diagonal_rows",
+        style="regular",
         label="Диагональные линии под углом к проезжей части",
         geometry_family="linear",
         zone_kinds=frozenset({"open_area", "path_corridor"}),
@@ -124,6 +137,7 @@ PATTERN_LIBRARY: dict[str, PatternSpec] = {
     ),
     "flowing_rows": PatternSpec(
         id="flowing_rows",
+        style="landscape",
         label="Волнистые (синус-модулированные) линии",
         geometry_family="linear",
         zone_kinds=frozenset({"open_area", "path_corridor"}),
@@ -134,6 +148,7 @@ PATTERN_LIBRARY: dict[str, PatternSpec] = {
     ),
     "formal_bosque_grid": PatternSpec(
         id="formal_bosque_grid",
+        style="regular",
         label="Формальный боскет -- строгая ортогональная сетка деревьев",
         geometry_family="linear",
         zone_kinds=frozenset({"open_area"}),
@@ -147,6 +162,7 @@ PATTERN_LIBRARY: dict[str, PatternSpec] = {
     ),
     "concentric_rings": PatternSpec(
         id="concentric_rings",
+        style="regular",
         label="Концентрические кольца вокруг центра площадки",
         geometry_family="linear",
         zone_kinds=frozenset({"open_area"}),
@@ -155,6 +171,7 @@ PATTERN_LIBRARY: dict[str, PatternSpec] = {
     ),
     "triangular_grid_fill": PatternSpec(
         id="triangular_grid_fill",
+        style="regular",
         label="Треугольная (гексагональная) сетка -- квинкункс",
         geometry_family="area_fill",
         zone_kinds=frozenset({"open_area"}),
@@ -162,6 +179,7 @@ PATTERN_LIBRARY: dict[str, PatternSpec] = {
     ),
     "grove_clusters": PatternSpec(
         id="grove_clusters",
+        style="landscape",
         label="Органичные рощи -- случайные группы по несколько деревьев",
         geometry_family="clustered",
         zone_kinds=frozenset({"open_area"}),
@@ -169,6 +187,7 @@ PATTERN_LIBRARY: dict[str, PatternSpec] = {
     ),
     "poisson_scatter_fill": PatternSpec(
         id="poisson_scatter_fill",
+        style="landscape",
         label="Равномерный редкий разброс по всей площади (без кластеров)",
         geometry_family="area_fill",
         zone_kinds=frozenset({"open_area"}),
@@ -191,6 +210,20 @@ DEFAULT_PATTERN_BY_ZONE_KIND: dict[ZoneKind, str] = {
     "site_edge": "linear_hedge_row",
     "open_area": "generic_fill",
 }
+
+
+# Запасной приём по стилю участка: зона без аналога в стиле участка получает
+# типовое решение ЭТОГО стиля, а не заливку без замысла посреди регулярного
+# или пейзажного участка. Виды зон, которых нет в словаре стиля, -- по
+# DEFAULT_PATTERN_BY_ZONE_KIND (там нейтральные изгородь и кольцо).
+DEFAULT_PATTERN_BY_STYLE: dict[str, dict[ZoneKind, str]] = {
+    "regular": {"open_area": "triangular_grid_fill"},
+    "landscape": {"open_area": "grove_clusters"},
+}
+
+
+def default_pattern(zone_kind: ZoneKind, site_style: Optional[str]) -> str:
+    return DEFAULT_PATTERN_BY_STYLE.get(site_style or "", {}).get(zone_kind) or DEFAULT_PATTERN_BY_ZONE_KIND[zone_kind]
 
 
 def pattern_spec(pattern_id: str) -> PatternSpec:

@@ -139,3 +139,14 @@ def test_generate_report_passes_model_and_temperature_to_client(monkeypatch):
     kwargs = fake.chat.completions.last_kwargs
     assert kwargs["model"] == decision_report.OLLAMA_MODEL
     assert kwargs["temperature"] == decision_report.TEMPERATURE
+
+
+def test_prompt_starts_with_the_site_decision(monkeypatch):
+    client = _FakeChatClient(response=_ok_response("текст"))
+    monkeypatch.setattr(decision_report, "_client", lambda: client)
+    assignment = _assignment("z1").model_copy(update={"site_style": "landscape", "lead_project": "12_natashinsky_proezd"})
+    generate_report([assignment])
+    user = client.chat.completions.last_kwargs["messages"][1]["content"]
+    first_fact = user.splitlines()[1]
+    assert first_fact.startswith("Общее решение: стиль участка -- пейзажный")
+    assert "12_natashinsky_proezd" in first_fact
