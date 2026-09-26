@@ -93,6 +93,14 @@ def extract_buildings(msp, tf, restriction_zones):
     return objects
 
 
+def _metadata(cfg, **fields):
+    """metadata точечного объекта; у слоя-вида (правило из справочника видов,
+    rules._species_point_rules) -- ещё и название вида."""
+    if cfg.get("species"):
+        fields["species"] = cfg["species"]
+    return fields
+
+
 def extract_point_objects(msp, tf):
     """INSERT/POINT — по одному объекту на сущность. LINE+CIRCLE в одном слое (столб+плафон,
     как в типовых DXF для фонарей) группируются по совпадающей (x, y) в один объект."""
@@ -134,7 +142,7 @@ def extract_point_objects(msp, tf):
                 "position": tf.point(loc.x, loc.y, loc.z if e.dxftype() == "INSERT" else 0.0),
                 "rotation": math.radians(getattr(e.dxf, "rotation", 0.0)),
                 "scale": _clamp_render_scale(getattr(e.dxf, "xscale", 1.0)),
-                "metadata": {"blockName": getattr(e.dxf, "name", None), "sourceLayer": e.dxf.layer},
+                "metadata": _metadata(cfg, blockName=getattr(e.dxf, "name", None), sourceLayer=e.dxf.layer),
             })
 
         # LINE (столб от земли вверх) + CIRCLE (плафон на верхушке) в одном месте -> один объект.
@@ -166,7 +174,7 @@ def extract_point_objects(msp, tf):
                     "position": tf.point(x, y, 0.0),
                     "rotation": 0,
                     "scale": 1,
-                    "metadata": {"height": round(top_z * tf.scale, 2), "sourceLayer": ln.dxf.layer},
+                    "metadata": _metadata(cfg, height=round(top_z * tf.scale, 2), sourceLayer=ln.dxf.layer),
                 })
 
         # Одиночные CIRCLE без пары LINE -- просто маркер точки (напр. дверь
@@ -194,7 +202,7 @@ def extract_point_objects(msp, tf):
                     "position": tf.point(c.dxf.center.x, c.dxf.center.y, c.dxf.center.z),
                     "rotation": 0,
                     "scale": 1,
-                    "metadata": {"sourceLayer": c.dxf.layer},
+                    "metadata": _metadata(cfg, sourceLayer=c.dxf.layer),
                 })
 
     return objects

@@ -378,3 +378,17 @@ def test_extract_facade_quads_ignores_unrelated_layers(empty_doc):
     quads = extract_facade_quads(msp, Transform())
     assert quads["windows"] == []
     assert quads["canopies"] == []
+
+
+def test_species_layer_passes_species_name_to_the_object(empty_doc):
+    # Слой с названием вида ("ЛИПА МЕЛКОЛИСТНАЯ") -- дерево этого вида:
+    # название уходит в metadata.species, по нему бэкенд находит модель.
+    msp = empty_doc.modelspace()
+    msp.add_point((1, 2, 0), dxfattribs={"layer": "ЛИПА МЕЛКОЛИСТНАЯ"})
+    msp.add_point((5, 2, 0), dxfattribs={"layer": "TREE"})
+    objects = extract_point_objects(msp, Transform())
+    by_layer = {o["metadata"]["sourceLayer"]: o for o in objects}
+    assert len(objects) == 2
+    assert by_layer["ЛИПА МЕЛКОЛИСТНАЯ"]["type"] == "tree"
+    assert by_layer["ЛИПА МЕЛКОЛИСТНАЯ"]["metadata"]["species"] == "Липа мелколистная"
+    assert "species" not in by_layer["TREE"]["metadata"]

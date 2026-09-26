@@ -84,6 +84,9 @@ const DEFAULT_ITEM_BY_TYPE: Record<string, string> = {
   bench: "bench",
   lamp: "lamp",
   trash: "trash",
+  // Урна из DXF: парсер даёт тип по слою (URN / TRASH_BIN), каталог -- trash.
+  urn: "trash",
+  trash_bin: "trash",
   fountain: "fountain",
   path_segment: "path_segment",
   hedge_segment: "hedge_segment",

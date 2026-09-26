@@ -62,18 +62,29 @@ CORPUS_SLUGS = (
     "08_lodochnaya",
     "09_izmaylovskaya_ploshad",
     "17_gruzinskaya_m",
-    # Синтетические эталонные участки (green-city-locations-primer-spec.md) --
+    # Синтетические эталонные участки (tools/primers/build_primers.py) --
     # см. докстринг модуля выше про суффикс "_primer".
     "21_road_buffer_primer",
     "22_circular_plaza_primer",
-    "23_triangular_plot_primer",
-    "24_hexagon_courtyard_primer",
+    "23_playground_yard_primer",
+    "24_boulevard_primer",
     "25_classical_building_ring_primer",
     "26_diagonal_garden_primer",
     "27_flowing_meadow_primer",
     "28_formal_bosque_primer",
-    "29_concentric_rings_primer",
-    "30_triangular_grid_primer",
+    "29_green_parking_primer",
+    "30_network_corridor_garden_primer",
+    # Фрагменты улиц с домами и подъездами (tools/primers/street_primers.py).
+    "31_street_front_gardens_primer",
+    "32_street_shops_primer",
+    "33_street_corner_primer",
+    "34_street_slab_yard_primer",
+    "35_street_townhouses_primer",
+    "36_street_clinic_primer",
+    "37_street_long_house_primer",
+    "38_street_median_primer",
+    "39_street_bike_lane_primer",
+    "40_street_cul_de_sac_primer",
 )
 
 _CORPUS_YAML = DATA_DIR / "pattern_corpus.yaml"

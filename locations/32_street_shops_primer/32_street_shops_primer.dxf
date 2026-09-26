@@ -5,11 +5,11 @@ HEADER
   9
 $ACADVER
   1
-AC1024
+AC1032
   9
 $ACADMAINTVER
- 70
-6
+ 90
+4
   9
 $DWGCODEPAGE
   3
@@ -18,6 +18,10 @@ ANSI_1252
 $LASTSAVEDBY
   1
 ezdxf
+  9
+$REQUIREDVERSIONS
+160
+0
   9
 $INSBASE
  10
@@ -489,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461306.400324074
+2461310.7561689815
   9
 $TDUCREATE
  40
@@ -497,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461306.400324074
+2461310.7561689815
   9
 $TDUUPDATE
  40
@@ -549,7 +553,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-D9
+111
   9
 $SURFTAB1
  70
@@ -929,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{F57D9635-D2A8-483D-A883-6EC86DAEEF5D}
+{8B54F5E5-F28B-4CF0-AFB3-97CD118A7F4E}
   9
 $VERSIONGUID
   2
-{224F0F58-A566-4A15-A327-48EB045982AB}
+{402B52A4-AFF7-40DF-92E1-74C24E83EB6A}
   9
 $EXTNAMES
 290
@@ -1323,9 +1327,9 @@ ISM
   0
 CLASS
   1
-ACDBPLACEHOLDER
+LAYOUT
   2
-AcDbPlaceHolder
+AcDbLayout
   3
 ObjectDBX Classes
  90
@@ -1339,9 +1343,9 @@ ObjectDBX Classes
   0
 CLASS
   1
-LAYOUT
+ACDBPLACEHOLDER
   2
-AcDbLayout
+AcDbPlaceHolder
   3
 ObjectDBX Classes
  90
@@ -1549,7 +1553,7 @@ LAYER
 100
 AcDbSymbolTable
  70
-5
+32
   0
 LAYER
   5
@@ -1615,31 +1619,7 @@ TERRITORY_BOUNDARY
  70
 0
  62
-7
-  6
-Continuous
-370
--3
-390
-13
-347
-21
-  0
-LAYER
-  5
-30
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-TREE
- 70
-0
- 62
-3
+8
   6
 Continuous
 370
@@ -1659,7 +1639,679 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-BUSH
+GRASS
+ 70
+0
+ 62
+84
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+33
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+ROAD_STREET
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+35
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_SIDEWALK
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+37
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+WATER_SUPPLY
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+39
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_ENTRANCE_4
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+3B
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_ENTRANCE_5
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+3D
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_ENTRANCE_6
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+3F
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_ENTRANCE_7
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+41
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_ENTRANCE_8
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+43
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_ENTRANCE_9
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+45
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_YARD
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+47
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_ENTRANCE_Y22
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+49
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_ENTRANCE_Y51
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+4B
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_ENTRANCE_Y79
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+4D
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_ENTRANCE_Y108
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+4F
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_PASSAGE_6
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+51
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_PASSAGE_124
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+53
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+BUILDINGS_FOOTPRINT
+ 70
+0
+ 62
+1
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+55
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+BUILDINGS_3D
+ 70
+0
+ 62
+3
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+57
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+LABELS
+ 70
+0
+ 62
+7
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+59
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+CURB
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+5C
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+ЛИПА МЕЛКОЛИСТНАЯ
+ 70
+0
+ 62
+3
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+6D
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+СПИРЕЯ ЯПОНСКАЯ
+ 70
+0
+ 62
+3
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+BE
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+КЛЕН ОСТРОЛИСТНЫЙ
+ 70
+0
+ 62
+3
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+C2
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+СИРЕНЬ ОБЫКНОВЕННАЯ
+ 70
+0
+ 62
+3
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+DF
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+ENTRANCE
+ 70
+0
+ 62
+2
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+EA
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+LAMPS
+ 70
+0
+ 62
+2
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+F4
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+BENCH
+ 70
+0
+ 62
+30
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+F7
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+URN
  70
 0
  62
@@ -1773,7 +2425,7 @@ ACAD
   0
 APPID
   5
-D6
+10E
 330
 3
 100
@@ -1787,7 +2439,7 @@ HATCHBACKGROUNDCOLOR
   0
 APPID
   5
-D7
+10F
 330
 3
 100
@@ -1963,7 +2615,7 @@ BLOCK_RECORD
 100
 AcDbSymbolTable
  70
-2
+3
   0
 BLOCK_RECORD
   5
@@ -1998,6 +2650,26 @@ AcDbBlockTableRecord
 *Paper_Space
 340
 1E
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+F0
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+BENCH_BLOCK
+340
+0
  70
 0
 280
@@ -2089,6 +2761,76 @@ AcDbEntity
 100
 AcDbBlockEnd
   0
+BLOCK
+  5
+F1
+330
+F0
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+BENCH_BLOCK
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+BENCH_BLOCK
+  1
+
+  0
+LWPOLYLINE
+  5
+F3
+330
+F0
+100
+AcDbEntity
+  8
+0
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+-0.75
+ 20
+-0.25
+ 10
+0.75
+ 20
+-0.25
+ 10
+0.75
+ 20
+0.25
+ 10
+-0.75
+ 20
+0.25
+  0
+ENDBLK
+  5
+F2
+330
+F0
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
 ENDSEC
   0
 SECTION
@@ -2097,7 +2839,7 @@ ENTITIES
   0
 LWPOLYLINE
   5
-32
+30
 330
 17
 100
@@ -2107,49 +2849,59 @@ TERRITORY_BOUNDARY
 100
 AcDbPolyline
  90
-5
+4
  70
 1
  10
-0.0
+130.0
  20
 0.0
  10
-42.0
+130.0
  20
-0.0
- 10
-42.0
- 20
-36.0
+58.0
  10
 0.0
  20
-36.0
+58.0
  10
 0.0
  20
 0.0
   0
-POINT
+LWPOLYLINE
   5
-33
+32
 330
 17
 100
 AcDbEntity
   8
-TREE
+GRASS
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-5.0
+130.0
  20
-6.098076211353316
- 30
+0.0
+ 10
+130.0
+ 20
+58.0
+ 10
+0.0
+ 20
+58.0
+ 10
+0.0
+ 20
 0.0
   0
-POINT
+LWPOLYLINE
   5
 34
 330
@@ -2157,35 +2909,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+ROAD_STREET
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-11.0
+130.0
  20
-6.098076211353316
- 30
+0.0
+ 10
+130.0
+ 20
+7.0
+ 10
+0.0
+ 20
+7.0
+ 10
+0.0
+ 20
 0.0
   0
-POINT
-  5
-35
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
- 10
-17.0
- 20
-6.098076211353316
- 30
-0.0
-  0
-POINT
+LWPOLYLINE
   5
 36
 330
@@ -2193,35 +2941,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+PATH_SIDEWALK
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-23.0
+130.0
  20
-6.098076211353316
- 30
-0.0
-  0
-POINT
-  5
-37
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
+11.0
  10
-29.0
+130.0
  20
-6.098076211353316
- 30
+17.0
+ 10
 0.0
+ 20
+17.0
+ 10
+0.0
+ 20
+11.0
   0
-POINT
+LWPOLYLINE
   5
 38
 330
@@ -2229,35 +2973,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+WATER_SUPPLY
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-35.0
+130.0
  20
-6.098076211353316
- 30
-0.0
-  0
-POINT
-  5
-39
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
+11.8
  10
-8.0
+130.0
  20
-11.294228634059948
- 30
+13.2
+ 10
 0.0
+ 20
+13.2
+ 10
+0.0
+ 20
+11.8
   0
-POINT
+LWPOLYLINE
   5
 3A
 330
@@ -2265,35 +3005,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+PATH_ENTRANCE_4
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-14.0
+18.5
  20
-11.294228634059948
- 30
-0.0
-  0
-POINT
-  5
-3B
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
+17.0
  10
-20.0
+18.5
  20
-11.294228634059948
- 30
-0.0
+21.0
+ 10
+16.5
+ 20
+21.0
+ 10
+16.5
+ 20
+17.0
   0
-POINT
+LWPOLYLINE
   5
 3C
 330
@@ -2301,35 +3037,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+PATH_ENTRANCE_5
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-26.0
+37.5
  20
-11.294228634059948
- 30
-0.0
-  0
-POINT
-  5
-3D
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
+17.0
  10
-32.0
+37.5
  20
-11.294228634059948
- 30
-0.0
+21.0
+ 10
+35.5
+ 20
+21.0
+ 10
+35.5
+ 20
+17.0
   0
-POINT
+LWPOLYLINE
   5
 3E
 330
@@ -2337,35 +3069,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+PATH_ENTRANCE_6
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-38.0
+56.5
  20
-11.294228634059948
- 30
-0.0
-  0
-POINT
-  5
-3F
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
+17.0
  10
-5.0
+56.5
  20
-16.49038105676658
- 30
-0.0
+21.0
+ 10
+54.5
+ 20
+21.0
+ 10
+54.5
+ 20
+17.0
   0
-POINT
+LWPOLYLINE
   5
 40
 330
@@ -2373,35 +3101,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+PATH_ENTRANCE_7
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-11.0
+75.5
  20
-16.49038105676658
- 30
-0.0
-  0
-POINT
-  5
-41
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
- 10
 17.0
+ 10
+75.5
  20
-16.49038105676658
- 30
-0.0
+21.0
+ 10
+73.5
+ 20
+21.0
+ 10
+73.5
+ 20
+17.0
   0
-POINT
+LWPOLYLINE
   5
 42
 330
@@ -2409,35 +3133,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+PATH_ENTRANCE_8
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-23.0
+94.5
  20
-16.49038105676658
- 30
-0.0
-  0
-POINT
-  5
-43
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
+17.0
  10
-29.0
+94.5
  20
-16.49038105676658
- 30
-0.0
+21.0
+ 10
+92.5
+ 20
+21.0
+ 10
+92.5
+ 20
+17.0
   0
-POINT
+LWPOLYLINE
   5
 44
 330
@@ -2445,35 +3165,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+PATH_ENTRANCE_9
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-35.0
+113.5
  20
-16.49038105676658
- 30
-0.0
-  0
-POINT
-  5
-45
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
+17.0
  10
-8.0
+113.5
  20
-21.686533479473212
- 30
-0.0
+21.0
+ 10
+111.5
+ 20
+21.0
+ 10
+111.5
+ 20
+17.0
   0
-POINT
+LWPOLYLINE
   5
 46
 330
@@ -2481,35 +3197,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+PATH_YARD
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-14.0
+124.0
  20
-21.686533479473212
- 30
-0.0
-  0
-POINT
-  5
-47
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
+39.0
  10
-20.0
+124.0
  20
-21.686533479473212
- 30
-0.0
+41.5
+ 10
+6.0
+ 20
+41.5
+ 10
+6.0
+ 20
+39.0
   0
-POINT
+LWPOLYLINE
   5
 48
 330
@@ -2517,35 +3229,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+PATH_ENTRANCE_Y22
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-26.0
+23.25
  20
-21.686533479473212
- 30
-0.0
-  0
-POINT
-  5
-49
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
+35.0
  10
-32.0
+23.25
  20
-21.686533479473212
- 30
-0.0
+39.0
+ 10
+21.25
+ 20
+39.0
+ 10
+21.25
+ 20
+35.0
   0
-POINT
+LWPOLYLINE
   5
 4A
 330
@@ -2553,35 +3261,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+PATH_ENTRANCE_Y51
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-38.0
+51.75
  20
-21.686533479473212
- 30
-0.0
-  0
-POINT
-  5
-4B
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
+35.0
  10
-5.0
+51.75
  20
-26.882685902179844
- 30
-0.0
+39.0
+ 10
+49.75
+ 20
+39.0
+ 10
+49.75
+ 20
+35.0
   0
-POINT
+LWPOLYLINE
   5
 4C
 330
@@ -2589,35 +3293,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+PATH_ENTRANCE_Y79
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-11.0
+80.25
  20
-26.882685902179844
- 30
-0.0
-  0
-POINT
-  5
-4D
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
+35.0
  10
-17.0
+80.25
  20
-26.882685902179844
- 30
-0.0
+39.0
+ 10
+78.25
+ 20
+39.0
+ 10
+78.25
+ 20
+35.0
   0
-POINT
+LWPOLYLINE
   5
 4E
 330
@@ -2625,35 +3325,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+PATH_ENTRANCE_Y108
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-23.0
+108.75
  20
-26.882685902179844
- 30
-0.0
-  0
-POINT
-  5
-4F
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
+35.0
  10
-29.0
+108.75
  20
-26.882685902179844
- 30
-0.0
+39.0
+ 10
+106.75
+ 20
+39.0
+ 10
+106.75
+ 20
+35.0
   0
-POINT
+LWPOLYLINE
   5
 50
 330
@@ -2661,35 +3357,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+PATH_PASSAGE_6
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-35.0
+7.2
  20
-26.882685902179844
- 30
-0.0
-  0
-POINT
-  5
-51
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
+17.0
  10
-8.0
+7.2
  20
-32.078838324886476
- 30
-0.0
+41.5
+ 10
+5.0
+ 20
+41.5
+ 10
+5.0
+ 20
+17.0
   0
-POINT
+LWPOLYLINE
   5
 52
 330
@@ -2697,35 +3389,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+PATH_PASSAGE_124
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-14.0
+123.2
  20
-32.078838324886476
- 30
-0.0
-  0
-POINT
-  5
-53
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
+17.0
  10
-20.0
+123.2
  20
-32.078838324886476
- 30
-0.0
+41.5
+ 10
+121.0
+ 20
+41.5
+ 10
+121.0
+ 20
+17.0
   0
-POINT
+LWPOLYLINE
   5
 54
 330
@@ -2733,35 +3421,31 @@ POINT
 100
 AcDbEntity
   8
-TREE
+BUILDINGS_FOOTPRINT
 100
-AcDbPoint
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-26.0
+122.0
  20
-32.078838324886476
- 30
-0.0
-  0
-POINT
-  5
-55
-330
-17
-100
-AcDbEntity
-  8
-TREE
-100
-AcDbPoint
+21.0
  10
-32.0
+122.0
  20
-32.078838324886476
- 30
-0.0
+35.0
+ 10
+8.0
+ 20
+35.0
+ 10
+8.0
+ 20
+21.0
   0
-POINT
+MESH
   5
 56
 330
@@ -2769,35 +3453,135 @@ POINT
 100
 AcDbEntity
   8
-TREE
+BUILDINGS_3D
 100
-AcDbPoint
+AcDbSubDMesh
+ 71
+2
+ 72
+0
+ 91
+0
+ 92
+8
  10
-38.0
+122.0
  20
-32.078838324886476
+21.0
  30
 0.0
-  0
-POINT
-  5
-57
-330
-17
-100
-AcDbEntity
-  8
-BUSH
-100
-AcDbPoint
  10
-4.25
+122.0
  20
-4.799038105676658
+35.0
  30
 0.0
+ 10
+8.0
+ 20
+35.0
+ 30
+0.0
+ 10
+8.0
+ 20
+21.0
+ 30
+0.0
+ 10
+122.0
+ 20
+21.0
+ 30
+27.0
+ 10
+122.0
+ 20
+35.0
+ 30
+27.0
+ 10
+8.0
+ 20
+35.0
+ 30
+27.0
+ 10
+8.0
+ 20
+21.0
+ 30
+27.0
+ 93
+30
+ 90
+4
+ 90
+0
+ 90
+1
+ 90
+2
+ 90
+3
+ 90
+4
+ 90
+7
+ 90
+6
+ 90
+5
+ 90
+4
+ 90
+4
+ 90
+0
+ 90
+1
+ 90
+5
+ 90
+4
+ 90
+4
+ 90
+1
+ 90
+2
+ 90
+6
+ 90
+5
+ 90
+4
+ 90
+2
+ 90
+3
+ 90
+7
+ 90
+6
+ 90
+4
+ 90
+3
+ 90
+0
+ 90
+4
+ 90
+7
+ 94
+0
+ 95
+0
+ 90
+0
   0
-POINT
+TEXT
   5
 58
 330
@@ -2805,35 +3589,23 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+LABELS
 100
-AcDbPoint
+AcDbText
  10
-7.25
+65.0
  20
-4.799038105676658
+28.0
  30
 0.0
-  0
-POINT
-  5
-59
-330
-17
+ 40
+1.5
+  1
+Жилой дом с магазинами, 9 эт.
 100
-AcDbEntity
-  8
-BUSH
-100
-AcDbPoint
- 10
-10.25
- 20
-4.799038105676658
- 30
-0.0
+AcDbText
   0
-POINT
+LWPOLYLINE
   5
 5A
 330
@@ -2841,17 +3613,23 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+CURB
 100
-AcDbPoint
+AcDbPolyline
+ 90
+2
+ 70
+0
  10
-13.25
- 20
-4.799038105676658
- 30
 0.0
+ 20
+7.0
+ 10
+130.0
+ 20
+7.0
   0
-POINT
+LWPOLYLINE
   5
 5B
 330
@@ -2859,33 +3637,21 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+CURB
 100
-AcDbPoint
+AcDbPolyline
+ 90
+2
+ 70
+0
  10
-16.25
- 20
-4.799038105676658
- 30
 0.0
-  0
-POINT
-  5
-5C
-330
-17
-100
-AcDbEntity
-  8
-BUSH
-100
-AcDbPoint
+ 20
+11.0
  10
-19.25
+130.0
  20
-4.799038105676658
- 30
-0.0
+11.0
   0
 POINT
   5
@@ -2895,13 +3661,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-22.25
+4.0
  20
-4.799038105676658
+9.3
  30
 0.0
   0
@@ -2913,13 +3679,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-25.25
+12.0
  20
-4.799038105676658
+9.3
  30
 0.0
   0
@@ -2931,13 +3697,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-28.25
+20.0
  20
-4.799038105676658
+9.3
  30
 0.0
   0
@@ -2949,13 +3715,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-31.25
+28.0
  20
-4.799038105676658
+9.3
  30
 0.0
   0
@@ -2967,13 +3733,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-34.25
+36.0
  20
-4.799038105676658
+9.3
  30
 0.0
   0
@@ -2985,13 +3751,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-37.25
+44.0
  20
-4.799038105676658
+9.3
  30
 0.0
   0
@@ -3003,13 +3769,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-5.75
+52.0
  20
-7.397114317029974
+9.3
  30
 0.0
   0
@@ -3021,13 +3787,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-8.75
+60.0
  20
-7.397114317029974
+9.3
  30
 0.0
   0
@@ -3039,13 +3805,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-11.75
+68.0
  20
-7.397114317029974
+9.3
  30
 0.0
   0
@@ -3057,13 +3823,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-14.75
+76.0
  20
-7.397114317029974
+9.3
  30
 0.0
   0
@@ -3075,13 +3841,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-17.75
+84.0
  20
-7.397114317029974
+9.3
  30
 0.0
   0
@@ -3093,13 +3859,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-20.75
+92.0
  20
-7.397114317029974
+9.3
  30
 0.0
   0
@@ -3111,13 +3877,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-23.75
+100.0
  20
-7.397114317029974
+9.3
  30
 0.0
   0
@@ -3129,13 +3895,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-26.75
+108.0
  20
-7.397114317029974
+9.3
  30
 0.0
   0
@@ -3147,13 +3913,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-29.75
+116.0
  20
-7.397114317029974
+9.3
  30
 0.0
   0
@@ -3165,31 +3931,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-32.75
+124.0
  20
-7.397114317029974
- 30
-0.0
-  0
-POINT
-  5
-6D
-330
-17
-100
-AcDbEntity
-  8
-BUSH
-100
-AcDbPoint
- 10
-35.75
- 20
-7.397114317029974
+9.3
  30
 0.0
   0
@@ -3201,13 +3949,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-4.25
+8.6
  20
-9.99519052838329
+19.1
  30
 0.0
   0
@@ -3219,13 +3967,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-7.25
+9.799999999999999
  20
-9.99519052838329
+19.1
  30
 0.0
   0
@@ -3237,13 +3985,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-10.25
+11.0
  20
-9.99519052838329
+19.1
  30
 0.0
   0
@@ -3255,13 +4003,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-13.25
+12.2
  20
-9.99519052838329
+19.1
  30
 0.0
   0
@@ -3273,13 +4021,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-16.25
+13.4
  20
-9.99519052838329
+19.1
  30
 0.0
   0
@@ -3291,13 +4039,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-19.25
+14.600000000000001
  20
-9.99519052838329
+19.1
  30
 0.0
   0
@@ -3309,13 +4057,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-22.25
+15.8
  20
-9.99519052838329
+19.1
  30
 0.0
   0
@@ -3327,13 +4075,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-25.25
+19.4
  20
-9.99519052838329
+19.1
  30
 0.0
   0
@@ -3345,13 +4093,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-28.25
+20.599999999999998
  20
-9.99519052838329
+19.1
  30
 0.0
   0
@@ -3363,13 +4111,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-31.25
+21.799999999999997
  20
-9.99519052838329
+19.1
  30
 0.0
   0
@@ -3381,13 +4129,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-34.25
+22.999999999999996
  20
-9.99519052838329
+19.1
  30
 0.0
   0
@@ -3399,13 +4147,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-37.25
+24.199999999999996
  20
-9.99519052838329
+19.1
  30
 0.0
   0
@@ -3417,13 +4165,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-5.75
+25.399999999999995
  20
-12.593266739736606
+19.1
  30
 0.0
   0
@@ -3435,13 +4183,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-8.75
+26.599999999999994
  20
-12.593266739736606
+19.1
  30
 0.0
   0
@@ -3453,13 +4201,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-11.75
+27.799999999999994
  20
-12.593266739736606
+19.1
  30
 0.0
   0
@@ -3471,13 +4219,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-14.75
+28.999999999999993
  20
-12.593266739736606
+19.1
  30
 0.0
   0
@@ -3489,13 +4237,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-17.75
+30.199999999999992
  20
-12.593266739736606
+19.1
  30
 0.0
   0
@@ -3507,13 +4255,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-20.75
+31.39999999999999
  20
-12.593266739736606
+19.1
  30
 0.0
   0
@@ -3525,13 +4273,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-23.75
+32.599999999999994
  20
-12.593266739736606
+19.1
  30
 0.0
   0
@@ -3543,13 +4291,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-26.75
+33.79999999999999
  20
-12.593266739736606
+19.1
  30
 0.0
   0
@@ -3561,13 +4309,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-29.75
+38.59999999999999
  20
-12.593266739736606
+19.1
  30
 0.0
   0
@@ -3579,13 +4327,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-32.75
+39.79999999999998
  20
-12.593266739736606
+19.1
  30
 0.0
   0
@@ -3597,13 +4345,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-35.75
+40.999999999999986
  20
-12.593266739736606
+19.1
  30
 0.0
   0
@@ -3615,13 +4363,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-4.25
+42.19999999999999
  20
-15.191342951089922
+19.1
  30
 0.0
   0
@@ -3633,13 +4381,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-7.25
+43.39999999999999
  20
-15.191342951089922
+19.1
  30
 0.0
   0
@@ -3651,13 +4399,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-10.25
+44.599999999999994
  20
-15.191342951089922
+19.1
  30
 0.0
   0
@@ -3669,13 +4417,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-13.25
+45.8
  20
-15.191342951089922
+19.1
  30
 0.0
   0
@@ -3687,13 +4435,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-16.25
+47.0
  20
-15.191342951089922
+19.1
  30
 0.0
   0
@@ -3705,13 +4453,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-19.25
+48.2
  20
-15.191342951089922
+19.1
  30
 0.0
   0
@@ -3723,13 +4471,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-22.25
+49.400000000000006
  20
-15.191342951089922
+19.1
  30
 0.0
   0
@@ -3741,13 +4489,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-25.25
+50.60000000000001
  20
-15.191342951089922
+19.1
  30
 0.0
   0
@@ -3759,13 +4507,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-28.25
+51.80000000000001
  20
-15.191342951089922
+19.1
  30
 0.0
   0
@@ -3777,13 +4525,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-31.25
+53.000000000000014
  20
-15.191342951089922
+19.1
  30
 0.0
   0
@@ -3795,13 +4543,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-34.25
+57.800000000000026
  20
-15.191342951089922
+19.1
  30
 0.0
   0
@@ -3813,13 +4561,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-37.25
+59.00000000000003
  20
-15.191342951089922
+19.1
  30
 0.0
   0
@@ -3831,13 +4579,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-5.75
+60.20000000000003
  20
-17.789419162443238
+19.1
  30
 0.0
   0
@@ -3849,13 +4597,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-8.75
+61.400000000000034
  20
-17.789419162443238
+19.1
  30
 0.0
   0
@@ -3867,13 +4615,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-11.75
+62.60000000000004
  20
-17.789419162443238
+19.1
  30
 0.0
   0
@@ -3885,13 +4633,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-14.75
+63.80000000000004
  20
-17.789419162443238
+19.1
  30
 0.0
   0
@@ -3903,13 +4651,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-17.75
+65.00000000000003
  20
-17.789419162443238
+19.1
  30
 0.0
   0
@@ -3921,13 +4669,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-20.75
+66.20000000000005
  20
-17.789419162443238
+19.1
  30
 0.0
   0
@@ -3939,13 +4687,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-23.75
+67.40000000000005
  20
-17.789419162443238
+19.1
  30
 0.0
   0
@@ -3957,13 +4705,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-26.75
+68.60000000000005
  20
-17.789419162443238
+19.1
  30
 0.0
   0
@@ -3975,13 +4723,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-29.75
+69.80000000000005
  20
-17.789419162443238
+19.1
  30
 0.0
   0
@@ -3993,13 +4741,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-32.75
+71.00000000000006
  20
-17.789419162443238
+19.1
  30
 0.0
   0
@@ -4011,13 +4759,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-35.75
+72.20000000000006
  20
-17.789419162443238
+19.1
  30
 0.0
   0
@@ -4029,13 +4777,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-4.25
+77.00000000000007
  20
-20.387495373796554
+19.1
  30
 0.0
   0
@@ -4047,13 +4795,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-7.25
+78.20000000000007
  20
-20.387495373796554
+19.1
  30
 0.0
   0
@@ -4065,13 +4813,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-10.25
+79.40000000000008
  20
-20.387495373796554
+19.1
  30
 0.0
   0
@@ -4083,13 +4831,13 @@ POINT
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-13.25
+80.60000000000008
  20
-20.387495373796554
+19.1
  30
 0.0
   0
@@ -4101,13 +4849,13 @@ A0
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-16.25
+81.80000000000008
  20
-20.387495373796554
+19.1
  30
 0.0
   0
@@ -4119,13 +4867,13 @@ A1
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-19.25
+83.00000000000009
  20
-20.387495373796554
+19.1
  30
 0.0
   0
@@ -4137,13 +4885,13 @@ A2
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-22.25
+84.20000000000009
  20
-20.387495373796554
+19.1
  30
 0.0
   0
@@ -4155,13 +4903,13 @@ A3
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-25.25
+85.40000000000009
  20
-20.387495373796554
+19.1
  30
 0.0
   0
@@ -4173,13 +4921,13 @@ A4
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-28.25
+86.6000000000001
  20
-20.387495373796554
+19.1
  30
 0.0
   0
@@ -4191,13 +4939,13 @@ A5
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-31.25
+87.8000000000001
  20
-20.387495373796554
+19.1
  30
 0.0
   0
@@ -4209,13 +4957,13 @@ A6
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-34.25
+89.0000000000001
  20
-20.387495373796554
+19.1
  30
 0.0
   0
@@ -4227,13 +4975,13 @@ A7
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-37.25
+90.2000000000001
  20
-20.387495373796554
+19.1
  30
 0.0
   0
@@ -4245,13 +4993,13 @@ A8
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-5.75
+91.4000000000001
  20
-22.98557158514987
+19.1
  30
 0.0
   0
@@ -4263,13 +5011,13 @@ A9
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-8.75
+96.20000000000012
  20
-22.98557158514987
+19.1
  30
 0.0
   0
@@ -4281,13 +5029,13 @@ AA
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-11.75
+97.40000000000012
  20
-22.98557158514987
+19.1
  30
 0.0
   0
@@ -4299,13 +5047,13 @@ AB
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-14.75
+98.60000000000012
  20
-22.98557158514987
+19.1
  30
 0.0
   0
@@ -4317,13 +5065,13 @@ AC
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-17.75
+99.80000000000013
  20
-22.98557158514987
+19.1
  30
 0.0
   0
@@ -4335,13 +5083,13 @@ AD
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-20.75
+101.00000000000013
  20
-22.98557158514987
+19.1
  30
 0.0
   0
@@ -4353,13 +5101,13 @@ AE
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-23.75
+102.20000000000013
  20
-22.98557158514987
+19.1
  30
 0.0
   0
@@ -4371,13 +5119,13 @@ AF
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-26.75
+103.40000000000013
  20
-22.98557158514987
+19.1
  30
 0.0
   0
@@ -4389,13 +5137,13 @@ B0
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-29.75
+104.60000000000014
  20
-22.98557158514987
+19.1
  30
 0.0
   0
@@ -4407,13 +5155,13 @@ B1
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-32.75
+105.80000000000014
  20
-22.98557158514987
+19.1
  30
 0.0
   0
@@ -4425,13 +5173,13 @@ B2
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-35.75
+107.00000000000014
  20
-22.98557158514987
+19.1
  30
 0.0
   0
@@ -4443,13 +5191,13 @@ B3
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-4.25
+108.20000000000014
  20
-25.583647796503186
+19.1
  30
 0.0
   0
@@ -4461,13 +5209,13 @@ B4
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-7.25
+109.40000000000015
  20
-25.583647796503186
+19.1
  30
 0.0
   0
@@ -4479,13 +5227,13 @@ B5
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-10.25
+110.60000000000015
  20
-25.583647796503186
+19.1
  30
 0.0
   0
@@ -4497,13 +5245,13 @@ B6
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-13.25
+114.20000000000016
  20
-25.583647796503186
+19.1
  30
 0.0
   0
@@ -4515,13 +5263,13 @@ B7
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-16.25
+115.40000000000016
  20
-25.583647796503186
+19.1
  30
 0.0
   0
@@ -4533,13 +5281,13 @@ B8
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-19.25
+116.60000000000016
  20
-25.583647796503186
+19.1
  30
 0.0
   0
@@ -4551,13 +5299,13 @@ B9
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-22.25
+117.80000000000017
  20
-25.583647796503186
+19.1
  30
 0.0
   0
@@ -4569,13 +5317,13 @@ BA
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-25.25
+119.00000000000017
  20
-25.583647796503186
+19.1
  30
 0.0
   0
@@ -4587,13 +5335,13 @@ BB
 100
 AcDbEntity
   8
-BUSH
+СПИРЕЯ ЯПОНСКАЯ
 100
 AcDbPoint
  10
-28.25
+120.20000000000017
  20
-25.583647796503186
+19.1
  30
 0.0
   0
@@ -4605,13 +5353,13 @@ BC
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-31.25
+22.0
  20
-25.583647796503186
+50.0
  30
 0.0
   0
@@ -4623,31 +5371,13 @@ BD
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-34.25
+18.0
  20
-25.583647796503186
- 30
-0.0
-  0
-POINT
-  5
-BE
-330
-17
-100
-AcDbEntity
-  8
-BUSH
-100
-AcDbPoint
- 10
-37.25
- 20
-25.583647796503186
+50.0
  30
 0.0
   0
@@ -4659,13 +5389,13 @@ BF
 100
 AcDbEntity
   8
-BUSH
+КЛЕН ОСТРОЛИСТНЫЙ
 100
 AcDbPoint
  10
-5.75
+26.0
  20
-28.181724007856502
+50.0
  30
 0.0
   0
@@ -4677,13 +5407,13 @@ C0
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-8.75
+22.0
  20
-28.181724007856502
+54.0
  30
 0.0
   0
@@ -4695,31 +5425,13 @@ C1
 100
 AcDbEntity
   8
-BUSH
+КЛЕН ОСТРОЛИСТНЫЙ
 100
 AcDbPoint
  10
-11.75
+22.0
  20
-28.181724007856502
- 30
-0.0
-  0
-POINT
-  5
-C2
-330
-17
-100
-AcDbEntity
-  8
-BUSH
-100
-AcDbPoint
- 10
-14.75
- 20
-28.181724007856502
+46.5
  30
 0.0
   0
@@ -4731,13 +5443,13 @@ C3
 100
 AcDbEntity
   8
-BUSH
+СИРЕНЬ ОБЫКНОВЕННАЯ
 100
 AcDbPoint
  10
-17.75
+14.25
  20
-28.181724007856502
+45.5
  30
 0.0
   0
@@ -4749,13 +5461,13 @@ C4
 100
 AcDbEntity
   8
-BUSH
+СИРЕНЬ ОБЫКНОВЕННАЯ
 100
 AcDbPoint
  10
-20.75
+16.75
  20
-28.181724007856502
+45.5
  30
 0.0
   0
@@ -4767,13 +5479,13 @@ C5
 100
 AcDbEntity
   8
-BUSH
+СИРЕНЬ ОБЫКНОВЕННАЯ
 100
 AcDbPoint
  10
-23.75
+19.25
  20
-28.181724007856502
+45.5
  30
 0.0
   0
@@ -4785,13 +5497,13 @@ C6
 100
 AcDbEntity
   8
-BUSH
+СИРЕНЬ ОБЫКНОВЕННАЯ
 100
 AcDbPoint
  10
-26.75
+24.25
  20
-28.181724007856502
+45.5
  30
 0.0
   0
@@ -4803,13 +5515,13 @@ C7
 100
 AcDbEntity
   8
-BUSH
+СИРЕНЬ ОБЫКНОВЕННАЯ
 100
 AcDbPoint
  10
-29.75
+26.75
  20
-28.181724007856502
+45.5
  30
 0.0
   0
@@ -4821,13 +5533,13 @@ C8
 100
 AcDbEntity
   8
-BUSH
+СИРЕНЬ ОБЫКНОВЕННАЯ
 100
 AcDbPoint
  10
-32.75
+29.25
  20
-28.181724007856502
+45.5
  30
 0.0
   0
@@ -4839,13 +5551,13 @@ C9
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-35.75
+65.0
  20
-28.181724007856502
+50.0
  30
 0.0
   0
@@ -4857,13 +5569,13 @@ CA
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-4.25
+61.0
  20
-30.779800219209818
+50.0
  30
 0.0
   0
@@ -4875,13 +5587,13 @@ CB
 100
 AcDbEntity
   8
-BUSH
+КЛЕН ОСТРОЛИСТНЫЙ
 100
 AcDbPoint
  10
-7.25
+69.0
  20
-30.779800219209818
+50.0
  30
 0.0
   0
@@ -4893,13 +5605,13 @@ CC
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-10.25
+65.0
  20
-30.779800219209818
+54.0
  30
 0.0
   0
@@ -4911,13 +5623,13 @@ CD
 100
 AcDbEntity
   8
-BUSH
+КЛЕН ОСТРОЛИСТНЫЙ
 100
 AcDbPoint
  10
-13.25
+65.0
  20
-30.779800219209818
+46.5
  30
 0.0
   0
@@ -4929,13 +5641,13 @@ CE
 100
 AcDbEntity
   8
-BUSH
+СИРЕНЬ ОБЫКНОВЕННАЯ
 100
 AcDbPoint
  10
-16.25
+57.25
  20
-30.779800219209818
+45.5
  30
 0.0
   0
@@ -4947,13 +5659,13 @@ CF
 100
 AcDbEntity
   8
-BUSH
+СИРЕНЬ ОБЫКНОВЕННАЯ
 100
 AcDbPoint
  10
-19.25
+59.75
  20
-30.779800219209818
+45.5
  30
 0.0
   0
@@ -4965,13 +5677,13 @@ D0
 100
 AcDbEntity
   8
-BUSH
+СИРЕНЬ ОБЫКНОВЕННАЯ
 100
 AcDbPoint
  10
-22.25
+62.25
  20
-30.779800219209818
+45.5
  30
 0.0
   0
@@ -4983,13 +5695,13 @@ D1
 100
 AcDbEntity
   8
-BUSH
+СИРЕНЬ ОБЫКНОВЕННАЯ
 100
 AcDbPoint
  10
-25.25
+67.25
  20
-30.779800219209818
+45.5
  30
 0.0
   0
@@ -5001,13 +5713,13 @@ D2
 100
 AcDbEntity
   8
-BUSH
+СИРЕНЬ ОБЫКНОВЕННАЯ
 100
 AcDbPoint
  10
-28.25
+69.75
  20
-30.779800219209818
+45.5
  30
 0.0
   0
@@ -5019,13 +5731,13 @@ D3
 100
 AcDbEntity
   8
-BUSH
+СИРЕНЬ ОБЫКНОВЕННАЯ
 100
 AcDbPoint
  10
-31.25
+72.25
  20
-30.779800219209818
+45.5
  30
 0.0
   0
@@ -5037,13 +5749,13 @@ D4
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-34.25
+108.0
  20
-30.779800219209818
+50.0
  30
 0.0
   0
@@ -5055,13 +5767,765 @@ D5
 100
 AcDbEntity
   8
-BUSH
+ЛИПА МЕЛКОЛИСТНАЯ
 100
 AcDbPoint
  10
-37.25
+104.0
  20
-30.779800219209818
+50.0
+ 30
+0.0
+  0
+POINT
+  5
+D6
+330
+17
+100
+AcDbEntity
+  8
+КЛЕН ОСТРОЛИСТНЫЙ
+100
+AcDbPoint
+ 10
+112.0
+ 20
+50.0
+ 30
+0.0
+  0
+POINT
+  5
+D7
+330
+17
+100
+AcDbEntity
+  8
+ЛИПА МЕЛКОЛИСТНАЯ
+100
+AcDbPoint
+ 10
+108.0
+ 20
+54.0
+ 30
+0.0
+  0
+POINT
+  5
+D8
+330
+17
+100
+AcDbEntity
+  8
+КЛЕН ОСТРОЛИСТНЫЙ
+100
+AcDbPoint
+ 10
+108.0
+ 20
+46.5
+ 30
+0.0
+  0
+POINT
+  5
+D9
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+100.25
+ 20
+45.5
+ 30
+0.0
+  0
+POINT
+  5
+DA
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+102.75
+ 20
+45.5
+ 30
+0.0
+  0
+POINT
+  5
+DB
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+105.25
+ 20
+45.5
+ 30
+0.0
+  0
+POINT
+  5
+DC
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+110.25
+ 20
+45.5
+ 30
+0.0
+  0
+POINT
+  5
+DD
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+112.75
+ 20
+45.5
+ 30
+0.0
+  0
+POINT
+  5
+DE
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+115.25
+ 20
+45.5
+ 30
+0.0
+  0
+POINT
+  5
+E0
+330
+17
+100
+AcDbEntity
+  8
+ENTRANCE
+100
+AcDbPoint
+ 10
+17.5
+ 20
+21.0
+ 30
+0.0
+  0
+POINT
+  5
+E1
+330
+17
+100
+AcDbEntity
+  8
+ENTRANCE
+100
+AcDbPoint
+ 10
+36.5
+ 20
+21.0
+ 30
+0.0
+  0
+POINT
+  5
+E2
+330
+17
+100
+AcDbEntity
+  8
+ENTRANCE
+100
+AcDbPoint
+ 10
+55.5
+ 20
+21.0
+ 30
+0.0
+  0
+POINT
+  5
+E3
+330
+17
+100
+AcDbEntity
+  8
+ENTRANCE
+100
+AcDbPoint
+ 10
+74.5
+ 20
+21.0
+ 30
+0.0
+  0
+POINT
+  5
+E4
+330
+17
+100
+AcDbEntity
+  8
+ENTRANCE
+100
+AcDbPoint
+ 10
+93.5
+ 20
+21.0
+ 30
+0.0
+  0
+POINT
+  5
+E5
+330
+17
+100
+AcDbEntity
+  8
+ENTRANCE
+100
+AcDbPoint
+ 10
+112.5
+ 20
+21.0
+ 30
+0.0
+  0
+POINT
+  5
+E6
+330
+17
+100
+AcDbEntity
+  8
+ENTRANCE
+100
+AcDbPoint
+ 10
+22.25
+ 20
+35.0
+ 30
+0.0
+  0
+POINT
+  5
+E7
+330
+17
+100
+AcDbEntity
+  8
+ENTRANCE
+100
+AcDbPoint
+ 10
+50.75
+ 20
+35.0
+ 30
+0.0
+  0
+POINT
+  5
+E8
+330
+17
+100
+AcDbEntity
+  8
+ENTRANCE
+100
+AcDbPoint
+ 10
+79.25
+ 20
+35.0
+ 30
+0.0
+  0
+POINT
+  5
+E9
+330
+17
+100
+AcDbEntity
+  8
+ENTRANCE
+100
+AcDbPoint
+ 10
+107.75
+ 20
+35.0
+ 30
+0.0
+  0
+POINT
+  5
+EB
+330
+17
+100
+AcDbEntity
+  8
+LAMPS
+100
+AcDbPoint
+ 10
+16.0
+ 20
+9.3
+ 30
+0.0
+  0
+POINT
+  5
+EC
+330
+17
+100
+AcDbEntity
+  8
+LAMPS
+100
+AcDbPoint
+ 10
+40.0
+ 20
+9.3
+ 30
+0.0
+  0
+POINT
+  5
+ED
+330
+17
+100
+AcDbEntity
+  8
+LAMPS
+100
+AcDbPoint
+ 10
+64.0
+ 20
+9.3
+ 30
+0.0
+  0
+POINT
+  5
+EE
+330
+17
+100
+AcDbEntity
+  8
+LAMPS
+100
+AcDbPoint
+ 10
+88.0
+ 20
+9.3
+ 30
+0.0
+  0
+POINT
+  5
+EF
+330
+17
+100
+AcDbEntity
+  8
+LAMPS
+100
+AcDbPoint
+ 10
+112.0
+ 20
+9.3
+ 30
+0.0
+  0
+INSERT
+  5
+F5
+330
+17
+100
+AcDbEntity
+  8
+BENCH
+100
+AcDbBlockReference
+  2
+BENCH_BLOCK
+ 10
+14.0
+ 20
+42.3
+ 30
+0.0
+  0
+POINT
+  5
+F8
+330
+17
+100
+AcDbEntity
+  8
+URN
+100
+AcDbPoint
+ 10
+15.3
+ 20
+42.3
+ 30
+0.0
+  0
+INSERT
+  5
+F9
+330
+17
+100
+AcDbEntity
+  8
+BENCH
+100
+AcDbBlockReference
+  2
+BENCH_BLOCK
+ 10
+32.0
+ 20
+42.3
+ 30
+0.0
+  0
+POINT
+  5
+FB
+330
+17
+100
+AcDbEntity
+  8
+URN
+100
+AcDbPoint
+ 10
+33.3
+ 20
+42.3
+ 30
+0.0
+  0
+INSERT
+  5
+FC
+330
+17
+100
+AcDbEntity
+  8
+BENCH
+100
+AcDbBlockReference
+  2
+BENCH_BLOCK
+ 10
+50.0
+ 20
+42.3
+ 30
+0.0
+  0
+POINT
+  5
+FE
+330
+17
+100
+AcDbEntity
+  8
+URN
+100
+AcDbPoint
+ 10
+51.3
+ 20
+42.3
+ 30
+0.0
+  0
+INSERT
+  5
+FF
+330
+17
+100
+AcDbEntity
+  8
+BENCH
+100
+AcDbBlockReference
+  2
+BENCH_BLOCK
+ 10
+68.0
+ 20
+42.3
+ 30
+0.0
+  0
+POINT
+  5
+101
+330
+17
+100
+AcDbEntity
+  8
+URN
+100
+AcDbPoint
+ 10
+69.3
+ 20
+42.3
+ 30
+0.0
+  0
+INSERT
+  5
+102
+330
+17
+100
+AcDbEntity
+  8
+BENCH
+100
+AcDbBlockReference
+  2
+BENCH_BLOCK
+ 10
+86.0
+ 20
+42.3
+ 30
+0.0
+  0
+POINT
+  5
+104
+330
+17
+100
+AcDbEntity
+  8
+URN
+100
+AcDbPoint
+ 10
+87.3
+ 20
+42.3
+ 30
+0.0
+  0
+INSERT
+  5
+105
+330
+17
+100
+AcDbEntity
+  8
+BENCH
+100
+AcDbBlockReference
+  2
+BENCH_BLOCK
+ 10
+104.0
+ 20
+42.3
+ 30
+0.0
+  0
+POINT
+  5
+107
+330
+17
+100
+AcDbEntity
+  8
+URN
+100
+AcDbPoint
+ 10
+105.3
+ 20
+42.3
+ 30
+0.0
+  0
+INSERT
+  5
+108
+330
+17
+100
+AcDbEntity
+  8
+BENCH
+100
+AcDbBlockReference
+  2
+BENCH_BLOCK
+ 10
+122.0
+ 20
+42.3
+ 30
+0.0
+  0
+POINT
+  5
+10A
+330
+17
+100
+AcDbEntity
+  8
+URN
+100
+AcDbPoint
+ 10
+123.3
+ 20
+42.3
+ 30
+0.0
+  0
+POINT
+  5
+10B
+330
+17
+100
+AcDbEntity
+  8
+LAMPS
+100
+AcDbPoint
+ 10
+48.0
+ 20
+38.2
+ 30
+0.0
+  0
+POINT
+  5
+10C
+330
+17
+100
+AcDbEntity
+  8
+LAMPS
+100
+AcDbPoint
+ 10
+74.0
+ 20
+38.2
+ 30
+0.0
+  0
+POINT
+  5
+10D
+330
+17
+100
+AcDbEntity
+  8
+LAMPS
+100
+AcDbPoint
+ 10
+100.0
+ 20
+38.2
  30
 0.0
   0
@@ -6055,7 +7519,7 @@ CREATED_BY_EZDXF
   3
 WRITTEN_BY_EZDXF
 350
-D8
+110
   0
 DICTIONARYVAR
   5
@@ -6067,11 +7531,11 @@ DictionaryVariables
 280
 0
   1
-1.4.4 @ 2026-09-22T06:36:28.756440+00:00
+1.4.4 @ 2026-09-26T15:08:53.915658+00:00
   0
 DICTIONARYVAR
   5
-D8
+110
 330
 2D
 100
@@ -6079,7 +7543,7 @@ DictionaryVariables
 280
 0
   1
-1.4.4 @ 2026-09-22T06:36:28.760534+00:00
+1.4.4 @ 2026-09-26T15:08:53.917879+00:00
   0
 ENDSEC
   0

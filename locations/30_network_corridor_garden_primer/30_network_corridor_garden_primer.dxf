@@ -1,0 +1,11642 @@
+  0
+SECTION
+  2
+HEADER
+  9
+$ACADVER
+  1
+AC1032
+  9
+$ACADMAINTVER
+ 90
+4
+  9
+$DWGCODEPAGE
+  3
+ANSI_1252
+  9
+$LASTSAVEDBY
+  1
+ezdxf
+  9
+$REQUIREDVERSIONS
+160
+0
+  9
+$INSBASE
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$EXTMIN
+ 10
+1e+20
+ 20
+1e+20
+ 30
+1e+20
+  9
+$EXTMAX
+ 10
+-1e+20
+ 20
+-1e+20
+ 30
+-1e+20
+  9
+$LIMMIN
+ 10
+0.0
+ 20
+0.0
+  9
+$LIMMAX
+ 10
+420.0
+ 20
+297.0
+  9
+$ORTHOMODE
+ 70
+0
+  9
+$REGENMODE
+ 70
+1
+  9
+$FILLMODE
+ 70
+1
+  9
+$QTEXTMODE
+ 70
+0
+  9
+$MIRRTEXT
+ 70
+1
+  9
+$LTSCALE
+ 40
+1.0
+  9
+$ATTMODE
+ 70
+1
+  9
+$TEXTSIZE
+ 40
+2.5
+  9
+$TRACEWID
+ 40
+1.0
+  9
+$TEXTSTYLE
+  7
+Standard
+  9
+$CLAYER
+  8
+0
+  9
+$CELTYPE
+  6
+ByLayer
+  9
+$CECOLOR
+ 62
+256
+  9
+$CELTSCALE
+ 40
+1.0
+  9
+$DISPSILH
+ 70
+0
+  9
+$DIMSCALE
+ 40
+1.0
+  9
+$DIMASZ
+ 40
+2.5
+  9
+$DIMEXO
+ 40
+0.625
+  9
+$DIMDLI
+ 40
+3.75
+  9
+$DIMRND
+ 40
+0.0
+  9
+$DIMDLE
+ 40
+0.0
+  9
+$DIMEXE
+ 40
+1.25
+  9
+$DIMTP
+ 40
+0.0
+  9
+$DIMTM
+ 40
+0.0
+  9
+$DIMTXT
+ 40
+2.5
+  9
+$DIMCEN
+ 40
+2.5
+  9
+$DIMTSZ
+ 40
+0.0
+  9
+$DIMTOL
+ 70
+0
+  9
+$DIMLIM
+ 70
+0
+  9
+$DIMTIH
+ 70
+0
+  9
+$DIMTOH
+ 70
+0
+  9
+$DIMSE1
+ 70
+0
+  9
+$DIMSE2
+ 70
+0
+  9
+$DIMTAD
+ 70
+1
+  9
+$DIMZIN
+ 70
+8
+  9
+$DIMBLK
+  1
+
+  9
+$DIMASO
+ 70
+1
+  9
+$DIMSHO
+ 70
+1
+  9
+$DIMPOST
+  1
+
+  9
+$DIMAPOST
+  1
+
+  9
+$DIMALT
+ 70
+0
+  9
+$DIMALTD
+ 70
+3
+  9
+$DIMALTF
+ 40
+0.03937007874
+  9
+$DIMLFAC
+ 40
+1.0
+  9
+$DIMTOFL
+ 70
+1
+  9
+$DIMTVP
+ 40
+0.0
+  9
+$DIMTIX
+ 70
+0
+  9
+$DIMSOXD
+ 70
+0
+  9
+$DIMSAH
+ 70
+0
+  9
+$DIMBLK1
+  1
+
+  9
+$DIMBLK2
+  1
+
+  9
+$DIMSTYLE
+  2
+ISO-25
+  9
+$DIMCLRD
+ 70
+0
+  9
+$DIMCLRE
+ 70
+0
+  9
+$DIMCLRT
+ 70
+0
+  9
+$DIMTFAC
+ 40
+1.0
+  9
+$DIMGAP
+ 40
+0.625
+  9
+$DIMJUST
+ 70
+0
+  9
+$DIMSD1
+ 70
+0
+  9
+$DIMSD2
+ 70
+0
+  9
+$DIMTOLJ
+ 70
+0
+  9
+$DIMTZIN
+ 70
+8
+  9
+$DIMALTZ
+ 70
+0
+  9
+$DIMALTTZ
+ 70
+0
+  9
+$DIMUPT
+ 70
+0
+  9
+$DIMDEC
+ 70
+2
+  9
+$DIMTDEC
+ 70
+2
+  9
+$DIMALTU
+ 70
+2
+  9
+$DIMALTTD
+ 70
+3
+  9
+$DIMTXSTY
+  7
+Standard
+  9
+$DIMAUNIT
+ 70
+0
+  9
+$DIMADEC
+ 70
+0
+  9
+$DIMALTRND
+ 40
+0.0
+  9
+$DIMAZIN
+ 70
+0
+  9
+$DIMDSEP
+ 70
+44
+  9
+$DIMATFIT
+ 70
+3
+  9
+$DIMFRAC
+ 70
+0
+  9
+$DIMLDRBLK
+  1
+
+  9
+$DIMLUNIT
+ 70
+2
+  9
+$DIMLWD
+ 70
+-2
+  9
+$DIMLWE
+ 70
+-2
+  9
+$DIMTMOVE
+ 70
+0
+  9
+$DIMFXL
+ 40
+1.0
+  9
+$DIMFXLON
+ 70
+0
+  9
+$DIMJOGANG
+ 40
+0.785398163397
+  9
+$DIMTFILL
+ 70
+0
+  9
+$DIMTFILLCLR
+ 70
+0
+  9
+$DIMARCSYM
+ 70
+0
+  9
+$DIMLTYPE
+  6
+
+  9
+$DIMLTEX1
+  6
+
+  9
+$DIMLTEX2
+  6
+
+  9
+$DIMTXTDIRECTION
+ 70
+0
+  9
+$LUNITS
+ 70
+2
+  9
+$LUPREC
+ 70
+4
+  9
+$SKETCHINC
+ 40
+1.0
+  9
+$FILLETRAD
+ 40
+10.0
+  9
+$AUNITS
+ 70
+0
+  9
+$AUPREC
+ 70
+2
+  9
+$MENU
+  1
+.
+  9
+$ELEVATION
+ 40
+0.0
+  9
+$PELEVATION
+ 40
+0.0
+  9
+$THICKNESS
+ 40
+0.0
+  9
+$LIMCHECK
+ 70
+0
+  9
+$CHAMFERA
+ 40
+0.0
+  9
+$CHAMFERB
+ 40
+0.0
+  9
+$CHAMFERC
+ 40
+0.0
+  9
+$CHAMFERD
+ 40
+0.0
+  9
+$SKPOLY
+ 70
+0
+  9
+$TDCREATE
+ 40
+2461310.7561689815
+  9
+$TDUCREATE
+ 40
+2458532.153996898
+  9
+$TDUPDATE
+ 40
+2461310.7561689815
+  9
+$TDUUPDATE
+ 40
+2458532.1544311
+  9
+$TDINDWG
+ 40
+0.0
+  9
+$TDUSRTIMER
+ 40
+0.0
+  9
+$USRTIMER
+ 70
+1
+  9
+$ANGBASE
+ 50
+0.0
+  9
+$ANGDIR
+ 70
+0
+  9
+$PDMODE
+ 70
+0
+  9
+$PDSIZE
+ 40
+0.0
+  9
+$PLINEWID
+ 40
+0.0
+  9
+$SPLFRAME
+ 70
+0
+  9
+$SPLINETYPE
+ 70
+6
+  9
+$SPLINESEGS
+ 70
+8
+  9
+$HANDSEED
+  5
+207
+  9
+$SURFTAB1
+ 70
+6
+  9
+$SURFTAB2
+ 70
+6
+  9
+$SURFTYPE
+ 70
+6
+  9
+$SURFU
+ 70
+6
+  9
+$SURFV
+ 70
+6
+  9
+$UCSBASE
+  2
+
+  9
+$UCSNAME
+  2
+
+  9
+$UCSORG
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$UCSXDIR
+ 10
+1.0
+ 20
+0.0
+ 30
+0.0
+  9
+$UCSYDIR
+ 10
+0.0
+ 20
+1.0
+ 30
+0.0
+  9
+$UCSORTHOREF
+  2
+
+  9
+$UCSORTHOVIEW
+ 70
+0
+  9
+$UCSORGTOP
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$UCSORGBOTTOM
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$UCSORGLEFT
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$UCSORGRIGHT
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$UCSORGFRONT
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$UCSORGBACK
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$PUCSBASE
+  2
+
+  9
+$PUCSNAME
+  2
+
+  9
+$PUCSORG
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$PUCSXDIR
+ 10
+1.0
+ 20
+0.0
+ 30
+0.0
+  9
+$PUCSYDIR
+ 10
+0.0
+ 20
+1.0
+ 30
+0.0
+  9
+$PUCSORTHOREF
+  2
+
+  9
+$PUCSORTHOVIEW
+ 70
+0
+  9
+$PUCSORGTOP
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$PUCSORGBOTTOM
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$PUCSORGLEFT
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$PUCSORGRIGHT
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$PUCSORGFRONT
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$PUCSORGBACK
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$USERI1
+ 70
+0
+  9
+$USERI2
+ 70
+0
+  9
+$USERI3
+ 70
+0
+  9
+$USERI4
+ 70
+0
+  9
+$USERI5
+ 70
+0
+  9
+$USERR1
+ 40
+0.0
+  9
+$USERR2
+ 40
+0.0
+  9
+$USERR3
+ 40
+0.0
+  9
+$USERR4
+ 40
+0.0
+  9
+$USERR5
+ 40
+0.0
+  9
+$WORLDVIEW
+ 70
+1
+  9
+$SHADEDGE
+ 70
+3
+  9
+$SHADEDIF
+ 70
+70
+  9
+$TILEMODE
+ 70
+1
+  9
+$MAXACTVP
+ 70
+64
+  9
+$PINSBASE
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  9
+$PLIMCHECK
+ 70
+0
+  9
+$PEXTMIN
+ 10
+1e+20
+ 20
+1e+20
+ 30
+1e+20
+  9
+$PEXTMAX
+ 10
+-1e+20
+ 20
+-1e+20
+ 30
+-1e+20
+  9
+$PLIMMIN
+ 10
+0.0
+ 20
+0.0
+  9
+$PLIMMAX
+ 10
+420.0
+ 20
+297.0
+  9
+$UNITMODE
+ 70
+0
+  9
+$VISRETAIN
+ 70
+1
+  9
+$PLINEGEN
+ 70
+0
+  9
+$PSLTSCALE
+ 70
+1
+  9
+$TREEDEPTH
+ 70
+3020
+  9
+$CMLSTYLE
+  2
+Standard
+  9
+$CMLJUST
+ 70
+0
+  9
+$CMLSCALE
+ 40
+20.0
+  9
+$PROXYGRAPHICS
+ 70
+1
+  9
+$MEASUREMENT
+ 70
+1
+  9
+$CELWEIGHT
+370
+-1
+  9
+$ENDCAPS
+280
+0
+  9
+$JOINSTYLE
+280
+0
+  9
+$LWDISPLAY
+290
+0
+  9
+$INSUNITS
+ 70
+6
+  9
+$HYPERLINKBASE
+  1
+
+  9
+$STYLESHEET
+  1
+
+  9
+$XEDIT
+290
+1
+  9
+$CEPSNTYPE
+380
+0
+  9
+$PSTYLEMODE
+290
+1
+  9
+$FINGERPRINTGUID
+  2
+{4620A182-222F-4D51-A08B-F6A4FBBF74E5}
+  9
+$VERSIONGUID
+  2
+{4D3F2D40-8EE4-429D-849E-15AF2A123C1C}
+  9
+$EXTNAMES
+290
+1
+  9
+$PSVPSCALE
+ 40
+0.0
+  9
+$OLESTARTUP
+290
+0
+  9
+$SORTENTS
+280
+127
+  9
+$INDEXCTL
+280
+0
+  9
+$HIDETEXT
+280
+1
+  9
+$XCLIPFRAME
+280
+1
+  9
+$HALOGAP
+280
+0
+  9
+$OBSCOLOR
+ 70
+257
+  9
+$OBSLTYPE
+280
+0
+  9
+$INTERSECTIONDISPLAY
+280
+0
+  9
+$INTERSECTIONCOLOR
+ 70
+257
+  9
+$DIMASSOC
+280
+2
+  9
+$PROJECTNAME
+  1
+
+  9
+$CAMERADISPLAY
+290
+0
+  9
+$LENSLENGTH
+ 40
+50.0
+  9
+$CAMERAHEIGHT
+ 40
+0.0
+  9
+$STEPSPERSEC
+ 40
+24.0
+  9
+$STEPSIZE
+ 40
+100.0
+  9
+$3DDWFPREC
+ 40
+2.0
+  9
+$PSOLWIDTH
+ 40
+0.005
+  9
+$PSOLHEIGHT
+ 40
+0.08
+  9
+$LOFTANG1
+ 40
+1.570796326795
+  9
+$LOFTANG2
+ 40
+1.570796326795
+  9
+$LOFTMAG1
+ 40
+0.0
+  9
+$LOFTMAG2
+ 40
+0.0
+  9
+$LOFTPARAM
+ 70
+7
+  9
+$LOFTNORMALS
+280
+1
+  9
+$LATITUDE
+ 40
+37.795
+  9
+$LONGITUDE
+ 40
+-122.394
+  9
+$NORTHDIRECTION
+ 40
+0.0
+  9
+$TIMEZONE
+ 70
+-8000
+  9
+$LIGHTGLYPHDISPLAY
+280
+1
+  9
+$TILEMODELIGHTSYNCH
+280
+1
+  9
+$CMATERIAL
+347
+20
+  9
+$SOLIDHIST
+280
+0
+  9
+$SHOWHIST
+280
+1
+  9
+$DWFFRAME
+280
+2
+  9
+$DGNFRAME
+280
+2
+  9
+$REALWORLDSCALE
+290
+1
+  9
+$INTERFERECOLOR
+ 62
+256
+  9
+$CSHADOW
+280
+0
+  9
+$SHADOWPLANELOCATION
+ 40
+0.0
+  0
+ENDSEC
+  0
+SECTION
+  2
+CLASSES
+  0
+CLASS
+  1
+ACDBDICTIONARYWDFLT
+  2
+AcDbDictionaryWithDefault
+  3
+ObjectDBX Classes
+ 90
+0
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+SUN
+  2
+AcDbSun
+  3
+SCENEOE
+ 90
+1153
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+VISUALSTYLE
+  2
+AcDbVisualStyle
+  3
+ObjectDBX Classes
+ 90
+4095
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+MATERIAL
+  2
+AcDbMaterial
+  3
+ObjectDBX Classes
+ 90
+1153
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+SCALE
+  2
+AcDbScale
+  3
+ObjectDBX Classes
+ 90
+1153
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+TABLESTYLE
+  2
+AcDbTableStyle
+  3
+ObjectDBX Classes
+ 90
+4095
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+MLEADERSTYLE
+  2
+AcDbMLeaderStyle
+  3
+ACDB_MLEADERSTYLE_CLASS
+ 90
+4095
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+DICTIONARYVAR
+  2
+AcDbDictionaryVar
+  3
+ObjectDBX Classes
+ 90
+0
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+CELLSTYLEMAP
+  2
+AcDbCellStyleMap
+  3
+ObjectDBX Classes
+ 90
+1152
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+MENTALRAYRENDERSETTINGS
+  2
+AcDbMentalRayRenderSettings
+  3
+SCENEOE
+ 90
+1024
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+ACDBDETAILVIEWSTYLE
+  2
+AcDbDetailViewStyle
+  3
+ObjectDBX Classes
+ 90
+1025
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+ACDBSECTIONVIEWSTYLE
+  2
+AcDbSectionViewStyle
+  3
+ObjectDBX Classes
+ 90
+1025
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+RASTERVARIABLES
+  2
+AcDbRasterVariables
+  3
+ISM
+ 90
+0
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+LAYOUT
+  2
+AcDbLayout
+  3
+ObjectDBX Classes
+ 90
+0
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+ACDBPLACEHOLDER
+  2
+AcDbPlaceHolder
+  3
+ObjectDBX Classes
+ 90
+0
+ 91
+0
+280
+0
+281
+0
+  0
+ENDSEC
+  0
+SECTION
+  2
+TABLES
+  0
+TABLE
+  2
+VPORT
+  5
+8
+330
+0
+100
+AcDbSymbolTable
+ 70
+1
+  0
+VPORT
+  5
+23
+330
+8
+100
+AcDbSymbolTableRecord
+100
+AcDbViewportTableRecord
+  2
+*Active
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 11
+1.0
+ 21
+1.0
+ 12
+0.0
+ 22
+0.0
+ 13
+0.0
+ 23
+0.0
+ 14
+0.5
+ 24
+0.5
+ 15
+0.5
+ 25
+0.5
+ 16
+0.0
+ 26
+0.0
+ 36
+1.0
+ 17
+0.0
+ 27
+0.0
+ 37
+0.0
+ 40
+1000.0
+ 41
+1.34
+ 42
+50.0
+ 43
+0.0
+ 44
+0.0
+ 50
+0.0
+ 51
+0.0
+ 71
+0
+ 72
+1000
+ 73
+1
+ 74
+3
+ 75
+0
+ 76
+0
+ 77
+0
+ 78
+0
+281
+0
+ 65
+0
+146
+0.0
+  0
+ENDTAB
+  0
+TABLE
+  2
+LTYPE
+  5
+2
+330
+0
+100
+AcDbSymbolTable
+ 70
+3
+  0
+LTYPE
+  5
+24
+330
+2
+100
+AcDbSymbolTableRecord
+100
+AcDbLinetypeTableRecord
+  2
+ByBlock
+ 70
+0
+  3
+
+ 72
+65
+ 73
+0
+ 40
+0.0
+  0
+LTYPE
+  5
+25
+330
+2
+100
+AcDbSymbolTableRecord
+100
+AcDbLinetypeTableRecord
+  2
+ByLayer
+ 70
+0
+  3
+
+ 72
+65
+ 73
+0
+ 40
+0.0
+  0
+LTYPE
+  5
+26
+330
+2
+100
+AcDbSymbolTableRecord
+100
+AcDbLinetypeTableRecord
+  2
+Continuous
+ 70
+0
+  3
+
+ 72
+65
+ 73
+0
+ 40
+0.0
+  0
+ENDTAB
+  0
+TABLE
+  2
+LAYER
+  5
+1
+330
+0
+100
+AcDbSymbolTable
+ 70
+18
+  0
+LAYER
+  5
+27
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+0
+ 70
+0
+ 62
+7
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+28
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+Defpoints
+ 70
+0
+ 62
+7
+  6
+Continuous
+290
+0
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+2F
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+TERRITORY_BOUNDARY
+ 70
+0
+ 62
+8
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+31
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+GRASS
+ 70
+0
+ 62
+84
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+33
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+HEATING_T1
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+35
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+WATER_SUPPLY
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+37
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_ALONG
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+39
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_TO_SOUTH
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+3B
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+PATH_TO_NORTH
+ 70
+0
+ 62
+9
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+3D
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+ 70
+0
+ 62
+3
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+3F
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+БЕРЕЗА ПОВИСЛАЯ
+ 70
+0
+ 62
+3
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+4E
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+СПИРЕЯ ВАНГУТТА
+ 70
+0
+ 62
+3
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+50
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+СИРЕНЬ ОБЫКНОВЕННАЯ
+ 70
+0
+ 62
+3
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+5C
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+ЕЛЬ КОЛЮЧАЯ
+ 70
+0
+ 62
+3
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+1DC
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+ЛИПА МЕЛКОЛИСТНАЯ
+ 70
+0
+ 62
+3
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+1E9
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+LAMPS
+ 70
+0
+ 62
+2
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+1F3
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+BENCH
+ 70
+0
+ 62
+30
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+LAYER
+  5
+1F6
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+URN
+ 70
+0
+ 62
+2
+  6
+Continuous
+370
+-3
+390
+13
+347
+21
+  0
+ENDTAB
+  0
+TABLE
+  2
+STYLE
+  5
+5
+330
+0
+100
+AcDbSymbolTable
+ 70
+1
+  0
+STYLE
+  5
+29
+330
+5
+100
+AcDbSymbolTableRecord
+100
+AcDbTextStyleTableRecord
+  2
+Standard
+ 70
+0
+ 40
+0.0
+ 41
+1.0
+ 50
+0.0
+ 71
+0
+ 42
+2.5
+  3
+txt
+  4
+
+  0
+ENDTAB
+  0
+TABLE
+  2
+VIEW
+  5
+7
+330
+0
+100
+AcDbSymbolTable
+ 70
+0
+  0
+ENDTAB
+  0
+TABLE
+  2
+UCS
+  5
+6
+330
+0
+100
+AcDbSymbolTable
+ 70
+0
+  0
+ENDTAB
+  0
+TABLE
+  2
+APPID
+  5
+3
+330
+0
+100
+AcDbSymbolTable
+ 70
+3
+  0
+APPID
+  5
+2A
+330
+3
+100
+AcDbSymbolTableRecord
+100
+AcDbRegAppTableRecord
+  2
+ACAD
+ 70
+0
+  0
+APPID
+  5
+204
+330
+3
+100
+AcDbSymbolTableRecord
+100
+AcDbRegAppTableRecord
+  2
+HATCHBACKGROUNDCOLOR
+ 70
+0
+  0
+APPID
+  5
+205
+330
+3
+100
+AcDbSymbolTableRecord
+100
+AcDbRegAppTableRecord
+  2
+EZDXF
+ 70
+0
+  0
+ENDTAB
+  0
+TABLE
+  2
+DIMSTYLE
+  5
+4
+330
+0
+100
+AcDbSymbolTable
+ 70
+1
+100
+AcDbDimStyleTable
+  0
+DIMSTYLE
+105
+2B
+330
+4
+100
+AcDbSymbolTableRecord
+100
+AcDbDimStyleTableRecord
+  2
+Standard
+ 70
+0
+ 40
+1.0
+ 41
+2.5
+ 42
+0.625
+ 43
+3.75
+ 44
+1.25
+ 45
+0.0
+ 46
+0.0
+ 47
+0.0
+ 48
+0.0
+ 49
+2.5
+140
+2.5
+141
+2.5
+142
+0.0
+143
+0.03937007874
+144
+1.0
+145
+0.0
+146
+1.0
+147
+0.625
+148
+0.0
+ 69
+0
+ 70
+0
+ 71
+0
+ 72
+0
+ 73
+0
+ 74
+0
+ 75
+0
+ 76
+0
+ 77
+1
+ 78
+8
+ 79
+3
+170
+0
+171
+3
+172
+1
+173
+0
+174
+0
+175
+0
+176
+0
+177
+0
+178
+0
+179
+2
+271
+2
+272
+2
+273
+2
+274
+3
+275
+0
+276
+0
+277
+2
+278
+44
+279
+0
+280
+0
+281
+0
+282
+0
+283
+0
+284
+8
+285
+0
+286
+0
+288
+0
+289
+3
+290
+0
+371
+-2
+372
+-2
+  0
+ENDTAB
+  0
+TABLE
+  2
+BLOCK_RECORD
+  5
+9
+330
+0
+100
+AcDbSymbolTable
+ 70
+3
+  0
+BLOCK_RECORD
+  5
+17
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+*Model_Space
+340
+1A
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+1B
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+*Paper_Space
+340
+1E
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+1EF
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+BENCH_BLOCK
+340
+0
+ 70
+0
+280
+1
+281
+0
+  0
+ENDTAB
+  0
+ENDSEC
+  0
+SECTION
+  2
+BLOCKS
+  0
+BLOCK
+  5
+18
+330
+17
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+*Model_Space
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+*Model_Space
+  1
+
+  0
+ENDBLK
+  5
+19
+330
+17
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+1C
+330
+1B
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+*Paper_Space
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+*Paper_Space
+  1
+
+  0
+ENDBLK
+  5
+1D
+330
+1B
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+1F0
+330
+1EF
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+BENCH_BLOCK
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+BENCH_BLOCK
+  1
+
+  0
+LWPOLYLINE
+  5
+1F2
+330
+1EF
+100
+AcDbEntity
+  8
+0
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+-0.75
+ 20
+-0.25
+ 10
+0.75
+ 20
+-0.25
+ 10
+0.75
+ 20
+0.25
+ 10
+-0.75
+ 20
+0.25
+  0
+ENDBLK
+  5
+1F1
+330
+1EF
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+ENDSEC
+  0
+SECTION
+  2
+ENTITIES
+  0
+LWPOLYLINE
+  5
+30
+330
+17
+100
+AcDbEntity
+  8
+TERRITORY_BOUNDARY
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+90.0
+ 20
+0.0
+ 10
+90.0
+ 20
+60.0
+ 10
+0.0
+ 20
+60.0
+ 10
+0.0
+ 20
+0.0
+  0
+LWPOLYLINE
+  5
+32
+330
+17
+100
+AcDbEntity
+  8
+GRASS
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+90.0
+ 20
+0.0
+ 10
+90.0
+ 20
+60.0
+ 10
+0.0
+ 20
+60.0
+ 10
+0.0
+ 20
+0.0
+  0
+LWPOLYLINE
+  5
+34
+330
+17
+100
+AcDbEntity
+  8
+HEATING_T1
+100
+AcDbPolyline
+ 90
+6
+ 70
+1
+ 10
+90.0
+ 20
+36.0
+ 10
+90.0
+ 20
+34.486725404957845
+ 10
+0.19824558013652693
+ 20
+22.513158148976046
+ 10
+0.0
+ 20
+24.0
+ 10
+0.0
+ 20
+25.51327459504216
+ 10
+89.80175441986347
+ 20
+37.486841851023954
+  0
+LWPOLYLINE
+  5
+36
+330
+17
+100
+AcDbEntity
+  8
+WATER_SUPPLY
+100
+AcDbPolyline
+ 90
+6
+ 70
+1
+ 10
+90.0
+ 20
+41.5
+ 10
+90.0
+ 20
+40.692920215977516
+ 10
+0.10573097607281438
+ 20
+28.70701767945389
+ 10
+0.0
+ 20
+29.5
+ 10
+0.0
+ 20
+30.307079784022484
+ 10
+89.89426902392718
+ 20
+42.29298232054611
+  0
+LWPOLYLINE
+  5
+38
+330
+17
+100
+AcDbEntity
+  8
+PATH_ALONG
+100
+AcDbPolyline
+ 90
+6
+ 70
+1
+ 10
+90.0
+ 20
+38.5
+ 10
+90.0
+ 20
+37.23893783746487
+ 10
+0.16520465011377244
+ 20
+25.260965124146708
+ 10
+0.0
+ 20
+26.5
+ 10
+0.0
+ 20
+27.76106216253513
+ 10
+89.83479534988622
+ 20
+39.73903487585329
+  0
+LWPOLYLINE
+  5
+3A
+330
+17
+100
+AcDbEntity
+  8
+PATH_TO_SOUTH
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+28.9
+ 20
+29.5
+ 10
+31.1
+ 20
+29.5
+ 10
+31.1
+ 20
+0.0
+ 10
+28.9
+ 20
+0.0
+  0
+LWPOLYLINE
+  5
+3C
+330
+17
+100
+AcDbEntity
+  8
+PATH_TO_NORTH
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+60.9
+ 20
+60.0
+ 10
+63.1
+ 20
+60.0
+ 10
+63.1
+ 20
+34.9
+ 10
+60.9
+ 20
+34.9
+  0
+POINT
+  5
+3E
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+14.0
+ 20
+9.0
+ 30
+0.0
+  0
+POINT
+  5
+40
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+17.68424397601154
+ 20
+10.557673369234601
+ 30
+0.0
+  0
+POINT
+  5
+41
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+14.493137279450107
+ 20
+12.969485561583081
+ 30
+0.0
+  0
+POINT
+  5
+42
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+10.808893303438568
+ 20
+11.41181219234848
+ 30
+0.0
+  0
+POINT
+  5
+43
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+10.31575602398846
+ 20
+7.442326630765399
+ 30
+0.0
+  0
+POINT
+  5
+44
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+13.506862720549893
+ 20
+5.030514438416919
+ 30
+0.0
+  0
+POINT
+  5
+45
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+17.191106696561434
+ 20
+6.588187807651522
+ 30
+0.0
+  0
+POINT
+  5
+46
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+21.644519307161683
+ 20
+10.549620780201478
+ 30
+0.0
+  0
+POINT
+  5
+47
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+18.309744079057463
+ 20
+15.50123880295357
+ 30
+0.0
+  0
+POINT
+  5
+48
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+12.450379219798524
+ 20
+16.644519307161683
+ 30
+0.0
+  0
+POINT
+  5
+49
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+7.498761197046432
+ 20
+13.309744079057461
+ 30
+0.0
+  0
+POINT
+  5
+4A
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+6.355480692838316
+ 20
+7.450379219798522
+ 30
+0.0
+  0
+POINT
+  5
+4B
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+9.690255920942539
+ 20
+2.4987611970464316
+ 30
+0.0
+  0
+POINT
+  5
+4C
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+15.549620780201478
+ 20
+1.3554806928383156
+ 30
+0.0
+  0
+POINT
+  5
+4D
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+20.50123880295357
+ 20
+4.690255920942538
+ 30
+0.0
+  0
+POINT
+  5
+4F
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+24.5
+ 20
+9.0
+ 30
+0.0
+  0
+POINT
+  5
+51
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+23.4601731129754
+ 20
+13.555779260734361
+ 30
+0.0
+  0
+POINT
+  5
+52
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+20.546642919516703
+ 20
+17.20923056591431
+ 30
+0.0
+  0
+POINT
+  5
+53
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+16.336469806541302
+ 20
+19.236743077909146
+ 30
+0.0
+  0
+POINT
+  5
+54
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+11.6635301934587
+ 20
+19.236743077909146
+ 30
+0.0
+  0
+POINT
+  5
+55
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+7.453357080483299
+ 20
+17.209230565914314
+ 30
+0.0
+  0
+POINT
+  5
+56
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+4.539826887024599
+ 20
+13.555779260734361
+ 30
+0.0
+  0
+POINT
+  5
+57
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+3.5
+ 20
+9.000000000000002
+ 30
+0.0
+  0
+POINT
+  5
+58
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+4.539826887024599
+ 20
+4.444220739265641
+ 30
+0.0
+  0
+POINT
+  5
+59
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+7.453357080483297
+ 20
+0.7907694340856875
+ 30
+0.0
+  0
+POINT
+  5
+5A
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+20.5466429195167
+ 20
+0.7907694340856857
+ 30
+0.0
+  0
+POINT
+  5
+5B
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+23.460173112975404
+ 20
+4.4442207392656465
+ 30
+0.0
+  0
+POINT
+  5
+5D
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+47.0
+ 20
+7.0
+ 30
+0.0
+  0
+POINT
+  5
+5E
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+50.684243976011544
+ 20
+8.557673369234601
+ 30
+0.0
+  0
+POINT
+  5
+5F
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+47.49313727945011
+ 20
+10.969485561583081
+ 30
+0.0
+  0
+POINT
+  5
+60
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+43.808893303438566
+ 20
+9.41181219234848
+ 30
+0.0
+  0
+POINT
+  5
+61
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+43.315756023988456
+ 20
+5.442326630765399
+ 30
+0.0
+  0
+POINT
+  5
+62
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+46.50686272054989
+ 20
+3.0305144384169194
+ 30
+0.0
+  0
+POINT
+  5
+63
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+50.191106696561434
+ 20
+4.588187807651522
+ 30
+0.0
+  0
+POINT
+  5
+64
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+54.64451930716169
+ 20
+8.549620780201478
+ 30
+0.0
+  0
+POINT
+  5
+65
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+51.30974407905746
+ 20
+13.50123880295357
+ 30
+0.0
+  0
+POINT
+  5
+66
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+45.45037921979852
+ 20
+14.644519307161683
+ 30
+0.0
+  0
+POINT
+  5
+67
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+40.498761197046434
+ 20
+11.309744079057461
+ 30
+0.0
+  0
+POINT
+  5
+68
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+39.35548069283831
+ 20
+5.450379219798522
+ 30
+0.0
+  0
+POINT
+  5
+69
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+53.501238802953566
+ 20
+2.690255920942538
+ 30
+0.0
+  0
+POINT
+  5
+6A
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+57.5
+ 20
+7.0
+ 30
+0.0
+  0
+POINT
+  5
+6B
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+56.4601731129754
+ 20
+11.555779260734361
+ 30
+0.0
+  0
+POINT
+  5
+6C
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+53.5466429195167
+ 20
+15.209230565914313
+ 30
+0.0
+  0
+POINT
+  5
+6D
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+49.3364698065413
+ 20
+17.236743077909146
+ 30
+0.0
+  0
+POINT
+  5
+6E
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+44.6635301934587
+ 20
+17.236743077909146
+ 30
+0.0
+  0
+POINT
+  5
+6F
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+40.4533570804833
+ 20
+15.209230565914314
+ 30
+0.0
+  0
+POINT
+  5
+70
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+37.5398268870246
+ 20
+11.555779260734361
+ 30
+0.0
+  0
+POINT
+  5
+71
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+36.5
+ 20
+7.000000000000001
+ 30
+0.0
+  0
+POINT
+  5
+72
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+37.5398268870246
+ 20
+2.444220739265641
+ 30
+0.0
+  0
+POINT
+  5
+73
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+56.460173112975404
+ 20
+2.4442207392656465
+ 30
+0.0
+  0
+POINT
+  5
+74
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+75.0
+ 20
+13.0
+ 30
+0.0
+  0
+POINT
+  5
+75
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+78.68424397601154
+ 20
+14.557673369234601
+ 30
+0.0
+  0
+POINT
+  5
+76
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+75.49313727945011
+ 20
+16.96948556158308
+ 30
+0.0
+  0
+POINT
+  5
+77
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+71.80889330343857
+ 20
+15.41181219234848
+ 30
+0.0
+  0
+POINT
+  5
+78
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+71.31575602398846
+ 20
+11.442326630765399
+ 30
+0.0
+  0
+POINT
+  5
+79
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+74.50686272054989
+ 20
+9.030514438416919
+ 30
+0.0
+  0
+POINT
+  5
+7A
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+78.19110669656143
+ 20
+10.588187807651522
+ 30
+0.0
+  0
+POINT
+  5
+7B
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+82.64451930716169
+ 20
+14.549620780201478
+ 30
+0.0
+  0
+POINT
+  5
+7C
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+79.30974407905747
+ 20
+19.50123880295357
+ 30
+0.0
+  0
+POINT
+  5
+7D
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+73.45037921979852
+ 20
+20.644519307161683
+ 30
+0.0
+  0
+POINT
+  5
+7E
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+68.49876119704643
+ 20
+17.30974407905746
+ 30
+0.0
+  0
+POINT
+  5
+7F
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+67.35548069283831
+ 20
+11.450379219798522
+ 30
+0.0
+  0
+POINT
+  5
+80
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+70.69025592094253
+ 20
+6.498761197046432
+ 30
+0.0
+  0
+POINT
+  5
+81
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+76.54962078020148
+ 20
+5.355480692838316
+ 30
+0.0
+  0
+POINT
+  5
+82
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+81.50123880295357
+ 20
+8.690255920942537
+ 30
+0.0
+  0
+POINT
+  5
+83
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+85.5
+ 20
+13.0
+ 30
+0.0
+  0
+POINT
+  5
+84
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+84.4601731129754
+ 20
+17.55577926073436
+ 30
+0.0
+  0
+POINT
+  5
+85
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+81.5466429195167
+ 20
+21.20923056591431
+ 30
+0.0
+  0
+POINT
+  5
+86
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+77.3364698065413
+ 20
+23.236743077909146
+ 30
+0.0
+  0
+POINT
+  5
+87
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+72.6635301934587
+ 20
+23.236743077909146
+ 30
+0.0
+  0
+POINT
+  5
+88
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+68.4533570804833
+ 20
+21.209230565914314
+ 30
+0.0
+  0
+POINT
+  5
+89
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+65.5398268870246
+ 20
+17.55577926073436
+ 30
+0.0
+  0
+POINT
+  5
+8A
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+64.5
+ 20
+13.000000000000002
+ 30
+0.0
+  0
+POINT
+  5
+8B
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+65.5398268870246
+ 20
+8.444220739265642
+ 30
+0.0
+  0
+POINT
+  5
+8C
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+68.4533570804833
+ 20
+4.7907694340856875
+ 30
+0.0
+  0
+POINT
+  5
+8D
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+72.6635301934587
+ 20
+2.763256922090852
+ 30
+0.0
+  0
+POINT
+  5
+8E
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+77.33646980654129
+ 20
+2.76325692209085
+ 30
+0.0
+  0
+POINT
+  5
+8F
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+81.5466429195167
+ 20
+4.790769434085686
+ 30
+0.0
+  0
+POINT
+  5
+90
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+84.4601731129754
+ 20
+8.444220739265646
+ 30
+0.0
+  0
+POINT
+  5
+91
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+13.0
+ 20
+48.0
+ 30
+0.0
+  0
+POINT
+  5
+92
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+16.68424397601154
+ 20
+49.5576733692346
+ 30
+0.0
+  0
+POINT
+  5
+93
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+13.493137279450107
+ 20
+51.969485561583085
+ 30
+0.0
+  0
+POINT
+  5
+94
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+9.808893303438568
+ 20
+50.41181219234848
+ 30
+0.0
+  0
+POINT
+  5
+95
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+9.31575602398846
+ 20
+46.4423266307654
+ 30
+0.0
+  0
+POINT
+  5
+96
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+12.506862720549893
+ 20
+44.03051443841692
+ 30
+0.0
+  0
+POINT
+  5
+97
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+16.191106696561434
+ 20
+45.58818780765152
+ 30
+0.0
+  0
+POINT
+  5
+98
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+20.644519307161683
+ 20
+49.54962078020148
+ 30
+0.0
+  0
+POINT
+  5
+99
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+17.309744079057463
+ 20
+54.501238802953566
+ 30
+0.0
+  0
+POINT
+  5
+9A
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+11.450379219798524
+ 20
+55.64451930716169
+ 30
+0.0
+  0
+POINT
+  5
+9B
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+6.498761197046432
+ 20
+52.30974407905746
+ 30
+0.0
+  0
+POINT
+  5
+9C
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+5.355480692838316
+ 20
+46.45037921979852
+ 30
+0.0
+  0
+POINT
+  5
+9D
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+8.690255920942539
+ 20
+41.498761197046434
+ 30
+0.0
+  0
+POINT
+  5
+9E
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+14.549620780201478
+ 20
+40.35548069283831
+ 30
+0.0
+  0
+POINT
+  5
+9F
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+19.50123880295357
+ 20
+43.69025592094254
+ 30
+0.0
+  0
+POINT
+  5
+A0
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+23.5
+ 20
+48.0
+ 30
+0.0
+  0
+POINT
+  5
+A1
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+22.4601731129754
+ 20
+52.55577926073436
+ 30
+0.0
+  0
+POINT
+  5
+A2
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+19.546642919516703
+ 20
+56.20923056591431
+ 30
+0.0
+  0
+POINT
+  5
+A3
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+15.336469806541302
+ 20
+58.236743077909146
+ 30
+0.0
+  0
+POINT
+  5
+A4
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+10.6635301934587
+ 20
+58.236743077909146
+ 30
+0.0
+  0
+POINT
+  5
+A5
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+6.453357080483299
+ 20
+56.20923056591431
+ 30
+0.0
+  0
+POINT
+  5
+A6
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+3.5398268870245992
+ 20
+52.55577926073436
+ 30
+0.0
+  0
+POINT
+  5
+A7
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+2.5
+ 20
+48.0
+ 30
+0.0
+  0
+POINT
+  5
+A8
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+3.5398268870245992
+ 20
+43.44422073926564
+ 30
+0.0
+  0
+POINT
+  5
+A9
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+6.453357080483297
+ 20
+39.79076943408569
+ 30
+0.0
+  0
+POINT
+  5
+AA
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+10.663530193458698
+ 20
+37.763256922090854
+ 30
+0.0
+  0
+POINT
+  5
+AB
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+15.33646980654129
+ 20
+37.76325692209085
+ 30
+0.0
+  0
+POINT
+  5
+AC
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+19.5466429195167
+ 20
+39.79076943408569
+ 30
+0.0
+  0
+POINT
+  5
+AD
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+22.460173112975404
+ 20
+43.444220739265646
+ 30
+0.0
+  0
+POINT
+  5
+AE
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+40.0
+ 20
+52.0
+ 30
+0.0
+  0
+POINT
+  5
+AF
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+43.684243976011544
+ 20
+53.5576733692346
+ 30
+0.0
+  0
+POINT
+  5
+B0
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+40.49313727945011
+ 20
+55.969485561583085
+ 30
+0.0
+  0
+POINT
+  5
+B1
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+36.808893303438566
+ 20
+54.41181219234848
+ 30
+0.0
+  0
+POINT
+  5
+B2
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+36.315756023988456
+ 20
+50.4423266307654
+ 30
+0.0
+  0
+POINT
+  5
+B3
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+39.50686272054989
+ 20
+48.03051443841692
+ 30
+0.0
+  0
+POINT
+  5
+B4
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+43.191106696561434
+ 20
+49.58818780765152
+ 30
+0.0
+  0
+POINT
+  5
+B5
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+47.64451930716169
+ 20
+53.54962078020148
+ 30
+0.0
+  0
+POINT
+  5
+B6
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+44.30974407905746
+ 20
+58.501238802953566
+ 30
+0.0
+  0
+POINT
+  5
+B7
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+33.498761197046434
+ 20
+56.30974407905746
+ 30
+0.0
+  0
+POINT
+  5
+B8
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+32.35548069283831
+ 20
+50.45037921979852
+ 30
+0.0
+  0
+POINT
+  5
+B9
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+35.69025592094254
+ 20
+45.498761197046434
+ 30
+0.0
+  0
+POINT
+  5
+BA
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+41.54962078020148
+ 20
+44.35548069283831
+ 30
+0.0
+  0
+POINT
+  5
+BB
+330
+17
+100
+AcDbEntity
+  8
+ЛИСТВЕННИЦА ЕВРОПЕЙСКАЯ
+100
+AcDbPoint
+ 10
+46.501238802953566
+ 20
+47.69025592094254
+ 30
+0.0
+  0
+POINT
+  5
+BC
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+50.5
+ 20
+52.0
+ 30
+0.0
+  0
+POINT
+  5
+BD
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+49.4601731129754
+ 20
+56.55577926073436
+ 30
+0.0
+  0
+POINT
+  5
+BE
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+30.5398268870246
+ 20
+56.55577926073436
+ 30
+0.0
+  0
+POINT
+  5
+BF
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+29.5
+ 20
+52.0
+ 30
+0.0
+  0
+POINT
+  5
+C0
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+30.5398268870246
+ 20
+47.44422073926564
+ 30
+0.0
+  0
+POINT
+  5
+C1
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+33.4533570804833
+ 20
+43.79076943408569
+ 30
+0.0
+  0
+POINT
+  5
+C2
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+37.6635301934587
+ 20
+41.763256922090854
+ 30
+0.0
+  0
+POINT
+  5
+C3
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+42.33646980654129
+ 20
+41.76325692209085
+ 30
+0.0
+  0
+POINT
+  5
+C4
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+46.5466429195167
+ 20
+43.79076943408569
+ 30
+0.0
+  0
+POINT
+  5
+C5
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+49.460173112975404
+ 20
+47.444220739265646
+ 30
+0.0
+  0
+POINT
+  5
+C6
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+78.0
+ 20
+51.0
+ 30
+0.0
+  0
+POINT
+  5
+C7
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+81.68424397601154
+ 20
+52.5576733692346
+ 30
+0.0
+  0
+POINT
+  5
+C8
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+78.49313727945011
+ 20
+54.969485561583085
+ 30
+0.0
+  0
+POINT
+  5
+C9
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+74.80889330343857
+ 20
+53.41181219234848
+ 30
+0.0
+  0
+POINT
+  5
+CA
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+74.31575602398846
+ 20
+49.4423266307654
+ 30
+0.0
+  0
+POINT
+  5
+CB
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+77.50686272054989
+ 20
+47.03051443841692
+ 30
+0.0
+  0
+POINT
+  5
+CC
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+81.19110669656143
+ 20
+48.58818780765152
+ 30
+0.0
+  0
+POINT
+  5
+CD
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+85.64451930716169
+ 20
+52.54962078020148
+ 30
+0.0
+  0
+POINT
+  5
+CE
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+82.30974407905747
+ 20
+57.501238802953566
+ 30
+0.0
+  0
+POINT
+  5
+CF
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+76.45037921979852
+ 20
+58.64451930716169
+ 30
+0.0
+  0
+POINT
+  5
+D0
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+71.49876119704643
+ 20
+55.30974407905746
+ 30
+0.0
+  0
+POINT
+  5
+D1
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+70.35548069283831
+ 20
+49.45037921979852
+ 30
+0.0
+  0
+POINT
+  5
+D2
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+73.69025592094253
+ 20
+44.498761197046434
+ 30
+0.0
+  0
+POINT
+  5
+D3
+330
+17
+100
+AcDbEntity
+  8
+БЕРЕЗА ПОВИСЛАЯ
+100
+AcDbPoint
+ 10
+79.54962078020148
+ 20
+43.35548069283831
+ 30
+0.0
+  0
+POINT
+  5
+D4
+330
+17
+100
+AcDbEntity
+  8
+ЕЛЬ КОЛЮЧАЯ
+100
+AcDbPoint
+ 10
+84.50123880295357
+ 20
+46.69025592094254
+ 30
+0.0
+  0
+POINT
+  5
+D5
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+88.5
+ 20
+51.0
+ 30
+0.0
+  0
+POINT
+  5
+D6
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+87.4601731129754
+ 20
+55.55577926073436
+ 30
+0.0
+  0
+POINT
+  5
+D7
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+84.5466429195167
+ 20
+59.20923056591431
+ 30
+0.0
+  0
+POINT
+  5
+D8
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+71.4533570804833
+ 20
+59.20923056591431
+ 30
+0.0
+  0
+POINT
+  5
+D9
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+68.5398268870246
+ 20
+55.55577926073436
+ 30
+0.0
+  0
+POINT
+  5
+DA
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+67.5
+ 20
+51.0
+ 30
+0.0
+  0
+POINT
+  5
+DB
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+68.5398268870246
+ 20
+46.44422073926564
+ 30
+0.0
+  0
+POINT
+  5
+DC
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+71.4533570804833
+ 20
+42.79076943408569
+ 30
+0.0
+  0
+POINT
+  5
+DD
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+75.6635301934587
+ 20
+40.763256922090854
+ 30
+0.0
+  0
+POINT
+  5
+DE
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+84.5466429195167
+ 20
+42.79076943408569
+ 30
+0.0
+  0
+POINT
+  5
+DF
+330
+17
+100
+AcDbEntity
+  8
+СИРЕНЬ ОБЫКНОВЕННАЯ
+100
+AcDbPoint
+ 10
+87.4601731129754
+ 20
+46.444220739265646
+ 30
+0.0
+  0
+POINT
+  5
+E0
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+0.7103799954892216
+ 20
+20.09029246771784
+ 30
+0.0
+  0
+POINT
+  5
+E1
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+1.9989762663766468
+ 20
+20.262105303836165
+ 30
+0.0
+  0
+POINT
+  5
+E2
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+3.287572537264072
+ 20
+20.43391813995449
+ 30
+0.0
+  0
+POINT
+  5
+E3
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+4.576168808151497
+ 20
+20.605730976072813
+ 30
+0.0
+  0
+POINT
+  5
+E4
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+5.864765079038921
+ 20
+20.777543812191137
+ 30
+0.0
+  0
+POINT
+  5
+E5
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+7.153361349926346
+ 20
+20.949356648309458
+ 30
+0.0
+  0
+POINT
+  5
+E6
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+8.44195762081377
+ 20
+21.12116948442778
+ 30
+0.0
+  0
+POINT
+  5
+E7
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+9.730553891701197
+ 20
+21.292982320546106
+ 30
+0.0
+  0
+POINT
+  5
+E8
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+11.019150162588623
+ 20
+21.46479515666443
+ 30
+0.0
+  0
+POINT
+  5
+E9
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+12.307746433476048
+ 20
+21.636607992782753
+ 30
+0.0
+  0
+POINT
+  5
+EA
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+13.596342704363476
+ 20
+21.808420828901077
+ 30
+0.0
+  0
+POINT
+  5
+EB
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+14.8849389752509
+ 20
+21.9802336650194
+ 30
+0.0
+  0
+POINT
+  5
+EC
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+16.173535246138325
+ 20
+22.152046501137725
+ 30
+0.0
+  0
+POINT
+  5
+ED
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+17.46213151702575
+ 20
+22.323859337256046
+ 30
+0.0
+  0
+POINT
+  5
+EE
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+18.750727787913174
+ 20
+22.49567217337437
+ 30
+0.0
+  0
+POINT
+  5
+EF
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+20.039324058800602
+ 20
+22.667485009492694
+ 30
+0.0
+  0
+POINT
+  5
+F0
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+21.327920329688027
+ 20
+22.839297845611018
+ 30
+0.0
+  0
+POINT
+  5
+F1
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+22.61651660057546
+ 20
+23.011110681729342
+ 30
+0.0
+  0
+POINT
+  5
+F2
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+23.905112871462883
+ 20
+23.182923517847666
+ 30
+0.0
+  0
+POINT
+  5
+F3
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+25.193709142350308
+ 20
+23.354736353965986
+ 30
+0.0
+  0
+POINT
+  5
+F4
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+26.482305413237732
+ 20
+23.52654919008431
+ 30
+0.0
+  0
+POINT
+  5
+F5
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+27.770901684125157
+ 20
+23.698362026202634
+ 30
+0.0
+  0
+POINT
+  5
+F6
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+32.92528676767486
+ 20
+24.385613370675934
+ 30
+0.0
+  0
+POINT
+  5
+F7
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+34.21388303856228
+ 20
+24.55742620679425
+ 30
+0.0
+  0
+POINT
+  5
+F8
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+35.502479309449704
+ 20
+24.729239042912575
+ 30
+0.0
+  0
+POINT
+  5
+F9
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+36.79107558033712
+ 20
+24.9010518790309
+ 30
+0.0
+  0
+POINT
+  5
+FA
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+38.079671851224546
+ 20
+25.07286471514922
+ 30
+0.0
+  0
+POINT
+  5
+FB
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+39.36826812211197
+ 20
+25.244677551267543
+ 30
+0.0
+  0
+POINT
+  5
+FC
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+40.656864392999395
+ 20
+25.41649038738587
+ 30
+0.0
+  0
+POINT
+  5
+FD
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+41.94546066388681
+ 20
+25.58830322350419
+ 30
+0.0
+  0
+POINT
+  5
+FE
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+43.23405693477424
+ 20
+25.76011605962251
+ 30
+0.0
+  0
+POINT
+  5
+FF
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+44.52265320566166
+ 20
+25.931928895740835
+ 30
+0.0
+  0
+POINT
+  5
+100
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+45.81124947654908
+ 20
+26.103741731859156
+ 30
+0.0
+  0
+POINT
+  5
+101
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+47.09984574743651
+ 20
+26.275554567977487
+ 30
+0.0
+  0
+POINT
+  5
+102
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+48.38844201832393
+ 20
+26.447367404095804
+ 30
+0.0
+  0
+POINT
+  5
+103
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+49.677038289211346
+ 20
+26.619180240214124
+ 30
+0.0
+  0
+POINT
+  5
+104
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+50.96563456009877
+ 20
+26.790993076332448
+ 30
+0.0
+  0
+POINT
+  5
+105
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+52.25423083098619
+ 20
+26.962805912450772
+ 30
+0.0
+  0
+POINT
+  5
+106
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+53.54282710187362
+ 20
+27.134618748569096
+ 30
+0.0
+  0
+POINT
+  5
+107
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+54.83142337276104
+ 20
+27.30643158468742
+ 30
+0.0
+  0
+POINT
+  5
+108
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+56.120019643648455
+ 20
+27.478244420805744
+ 30
+0.0
+  0
+POINT
+  5
+109
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+57.40861591453588
+ 20
+27.650057256924068
+ 30
+0.0
+  0
+POINT
+  5
+10A
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+58.69721218542331
+ 20
+27.821870093042392
+ 30
+0.0
+  0
+POINT
+  5
+10B
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+59.98580845631073
+ 20
+27.99368292916071
+ 30
+0.0
+  0
+POINT
+  5
+10C
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+61.274404727198146
+ 20
+28.165495765279033
+ 30
+0.0
+  0
+POINT
+  5
+10D
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+62.56300099808557
+ 20
+28.337308601397357
+ 30
+0.0
+  0
+POINT
+  5
+10E
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+63.851597268972995
+ 20
+28.509121437515677
+ 30
+0.0
+  0
+POINT
+  5
+10F
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+65.14019353986043
+ 20
+28.68093427363401
+ 30
+0.0
+  0
+POINT
+  5
+110
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+66.42878981074786
+ 20
+28.852747109752325
+ 30
+0.0
+  0
+POINT
+  5
+111
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+67.71738608163527
+ 20
+29.024559945870653
+ 30
+0.0
+  0
+POINT
+  5
+112
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+69.0059823525227
+ 20
+29.196372781988977
+ 30
+0.0
+  0
+POINT
+  5
+113
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+70.29457862341012
+ 20
+29.368185618107297
+ 30
+0.0
+  0
+POINT
+  5
+114
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+71.58317489429754
+ 20
+29.53999845422562
+ 30
+0.0
+  0
+POINT
+  5
+115
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+72.87177116518497
+ 20
+29.71181129034394
+ 30
+0.0
+  0
+POINT
+  5
+116
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+74.16036743607238
+ 20
+29.883624126462266
+ 30
+0.0
+  0
+POINT
+  5
+117
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+75.4489637069598
+ 20
+30.055436962580586
+ 30
+0.0
+  0
+POINT
+  5
+118
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+76.73755997784723
+ 20
+30.22724979869891
+ 30
+0.0
+  0
+POINT
+  5
+119
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+78.02615624873465
+ 20
+30.399062634817234
+ 30
+0.0
+  0
+POINT
+  5
+11A
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+79.31475251962208
+ 20
+30.570875470935555
+ 30
+0.0
+  0
+POINT
+  5
+11B
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+80.6033487905095
+ 20
+30.74268830705388
+ 30
+0.0
+  0
+POINT
+  5
+11C
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+81.89194506139692
+ 20
+30.914501143172203
+ 30
+0.0
+  0
+POINT
+  5
+11D
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+83.18054133228435
+ 20
+31.08631397929053
+ 30
+0.0
+  0
+POINT
+  5
+11E
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+84.46913760317176
+ 20
+31.25812681540885
+ 30
+0.0
+  0
+POINT
+  5
+11F
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+85.75773387405918
+ 20
+31.429939651527175
+ 30
+0.0
+  0
+POINT
+  5
+120
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+87.04633014494661
+ 20
+31.601752487645495
+ 30
+0.0
+  0
+POINT
+  5
+121
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+88.33492641583403
+ 20
+31.773565323763815
+ 30
+0.0
+  0
+POINT
+  5
+122
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+1.222514410841916
+ 20
+21.167426786459643
+ 30
+0.0
+  0
+POINT
+  5
+123
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+2.511110681729341
+ 20
+21.339239622577967
+ 30
+0.0
+  0
+POINT
+  5
+124
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+3.7997069526167664
+ 20
+21.511052458696287
+ 30
+0.0
+  0
+POINT
+  5
+125
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+5.088303223504191
+ 20
+21.68286529481461
+ 30
+0.0
+  0
+POINT
+  5
+126
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+6.376899494391616
+ 20
+21.854678130932935
+ 30
+0.0
+  0
+POINT
+  5
+127
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+7.665495765279042
+ 20
+22.02649096705126
+ 30
+0.0
+  0
+POINT
+  5
+128
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+8.954092036166466
+ 20
+22.198303803169583
+ 30
+0.0
+  0
+POINT
+  5
+129
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+10.242688307053891
+ 20
+22.370116639287907
+ 30
+0.0
+  0
+POINT
+  5
+12A
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+11.531284577941317
+ 20
+22.541929475406228
+ 30
+0.0
+  0
+POINT
+  5
+12B
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+12.819880848828742
+ 20
+22.713742311524552
+ 30
+0.0
+  0
+POINT
+  5
+12C
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+14.10847711971617
+ 20
+22.885555147642876
+ 30
+0.0
+  0
+POINT
+  5
+12D
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+15.397073390603596
+ 20
+23.0573679837612
+ 30
+0.0
+  0
+POINT
+  5
+12E
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+16.68566966149102
+ 20
+23.229180819879524
+ 30
+0.0
+  0
+POINT
+  5
+12F
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+17.974265932378444
+ 20
+23.400993655997848
+ 30
+0.0
+  0
+POINT
+  5
+130
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+19.26286220326587
+ 20
+23.572806492116168
+ 30
+0.0
+  0
+POINT
+  5
+131
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+20.551458474153296
+ 20
+23.744619328234492
+ 30
+0.0
+  0
+POINT
+  5
+132
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+21.840054745040725
+ 20
+23.916432164352816
+ 30
+0.0
+  0
+POINT
+  5
+133
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+23.128651015928146
+ 20
+24.088245000471137
+ 30
+0.0
+  0
+POINT
+  5
+134
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+24.417247286815574
+ 20
+24.260057836589464
+ 30
+0.0
+  0
+POINT
+  5
+135
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+25.705843557703
+ 20
+24.431870672707788
+ 30
+0.0
+  0
+POINT
+  5
+136
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+26.994439828590423
+ 20
+24.603683508826112
+ 30
+0.0
+  0
+POINT
+  5
+137
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+28.28303609947785
+ 20
+24.775496344944433
+ 30
+0.0
+  0
+POINT
+  5
+138
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+32.14882491214013
+ 20
+25.290934853299404
+ 30
+0.0
+  0
+POINT
+  5
+139
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+33.43742118302755
+ 20
+25.46274768941773
+ 30
+0.0
+  0
+POINT
+  5
+13A
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+34.72601745391497
+ 20
+25.63456052553605
+ 30
+0.0
+  0
+POINT
+  5
+13B
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+36.01461372480239
+ 20
+25.80637336165437
+ 30
+0.0
+  0
+POINT
+  5
+13C
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+37.30320999568981
+ 20
+25.978186197772693
+ 30
+0.0
+  0
+POINT
+  5
+13D
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+38.59180626657724
+ 20
+26.149999033891017
+ 30
+0.0
+  0
+POINT
+  5
+13E
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+39.880402537464654
+ 20
+26.321811870009338
+ 30
+0.0
+  0
+POINT
+  5
+13F
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+41.168998808352086
+ 20
+26.493624706127665
+ 30
+0.0
+  0
+POINT
+  5
+140
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+42.4575950792395
+ 20
+26.665437542245982
+ 30
+0.0
+  0
+POINT
+  5
+141
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+43.74619135012693
+ 20
+26.837250378364306
+ 30
+0.0
+  0
+POINT
+  5
+142
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+45.03478762101435
+ 20
+27.009063214482634
+ 30
+0.0
+  0
+POINT
+  5
+143
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+46.32338389190177
+ 20
+27.180876050600954
+ 30
+0.0
+  0
+POINT
+  5
+144
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+47.61198016278919
+ 20
+27.352688886719278
+ 30
+0.0
+  0
+POINT
+  5
+145
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+48.90057643367662
+ 20
+27.524501722837602
+ 30
+0.0
+  0
+POINT
+  5
+146
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+50.18917270456404
+ 20
+27.696314558955923
+ 30
+0.0
+  0
+POINT
+  5
+147
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+51.47776897545146
+ 20
+27.86812739507425
+ 30
+0.0
+  0
+POINT
+  5
+148
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+52.76636524633888
+ 20
+28.03994023119257
+ 30
+0.0
+  0
+POINT
+  5
+149
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+54.05496151722631
+ 20
+28.211753067310894
+ 30
+0.0
+  0
+POINT
+  5
+14A
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+55.34355778811373
+ 20
+28.38356590342922
+ 30
+0.0
+  0
+POINT
+  5
+14B
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+56.632154059001145
+ 20
+28.555378739547535
+ 30
+0.0
+  0
+POINT
+  5
+14C
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+57.92075032988857
+ 20
+28.72719157566586
+ 30
+0.0
+  0
+POINT
+  5
+14D
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+59.209346600776
+ 20
+28.899004411784183
+ 30
+0.0
+  0
+POINT
+  5
+14E
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+60.49794287166342
+ 20
+29.070817247902504
+ 30
+0.0
+  0
+POINT
+  5
+14F
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+61.786539142550836
+ 20
+29.242630084020828
+ 30
+0.0
+  0
+POINT
+  5
+150
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+63.07513541343826
+ 20
+29.414442920139155
+ 30
+0.0
+  0
+POINT
+  5
+151
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+64.36373168432569
+ 20
+29.586255756257476
+ 30
+0.0
+  0
+POINT
+  5
+152
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+65.6523279552131
+ 20
+29.7580685923758
+ 30
+0.0
+  0
+POINT
+  5
+153
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+66.94092422610053
+ 20
+29.929881428494124
+ 30
+0.0
+  0
+POINT
+  5
+154
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+68.22952049698794
+ 20
+30.101694264612444
+ 30
+0.0
+  0
+POINT
+  5
+155
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+69.51811676787537
+ 20
+30.27350710073077
+ 30
+0.0
+  0
+POINT
+  5
+156
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+70.8067130387628
+ 20
+30.445319936849092
+ 30
+0.0
+  0
+POINT
+  5
+157
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+72.09530930965022
+ 20
+30.617132772967413
+ 30
+0.0
+  0
+POINT
+  5
+158
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+73.38390558053764
+ 20
+30.788945609085737
+ 30
+0.0
+  0
+POINT
+  5
+159
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+74.67250185142505
+ 20
+30.960758445204057
+ 30
+0.0
+  0
+POINT
+  5
+15A
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+75.96109812231248
+ 20
+31.132571281322384
+ 30
+0.0
+  0
+POINT
+  5
+15B
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+77.2496943931999
+ 20
+31.30438411744071
+ 30
+0.0
+  0
+POINT
+  5
+15C
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+78.53829066408733
+ 20
+31.476196953559032
+ 30
+0.0
+  0
+POINT
+  5
+15D
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+79.82688693497475
+ 20
+31.648009789677356
+ 30
+0.0
+  0
+POINT
+  5
+15E
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+81.11548320586216
+ 20
+31.819822625795677
+ 30
+0.0
+  0
+POINT
+  5
+15F
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+82.4040794767496
+ 20
+31.991635461914
+ 30
+0.0
+  0
+POINT
+  5
+160
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+83.69267574763703
+ 20
+32.16344829803232
+ 30
+0.0
+  0
+POINT
+  5
+161
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+84.98127201852444
+ 20
+32.33526113415064
+ 30
+0.0
+  0
+POINT
+  5
+162
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+86.26986828941186
+ 20
+32.50707397026897
+ 30
+0.0
+  0
+POINT
+  5
+163
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+87.55846456029929
+ 20
+32.67888680638729
+ 30
+0.0
+  0
+POINT
+  5
+164
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+88.84706083118671
+ 20
+32.85069964250561
+ 30
+0.0
+  0
+POINT
+  5
+165
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+0.7103799954892198
+ 20
+32.99029246771784
+ 30
+0.0
+  0
+POINT
+  5
+166
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+1.9989762663766486
+ 20
+33.16210530383617
+ 30
+0.0
+  0
+POINT
+  5
+167
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+3.28757253726407
+ 20
+33.33391813995449
+ 30
+0.0
+  0
+POINT
+  5
+168
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+4.576168808151499
+ 20
+33.50573097607281
+ 30
+0.0
+  0
+POINT
+  5
+169
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+5.86476507903892
+ 20
+33.67754381219114
+ 30
+0.0
+  0
+POINT
+  5
+16A
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+7.153361349926344
+ 20
+33.84935664830946
+ 30
+0.0
+  0
+POINT
+  5
+16B
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+8.441957620813772
+ 20
+34.02116948442779
+ 30
+0.0
+  0
+POINT
+  5
+16C
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+9.730553891701195
+ 20
+34.19298232054611
+ 30
+0.0
+  0
+POINT
+  5
+16D
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+11.019150162588625
+ 20
+34.364795156664435
+ 30
+0.0
+  0
+POINT
+  5
+16E
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+12.307746433476046
+ 20
+34.536607992782756
+ 30
+0.0
+  0
+POINT
+  5
+16F
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+13.596342704363478
+ 20
+34.708420828901076
+ 30
+0.0
+  0
+POINT
+  5
+170
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+14.884938975250899
+ 20
+34.880233665019404
+ 30
+0.0
+  0
+POINT
+  5
+171
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+16.173535246138325
+ 20
+35.052046501137724
+ 30
+0.0
+  0
+POINT
+  5
+172
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+17.462131517025753
+ 20
+35.22385933725605
+ 30
+0.0
+  0
+POINT
+  5
+173
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+18.750727787913174
+ 20
+35.39567217337437
+ 30
+0.0
+  0
+POINT
+  5
+174
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+20.039324058800606
+ 20
+35.56748500949269
+ 30
+0.0
+  0
+POINT
+  5
+175
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+21.327920329688027
+ 20
+35.73929784561102
+ 30
+0.0
+  0
+POINT
+  5
+176
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+22.61651660057546
+ 20
+35.91111068172934
+ 30
+0.0
+  0
+POINT
+  5
+177
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+23.905112871462883
+ 20
+36.08292351784767
+ 30
+0.0
+  0
+POINT
+  5
+178
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+25.193709142350304
+ 20
+36.25473635396599
+ 30
+0.0
+  0
+POINT
+  5
+179
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+26.482305413237732
+ 20
+36.426549190084316
+ 30
+0.0
+  0
+POINT
+  5
+17A
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+27.770901684125157
+ 20
+36.598362026202636
+ 30
+0.0
+  0
+POINT
+  5
+17B
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+29.059497955012585
+ 20
+36.77017486232096
+ 30
+0.0
+  0
+POINT
+  5
+17C
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+30.34809422590001
+ 20
+36.941987698439284
+ 30
+0.0
+  0
+POINT
+  5
+17D
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+31.636690496787434
+ 20
+37.113800534557605
+ 30
+0.0
+  0
+POINT
+  5
+17E
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+32.92528676767486
+ 20
+37.28561337067593
+ 30
+0.0
+  0
+POINT
+  5
+17F
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+34.21388303856228
+ 20
+37.45742620679425
+ 30
+0.0
+  0
+POINT
+  5
+180
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+35.50247930944971
+ 20
+37.62923904291257
+ 30
+0.0
+  0
+POINT
+  5
+181
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+36.79107558033712
+ 20
+37.8010518790309
+ 30
+0.0
+  0
+POINT
+  5
+182
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+38.079671851224546
+ 20
+37.97286471514922
+ 30
+0.0
+  0
+POINT
+  5
+183
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+39.36826812211198
+ 20
+38.14467755126754
+ 30
+0.0
+  0
+POINT
+  5
+184
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+40.656864392999395
+ 20
+38.31649038738587
+ 30
+0.0
+  0
+POINT
+  5
+185
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+41.94546066388681
+ 20
+38.48830322350419
+ 30
+0.0
+  0
+POINT
+  5
+186
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+43.234056934774244
+ 20
+38.66011605962252
+ 30
+0.0
+  0
+POINT
+  5
+187
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+44.52265320566166
+ 20
+38.83192889574084
+ 30
+0.0
+  0
+POINT
+  5
+188
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+45.81124947654908
+ 20
+39.00374173185916
+ 30
+0.0
+  0
+POINT
+  5
+189
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+47.09984574743652
+ 20
+39.175554567977485
+ 30
+0.0
+  0
+POINT
+  5
+18A
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+48.38844201832393
+ 20
+39.347367404095806
+ 30
+0.0
+  0
+POINT
+  5
+18B
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+49.677038289211346
+ 20
+39.519180240214126
+ 30
+0.0
+  0
+POINT
+  5
+18C
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+50.96563456009877
+ 20
+39.690993076332454
+ 30
+0.0
+  0
+POINT
+  5
+18D
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+52.25423083098619
+ 20
+39.862805912450774
+ 30
+0.0
+  0
+POINT
+  5
+18E
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+53.54282710187363
+ 20
+40.034618748569095
+ 30
+0.0
+  0
+POINT
+  5
+18F
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+54.83142337276104
+ 20
+40.20643158468742
+ 30
+0.0
+  0
+POINT
+  5
+190
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+56.120019643648455
+ 20
+40.37824442080574
+ 30
+0.0
+  0
+POINT
+  5
+191
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+57.40861591453588
+ 20
+40.55005725692406
+ 30
+0.0
+  0
+POINT
+  5
+192
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+58.69721218542332
+ 20
+40.72187009304239
+ 30
+0.0
+  0
+POINT
+  5
+193
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+59.98580845631073
+ 20
+40.89368292916071
+ 30
+0.0
+  0
+POINT
+  5
+194
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+63.851597268972995
+ 20
+41.40912143751568
+ 30
+0.0
+  0
+POINT
+  5
+195
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+65.14019353986043
+ 20
+41.58093427363401
+ 30
+0.0
+  0
+POINT
+  5
+196
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+66.42878981074786
+ 20
+41.75274710975233
+ 30
+0.0
+  0
+POINT
+  5
+197
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+67.71738608163527
+ 20
+41.92455994587065
+ 30
+0.0
+  0
+POINT
+  5
+198
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+69.0059823525227
+ 20
+42.096372781988975
+ 30
+0.0
+  0
+POINT
+  5
+199
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+70.29457862341012
+ 20
+42.268185618107296
+ 30
+0.0
+  0
+POINT
+  5
+19A
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+72.87177116518497
+ 20
+42.611811290343944
+ 30
+0.0
+  0
+POINT
+  5
+19B
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+75.4489637069598
+ 20
+42.955436962580585
+ 30
+0.0
+  0
+POINT
+  5
+19C
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+76.73755997784723
+ 20
+43.12724979869891
+ 30
+0.0
+  0
+POINT
+  5
+19D
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+81.89194506139692
+ 20
+43.8145011431722
+ 30
+0.0
+  0
+POINT
+  5
+19E
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+83.18054133228435
+ 20
+43.98631397929053
+ 30
+0.0
+  0
+POINT
+  5
+19F
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+84.46913760317176
+ 20
+44.15812681540885
+ 30
+0.0
+  0
+POINT
+  5
+1A0
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+85.75773387405918
+ 20
+44.32993965152718
+ 30
+0.0
+  0
+POINT
+  5
+1A1
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+87.04633014494661
+ 20
+44.5017524876455
+ 30
+0.0
+  0
+POINT
+  5
+1A2
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+88.33492641583403
+ 20
+44.67356532376382
+ 30
+0.0
+  0
+POINT
+  5
+1A3
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+1.2225144108419141
+ 20
+34.067426786459635
+ 30
+0.0
+  0
+POINT
+  5
+1A4
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+2.5111106817293427
+ 20
+34.23923962257796
+ 30
+0.0
+  0
+POINT
+  5
+1A5
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+3.799706952616768
+ 20
+34.41105245869628
+ 30
+0.0
+  0
+POINT
+  5
+1A6
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+5.088303223504189
+ 20
+34.58286529481461
+ 30
+0.0
+  0
+POINT
+  5
+1A7
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+6.376899494391618
+ 20
+34.75467813093293
+ 30
+0.0
+  0
+POINT
+  5
+1A8
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+7.66549576527904
+ 20
+34.92649096705125
+ 30
+0.0
+  0
+POINT
+  5
+1A9
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+8.954092036166468
+ 20
+35.09830380316958
+ 30
+0.0
+  0
+POINT
+  5
+1AA
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+10.24268830705389
+ 20
+35.2701166392879
+ 30
+0.0
+  0
+POINT
+  5
+1AB
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+11.531284577941316
+ 20
+35.441929475406226
+ 30
+0.0
+  0
+POINT
+  5
+1AC
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+12.819880848828744
+ 20
+35.61374231152455
+ 30
+0.0
+  0
+POINT
+  5
+1AD
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+14.108477119716168
+ 20
+35.785555147642874
+ 30
+0.0
+  0
+POINT
+  5
+1AE
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+15.397073390603596
+ 20
+35.957367983761195
+ 30
+0.0
+  0
+POINT
+  5
+1AF
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+16.68566966149102
+ 20
+36.129180819879515
+ 30
+0.0
+  0
+POINT
+  5
+1B0
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+17.974265932378447
+ 20
+36.30099365599784
+ 30
+0.0
+  0
+POINT
+  5
+1B1
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+19.262862203265872
+ 20
+36.47280649211616
+ 30
+0.0
+  0
+POINT
+  5
+1B2
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+20.551458474153296
+ 20
+36.64461932823449
+ 30
+0.0
+  0
+POINT
+  5
+1B3
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+21.840054745040725
+ 20
+36.81643216435281
+ 30
+0.0
+  0
+POINT
+  5
+1B4
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+23.128651015928146
+ 20
+36.98824500047113
+ 30
+0.0
+  0
+POINT
+  5
+1B5
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+24.417247286815577
+ 20
+37.16005783658946
+ 30
+0.0
+  0
+POINT
+  5
+1B6
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+25.705843557703002
+ 20
+37.33187067270778
+ 30
+0.0
+  0
+POINT
+  5
+1B7
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+26.994439828590423
+ 20
+37.50368350882611
+ 30
+0.0
+  0
+POINT
+  5
+1B8
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+28.28303609947785
+ 20
+37.67549634494443
+ 30
+0.0
+  0
+POINT
+  5
+1B9
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+29.571632370365275
+ 20
+37.847309181062755
+ 30
+0.0
+  0
+POINT
+  5
+1BA
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+30.860228641252704
+ 20
+38.019122017181076
+ 30
+0.0
+  0
+POINT
+  5
+1BB
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+32.14882491214013
+ 20
+38.190934853299396
+ 30
+0.0
+  0
+POINT
+  5
+1BC
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+33.43742118302755
+ 20
+38.36274768941772
+ 30
+0.0
+  0
+POINT
+  5
+1BD
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+34.72601745391497
+ 20
+38.534560525536044
+ 30
+0.0
+  0
+POINT
+  5
+1BE
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+36.01461372480239
+ 20
+38.706373361654364
+ 30
+0.0
+  0
+POINT
+  5
+1BF
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+37.30320999568981
+ 20
+38.87818619777269
+ 30
+0.0
+  0
+POINT
+  5
+1C0
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+38.59180626657724
+ 20
+39.04999903389101
+ 30
+0.0
+  0
+POINT
+  5
+1C1
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+39.880402537464654
+ 20
+39.22181187000934
+ 30
+0.0
+  0
+POINT
+  5
+1C2
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+41.168998808352086
+ 20
+39.39362470612766
+ 30
+0.0
+  0
+POINT
+  5
+1C3
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+42.457595079239496
+ 20
+39.56543754224598
+ 30
+0.0
+  0
+POINT
+  5
+1C4
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+43.74619135012693
+ 20
+39.73725037836431
+ 30
+0.0
+  0
+POINT
+  5
+1C5
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+45.03478762101435
+ 20
+39.90906321448263
+ 30
+0.0
+  0
+POINT
+  5
+1C6
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+46.32338389190177
+ 20
+40.08087605060095
+ 30
+0.0
+  0
+POINT
+  5
+1C7
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+47.61198016278918
+ 20
+40.25268888671928
+ 30
+0.0
+  0
+POINT
+  5
+1C8
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+48.90057643367662
+ 20
+40.4245017228376
+ 30
+0.0
+  0
+POINT
+  5
+1C9
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+50.18917270456404
+ 20
+40.59631455895592
+ 30
+0.0
+  0
+POINT
+  5
+1CA
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+51.47776897545146
+ 20
+40.768127395074245
+ 30
+0.0
+  0
+POINT
+  5
+1CB
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+52.76636524633888
+ 20
+40.939940231192566
+ 30
+0.0
+  0
+POINT
+  5
+1CC
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+54.0549615172263
+ 20
+41.11175306731089
+ 30
+0.0
+  0
+POINT
+  5
+1CD
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+55.34355778811373
+ 20
+41.28356590342921
+ 30
+0.0
+  0
+POINT
+  5
+1CE
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+56.63215405900114
+ 20
+41.455378739547534
+ 30
+0.0
+  0
+POINT
+  5
+1CF
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+57.92075032988857
+ 20
+41.627191575665854
+ 30
+0.0
+  0
+POINT
+  5
+1D0
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+59.209346600776
+ 20
+41.79900441178418
+ 30
+0.0
+  0
+POINT
+  5
+1D1
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+64.36373168432569
+ 20
+42.48625575625747
+ 30
+0.0
+  0
+POINT
+  5
+1D2
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+65.6523279552131
+ 20
+42.6580685923758
+ 30
+0.0
+  0
+POINT
+  5
+1D3
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+66.94092422610053
+ 20
+42.82988142849412
+ 30
+0.0
+  0
+POINT
+  5
+1D4
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+68.22952049698794
+ 20
+43.001694264612446
+ 30
+0.0
+  0
+POINT
+  5
+1D5
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+69.51811676787537
+ 20
+43.17350710073077
+ 30
+0.0
+  0
+POINT
+  5
+1D6
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+75.96109812231248
+ 20
+44.03257128132238
+ 30
+0.0
+  0
+POINT
+  5
+1D7
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+77.2496943931999
+ 20
+44.2043841174407
+ 30
+0.0
+  0
+POINT
+  5
+1D8
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+81.11548320586216
+ 20
+44.71982262579567
+ 30
+0.0
+  0
+POINT
+  5
+1D9
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+82.4040794767496
+ 20
+44.891635461914
+ 30
+0.0
+  0
+POINT
+  5
+1DA
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+86.26986828941186
+ 20
+45.40707397026896
+ 30
+0.0
+  0
+POINT
+  5
+1DB
+330
+17
+100
+AcDbEntity
+  8
+СПИРЕЯ ВАНГУТТА
+100
+AcDbPoint
+ 10
+88.84706083118671
+ 20
+45.75069964250561
+ 30
+0.0
+  0
+POINT
+  5
+1DD
+330
+17
+100
+AcDbEntity
+  8
+ЛИПА МЕЛКОЛИСТНАЯ
+100
+AcDbPoint
+ 10
+26.0
+ 20
+2.5
+ 30
+0.0
+  0
+POINT
+  5
+1DE
+330
+17
+100
+AcDbEntity
+  8
+ЛИПА МЕЛКОЛИСТНАЯ
+100
+AcDbPoint
+ 10
+26.0
+ 20
+57.5
+ 30
+0.0
+  0
+POINT
+  5
+1DF
+330
+17
+100
+AcDbEntity
+  8
+ЛИПА МЕЛКОЛИСТНАЯ
+100
+AcDbPoint
+ 10
+33.0
+ 20
+2.5
+ 30
+0.0
+  0
+POINT
+  5
+1E0
+330
+17
+100
+AcDbEntity
+  8
+ЛИПА МЕЛКОЛИСТНАЯ
+100
+AcDbPoint
+ 10
+40.0
+ 20
+2.5
+ 30
+0.0
+  0
+POINT
+  5
+1E1
+330
+17
+100
+AcDbEntity
+  8
+ЛИПА МЕЛКОЛИСТНАЯ
+100
+AcDbPoint
+ 10
+54.0
+ 20
+57.5
+ 30
+0.0
+  0
+POINT
+  5
+1E2
+330
+17
+100
+AcDbEntity
+  8
+ЛИПА МЕЛКОЛИСТНАЯ
+100
+AcDbPoint
+ 10
+61.0
+ 20
+2.5
+ 30
+0.0
+  0
+POINT
+  5
+1E3
+330
+17
+100
+AcDbEntity
+  8
+ЛИПА МЕЛКОЛИСТНАЯ
+100
+AcDbPoint
+ 10
+68.0
+ 20
+2.5
+ 30
+0.0
+  0
+POINT
+  5
+1E4
+330
+17
+100
+AcDbEntity
+  8
+ЛИПА МЕЛКОЛИСТНАЯ
+100
+AcDbPoint
+ 10
+68.0
+ 20
+57.5
+ 30
+0.0
+  0
+POINT
+  5
+1E5
+330
+17
+100
+AcDbEntity
+  8
+ЛИПА МЕЛКОЛИСТНАЯ
+100
+AcDbPoint
+ 10
+75.0
+ 20
+2.5
+ 30
+0.0
+  0
+POINT
+  5
+1E6
+330
+17
+100
+AcDbEntity
+  8
+ЛИПА МЕЛКОЛИСТНАЯ
+100
+AcDbPoint
+ 10
+82.0
+ 20
+2.5
+ 30
+0.0
+  0
+POINT
+  5
+1E7
+330
+17
+100
+AcDbEntity
+  8
+ЛИПА МЕЛКОЛИСТНАЯ
+100
+AcDbPoint
+ 10
+89.0
+ 20
+2.5
+ 30
+0.0
+  0
+POINT
+  5
+1E8
+330
+17
+100
+AcDbEntity
+  8
+ЛИПА МЕЛКОЛИСТНАЯ
+100
+AcDbPoint
+ 10
+89.0
+ 20
+57.5
+ 30
+0.0
+  0
+POINT
+  5
+1EA
+330
+17
+100
+AcDbEntity
+  8
+LAMPS
+100
+AcDbPoint
+ 10
+7.43420925511976
+ 20
+32.49122790068264
+ 30
+0.0
+  0
+POINT
+  5
+1EB
+330
+17
+100
+AcDbEntity
+  8
+LAMPS
+100
+AcDbPoint
+ 10
+22.30262776535928
+ 20
+34.47368370204791
+ 30
+0.0
+  0
+POINT
+  5
+1EC
+330
+17
+100
+AcDbEntity
+  8
+LAMPS
+100
+AcDbPoint
+ 10
+37.171046275598805
+ 20
+36.456139503413176
+ 30
+0.0
+  0
+POINT
+  5
+1ED
+330
+17
+100
+AcDbEntity
+  8
+LAMPS
+100
+AcDbPoint
+ 10
+52.03946478583832
+ 20
+38.438595304778445
+ 30
+0.0
+  0
+POINT
+  5
+1EE
+330
+17
+100
+AcDbEntity
+  8
+LAMPS
+100
+AcDbPoint
+ 10
+66.90788329607784
+ 20
+40.421051106143715
+ 30
+0.0
+  0
+INSERT
+  5
+1F4
+330
+17
+100
+AcDbEntity
+  8
+BENCH
+100
+AcDbBlockReference
+  2
+BENCH_BLOCK
+ 10
+14.86841851023952
+ 20
+33.48245580136527
+ 30
+0.0
+ 50
+187.59464336859125
+  0
+POINT
+  5
+1F7
+330
+17
+100
+AcDbEntity
+  8
+URN
+100
+AcDbPoint
+ 10
+16.157014781126946
+ 20
+33.65426863748359
+ 30
+0.0
+  0
+INSERT
+  5
+1F8
+330
+17
+100
+AcDbEntity
+  8
+BENCH
+100
+AcDbBlockReference
+  2
+BENCH_BLOCK
+ 10
+29.73683702047904
+ 20
+35.46491160273054
+ 30
+0.0
+ 50
+187.59464336859128
+  0
+POINT
+  5
+1FA
+330
+17
+100
+AcDbEntity
+  8
+URN
+100
+AcDbPoint
+ 10
+31.025433291366465
+ 20
+35.63672443884886
+ 30
+0.0
+  0
+INSERT
+  5
+1FB
+330
+17
+100
+AcDbEntity
+  8
+BENCH
+100
+AcDbBlockReference
+  2
+BENCH_BLOCK
+ 10
+44.60525553071856
+ 20
+37.44736740409581
+ 30
+0.0
+ 50
+187.59464336859128
+  0
+POINT
+  5
+1FD
+330
+17
+100
+AcDbEntity
+  8
+URN
+100
+AcDbPoint
+ 10
+45.89385180160598
+ 20
+37.61918024021413
+ 30
+0.0
+  0
+INSERT
+  5
+1FE
+330
+17
+100
+AcDbEntity
+  8
+BENCH
+100
+AcDbBlockReference
+  2
+BENCH_BLOCK
+ 10
+59.47367404095808
+ 20
+39.429823205461076
+ 30
+0.0
+ 50
+187.5946433685916
+  0
+INSERT
+  5
+200
+330
+17
+100
+AcDbEntity
+  8
+BENCH
+100
+AcDbBlockReference
+  2
+BENCH_BLOCK
+ 10
+74.34209255119761
+ 20
+41.412279006826346
+ 30
+0.0
+ 50
+187.59464336859128
+  0
+INSERT
+  5
+202
+330
+17
+100
+AcDbEntity
+  8
+BENCH
+100
+AcDbBlockReference
+  2
+BENCH_BLOCK
+ 10
+89.21051106143712
+ 20
+43.394734808191615
+ 30
+0.0
+ 50
+187.5946433685916
+  0
+ENDSEC
+  0
+SECTION
+  2
+OBJECTS
+  0
+DICTIONARY
+  5
+A
+330
+0
+100
+AcDbDictionary
+281
+1
+  3
+ACAD_COLOR
+350
+B
+  3
+ACAD_GROUP
+350
+C
+  3
+ACAD_LAYOUT
+350
+D
+  3
+ACAD_MATERIAL
+350
+E
+  3
+ACAD_MLEADERSTYLE
+350
+F
+  3
+ACAD_MLINESTYLE
+350
+10
+  3
+ACAD_PLOTSETTINGS
+350
+11
+  3
+ACAD_PLOTSTYLENAME
+350
+12
+  3
+ACAD_SCALELIST
+350
+14
+  3
+ACAD_TABLESTYLE
+350
+15
+  3
+ACAD_VISUALSTYLE
+350
+16
+  3
+EZDXF_META
+350
+2D
+  0
+DICTIONARY
+  5
+B
+330
+A
+100
+AcDbDictionary
+281
+1
+  0
+DICTIONARY
+  5
+C
+330
+A
+100
+AcDbDictionary
+281
+1
+  0
+DICTIONARY
+  5
+D
+330
+A
+100
+AcDbDictionary
+281
+1
+  3
+Model
+350
+1A
+  3
+Layout1
+350
+1E
+  0
+DICTIONARY
+  5
+E
+330
+A
+100
+AcDbDictionary
+281
+1
+  3
+ByBlock
+350
+1F
+  3
+ByLayer
+350
+20
+  3
+Global
+350
+21
+  0
+DICTIONARY
+  5
+F
+330
+A
+100
+AcDbDictionary
+281
+1
+  3
+Standard
+350
+2C
+  0
+DICTIONARY
+  5
+10
+330
+A
+100
+AcDbDictionary
+281
+1
+  3
+Standard
+350
+22
+  0
+DICTIONARY
+  5
+11
+330
+A
+100
+AcDbDictionary
+281
+1
+  0
+ACDBDICTIONARYWDFLT
+  5
+12
+330
+A
+100
+AcDbDictionary
+281
+1
+  3
+Normal
+350
+13
+100
+AcDbDictionaryWithDefault
+340
+13
+  0
+ACDBPLACEHOLDER
+  5
+13
+330
+12
+  0
+DICTIONARY
+  5
+14
+330
+A
+100
+AcDbDictionary
+281
+1
+  0
+DICTIONARY
+  5
+15
+330
+A
+100
+AcDbDictionary
+281
+1
+  0
+DICTIONARY
+  5
+16
+330
+A
+100
+AcDbDictionary
+281
+1
+  0
+LAYOUT
+  5
+1A
+330
+D
+100
+AcDbPlotSettings
+  1
+
+  4
+A3
+  6
+
+ 40
+7.5
+ 41
+20.0
+ 42
+7.5
+ 43
+20.0
+ 44
+420.0
+ 45
+297.0
+ 46
+0.0
+ 47
+0.0
+ 48
+0.0
+ 49
+0.0
+140
+0.0
+141
+0.0
+142
+1.0
+143
+1.0
+ 70
+1024
+ 72
+1
+ 73
+0
+ 74
+5
+  7
+
+ 75
+16
+ 76
+0
+ 77
+2
+ 78
+300
+147
+1.0
+148
+0.0
+149
+0.0
+100
+AcDbLayout
+  1
+Model
+ 70
+1
+ 71
+0
+ 10
+0.0
+ 20
+0.0
+ 11
+420.0
+ 21
+297.0
+ 12
+0.0
+ 22
+0.0
+ 32
+0.0
+ 14
+1e+20
+ 24
+1e+20
+ 34
+1e+20
+ 15
+-1e+20
+ 25
+-1e+20
+ 35
+-1e+20
+146
+0.0
+ 13
+0.0
+ 23
+0.0
+ 33
+0.0
+ 16
+1.0
+ 26
+0.0
+ 36
+0.0
+ 17
+0.0
+ 27
+1.0
+ 37
+0.0
+ 76
+1
+330
+17
+  0
+LAYOUT
+  5
+1E
+330
+D
+100
+AcDbPlotSettings
+  1
+
+  4
+A3
+  6
+
+ 40
+7.5
+ 41
+20.0
+ 42
+7.5
+ 43
+20.0
+ 44
+420.0
+ 45
+297.0
+ 46
+0.0
+ 47
+0.0
+ 48
+0.0
+ 49
+0.0
+140
+0.0
+141
+0.0
+142
+1.0
+143
+1.0
+ 70
+0
+ 72
+1
+ 73
+0
+ 74
+5
+  7
+
+ 75
+16
+ 76
+0
+ 77
+2
+ 78
+300
+147
+1.0
+148
+0.0
+149
+0.0
+100
+AcDbLayout
+  1
+Layout1
+ 70
+1
+ 71
+1
+ 10
+0.0
+ 20
+0.0
+ 11
+420.0
+ 21
+297.0
+ 12
+0.0
+ 22
+0.0
+ 32
+0.0
+ 14
+1e+20
+ 24
+1e+20
+ 34
+1e+20
+ 15
+-1e+20
+ 25
+-1e+20
+ 35
+-1e+20
+146
+0.0
+ 13
+0.0
+ 23
+0.0
+ 33
+0.0
+ 16
+1.0
+ 26
+0.0
+ 36
+0.0
+ 17
+0.0
+ 27
+1.0
+ 37
+0.0
+ 76
+1
+330
+1B
+  0
+MATERIAL
+  5
+1F
+102
+{ACAD_REACTORS
+330
+E
+102
+}
+330
+E
+100
+AcDbMaterial
+  1
+ByBlock
+  2
+
+ 70
+0
+ 40
+1.0
+ 71
+1
+ 41
+1.0
+ 91
+-1023410177
+ 42
+1.0
+ 72
+1
+  3
+
+ 73
+1
+ 74
+1
+ 75
+1
+ 44
+0.5
+ 73
+0
+ 45
+1.0
+ 46
+1.0
+ 77
+1
+  4
+
+ 78
+1
+ 79
+1
+170
+1
+ 48
+1.0
+171
+1
+  6
+
+172
+1
+173
+1
+174
+1
+140
+1.0
+141
+1.0
+175
+1
+  7
+
+176
+1
+177
+1
+178
+1
+143
+1.0
+179
+1
+  8
+
+270
+1
+271
+1
+272
+1
+145
+1.0
+146
+1.0
+273
+1
+  9
+
+274
+1
+275
+1
+276
+1
+ 42
+1.0
+ 72
+1
+  3
+
+ 73
+1
+ 74
+1
+ 75
+1
+ 94
+63
+  0
+MATERIAL
+  5
+20
+102
+{ACAD_REACTORS
+330
+E
+102
+}
+330
+E
+100
+AcDbMaterial
+  1
+ByLayer
+  2
+
+ 70
+0
+ 40
+1.0
+ 71
+1
+ 41
+1.0
+ 91
+-1023410177
+ 42
+1.0
+ 72
+1
+  3
+
+ 73
+1
+ 74
+1
+ 75
+1
+ 44
+0.5
+ 73
+0
+ 45
+1.0
+ 46
+1.0
+ 77
+1
+  4
+
+ 78
+1
+ 79
+1
+170
+1
+ 48
+1.0
+171
+1
+  6
+
+172
+1
+173
+1
+174
+1
+140
+1.0
+141
+1.0
+175
+1
+  7
+
+176
+1
+177
+1
+178
+1
+143
+1.0
+179
+1
+  8
+
+270
+1
+271
+1
+272
+1
+145
+1.0
+146
+1.0
+273
+1
+  9
+
+274
+1
+275
+1
+276
+1
+ 42
+1.0
+ 72
+1
+  3
+
+ 73
+1
+ 74
+1
+ 75
+1
+ 94
+63
+  0
+MATERIAL
+  5
+21
+102
+{ACAD_REACTORS
+330
+E
+102
+}
+330
+E
+100
+AcDbMaterial
+  1
+Global
+  2
+
+ 70
+0
+ 40
+1.0
+ 71
+1
+ 41
+1.0
+ 91
+-1023410177
+ 42
+1.0
+ 72
+1
+  3
+
+ 73
+1
+ 74
+1
+ 75
+1
+ 44
+0.5
+ 73
+0
+ 45
+1.0
+ 46
+1.0
+ 77
+1
+  4
+
+ 78
+1
+ 79
+1
+170
+1
+ 48
+1.0
+171
+1
+  6
+
+172
+1
+173
+1
+174
+1
+140
+1.0
+141
+1.0
+175
+1
+  7
+
+176
+1
+177
+1
+178
+1
+143
+1.0
+179
+1
+  8
+
+270
+1
+271
+1
+272
+1
+145
+1.0
+146
+1.0
+273
+1
+  9
+
+274
+1
+275
+1
+276
+1
+ 42
+1.0
+ 72
+1
+  3
+
+ 73
+1
+ 74
+1
+ 75
+1
+ 94
+63
+  0
+MLINESTYLE
+  5
+22
+102
+{ACAD_REACTORS
+330
+10
+102
+}
+330
+10
+100
+AcDbMlineStyle
+  2
+Standard
+ 70
+0
+  3
+
+ 62
+256
+ 51
+90.0
+ 52
+90.0
+ 71
+2
+ 49
+0.5
+ 62
+256
+  6
+BYLAYER
+ 49
+-0.5
+ 62
+256
+  6
+BYLAYER
+  0
+MLEADERSTYLE
+  5
+2C
+102
+{ACAD_REACTORS
+330
+F
+102
+}
+330
+F
+100
+AcDbMLeaderStyle
+179
+2
+170
+2
+171
+1
+172
+0
+ 90
+2
+ 40
+0.0
+ 41
+0.0
+173
+1
+ 91
+-1056964608
+ 92
+-2
+290
+1
+ 42
+2.0
+291
+1
+ 43
+8.0
+  3
+Standard
+ 44
+4.0
+300
+
+342
+29
+174
+1
+175
+1
+176
+0
+178
+1
+ 93
+-1056964608
+ 45
+4.0
+292
+0
+297
+0
+ 46
+4.0
+ 94
+-1056964608
+ 47
+1.0
+ 49
+1.0
+140
+1.0
+294
+1
+141
+0.0
+177
+0
+142
+1.0
+295
+0
+296
+0
+143
+3.75
+271
+0
+272
+9
+273
+9
+  0
+DICTIONARY
+  5
+2D
+330
+A
+100
+AcDbDictionary
+280
+1
+281
+1
+  3
+CREATED_BY_EZDXF
+350
+2E
+  3
+WRITTEN_BY_EZDXF
+350
+206
+  0
+DICTIONARYVAR
+  5
+2E
+330
+2D
+100
+DictionaryVariables
+280
+0
+  1
+1.4.4 @ 2026-09-26T15:08:53.852669+00:00
+  0
+DICTIONARYVAR
+  5
+206
+330
+2D
+100
+DictionaryVariables
+280
+0
+  1
+1.4.4 @ 2026-09-26T15:08:53.856166+00:00
+  0
+ENDSEC
+  0
+EOF
