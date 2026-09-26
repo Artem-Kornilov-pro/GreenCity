@@ -1,7 +1,8 @@
 """
 Вызов LLM для правки текстом (text_editor/service.py): выбор провайдера по
-LLM_PROVIDER ("gemini" по умолчанию или "yandex", оба через
-OpenAI-совместимый API), запрос и разбор ответа в LlmPlan. Gemini
+LLM_PROVIDER ("yandex" по умолчанию -- Yandex AI Studio, core/yandex_ai.py,
+модель YANDEX_CLOUD_MODEL, по умолчанию Qwen3 235B; или "gemini"), оба через
+OpenAI-совместимый API, запрос и разбор ответа в LlmPlan. Gemini
 поддерживает только Chat Completions, yandex-путь использует Responses API --
 поэтому два метода (_call_responses/_call_chat_completions) под одной
 _client_and_model. Без ключей -- LlmNotConfiguredError (503 в main.py), а не
@@ -16,10 +17,9 @@ import os
 import time
 
 import openai
-from dotenv import load_dotenv
 from pydantic import ValidationError
 
-from core.paths import ENV_FILE
+from core import yandex_ai
 from core.placement import (
     Placer,
 )
@@ -28,15 +28,10 @@ from core.schemas import Scene
 from text_editor.operations import ChatTurn, LlmPlan
 from text_editor.prompt import INSTRUCTIONS, _build_context
 
-# Локально .env лежит в корне репозитория. В Docker переменные уже приходят из
-# env_file, а load_dotenv без override существующие значения не перетирает.
-load_dotenv(ENV_FILE)
-
 # Без этого лога причину сбоя правки текстом было не узнать: в логе доступа
 # uvicorn видна только строка "502 Bad Gateway".
 logger = logging.getLogger("greencity.llm")
 
-YANDEX_BASE_URL = "https://ai.api.cloud.yandex.net/v1"
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 TEMPERATURE = 0.3
 # С запасом под рассуждающие модели. Текущая yandexgpt не рассуждает и тратит на
@@ -67,7 +62,7 @@ class LlmError(RuntimeError):
 
 
 def _llm_provider() -> str:
-    return os.environ.get("LLM_PROVIDER", "gemini").strip().lower()
+    return os.environ.get("LLM_PROVIDER", "yandex").strip().lower()
 
 
 def _client_and_model() -> tuple[openai.OpenAI, str]:
@@ -82,17 +77,16 @@ def _client_and_model() -> tuple[openai.OpenAI, str]:
         client = openai.OpenAI(api_key=api_key, base_url=GEMINI_BASE_URL)
         return client, model
 
-    api_key = os.environ.get("YANDEX_CLOUD_API_KEY")
-    folder = os.environ.get("YANDEX_CLOUD_FOLDER")
-    model = os.environ.get("YANDEX_CLOUD_MODEL", "yandexgpt/latest")
-    if not api_key or not folder:
+    creds = yandex_ai.credentials()
+    if creds is None:
         logger.warning("не заданы YANDEX_CLOUD_API_KEY / YANDEX_CLOUD_FOLDER")
         raise LlmNotConfiguredError(
             "Текстовое редактирование не настроено: задайте YANDEX_CLOUD_API_KEY и "
             "YANDEX_CLOUD_FOLDER (см. .env.example)."
         )
-    client = openai.OpenAI(api_key=api_key, base_url=YANDEX_BASE_URL, project=folder)
-    return client, f"gpt://{folder}/{model}"
+    api_key, folder = creds
+    model = yandex_ai.model_uri(folder, "YANDEX_CLOUD_MODEL", yandex_ai.DEFAULT_EDITOR_MODEL)
+    return yandex_ai.make_client(api_key, folder), model
 
 
 def _extract_json(text: str) -> dict:

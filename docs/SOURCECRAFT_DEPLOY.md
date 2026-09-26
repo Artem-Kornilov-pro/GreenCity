@@ -22,8 +22,8 @@ Connection → реестр". Без шагов ниже джоба `deploy-back
   503-ошибкой (см. `backend/storage/db.py`/`backend/storage/cache.py`), а сам редактор
   (парсинг DXF, генерация, правка текстом, GreenPlan) от них не зависит и
   работает как обычно — это штатное поведение, не поломка деплоя.
-- **Ollama/Mistral** — `POST /api/greenplan/report` ответит `report_error`
-  вместо текста, расстановка (`/api/greenplan/generate`) не пострадает.
+- **Yandex AI Studio** (без `YANDEX_CLOUD_API_KEY`/`YANDEX_CLOUD_FOLDER`) — правка текстом ответит 503, `POST /api/greenplan/report` ответит
+  `report_error` вместо текста, расстановка (`/api/greenplan/generate`) не пострадает.
 - **Frontend** — продакшен-образ `frontend/Dockerfile.prod` (статика за nginx,
   `/api/` проксируется на адрес из `BACKEND_URL`) собирается в CI и
   публикуется в ghcr.io (`docker-publish.yml`), но в этот workflow SourceCraft
@@ -32,7 +32,7 @@ Connection → реестр". Без шагов ниже джоба `deploy-back
 
 Для полноценного демо с аккаунтами/LLM нужно отдельно поднять MongoDB/Redis
 (например тоже в Yandex Cloud) и передать `MONGO_URI`/`REDIS_URL`/
-`OLLAMA_BASE_URL` через `--environment` в шаге `deploy` — сейчас там только
+`YANDEX_CLOUD_API_KEY`/`YANDEX_CLOUD_FOLDER` через `--environment` в шаге `deploy` — сейчас там только
 `UVICORN_WORKERS`.
 
 ## 1. Сервисный аккаунт в Yandex Cloud

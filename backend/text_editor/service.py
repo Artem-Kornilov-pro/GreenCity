@@ -25,9 +25,10 @@ LLM НЕ возвращает сцену целиком: сцена бывает
 не для языковой модели.
 
 Настройки берутся из переменных окружения (.env в корне репозитория локально,
-env_file в docker-compose): LLM_PROVIDER выбирает поставщика ("gemini" по
-умолчанию или "yandex"). Для yandex: YANDEX_CLOUD_API_KEY, YANDEX_CLOUD_FOLDER,
-YANDEX_CLOUD_MODEL. Для gemini: GEMINI_API_KEY, GEMINI_MODEL. Оба провайдера
+env_file в docker-compose): LLM_PROVIDER выбирает поставщика ("yandex" по
+умолчанию -- Yandex AI Studio, core/yandex_ai.py -- или "gemini"). Для yandex:
+YANDEX_CLOUD_API_KEY, YANDEX_CLOUD_FOLDER, YANDEX_CLOUD_MODEL (по умолчанию
+qwen3-235b-a22b-fp8/latest). Для gemini: GEMINI_API_KEY, GEMINI_MODEL. Оба провайдера
 доступны через OpenAI-совместимый API (openai-клиент с другим base_url), но
 Gemini поддерживает только Chat Completions, а не Responses API, которым уже
 пользуется yandex-путь -- поэтому запрос к модели устроен как два отдельных

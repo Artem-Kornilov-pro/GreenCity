@@ -1,7 +1,7 @@
 """Общие фикстуры сквозных тестов: настоящее приложение (main.app) через HTTP
 (TestClient), без подмен внутри бэкенда. Подменены только внешние границы:
 MongoDB/Redis (in-memory, фикстуры fake_mongo/fake_redis из tests/conftest.py)
-и клиенты LLM -- облачный для правки текстом и локальный Ollama для отчёта.
+и клиенты LLM -- облачные (Yandex AI Studio): для правки текстом и для отчёта.
 Всё остальное -- парсер, GreenPlan, нормы, экспорт, документ -- работает
 по-настоящему, на реальных DXF из locations/."""
 
@@ -56,41 +56,43 @@ def docx_text(content: bytes) -> str:
     return "\n".join(parts)
 
 
-class FakeChatLLM:
-    """OpenAI-совместимый клиент Chat Completions: отдаёт заранее заданный
-    ответ и запоминает, что ему прислали (проверяем, что в промпт ушли
-    настоящие факты сцены)."""
+class FakeLLM:
+    """OpenAI-совместимый клиент Responses API (так ходят в Yandex AI
+    Studio): отдаёт заранее заданный ответ и запоминает, что ему прислали
+    (проверяем, что в промпт ушли настоящие факты сцены)."""
 
     def __init__(self, content: str):
         self.content = content
         self.requests: list[dict] = []
-        self.chat = SimpleNamespace(completions=self)
+        self.responses = SimpleNamespace(create=self.create)
 
     def create(self, **kwargs):
         self.requests.append(kwargs)
         return SimpleNamespace(
-            choices=[SimpleNamespace(message=SimpleNamespace(content=self.content), finish_reason="stop")],
-            usage=SimpleNamespace(prompt_tokens=100, completion_tokens=50),
+            status="completed",
+            output_text=self.content,
+            incomplete_details=None,
+            usage=SimpleNamespace(input_tokens=100, output_tokens=50),
         )
 
     def prompt_text(self) -> str:
-        return "\n".join(m["content"] for req in self.requests for m in req["messages"])
+        return "\n".join(req["input"] for req in self.requests)
 
 
 @pytest.fixture
 def fake_text_editor_llm(monkeypatch):
     """Подменить облачную LLM правки текстом; план задаёт тест через
     fake.content = json.dumps({...})."""
-    monkeypatch.setenv("LLM_PROVIDER", "gemini")
-    fake = FakeChatLLM(json.dumps({"operations": [], "explanation": ""}))
+    monkeypatch.setenv("LLM_PROVIDER", "yandex")
+    fake = FakeLLM(json.dumps({"operations": [], "explanation": ""}))
     monkeypatch.setattr(llm_client, "_client_and_model", lambda: (fake, "fake-model"))
     return fake
 
 
 @pytest.fixture
 def fake_report_llm(monkeypatch):
-    """Подменить локальную LLM (Ollama) текста-отчёта GreenPlan."""
-    fake = FakeChatLLM("Вдоль дорожек участка предложена живая изгородь, открытая площадь занята группами деревьев.")
+    """Подменить LLM (YandexGPT) текста-отчёта GreenPlan."""
+    fake = FakeLLM("Вдоль дорожек участка предложена живая изгородь, открытая площадь занята группами деревьев.")
     monkeypatch.setattr(decision_report, "_client", lambda: fake)
     return fake
 

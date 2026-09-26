@@ -59,15 +59,16 @@ def test_client_and_model_defaults_model_when_env_var_missing(monkeypatch):
     monkeypatch.setenv("YANDEX_CLOUD_FOLDER", "folder123")
     monkeypatch.delenv("YANDEX_CLOUD_MODEL", raising=False)
     _client, model = _client_and_model()
-    assert model == "gpt://folder123/yandexgpt/latest"
+    assert model == "gpt://folder123/qwen3-235b-a22b-fp8/latest"
 
 
-def test_client_and_model_defaults_to_gemini_when_provider_env_var_missing(monkeypatch):
+def test_client_and_model_defaults_to_yandex_when_provider_env_var_missing(monkeypatch):
     monkeypatch.delenv("LLM_PROVIDER", raising=False)
-    monkeypatch.setenv("GEMINI_API_KEY", "fake-gemini-key")
+    monkeypatch.setenv("YANDEX_CLOUD_API_KEY", "fake-key")
+    monkeypatch.setenv("YANDEX_CLOUD_FOLDER", "folder123")
     client, model = _client_and_model()
-    assert model == "gemini-3.6-flash"
-    assert str(client.base_url).startswith("https://generativelanguage.googleapis.com")
+    assert model == "gpt://folder123/qwen3-235b-a22b-fp8/latest"
+    assert str(client.base_url).startswith("https://ai.api.cloud.yandex.net")
 
 
 def test_client_and_model_raises_when_gemini_selected_without_key(monkeypatch):

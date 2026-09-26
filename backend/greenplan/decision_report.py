@@ -1,8 +1,8 @@
 """
 Отчёт о решениях -- GreenPlan, Этап 6 (issue #23, "Отчёт о решениях... по
 аналогии с проектом X"). Требование заказчика: сам текст объяснения, почему
-озеленение участка сделано именно так, а не иначе, пишет LLM (mistral:7b
-через локальный Ollama), а не шаблон/f-строка.
+озеленение участка сделано именно так, а не иначе, пишет LLM (YandexGPT 5.1
+Pro в Yandex AI Studio, core/yandex_ai.py), а не шаблон/f-строка.
 
 Решения (какой паттерн, с какого проекта он взят, с какой уверенностью) уже
 посчитаны детерминированно и без LLM на Этапах 3-5
@@ -16,20 +16,22 @@
 Один связный текст на весь участок, не фраза на каждую зону -- реальные
 участки легко дают 50-200+ геометрических зон (zone_partitioning.py), и
 отдельная LLM-фраза на каждую была бы и нечитаемой простынёй, и неподъёмным
-промптом для 7B-модели. Поэтому сначала зоны АГРЕГИРУЮТСЯ по (вид зоны,
+промптом. Поэтому сначала зоны АГРЕГИРУЮТСЯ по (вид зоны,
 паттерн, проект-источник) -- ровно как прошлая сессия вручную писала
 design_rationale.md: не "зона №142 -> паттерн X", а "вдоль дорожек по всему
 участку -- живая изгородь, как на проекте Y".
 
 В отличие от необязательных фич (где недоступность LLM тихо откатывается на
 прежнее поведение), здесь LLM -- единственный способ получить текст: без
-Ollama функция не возвращает пустоту молча, а поднимает
+ключа или при недоступном API функция не возвращает пустоту молча, а поднимает
 DecisionReportUnavailable, чтобы вызывающий код не перепутал "нечего
 описывать" (пустой список решений) с "отчёт недоступен" (LLM не отвечает).
 
-Независим от backend/text_editor/service.py (свой openai-клиент на своём base_url) --
-по договорённости старый текстовый редактор (Gemini/Yandex) этот модуль не
-трогает и от него не зависит.
+Независим от text_editor/ (своя модель и свой промпт); общий с ним только
+клиент Yandex AI Studio (core/yandex_ai.py): ключ и каталог одни --
+YANDEX_CLOUD_API_KEY, YANDEX_CLOUD_FOLDER, модель -- YANDEX_CLOUD_REPORT_MODEL
+(по умолчанию yandexgpt-5.1/latest). Читаются при каждом вызове, а не при
+импорте, -- новый ключ подхватывается без правки кода.
 """
 
 from __future__ import annotations
@@ -41,26 +43,23 @@ from typing import Optional
 import openai
 from pydantic import BaseModel
 
+from core import yandex_ai
 from greenplan.pattern_assignment import ZoneAssignment
 from greenplan.pattern_library import PATTERN_LIBRARY, STYLE_LABELS
 from greenplan.zone_partitioning import ZoneKind
-
-OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434/v1")
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "mistral:7b")
 
 # Низкая, но не нулевая -- отчёту заказчику нужна стабильная формулировка
 # больше, чем творческое разнообразие, но совсем 0 иногда даёт рубленые
 # перечисления вместо связного текста даже у моделей покрупнее.
 TEMPERATURE = 0.2
-MAX_OUTPUT_TOKENS = 900
-# Замерено напрямую на Ollama/mistral:7b (обычная машина разработчика, не
-# GPU-сервер): ~26 токенов/с на прогретой модели -- полный ответ в
-# MAX_OUTPUT_TOKENS у модели укладывается впритык или чуть за 30 секунд.
-# Старые 30.0 с реально ловили таймаут при штатной (не сбойной) работе --
-# найдено ручным тестированием ("мистраль не отвечает"), хотя сама модель и
-# подключение были исправны. 60 -- запас почти вдвое от замеренного худшего
-# случая, а не догадка.
+# Несколько абзацев по-русски -- ~600-1000 токенов; с запасом, чтобы текст
+# не обрывался на полуслове.
+MAX_OUTPUT_TOKENS = 1500
+# С запасом под облачный API в час пик: обычно ответ -- секунды.
 REQUEST_TIMEOUT_S = 60.0
+# Один повтор -- на сетевой сбой облачного API. Больше не нужно: каждый
+# повтор -- ещё до REQUEST_TIMEOUT_S ожидания для пользователя.
+MAX_RETRIES = 1
 
 ZONE_KIND_LABELS: dict[ZoneKind, str] = {
     "building_border": "полоса вдоль зданий",
@@ -106,16 +105,20 @@ class DecisionReportUnavailable(RuntimeError):
     отчёт в этом случае не существует вовсе, а не тихо остаётся пустым."""
 
 
+def _model() -> str:
+    folder = os.environ.get("YANDEX_CLOUD_FOLDER", "").strip()
+    return yandex_ai.model_uri(folder, "YANDEX_CLOUD_REPORT_MODEL", yandex_ai.DEFAULT_REPORT_MODEL)
+
+
 def _client() -> openai.OpenAI:
-    # max_retries=0 -- явно, вместо дефолта openai-SDK (2 повтора). Для
-    # облачного API повтор на сетевой сбой оправдан; для локальной модели,
-    # которая просто медленно отвечает или недоступна, повтор с тем же
-    # REQUEST_TIMEOUT_S на попытку МНОЖИТ время до ответа (до 3x), а не
-    # спасает запрос -- Ollama не станет отвечать быстрее со второй попытки.
-    # Это и превращало единичный подвисший вызов в 60-90-секундный, из-за
-    # которого весь процесс (один воркер uvicorn, общий GIL) выглядел
-    # "зависшим" и для остальных запросов, включая healthcheck.
-    return openai.OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama", timeout=REQUEST_TIMEOUT_S, max_retries=0)
+    creds = yandex_ai.credentials()
+    if creds is None:
+        raise DecisionReportUnavailable(
+            "Текст-обоснование не настроено: задайте YANDEX_CLOUD_API_KEY и YANDEX_CLOUD_FOLDER (см. .env.example)."
+        )
+    # max_retries -- явно, вместо дефолта openai-SDK (2 повтора): каждый
+    # повтор с тем же REQUEST_TIMEOUT_S множит время до ответа.
+    return yandex_ai.make_client(*creds, timeout=REQUEST_TIMEOUT_S, max_retries=MAX_RETRIES)
 
 
 def _summarize(assignments: list[ZoneAssignment]) -> list[SummaryRow]:
@@ -198,19 +201,22 @@ def generate_report(assignments: list[ZoneAssignment]) -> Optional[str]:
 
     facts = _site_fact(assignments[0]) + "\n" + _format_facts(_summarize(assignments))
     try:
-        response = _client().chat.completions.create(
-            model=OLLAMA_MODEL,
+        # Без ключа _client() сам поднимает DecisionReportUnavailable.
+        response = _client().responses.create(
+            model=_model(),
             temperature=TEMPERATURE,
-            max_tokens=MAX_OUTPUT_TOKENS,
-            messages=[
-                {"role": "system", "content": INSTRUCTIONS},
-                {"role": "user", "content": f"Принятые решения по участку:\n{facts}"},
-            ],
+            instructions=INSTRUCTIONS,
+            input=f"Принятые решения по участку:\n{facts}",
+            max_output_tokens=MAX_OUTPUT_TOKENS,
         )
     except openai.OpenAIError as e:
         raise DecisionReportUnavailable(f"Не удалось получить отчёт от LLM: {e}") from e
 
-    text = (response.choices[0].message.content or "").strip()
+    if response.status == "incomplete":
+        # Оборванный на полуслове текст в записку заказчику не годится.
+        reason = getattr(response.incomplete_details, "reason", None) or "причина неизвестна"
+        raise DecisionReportUnavailable(f"LLM не завершила ответ ({reason})")
+    text = (response.output_text or "").strip()
     if not text:
         raise DecisionReportUnavailable("LLM вернула пустой ответ")
     return text

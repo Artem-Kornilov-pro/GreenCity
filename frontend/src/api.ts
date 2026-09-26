@@ -94,11 +94,11 @@ export async function downloadGreenPlanDocument(
 // violation_report.py, assortment_report.py, decision_report.py). Решения
 // (assignments) считаются полностью детерминированно, без LLM, и быстро
 // (find_violations -- через пространственный индекс, доли секунды даже на
-// крупных участках). Текст-объяснение (report) -- через локальную LLM
-// (mistral:7b/Ollama), занимает ~30 секунд, поэтому отдельный запрос
+// крупных участках). Текст-объяснение (report) -- через LLM (YandexGPT в
+// Yandex AI Studio), занимает секунды, поэтому отдельный запрос
 // (/api/greenplan/report), а не часть /api/greenplan/generate -- иначе
-// пользователь ждал бы уже готовую расстановку все эти 30 секунд ради
-// текста, который к ней не относится. Недоступность Ollama -- не ошибка
+// пользователь ждал бы уже готовую расстановку ради текста, который к ней
+// не относится. Недоступность LLM -- не ошибка
 // запроса (report_error заполнен, report null), сама расстановка не страдает.
 export interface GreenPlanZoneAssignment {
   zone_id: string;
@@ -189,7 +189,7 @@ export interface GreenPlanReportResult {
   report_error: string | null;
 }
 
-// Отдельный запрос, ~30 секунд (локальная LLM) -- вызывающий код (EditorPage)
+// Отдельный запрос к LLM (YandexGPT) -- вызывающий код (EditorPage)
 // не ждёт его перед тем, как показать уже готовый результат generateGreenPlan.
 export async function fetchGreenPlanReport(assignments: GreenPlanZoneAssignment[]): Promise<GreenPlanReportResult> {
   const res = await fetch(`${API_BASE}/api/greenplan/report`, {

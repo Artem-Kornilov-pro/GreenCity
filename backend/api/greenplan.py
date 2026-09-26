@@ -1,6 +1,6 @@
 """
 Эндпоинты GreenPlan (issue #23): автоозеленение по прошлым проектам
-(/generate, без LLM), текст-объяснение решений через локальную LLM
+(/generate, без LLM), текст-объяснение решений через YandexGPT
 (/report) и пояснительная записка в DOCX (/document).
 """
 
@@ -65,9 +65,9 @@ class GreenPlanGenerateResult(BaseModel):
 
 # Синхронный def -- расстановка, нарушения и ведомость -- чистая
 # CPU-геометрия, ни одного await. НАМЕРЕННО без текста-отчёта (LLM) -- тот
-# вынесен в отдельный /api/greenplan/report ниже: вызов Ollama занимает ~30
-# секунд сам по себе, и фронтенд не должен ждать его ради уже готовой
-# расстановки.
+# вынесен в отдельный /api/greenplan/report ниже: вызов LLM занимает секунды
+# (а с локальной моделью -- до ~30 с), и фронтенд не должен ждать его ради
+# уже готовой расстановки.
 @router.post("/api/greenplan/generate", response_model=GreenPlanGenerateResult)
 def greenplan_generate(
     request: GreenPlanGenerateRequest,
@@ -80,7 +80,7 @@ def greenplan_generate(
     присланной сцене, а не добавляет второй слой (greenplan/pipeline.py).
 
     Текст-объяснение -- отдельным запросом, см. /api/greenplan/report ниже:
-    он занимает ~30 секунд (локальная LLM) и не должен блокировать уже
+    он ждёт ответа LLM и не должен блокировать уже
     готовый детерминированный результат.
     """
     with _greenplan_generate_lock:
@@ -106,18 +106,18 @@ class GreenPlanReportResult(BaseModel):
 
 
 # Синхронный def -- клиент openai блокирующий (как и у /api/edit-with-text
-# ниже), FastAPI уводит в пул потоков; сам вызов -- ~30 секунд (mistral:7b
-# локально), поэтому отдельный от /api/greenplan/generate эндпоинт: фронтенд
+# ниже), FastAPI уводит в пул потоков; сам вызов -- секунды (YandexGPT),
+# поэтому отдельный от /api/greenplan/generate эндпоинт: фронтенд
 # показывает уже готовую расстановку сразу и дотягивает текст в фоне, не
 # блокируя ничего остальным ожиданием LLM. Свой лок (не общий с generate
-# выше) -- это разные ресурсы (CPU-геометрия vs сетевой вызов к Ollama),
+# выше) -- это разные ресурсы (CPU-геометрия vs сетевой вызов к LLM),
 # нет причины заставлять их ждать друг друга.
 @router.post("/api/greenplan/report", response_model=GreenPlanReportResult)
 def greenplan_report(assignments: list[ZoneAssignment]):
-    """Текст-объяснение решений GreenPlan (Этап 6) через локальную LLM
-    (mistral:7b/Ollama, backend/greenplan/decision_report.py) -- по списку решений,
+    """Текст-объяснение решений GreenPlan (Этап 6) через LLM (YandexGPT в
+    Yandex AI Studio, backend/greenplan/decision_report.py) -- по списку решений,
     уже посчитанному /api/greenplan/generate (передаётся сюда как есть, не
-    пересчитывается). Недоступность Ollama -- не ошибка запроса: 200 с
+    пересчитывается). Недоступность LLM или нет ключа -- не ошибка запроса: 200 с
     report=None и понятной report_error, а не 500."""
     with _greenplan_report_lock:
         try:

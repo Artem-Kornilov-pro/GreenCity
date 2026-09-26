@@ -280,14 +280,14 @@ def test_greenplan_report_survives_llm_unavailable(client, monkeypatch):
     assignments = client.post("/api/greenplan/generate", json={"scene": scene}).json()["assignments"]
 
     def _raise(assignments):
-        raise DecisionReportUnavailable("Ollama не запущена")
+        raise DecisionReportUnavailable("YandexGPT недоступна")
 
     monkeypatch.setattr(greenplan_api, "generate_report", _raise)
     r = client.post("/api/greenplan/report", json=assignments)
     assert r.status_code == 200
     body = r.json()
     assert body["report"] is None
-    assert body["report_error"] == "Ollama не запущена"
+    assert body["report_error"] == "YandexGPT недоступна"
 
 
 # --- /api/edit-with-text (LLM ПОЛНОСТЬЮ подменена) ---------------------------
