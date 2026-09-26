@@ -15,34 +15,34 @@ dwg_to_dxf.py`). Поэтому файлы, не поддавшиеся конв
 прерывают весь батч -- они попадают в `BatchConversionResult.failed`, а
 успешные продолжают собираться в общий документ.
 
-Обработка файлов НАМЕРЕННО последовательная, не параллельная -- это не
-недосмотр, а результат прямого замера (issue #50 follow-up, "слишком долго
-загружается проект"). Профилирование на реальных файлах Мосгеотреста
-показало: сам `dwg2dxf` (внешний процесс) быстрый, 0.5-0.8с/файл, а узкое
-место -- разбор итогового DXF через `ezdxf.readfile`/`recover` (3-4.5с/файл),
-чистый Python, держит GIL. Пул ПОТОКОВ поэтому не ускоряет вообще (GIL не
-даёт двум потокам разбирать DXF одновременно, замерено -- без выигрыша).
-Пул ПРОЦЕССОВ в изолированном скрипте (вне HTTP-сервера) на том же батче из
-5 файлов действительно ускорял разбор в ~1.8 раза (~27с -> ~14-15с) -- но
-тот же самый код, вызванный внутри РЕАЛЬНОГО процесса backend (уже
-загруженный retrieval-корпус, клиенты Mongo/Redis, потоки uvicorn), давал
-~40-43с что для fork, что для spawn -- то есть НИКАКОГО выигрыша: разница
-между "чистым" процессом и "тяжёлым" процессом backend съедает всю выгоду.
-Оставлено последовательным, чтобы не добавлять сложность и риск (всплеск
-памяти от нескольких одновременных ezdxf-документов, fork в
-многопоточном процессе) без реальной пользы.
+Файлы обрабатываются параллельно, в отдельных процессах (workers > 1).
+Узкое место -- чтение DXF через ezdxf (3-6 с на файл, чистый Python, одно
+ядро): замер на реальной пачке Мосгеотреста (5 файлов DWG, ~200 МБ DXF) --
+dwg2dxf 3 с, чтение DXF 15 с, склейка 3 с, разбор 7 с. Раньше пул процессов
+здесь не помогал, потому что запускался из тяжёлого процесса uvicorn; теперь
+разбор пачки идёт в отдельном лёгком процессе (exchange/dwg_job.py), и пул из
+него работает. Каждый рабочий процесс конвертирует свой файл, читает его и
+оставляет только слои, которые парсер вообще читает (dxf_parsing.rules.
+layer_is_parsed, плюс тексты -- подписи зданий), в компактном DXF; главный
+процесс склеивает компактные файлы в исходном порядке. Сцена после разбора
+та же до байта (сверено на реальной пачке), а вышло 18,5 с вместо 28,5 и пик
+памяти главного процесса 0,75 ГБ вместо 1,6 (рабочий процесс -- ~0,5 ГБ).
 """
 
 from __future__ import annotations
 
 import shutil
 import subprocess
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import ezdxf
 import ezdxf.recover
 from ezdxf.addons.importer import Importer
+
+import exchange.dxf_parser  # noqa: F401 -- добавляет parser/ в sys.path
+from dxf_parsing.rules import layer_is_parsed
 
 DXF_VERSION = "R2010"
 
@@ -106,27 +106,70 @@ def _read_converted_dxf(dxf_path: Path) -> ezdxf.document.Drawing:
         return doc
 
 
+def _parsed_entities(layout) -> list:
+    """Сущности, которые парсер читает: со слоёв, узнаваемых его правилами,
+    и все тексты (подписи зданий парсер ищет на любом слое)."""
+    return [e for e in layout if e.dxftype() in ("TEXT", "MTEXT") or layer_is_parsed(e.dxf.layer)]
+
+
 def _import_all_layouts(source_doc: ezdxf.document.Drawing, target_doc: ezdxf.document.Drawing) -> None:
+    """modelspace и все непустые paperspace-листы источника -- в modelspace
+    цели, только то, что читает парсер."""
     importer = Importer(source_doc, target_doc)
-    if len(source_doc.modelspace()):
-        importer.import_entities(source_doc.modelspace())
+    importer.import_entities(_parsed_entities(source_doc.modelspace()))
     for name in source_doc.layouts.names():
         if name == "Model":
             continue
-        layout = source_doc.layouts.get(name)
-        if len(layout):
-            importer.import_entities(layout)
+        importer.import_entities(_parsed_entities(source_doc.layouts.get(name)))
     importer.finalize()
 
 
-def merge_dwg_files(dwg_paths: list[Path], intermediate_dir: Path) -> BatchConversionResult:
-    """Конвертирует каждый файл из `dwg_paths` во временный .dxf внутри
-    `intermediate_dir` и сливает результаты в один ezdxf-документ. Поднимает
+def _extract_compact(dwg_path: str, work_dir: str) -> tuple[str, str | None, str | None]:
+    """Рабочий процесс: dwg2dxf, чтение, отбор нужного парсеру -- в
+    компактный DXF. (имя файла, путь к компактному DXF или None, ошибка)."""
+    dwg, work = Path(dwg_path), Path(work_dir)
+    dxf_tmp = work / (dwg.stem + ".dxf")
+    try:
+        _convert_one(dwg2dxf_path(), dwg, dxf_tmp)
+        source_doc = _read_converted_dxf(dxf_tmp)
+    except Exception as e:
+        return dwg.name, None, str(e)
+    try:
+        compact = ezdxf.new(dxfversion=DXF_VERSION)
+        _import_all_layouts(source_doc, compact)
+        compact_path = work / (dwg.stem + ".compact.dxf")
+        compact.saveas(compact_path)
+    except Exception as e:
+        return dwg.name, None, f"ошибка импорта в общий документ: {e}"
+    finally:
+        dxf_tmp.unlink(missing_ok=True)  # полный DXF больше не нужен -- место на диске
+    return dwg.name, str(compact_path), None
+
+
+def merge_dwg_files(dwg_paths: list[Path], intermediate_dir: Path, workers: int = 1) -> BatchConversionResult:
+    """Конвертирует каждый файл из `dwg_paths` и сливает в один ezdxf-документ
+    (только то, что читает парсер). workers > 1 -- файлы обрабатываются
+    параллельно в отдельных процессах (см. докстринг модуля). Поднимает
     `Dwg2DxfNotFound`, если сам конвертер не установлен -- эта ошибка
     останавливает весь батч, в отличие от ошибок на отдельных файлах."""
     tool = dwg2dxf_path()
     target_doc = ezdxf.new(dxfversion=DXF_VERSION)
     result = BatchConversionResult(doc=target_doc)
+
+    if workers > 1 and len(dwg_paths) > 1:
+        with ProcessPoolExecutor(max_workers=min(workers, len(dwg_paths))) as pool:
+            extracted = list(pool.map(_extract_compact, [str(p) for p in dwg_paths], [str(intermediate_dir)] * len(dwg_paths)))
+        for name, compact_path, error in extracted:
+            if compact_path is None:
+                result.failed[name] = error or "неизвестная ошибка"
+                continue
+            try:
+                _import_all_layouts(ezdxf.readfile(compact_path), target_doc)
+            except Exception as e:
+                result.failed[name] = f"ошибка импорта в общий документ: {e}"
+                continue
+            result.converted.append(name)
+        return result
 
     for dwg_path in dwg_paths:
         dxf_tmp = intermediate_dir / (dwg_path.stem + ".dxf")

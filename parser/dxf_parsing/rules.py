@@ -278,3 +278,28 @@ def match_rule(layer_name: str, rules):
         if key in up:
             return cfg
     return None
+
+
+# Все ключевые слова, по которым парсер вообще берёт сущность со слоя: зоны,
+# точечные объекты (в том числе виды), граница, бордюры, фасады, меши зданий.
+# Остальные слои (топосъёмка, размеры, штриховки подложки) парсер не читает --
+# по этому списку разбор DWG-пачки заранее отбрасывает их (backend/exchange/
+# dwg_batch_converter.py): склеивать и хранить в памяти их незачем.
+PARSED_LAYER_KEYWORDS = tuple(
+    dict.fromkeys(
+        [key for key, _ in POLYGON_RULES]
+        + [key for key, _ in POINT_LAYER_RULES]
+        + BOUNDARY_LAYER_KEYWORDS
+        + CURB_LAYER_KEYWORDS
+        + BUILDING_MESH_LAYER_KEYWORDS
+        + [key for keywords in FACADE_LAYER_KEYWORDS.values() for key in keywords]
+    )
+)
+
+
+def layer_is_parsed(layer_name: str, _cache: dict[str, bool] = {}) -> bool:  # noqa: B006 -- намеренный кеш
+    """Читает ли парсер хоть что-то с этого слоя. Тексты (подписи зданий)
+    парсер берёт с любого слоя -- их этот фильтр не касается."""
+    if layer_name not in _cache:
+        _cache[layer_name] = layer_matches(layer_name, PARSED_LAYER_KEYWORDS)
+    return _cache[layer_name]

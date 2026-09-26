@@ -41,7 +41,7 @@ DXF-файл → parser/parse_dxf.py → Scene (JSON) → backend (FastAPI) → 
 
 Импорты — абсолютные от `backend/` (`from core.schemas import Scene`), пути к данным — только через `core/paths.py`.
 
-Docker-compose поднимает 8 сервисов с healthcheck на каждом и `depends_on: condition: service_healthy` — backend стартует только когда mongo/redis реально приняли соединение. Код смонтирован volume'ами — правки в `backend/`/`parser/`/`frontend/` подхватываются на лету, без пересборки образа (новые зависимости в `requirements.txt` — нет, там нужен `--build`). Для сервера — `docker-compose.prod.yml` поверх основного файла (`make docker-prod-up`): статика за nginx на :80, backend без смонтированного кода и `--reload` (3 процесса, 3 ядра, до 3 ГБ), кеш MongoDB 0,5 ГБ, ротация логов контейнеров; рассчитан на сервер 4 vCPU / 8 ГБ / 40 ГБ SSD (README, «Docker на сервере»).
+Docker-compose поднимает 8 сервисов с healthcheck на каждом и `depends_on: condition: service_healthy` — backend стартует только когда mongo/redis реально приняли соединение. Код смонтирован volume'ами — правки в `backend/`/`parser/`/`frontend/` подхватываются на лету, без пересборки образа (новые зависимости в `requirements.txt` — нет, там нужен `--build`). Для сервера — `docker-compose.prod.yml` поверх основного файла (`make docker-prod-up`): статика за nginx на :80, backend без смонтированного кода и `--reload` (3 процесса, 3 ядра, до 4 ГБ; до 2 пачек DWG одновременно), кеш MongoDB 0,5 ГБ, ротация логов контейнеров; рассчитан на сервер 4 vCPU / 8 ГБ / 40 ГБ SSD (README, «Docker на сервере»).
 
 ## 3. Модель данных: `Scene`
 
@@ -73,7 +73,7 @@ Docker-compose поднимает 8 сервисов с healthcheck на каж�
 | Эндпоинт | Что делает |
 |---|---|
 | `POST /api/parse` | DXF → `Scene` |
-| `POST /api/parse-dwg` | Папка из нескольких `.dwg` → `Scene` (issue #50): батч-конвертация через `dwg2dxf`/LibreDWG + слияние в один документ (`backend/exchange/dwg_batch_converter.py`), дальше тот же `parse_dxf.py`. Файлы, которые не удалось сконвертировать, не роняют запрос — попадают в `Scene.dwgConversionWarnings` |
+| `POST /api/parse-dwg` | Папка из нескольких `.dwg` → `Scene` (issue #50): батч-конвертация через `dwg2dxf`/LibreDWG + слияние в один документ (`backend/exchange/dwg_batch_converter.py`), дальше тот же `parse_dxf.py`. Файлы, которые не удалось сконвертировать, не роняют запрос — попадают в `Scene.dwgConversionWarnings`. Разбор — в отдельном процессе: файлы пачки параллельно в `DWG_WORKERS` процессах (каждый конвертирует свой файл и оставляет только слои, которые читает парсер), до `DWG_MAX_PARALLEL` пачек с разных аккаунтов одновременно (`exchange/dwg_job.py`, `dwg_batch_converter.py`); реальная пачка из 5 файлов — 19 с вместо 28,5, три одновременные — 25/26/46 с вместо 27/58/87 с. |
 | `POST /api/generate-greenery` | Деревья/кусты/газон по сетке (без ML), см. ниже |
 | `POST /api/edit-with-text` | Правка плана текстом через LLM |
 | `POST /api/export-dxf` | `Scene` → DXF (зеркало парсера) |
