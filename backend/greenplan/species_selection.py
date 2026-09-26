@@ -260,6 +260,10 @@ class SiteContext(BaseModel):
     territory_type: TerritoryType
     has_playground: bool
     site_key: str  # для стабильного выбора внутри равноценных видов
+    # Предпочтительные виды пользователя (названия): ставятся первыми в любой
+    # роли своей категории -- ограничение по форме для них снято, нормы
+    # (_eligible/_excluded_reason) действуют как для всех.
+    preferred: frozenset[str] = frozenset()
 
 
 def _excluded_reason(item: CatalogItem, entry: AssortmentEntry, zone_kind: ZoneKind, site: SiteContext) -> Optional[str]:
@@ -331,20 +335,24 @@ def _pick(
     prefer_515 = site.territory_type in ("двор", "неопределено")
     in_palette = {item.label for item in palette or []}
 
+    def fits(item: CatalogItem) -> bool:
+        return model_group(item) in role.groups or item.label in site.preferred
+
     def rank(pair: tuple[CatalogItem, AssortmentEntry]) -> tuple:
         item, entry = pair
         group = model_group(item)
         return (
+            0 if item.label in site.preferred else 1,
             0 if item.label in in_palette else 1,
-            role.groups.index(group),
+            role.groups.index(group) if group in role.groups else len(role.groups),
             0 if prefer_515 and in_base_515(item) else 1,
             _CLASS_RANK.get(entry.assortment_class, 9),
             _stable_hash(site.site_key, role_key, item.label),
         )
 
-    fitting = [pair[0] for pair in sorted((p for p in candidates if model_group(p[0]) in role.groups), key=rank)]
+    fitting = [pair[0] for pair in sorted((p for p in candidates if fits(p[0])), key=rank)]
     if cap is not None and len(in_palette) >= cap and any(item.label in in_palette for item in fitting):
-        fitting = [item for item in fitting if item.label in in_palette]
+        fitting = [item for item in fitting if item.label in in_palette or item.label in site.preferred]
     chosen: list[CatalogItem] = []
     # Сначала -- разные роды: смесь из трёх жимолостей или двух лип
     # разнообразием только называется. Род повторяется, лишь если разных
@@ -444,3 +452,23 @@ def courtyard_palette(scene: Scene, trees: list[CatalogItem], bushes: list[Catal
     tree_palette = select_species("open_area", "poisson_scatter_fill", trees, [], site)
     bush_palette = select_species("path_corridor", "linear_hedge_row", [], bushes, site)
     return SpeciesPalette(trees=tree_palette.trees, bushes=bush_palette.bushes, basis=tree_palette.basis)
+
+
+def preference_note(item: CatalogItem, zone_kinds: list[ZoneKind], site: SiteContext) -> str:
+    """Почему предпочтительный вид не попал в посадку -- для пользователя:
+    не в ассортименте, не для этого типа территории, исключён нормами во всех
+    местах участка или не нашлось места."""
+    entry = assortment_entry(item)
+    if invasive_match(item.label):
+        return f"{item.label}: инвазивный вид (ППМ 369-ПП) — не сажается"
+    if entry is None:
+        return f"{item.label}: нет в ассортименте для озеленения Москвы — не использован"
+    column = TERRITORY_COLUMN[site.territory_type]
+    if entry.territories.get(column) != "+":
+        return f"{item.label}: ассортимент не рекомендует его для категории «{TERRITORY_LABEL[site.territory_type]}» — не использован"
+    if model_group(item) is None or model_group(item).startswith("vine_"):
+        return f"{item.label}: лиана — нужна опора, на газоне не сажается"
+    reasons = [_excluded_reason(item, entry, kind, site) for kind in dict.fromkeys(zone_kinds)]
+    if reasons and all(reasons):
+        return f"{item.label}: исключён нормами во всех местах участка ({reasons[0]})"
+    return f"{item.label}: не нашлось места с соблюдением норм"

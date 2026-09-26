@@ -59,6 +59,21 @@ export function GreenPlanPanel({
               </section>
             )}
 
+            {/* Что из параметров GreenPlan не удалось выполнить и почему
+                (вид не по нормам, опоры не встают в охранных зонах и т.п.). */}
+            {(result.notes ?? []).length > 0 && (
+              <section>
+                <h3 className={SECTION_TITLE}>Замечания к параметрам</h3>
+                <ul className="flex flex-col gap-1.5">
+                  {result.notes.map((note) => (
+                    <li key={note} className="rounded-xl bg-warning-500/15 px-3 py-2 text-xs text-ink-700">
+                      {note}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
             <section>
               <h3 className={SECTION_TITLE}>Обоснование</h3>
               {reportLoading ? (
@@ -121,6 +136,22 @@ export function GreenPlanPanel({
                 </p>
               ))}
             </section>
+
+            {(result.improvements ?? []).length > 0 && (
+              <section>
+                <h3 className={SECTION_TITLE}>Благоустройство</h3>
+                <div className="flex flex-col gap-1 text-sm text-ink-700">
+                  {result.improvements.map((row) => (
+                    <div key={row.species} className="flex items-center justify-between gap-2 rounded-lg bg-white/40 px-3 py-1.5">
+                      <span>{row.species}</span>
+                      <span className="font-medium">
+                        {row.unit === "м²" ? `${row.count.toLocaleString("ru-RU")} м²` : row.count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </>
         )}
       </div>

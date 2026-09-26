@@ -42,9 +42,11 @@ from core.paths import LOCATIONS_DIR, NORMS_DIR
 from core.plant_catalog import catalog_by_id
 from core.schemas import Scene
 from core.setback_norms import SETBACK_NORMS, species_rules
-from greenplan.assortment_report import AssortmentRow, lawn_assortment, summarize_assortment
+from greenplan.assortment_report import AssortmentRow, improvements_assortment, lawn_assortment, summarize_assortment
 from greenplan.decision_report import ZONE_KIND_LABELS
+from greenplan.improvements import is_greenplan_zone
 from greenplan.lawn import lawn_totals, plan_lawns
+from greenplan.options import GreenPlanOptions
 from greenplan.pattern_assignment import ZoneAssignment
 from greenplan.pattern_library import PATTERN_LIBRARY, STYLE_LABELS
 from greenplan.site_characterization import SiteCharacteristics, characterize_site
@@ -168,7 +170,14 @@ def _groups(assignments: list[ZoneAssignment]) -> list[DecisionGroup]:
 
 
 def _without_generated(scene: Scene) -> Scene:
-    return scene.model_copy(update={"objects": [o for o in scene.objects if not o.metadata.get("generated")]})
+    """Исходный участок -- без того, что добавил GreenPlan: посадок и МАФ
+    (metadata.generated) и новых дорожек (greenplan/improvements.py)."""
+    return scene.model_copy(
+        update={
+            "objects": [o for o in scene.objects if not o.metadata.get("generated")],
+            "restrictions": [z for z in scene.restrictions if not is_greenplan_zone(z)],
+        }
+    )
 
 
 # --- Оформление ------------------------------------------------------------
@@ -331,7 +340,12 @@ def _site_decision(a: ZoneAssignment) -> str:
     return f"Стиль участка: {STYLE_LABELS[a.site_style]}{lead}. Приёмы зон подобраны в этом стиле."
 
 
-def _section_decisions(doc, assignments: list[ZoneAssignment]) -> None:
+def _section_decisions(
+    doc,
+    assignments: list[ZoneAssignment],
+    options: Optional[GreenPlanOptions] = None,
+    notes: Optional[list[str]] = None,
+) -> None:
     doc.add_heading("3. Принятые решения", level=1)
     doc.add_paragraph(
         "Сначала принято общее решение на участок — стиль озеленения по похожим реализованным проектам и "
@@ -339,6 +353,13 @@ def _section_decisions(doc, assignments: list[ZoneAssignment]) -> None:
         "растений — по ассортименту и нормам. Расстановка рассчитана детерминированно, с проверкой отступов "
         "в каждой точке."
     )
+    if options is not None:
+        doc.add_paragraph("Параметры, заданные пользователем:")
+        labels = {item.id: item.label for item in catalog_by_id().values()}
+        for row in options.summary(labels):
+            doc.add_paragraph(_text(row[0].upper() + row[1:]) + ".", style="List Bullet")
+    for note in notes or []:
+        doc.add_paragraph(_text(note[0].upper() + note[1:]) + ".", style="List Bullet")
     if not assignments:
         doc.add_paragraph("Зон, пригодных для посадки, на участке нет.")
         return
@@ -396,6 +417,24 @@ def _section_schedule(doc, assortment: list[AssortmentRow]) -> None:
     lawn = sum(r.count for r in assortment if r.unit == "м²")
     total = f"Итого: деревьев — {trees}, кустарников — {bushes}"
     doc.add_paragraph(total + (f", газона (устройство) — {_fmt_area(lawn)} м²." if lawn else "."))
+
+
+def _section_improvements(doc, rows: list[AssortmentRow]) -> None:
+    """Благоустройство по параметрам пользователя (greenplan/improvements.py)."""
+    if not rows:
+        return
+    doc.add_heading("4.1. Благоустройство", level=2)
+    doc.add_paragraph(
+        "Дорожки проложены от подъездов к подъездам и к парковкам; фонари и скамейки с урнами — вдоль "
+        "дорожек. Посадки размещены с нормативными отступами от них (дерево — не ближе 0,7 м от края "
+        "дорожки и 4 м от опоры освещения, СП 42.13330.2016, табл. 9.1)."
+    )
+    _table(
+        doc,
+        ["Поз.", "Наименование", "Кол.", "Примечание"],
+        [[str(i), r.species, _schedule_quantity(r), "ширина 1,5 м" if r.unit == "м²" else "—"] for i, r in enumerate(rows, 1)],
+        [14, 70, 30, 56],
+    )
 
 
 def _schedule_quantity(row: AssortmentRow) -> str:
@@ -495,19 +534,30 @@ def _section_ai_text(doc, report: Optional[str]) -> None:
 # --- Сборка ----------------------------------------------------------------
 
 
-def build_document(scene: Scene, assignments: list[ZoneAssignment], report: Optional[str] = None, title: Optional[str] = None) -> bytes:
+def build_document(
+    scene: Scene,
+    assignments: list[ZoneAssignment],
+    report: Optional[str] = None,
+    title: Optional[str] = None,
+    options: Optional[GreenPlanOptions] = None,
+    notes: Optional[list[str]] = None,
+) -> bytes:
     """DOCX пояснительной записки по уже посчитанной сцене GreenPlan (с
-    новыми объектами, metadata.generated) и её решениям по зонам."""
+    новыми объектами, metadata.generated) и её решениям по зонам. options и
+    notes -- параметры запуска и заметки из /generate (раздел 3)."""
     title = (title or "").strip() or "Участок озеленения"
     by_id = catalog_by_id()
     # Газон -- производная от посадок и покрытий: пересчитываем, а не берём
     # из запроса, чтобы записка совпадала с планом после ручных правок.
-    scene = scene.model_copy(update={"lawns": plan_lawns(scene, by_id)})
+    # Газон выключен в параметрах -- его нет и в записке.
+    lawn_on = options is None or options.lawn
+    scene = scene.model_copy(update={"lawns": plan_lawns(scene, by_id) if lawn_on else []})
     base = _without_generated(scene)
     characteristics = characterize_site(base)
     generated = [o for o in scene.objects if o.metadata.get("generated")]
     violations = find_violations(scene)
     assortment = summarize_assortment(generated, by_id) + lawn_assortment(scene.lawns)
+    plants = sum(r.count for r in assortment if r.unit != "м²")
 
     doc = _new_document()
     heading = doc.add_heading("Пояснительная записка к проекту озеленения", level=0)
@@ -518,10 +568,11 @@ def build_document(scene: Scene, assignments: list[ZoneAssignment], report: Opti
     meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
     meta.runs[0].italic = True
 
-    _section_general(doc, title, characteristics, base, len(generated))
+    _section_general(doc, title, characteristics, base, plants)
     _section_norms(doc, base, assignments)
-    _section_decisions(doc, assignments)
+    _section_decisions(doc, assignments, options, notes)
     _section_schedule(doc, assortment)
+    _section_improvements(doc, improvements_assortment(scene))
     _section_violations(doc, violations, {o.id for o in generated})
     _section_technical(
         doc,

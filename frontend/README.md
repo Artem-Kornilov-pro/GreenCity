@@ -21,7 +21,7 @@ npm run build            # production-сборка в dist/
 | Папка / файл | Что внутри |
 |---|---|
 | `pages/` | Лендинг, вход/регистрация, список проектов |
-| `pages/editor/` | Редактор: `EditorPage.tsx` (состояние и обработчики) и его части — `EditorTopBar`, `EditorSidebar` (каталог, выбранный объект, легенда), `AssistantPanel` (правка текстом), `GreenPlanPanel`, общая выезжающая панель `SlidePanel`, `SaveAsDialog`, `StatusBanners` |
+| `pages/editor/` | Редактор: `EditorPage.tsx` (состояние и обработчики) и его части — `EditorTopBar`, `EditorSidebar` (каталог, выбранный объект, легенда), `AssistantPanel` (правка текстом), `GreenPlanPanel`, диалог параметров `GreenPlanOptionsDialog`, общая выезжающая панель `SlidePanel`, `SaveAsDialog`, `StatusBanners` |
 | `scene/` | 3D-сцена: здания, зоны ограничений, газон GreenPlan (`Lawns.tsx`), объекты (с GPU-инстансингом повторяющихся моделей), выделение области мышкой, камера |
 | `api.ts`, `auth.ts`, `catalog.ts` | Запросы к бэкенду, токены, каталог видов |
 | `geometry.ts`, `setbackNorms.ts` | Проверка нарушений отступов при перетаскивании; `setbackNorms.ts` — копия `backend/core/setback_norms.py` (синхронизируется вручную) |

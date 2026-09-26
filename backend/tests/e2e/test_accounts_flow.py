@@ -20,7 +20,7 @@ def test_register_save_greenplan_result_reopen_and_logout(client, e2e):
     assert r.status_code == 200, r.text
     project_id = r.json()["id"]
 
-    planned = client.post("/api/greenplan/generate", json=scene).json()["scene"]
+    planned = client.post("/api/greenplan/generate", json={"scene": scene}).json()["scene"]
     r = client.put(f"/api/projects/{project_id}", json={"scene": planned}, headers=_auth(access))
     assert r.status_code == 200
 
@@ -62,4 +62,4 @@ def test_projects_are_private_and_limited(client, e2e):
 
     # Без токена -- 401, редактор при этом работает без аккаунта.
     assert client.get("/api/projects").status_code == 401
-    assert client.post("/api/greenplan/generate", json=scene).status_code == 200
+    assert client.post("/api/greenplan/generate", json={"scene": scene}).status_code == 200

@@ -15,14 +15,14 @@ from fastapi import APIRouter, Query
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from core.plant_catalog import catalog_by_id, load_catalog
+from core.plant_catalog import catalog_by_id
 from core.schemas import Scene
-from greenplan.assortment_report import AssortmentRow, lawn_assortment, summarize_assortment
+from greenplan.assortment_report import AssortmentRow, improvements_assortment, lawn_assortment, summarize_assortment
 from greenplan.decision_report import DecisionReportUnavailable, generate_report
-from greenplan.deterministic_placement import generate_for_scene
 from greenplan.document import build_document
-from greenplan.lawn import plan_lawns
+from greenplan.options import GreenPlanOptions
 from greenplan.pattern_assignment import ZoneAssignment
+from greenplan.pipeline import run_greenplan
 from greenplan.violation_report import Violation, find_violations
 from monitoring import metrics
 
@@ -44,57 +44,59 @@ _greenplan_generate_lock = threading.Lock()
 _greenplan_report_lock = threading.Lock()
 
 
+class GreenPlanGenerateRequest(BaseModel):
+    scene: Scene
+    # Параметры пользователя (диалог GreenPlan): стиль, что сажать,
+    # предпочтительные виды, благоустройство. Без них -- поведение по умолчанию.
+    options: GreenPlanOptions = GreenPlanOptions()
+
+
 class GreenPlanGenerateResult(BaseModel):
     scene: Scene
     assignments: list[ZoneAssignment]
     violations: list[Violation]
     assortment: list[AssortmentRow]
+    # Ведомость благоустройства: новые дорожки (м²), фонари, скамейки, урны.
+    improvements: list[AssortmentRow] = []
+    # Для пользователя: что из параметров не удалось выполнить и почему
+    # (предпочтительный вид не по нормам, нет двора под дорожки и т.п.).
+    notes: list[str] = []
 
 
-# Синхронный def -- то же обоснование, что и у generate_greenery выше:
-# deterministic_placement/violation_report/assortment_report -- чистая
+# Синхронный def -- расстановка, нарушения и ведомость -- чистая
 # CPU-геометрия, ни одного await. НАМЕРЕННО без текста-отчёта (LLM) -- тот
-# вынесен в отдельный /api/greenplan/report ниже: расстановка/нарушения/
-# ведомость считаются за доли секунды (find_violations -- через STRtree,
-# см. violation_report.py), а вызов Ollama занимает ~30 секунд сам по себе.
-# Раньше оба шага были одним запросом, и фронтенд ждал уже готовый результат
-# все эти 30 секунд ради текста, который к самой расстановке не относится.
+# вынесен в отдельный /api/greenplan/report ниже: вызов Ollama занимает ~30
+# секунд сам по себе, и фронтенд не должен ждать его ради уже готовой
+# расстановки.
 @router.post("/api/greenplan/generate", response_model=GreenPlanGenerateResult)
-def greenplan_generate(scene: Scene, k: int = Query(default=3, ge=1, le=9, description="Число ближайших проектов-соседей для retrieval.")):
-    """Автоозеленение по прошлым проектам (GreenPlan, issue #23, Этапы 3-6) --
-    в отличие от /api/generate-greenery (сетка без понимания похожих
-    проектов), здесь паттерн для каждой геометрической зоны участка выбирается
-    по тому, что реально делали архитекторы на похожих участках из
-    retrieval-корпуса (backend/greenplan/pattern_corpus.py), расстановка полностью
-    детерминирована (backend/greenplan/deterministic_placement.py).
-
-    Каталог видов не параметризуется с фронта -- берутся все деревья/кусты
-    базового каталога (backend/core/plant_catalog.py) по категории.
+def greenplan_generate(
+    request: GreenPlanGenerateRequest,
+    k: int = Query(default=3, ge=1, le=9, description="Число ближайших проектов-соседей для retrieval."),
+):
+    """Автоозеленение по прошлым проектам (GreenPlan, issue #23, Этапы 3-6)
+    с параметрами пользователя (greenplan/options.py). Сначала общее решение
+    на участок (стиль, палитра видов), потом приёмы зон; благоустройство --
+    до посадок. Повторный запуск заменяет прошлый результат GreenPlan в
+    присланной сцене, а не добавляет второй слой (greenplan/pipeline.py).
 
     Текст-объяснение -- отдельным запросом, см. /api/greenplan/report ниже:
     он занимает ~30 секунд (локальная LLM) и не должен блокировать уже
     готовый детерминированный результат.
     """
     with _greenplan_generate_lock:
-        catalog = load_catalog()
-        trees = [c for c in catalog if c.category == "tree"]
-        bushes = [c for c in catalog if c.category == "bush" and c.object_type == "bush"]
-
-        new_objects, assignments = generate_for_scene(scene, trees, bushes, k)
-        scene.objects = [*scene.objects, *new_objects]
-        # Газон -- после посадок: клумбы кустарника из газона вычитаются.
-        by_id = catalog_by_id()
-        scene.lawns = plan_lawns(scene, by_id)
-
+        run = run_greenplan(request.scene, request.options, k)
         logging.getLogger("greencity.greenplan").info(
-            "GreenPlan: %d новых объектов, %d зон, газон %d участков", len(new_objects), len(assignments), len(scene.lawns)
+            "GreenPlan: %d новых посадок, %d объектов и %d дорожек благоустройства, %d зон, газон %d участков",
+            len(run.new_plants), len(run.improvements.objects), len(run.improvements.zones),
+            len(run.assignments), len(run.scene.lawns),
         )
-
         return GreenPlanGenerateResult(
-            scene=scene,
-            assignments=assignments,
-            violations=find_violations(scene),
-            assortment=summarize_assortment(new_objects, by_id) + lawn_assortment(scene.lawns),
+            scene=run.scene,
+            assignments=run.assignments,
+            violations=find_violations(run.scene),
+            assortment=summarize_assortment(run.new_plants, catalog_by_id()) + lawn_assortment(run.scene.lawns),
+            improvements=improvements_assortment(run.scene),
+            notes=run.notes,
         )
 
 
@@ -134,6 +136,10 @@ class GreenPlanDocumentRequest(BaseModel):
     # приложение с пометкой "текст ИИ -- проверить". Заново LLM не вызываем.
     report: Optional[str] = None
     title: Optional[str] = None
+    # Параметры запуска и заметки из /generate -- в записку ("Параметры,
+    # заданные пользователем"); без них записка -- как раньше.
+    options: Optional[GreenPlanOptions] = None
+    notes: list[str] = []
 
 
 DOCX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -149,7 +155,10 @@ def greenplan_document(request: GreenPlanDocumentRequest):
     ведомость и характеристики участка пересчитываются здесь по присланной
     сцене, а не берутся с фронтенда на веру."""
     with _greenplan_generate_lock:
-        content = build_document(request.scene, request.assignments, report=request.report, title=request.title)
+        content = build_document(
+            request.scene, request.assignments, report=request.report, title=request.title,
+            options=request.options, notes=request.notes,
+        )
     metrics.greenplan_documents_total.inc()
     logging.getLogger("greencity.greenplan").info("выгружена пояснительная записка: %d зон", len(request.assignments))
     # filename -- ASCII для старых клиентов, filename* -- с названием участка

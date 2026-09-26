@@ -98,6 +98,7 @@ def assign_patterns(
     zones: list[GeometricZone],
     k: int = 3,
     characteristics: SiteCharacteristics | None = None,
+    style: str = "auto",
 ) -> list[ZoneAssignment]:
     """characteristics -- проброс уже посчитанного characterize_site(scene)
     вызывающим кодом (deterministic_placement.generate_for_scene), который
@@ -119,7 +120,12 @@ def assign_patterns(
     ranked = nearest_projects(characteristics, len(CORPUS_SLUGS))
     pattern_log = load_pattern_log()
     kinds = list(dict.fromkeys(zone.kind for zone in zones))
-    site_style, lead_project = _site_style(set(kinds), ranked, pattern_log, k)
+    if style in ("regular", "landscape"):
+        # Стиль задал пользователь (параметры GreenPlan) -- голосование за
+        # стиль не нужно, ведущий аналог -- самый похожий проект этого стиля.
+        site_style, lead_project = style, _lead_of_style(style, set(kinds), ranked, pattern_log)
+    else:
+        site_style, lead_project = _site_style(set(kinds), ranked, pattern_log, k)
 
     chosen: dict[str, ZoneAssignment] = {}
     for kind in kinds:
@@ -181,11 +187,7 @@ def _site_style(
     for neighbor in ranked:
         if counted >= k or neighbor.similarity < MIN_VOTE_SIMILARITY:
             break
-        styles = {
-            PATTERN_LIBRARY[record.pattern].style
-            for kind, record in pattern_log.get(neighbor.slug, {}).items()
-            if kind in kinds and kind in PATTERN_LIBRARY[record.pattern].zone_kinds
-        } - {"neutral"}
+        styles = _styles_of(neighbor.slug, kinds, pattern_log)
         if not styles:
             continue
         for style in sorted(styles):
@@ -196,6 +198,31 @@ def _site_style(
         return None, None
     style = max(sorted(weight), key=lambda st: weight[st])
     return style, lead[style]
+
+
+def _styles_of(slug: str, kinds: set[ZoneKind], pattern_log: dict[str, dict[ZoneKind, PatternRecord]]) -> set[str]:
+    return {
+        PATTERN_LIBRARY[record.pattern].style
+        for kind, record in pattern_log.get(slug, {}).items()
+        if kind in kinds and kind in PATTERN_LIBRARY[record.pattern].zone_kinds
+    } - {"neutral"}
+
+
+def _lead_of_style(
+    style: str,
+    kinds: set[ZoneKind],
+    ranked: list[NeighborMatch],
+    pattern_log: dict[str, dict[ZoneKind, PatternRecord]],
+) -> str | None:
+    """Самый похожий проект (не ниже MIN_VOTE_SIMILARITY) с решением в
+    заданном стиле для видов зон участка; None -- таких нет, зоны получат
+    типовые приёмы стиля."""
+    for neighbor in ranked:
+        if neighbor.similarity < MIN_VOTE_SIMILARITY:
+            return None
+        if style in _styles_of(neighbor.slug, kinds, pattern_log):
+            return neighbor.slug
+    return None
 
 
 def _voters(
