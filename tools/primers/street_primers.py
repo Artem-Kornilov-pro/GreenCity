@@ -90,8 +90,12 @@ def street_front_gardens() -> Primer:
     for x in (41, 79):
         p.zone(f"PATH_PASSAGE_{x}", rect(x - 1.1, y_side, x + 1.1, h))
     p.zone("HEATING_T1", rect(0, 36.5, w, 38.0))  # ввод теплосети за домами
-    for x in range(6, int(w), 8):
-        p.plant(BEREZA if x % 16 else CHEREMUHA, x, 43.5)
+    # За домами -- регулярный боскет: два ряда строго друг против друга,
+    # берёзы ближе к домам (4,5 м от теплосети -- норма 4 м), черёмуха у
+    # границы; проходы во двор делят его на три части.
+    for x in range(5, int(w), 6):
+        p.plant(BEREZA, x, 42.5)
+        p.plant(CHEREMUHA, x, 46.5)
     return p
 
 
@@ -225,8 +229,13 @@ def street_townhouses() -> Primer:
         p.plant(YABLONYA, x0 + 3.5, 14.95)
         p.plant(TUYA, x0 + 12.5, 14.95)
         p.plant(SIREN, x0 - 2, 25)
-        p.plant(KLEN, x0 + 8, 41)
         hedge(p, SP_BUMALDA, [(x0 + 1, 33), (x0 + 15, 33)], 1.4)
+    # Общий сад за домами: яблони Недзведцкого по треугольной сетке --
+    # ряды через 4,3 м со сдвигом на полшага, каждая яблоня в 5 м от шести
+    # соседних.
+    for j, y in enumerate((36.0, 40.33, 44.66)):
+        for x in range(5, int(w) - 2, 5):
+            p.plant(YABLONYA, x + (2.5 if j % 2 else 0.0), y)
     hedge(p, KIZILNIK, [(1.5, 48.3), (124.5, 48.3)], 1.1)
     for x in range(15, int(w), 20):
         p.put("lamp", x, 11.3)

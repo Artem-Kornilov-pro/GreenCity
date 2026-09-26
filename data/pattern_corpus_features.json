@@ -561,8 +561,9 @@
   "characteristics": {
    "building_count": 3,
    "existing_tree_species": {
-    "Береза повислая": 14,
-    "Липа мелколистная": 15
+    "Береза повислая": 19,
+    "Липа мелколистная": 15,
+    "Черемуха Маака": 19
    },
    "plantable_area_sqm": 1120.6,
    "plantable_ratio": 0.1945,
@@ -578,7 +579,7 @@
    "territory_type_is_heuristic": true,
    "total_area_sqm": 5760.0
   },
-  "dxf_sha256": "24983df0885204cc85225bbbaa5f55720e3c1921ca9360a1aa49554c3c66e912"
+  "dxf_sha256": "684b6a25b7f08a863500116779eb43bb446c8a0c6046350010538317325c3f2b"
  },
  "32_street_shops_primer": {
   "characteristics": {
@@ -656,9 +657,8 @@
    "building_count": 6,
    "existing_tree_species": {
     "Береза повислая": 12,
-    "Клен остролистный": 6,
     "Туя западная": 6,
-    "Яблоня Недзведцкого": 6
+    "Яблоня Недзведцкого": 78
    },
    "plantable_area_sqm": 2455.8,
    "plantable_ratio": 0.3898,
@@ -673,7 +673,7 @@
    "territory_type_is_heuristic": true,
    "total_area_sqm": 6300.0
   },
-  "dxf_sha256": "8983651de2875aae7c81f652309e576e73648c2441119a5d24d45af4974e9aee"
+  "dxf_sha256": "18203d824bbff040986726487786cd82414debe9c67cbea8061d688493de72cc"
  },
  "36_street_clinic_primer": {
   "characteristics": {
