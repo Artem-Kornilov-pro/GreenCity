@@ -36,6 +36,13 @@ services:
     environment:
       - UVICORN_WORKERS=${UVICORN_WORKERS:-3}
       - UVICORN_RELOAD=0
+      # uvicorn раз в несколько секунд опрашивает рабочие процессы и убивает
+      # не ответивший за 5 с (по умолчанию) -- посреди тяжёлого запроса это
+      # давало 502. 120 с -- с запасом на самый долгий блокирующий шаг.
+      - UVICORN_TIMEOUT_WORKER_HEALTHCHECK=120
+      # Пачек DWG одновременно (backend/exchange/dwg_job.py): одна -- до
+      # ~1,8 ГБ в пике, при mem_limit 3g безопасна одна.
+      - DWG_MAX_PARALLEL=${DWG_MAX_PARALLEL:-1}
     cpus: 3.0
     mem_limit: 3g
     logging: *logging

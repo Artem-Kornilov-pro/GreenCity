@@ -27,6 +27,23 @@ server {
         proxy_send_timeout 300s;
     }
 
+    # Разбор пачки DWG: одна пачка -- до ~2-3 минут, и одновременно их
+    # разбирается не больше DWG_MAX_PARALLEL (backend/exchange/dwg_job.py),
+    # остальные ждут очереди до 10 минут, сам разбор -- не дольше 15. При
+    # 300 с третья одновременная загрузка обрывалась бы здесь с 504, хотя
+    # бэкенд её честно дорабатывал.
+    location = /api/parse-dwg {
+        proxy_pass ${BACKEND_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 200m;
+        proxy_read_timeout 1800s;
+        proxy_send_timeout 1800s;
+    }
+
     # Файлы сборки с хешем в имени -- неизменяемы, кешируются надолго.
     location /assets/ {
         add_header Cache-Control "public, max-age=31536000, immutable";
