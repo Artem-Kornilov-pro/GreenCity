@@ -12,11 +12,16 @@
 системе, как только завершается, а падение в нём (нехватка памяти) не роняет
 рабочий процесс uvicorn -- эндпоинт отвечает понятной ошибкой вместо 502.
 
-Зачем очередь. Даже в отдельных процессах три пачки одновременно -- это три
-пика по ~1,8 ГБ. Слоты -- файловые блокировки (fcntl.flock) в общем /tmp
+Параллельность. Внутри пачки файлы разбираются в DWG_WORKERS отдельных
+процессах (exchange/dwg_batch_converter.py): каждый держит свой файл, ~0,5 ГБ,
+главный процесс пачки -- ~0,75 ГБ на склейку и разбор (было 1,6 ГБ на всё в
+одном процессе). Реальная пачка из 5 файлов -- 18,5 с вместо 28,5. Одновременно
+разбираются до DWG_MAX_PARALLEL пачек с разных аккаунтов: на сервере 4 vCPU /
+8 ГБ (docker-compose.prod.yml, лимит бэкенда 4 ГБ) -- 2 пачки по 3 процесса,
+в худшем случае ~3 ГБ. Слоты -- файловые блокировки (fcntl.flock) в общем /tmp
 контейнера, поэтому ограничение действует на все процессы uvicorn сразу, а не
-на каждый по отдельности. Лишние загрузки ждут своей очереди, а не отнимают
-память друг у друга.
+на каждый по отдельности. Сверх лимита загрузки ждут своей очереди, а не
+отнимают память друг у друга.
 
 Сцена пишется дочерним процессом прямо в JSON-файл, и обработчик отдаёт эти
 байты как есть: 30 МБ JSON не превращаются в питоновский словарь в рабочем
@@ -44,10 +49,12 @@ from core.paths import BACKEND_DIR
 
 log = logging.getLogger("greencity.parse")
 
-# Сколько пачек DWG разбирается одновременно на весь backend. Одна пачка --
-# до ~1,8 ГБ в пике: при лимите контейнера 3 ГБ (docker-compose.prod.yml)
-# безопасна одна. Больше -- только вместе с бо́льшим mem_limit.
-DEFAULT_MAX_PARALLEL = 1
+# Сколько пачек DWG разбирается одновременно на весь backend (DWG_MAX_PARALLEL)
+# и сколько процессов разбирает файлы одной пачки (DWG_WORKERS). Пачка -- до
+# ~0,75 ГБ в главном процессе плюс ~0,5 ГБ на каждый рабочий: 2 x 3 укладываются
+# в лимит бэкенда 4 ГБ (docker-compose.prod.yml) вместе с процессами uvicorn.
+DEFAULT_MAX_PARALLEL = 2
+DEFAULT_WORKERS = 3
 # Сколько ждать свободного слота, прежде чем ответить "сервер занят".
 SLOT_WAIT_S = 600
 # Потолок на разбор одной пачки: зависший dwg2dxf/ezdxf не должен держать
@@ -77,7 +84,8 @@ def build_scene(dwg_paths: list[Path], work_dir: Path) -> tuple[dict, dict]:
     from exchange.dxf_parser import parse_dxf_doc
 
     try:
-        result = dwg_batch_converter.merge_dwg_files(dwg_paths, work_dir)
+        workers = max(1, int(os.environ.get("DWG_WORKERS", DEFAULT_WORKERS)))
+        result = dwg_batch_converter.merge_dwg_files(dwg_paths, work_dir, workers=workers)
     except dwg_batch_converter.Dwg2DxfNotFound as e:
         raise DwgJobError(503, str(e), "tool_missing") from e
 

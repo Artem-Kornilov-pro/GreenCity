@@ -44,7 +44,8 @@ def fake_dwg2dxf(monkeypatch, tmp_path):
             # то, из-за чего text=True раньше падал внутри subprocess.run
             # (см. комментарий у _convert_one).
             return FakeCompleted(1, stderr=b"dwg2dxf: unsupported object type \xbd")
-        _write_dxf_with_line(out_path, layer=in_path.stem)
+        # Слой дорожки -- его парсер читает, значит склейка его сохранит.
+        _write_dxf_with_line(out_path, layer=f"PATH_{in_path.stem}")
         return FakeCompleted(0)
 
     monkeypatch.setattr("exchange.dwg_batch_converter.shutil.which", fake_which)
@@ -136,3 +137,58 @@ def test_merge_dwg_files_processes_in_original_order_regardless_of_size(fake_dwg
     result = merge_dwg_files(paths, tmp_path)
 
     assert result.converted == ["c.dwg", "a.dwg", "b.dwg"]
+
+
+
+# --- Только то, что читает парсер; параллельная обработка файлов ------------
+
+
+def test_merge_keeps_only_layers_the_parser_reads_and_all_texts(monkeypatch, tmp_path):
+    def fake_run(args, capture_output):
+        doc = ezdxf.new()
+        msp = doc.modelspace()
+        msp.add_line((0, 0), (1, 1), dxfattribs={"layer": "ROAD_EDGE"})
+        msp.add_line((0, 0), (5, 5), dxfattribs={"layer": "Топосъемка_рельеф"})
+        msp.add_text("Дом 1", dxfattribs={"layer": "Подписи"})
+        doc.saveas(Path(args[2]))
+        return type("Done", (), {"returncode": 0, "stdout": b"", "stderr": b""})()
+
+    monkeypatch.setattr("exchange.dwg_batch_converter.shutil.which", lambda name: "/usr/bin/dwg2dxf")
+    monkeypatch.setattr("exchange.dwg_batch_converter.subprocess.run", fake_run)
+    dwg = tmp_path / "a.dwg"
+    dwg.write_bytes(b"x")
+    msp = merge_dwg_files([dwg], tmp_path).doc.modelspace()
+    assert [e.dxf.layer for e in msp.query("LINE")] == ["ROAD_EDGE"]
+    assert [e.dxf.text for e in msp.query("TEXT")] == ["Дом 1"]
+
+
+class _InProcessPool:
+    """Пул "процессов" в том же процессе -- подмены dwg2dxf в настоящие
+    дочерние процессы не переходят."""
+
+    def __init__(self, max_workers):
+        self.max_workers = max_workers
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def map(self, fn, *iterables):
+        return list(map(fn, *iterables))
+
+
+def test_parallel_merge_gives_the_same_document_in_the_original_order(fake_dwg2dxf, monkeypatch, tmp_path):
+    monkeypatch.setattr("exchange.dwg_batch_converter.ProcessPoolExecutor", _InProcessPool)
+    paths = []
+    for name, body in (("c", b"good"), ("a", b"good"), ("bad", b"bad"), ("b", b"good")):
+        path = tmp_path / f"{name}.dwg"
+        path.write_bytes(body)
+        paths.append(path)
+    result = merge_dwg_files(paths, tmp_path, workers=3)
+    assert result.converted == ["c.dwg", "a.dwg", "b.dwg"]
+    assert list(result.failed) == ["bad.dwg"]
+    assert [e.dxf.layer for e in result.doc.modelspace().query("LINE")] == ["PATH_c", "PATH_a", "PATH_b"]
+    # Полный промежуточный DXF удаляется, остаётся компактный.
+    assert not list(tmp_path.glob("c.dxf")) and list(tmp_path.glob("c.compact.dxf"))

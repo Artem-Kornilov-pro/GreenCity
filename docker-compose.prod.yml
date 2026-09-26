@@ -4,9 +4,11 @@
 #     # = docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 #
 # Рассчитан на сервер 4 vCPU (2 ГГц) / 8 ГБ ОЗУ / 40 ГБ SSD. Бюджет памяти:
-#   backend 3 ГБ (3 процесса, до ~750 МиБ каждый на крупном участке)
+#   backend 4 ГБ (3 процесса uvicorn, до ~750 МиБ каждый на крупном участке;
+#   разбор DWG -- до 2 пачек одновременно, каждая -- главный процесс ~0,75 ГБ
+#   и до 3 рабочих по ~0,5 ГБ)
 #   + mongo 1 ГБ + redis 256 МБ + frontend 128 МБ
-#   + мониторинг ~0,6 ГБ + система и Docker ~0,8 ГБ  =  ~5,8 ГБ,
+#   + мониторинг ~0,6 ГБ + система и Docker ~0,8 ГБ  =  ~6,8 ГБ,
 #   остальное -- запас и файловый кеш.
 # CPU: backend -- 3 ядра (тяжёлый запрос занимает одно ядро на 2-30 с при
 # 2 ГГц), четвёртое -- mongo, nginx, мониторинг и система, чтобы сайт
@@ -40,11 +42,13 @@ services:
       # не ответивший за 5 с (по умолчанию) -- посреди тяжёлого запроса это
       # давало 502. 120 с -- с запасом на самый долгий блокирующий шаг.
       - UVICORN_TIMEOUT_WORKER_HEALTHCHECK=120
-      # Пачек DWG одновременно (backend/exchange/dwg_job.py): одна -- до
-      # ~1,8 ГБ в пике, при mem_limit 3g безопасна одна.
-      - DWG_MAX_PARALLEL=${DWG_MAX_PARALLEL:-1}
+      # Разбор DWG (backend/exchange/dwg_job.py): до 2 пачек с разных
+      # аккаунтов одновременно, файлы пачки -- в 3 процессах параллельно.
+      # Худший случай ~3 ГБ -- в пределах mem_limit вместе с uvicorn.
+      - DWG_MAX_PARALLEL=${DWG_MAX_PARALLEL:-2}
+      - DWG_WORKERS=${DWG_WORKERS:-3}
     cpus: 3.0
-    mem_limit: 3g
+    mem_limit: 4g
     logging: *logging
 
   frontend:

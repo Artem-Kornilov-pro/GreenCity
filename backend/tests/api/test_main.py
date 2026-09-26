@@ -123,7 +123,7 @@ def test_parse_dwg_rejects_upload_without_any_dwg_file(client):
 
 
 def test_parse_dwg_returns_503_when_tool_missing(client, monkeypatch):
-    def _raise(dwg_paths, intermediate_dir):
+    def _raise(dwg_paths, intermediate_dir, workers=1):
         raise dwg_batch_converter.Dwg2DxfNotFound("dwg2dxf не найден")
 
     monkeypatch.setattr(dwg_batch_converter, "merge_dwg_files", _raise)
@@ -132,7 +132,7 @@ def test_parse_dwg_returns_503_when_tool_missing(client, monkeypatch):
 
 
 def test_parse_dwg_returns_400_when_every_file_fails(client, monkeypatch):
-    def _all_failed(dwg_paths, intermediate_dir):
+    def _all_failed(dwg_paths, intermediate_dir, workers=1):
         import ezdxf
 
         result = dwg_batch_converter.BatchConversionResult(doc=ezdxf.new())
@@ -149,7 +149,7 @@ def test_parse_dwg_success_returns_scene_with_warnings_for_failed_files(client, 
     fake_scene = {"boundary": None, "restrictions": [], "objects": [], "windows": [], "canopies": [], "curbs": [],
                   "meta": {"scale": 1.0, "insunits": 6, "origin": {"x": 0, "y": 0}, "buildingCount": 0, "pointObjectCount": 0}}
 
-    def _partial_success(dwg_paths, intermediate_dir):
+    def _partial_success(dwg_paths, intermediate_dir, workers=1):
         import ezdxf
 
         result = dwg_batch_converter.BatchConversionResult(doc=ezdxf.new())
@@ -176,7 +176,7 @@ def test_parse_dwg_success_without_failures_has_no_warnings_key(client, monkeypa
     fake_scene = {"boundary": None, "restrictions": [], "objects": [], "windows": [], "canopies": [], "curbs": [],
                   "meta": {"scale": 1.0, "insunits": 6, "origin": {"x": 0, "y": 0}, "buildingCount": 0, "pointObjectCount": 0}}
 
-    def _full_success(dwg_paths, intermediate_dir):
+    def _full_success(dwg_paths, intermediate_dir, workers=1):
         import ezdxf
 
         result = dwg_batch_converter.BatchConversionResult(doc=ezdxf.new())

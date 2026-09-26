@@ -33,7 +33,7 @@ def test_build_scene_parses_merged_doc_in_memory_same_as_through_a_file(monkeypa
     doc.saveas(tmp_path / "combined.dxf")
     expected = parse_dxf_file(str(tmp_path / "combined.dxf"))
 
-    def _merged(dwg_paths, work_dir):
+    def _merged(dwg_paths, work_dir, workers=1):
         result = dwg_batch_converter.BatchConversionResult(doc=_doc_with_site())
         result.converted = ["a.dwg"]
         result.failed = {"b.dwg": "unsupported"}
@@ -48,7 +48,7 @@ def test_build_scene_parses_merged_doc_in_memory_same_as_through_a_file(monkeypa
 
 
 def test_build_scene_all_failed_reports_outcome_and_failed_count(monkeypatch, tmp_path):
-    def _all_failed(dwg_paths, work_dir):
+    def _all_failed(dwg_paths, work_dir, workers=1):
         result = dwg_batch_converter.BatchConversionResult(doc=ezdxf.new())
         result.failed = {p.name: "не читается" for p in dwg_paths}
         return result
