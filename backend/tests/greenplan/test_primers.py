@@ -13,8 +13,14 @@ from greenplan.violation_report import find_violations
 PRIMERS = [slug for slug in CORPUS_SLUGS if slug.endswith("_primer")]
 
 
-def test_ten_primers():
-    assert len(PRIMERS) == 10
+def test_twenty_primers_half_of_them_streets_with_houses():
+    assert len(PRIMERS) == 20
+    streets = [slug for slug in PRIMERS if "_street_" in slug]
+    assert len(streets) == 10
+    for slug in streets:
+        scene = _corpus_scenes()[slug]
+        assert any(o.type == "building" for o in scene.objects)
+        assert any(o.type == "entrance" for o in scene.objects)
 
 
 @pytest.mark.parametrize("slug", PRIMERS)

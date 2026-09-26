@@ -18,55 +18,35 @@ from __future__ import annotations
 import math
 import sys
 
-from primer_kit import Primer, along, arc_band, circle, rect, strip
-
-LIPA = "Липа мелколистная"
-KLEN = "Клен остролистный"
-EL = "Ель колючая"
-BEREZA = "Береза повислая"
-DUB = "Дуб черешчатый"
-TUYA = "Туя западная"
-YABLONYA = "Яблоня Недзведцкого"
-CHEREMUHA = "Черемуха Маака"
-LISTVENNICA = "Лиственница европейская"
-KIZILNIK = "Кизильник блестящий"
-SP_VANGUTTA = "Спирея Вангутта"
-SP_JAPAN = "Спирея японская"
-SP_BUMALDA = "Спирея Бумальда"
-SP_GRAY = "Спирея серая"
-GORTENZIYA = "Гортензия метельчатая"
-DEREN = "Дерен кроваво-красный"
-SIREN = "Сирень обыкновенная"
-
-
-def hedge(p: Primer, species: str, points, step: float, rows=(0.0,), stagger: bool = True) -> None:
-    """Живая изгородь вдоль ломаной: ряды со смещением rows поперёк, в
-    шахматном порядке, если рядов больше одного."""
-    for i, offset in enumerate(rows):
-        shift = step / 2 if stagger and i % 2 else 0.0
-        for x, y, tx, ty in along(points, step, start=step / 2 + shift):
-            p.plant(species, x - ty * offset, y + tx * offset)
-
-
-def hedge_with_gaps(p: Primer, species: str, a, b, step: float, gaps=(), gap_half: float = 2.6, corner: float = 0.0) -> None:
-    """Изгородь по отрезку a-b с разрывами: gaps -- расстояния от a до
-    середины разрыва (место скамейки), corner -- отступ от концов отрезка
-    (место фонаря или туи на углу)."""
-    length = math.hypot(b[0] - a[0], b[1] - a[1])
-    tx, ty = (b[0] - a[0]) / length, (b[1] - a[1]) / length
-    d = corner + step / 2
-    while d <= length - corner:
-        if all(abs(d - g) > gap_half for g in gaps):
-            p.plant(species, a[0] + tx * d, a[1] + ty * d)
-        d += step
-
-
-def ring_points(cx, cy, r, a0, a1, step_deg):
-    a = a0
-    while a <= a1 + 1e-9:
-        yield cx + r * math.cos(math.radians(a)), cy + r * math.sin(math.radians(a))
-        a += step_deg
-
+from primer_kit import (
+    BEREZA,
+    CHEREMUHA,
+    DEREN,
+    DUB,
+    EL,
+    GORTENZIYA,
+    KIZILNIK,
+    KLEN,
+    LIPA,
+    LISTVENNICA,
+    SIREN,
+    SP_BUMALDA,
+    SP_GRAY,
+    SP_JAPAN,
+    SP_VANGUTTA,
+    TUYA,
+    YABLONYA,
+    Primer,
+    along,
+    arc_band,
+    circle,
+    hedge,
+    hedge_with_gaps,
+    rect,
+    ring_points,
+    strip,
+)
+from street_primers import STREET_BUILDERS
 
 # --- 21. Шумозащитная полоса вдоль дороги ------------------------------------
 
@@ -483,8 +463,9 @@ def network_corridor_garden() -> Primer:
     return p
 
 
-BUILDERS = [road_buffer, circular_plaza, playground_yard, boulevard, classical_building,
+BUILDERS_21_30 = [road_buffer, circular_plaza, playground_yard, boulevard, classical_building,
             stripe_garden, flowing_meadow, oak_squares, green_parking, network_corridor_garden]
+BUILDERS = BUILDERS_21_30 + STREET_BUILDERS
 
 
 if __name__ == "__main__":

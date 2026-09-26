@@ -197,7 +197,21 @@ class Primer:
 
     # --- DXF ------------------------------------------------------------------
 
+    def finalize(self) -> None:
+        """Повторная проверка всего, что уже поставлено, по окончательному
+        набору зон, зданий и подъездов: раскладка идёт по шагам, и посадка,
+        проверенная до того, как на план легли дом или проход, могла
+        оказаться ближе нормы к ним."""
+        plants, furniture = self.plants, self.furniture
+        self.plants, self.furniture = [], [f for f in furniture if f[0] == "entrance"]
+        for species, _, x, y in plants:
+            self.plant(species, x, y)
+        for ftype, x, y, rotation in furniture:
+            if ftype != "entrance":
+                self.put(ftype, x, y, rotation)
+
     def write(self) -> Path:
+        self.finalize()
         doc = ezdxf.new("R2018", setup=False)
         doc.header["$INSUNITS"] = 6  # метры
         msp = doc.modelspace()
@@ -244,3 +258,88 @@ class Primer:
         path.parent.mkdir(parents=True, exist_ok=True)
         doc.saveas(path)
         return path
+
+
+# --- Виды (названия -- как в справочнике: слой DXF = название вида) --------
+
+LIPA = "Липа мелколистная"
+KLEN = "Клен остролистный"
+EL = "Ель колючая"
+BEREZA = "Береза повислая"
+DUB = "Дуб черешчатый"
+TUYA = "Туя западная"
+YABLONYA = "Яблоня Недзведцкого"
+CHEREMUHA = "Черемуха Маака"
+LISTVENNICA = "Лиственница европейская"
+KIZILNIK = "Кизильник блестящий"
+SP_VANGUTTA = "Спирея Вангутта"
+SP_JAPAN = "Спирея японская"
+SP_BUMALDA = "Спирея Бумальда"
+SP_GRAY = "Спирея серая"
+GORTENZIYA = "Гортензия метельчатая"
+DEREN = "Дерен кроваво-красный"
+SIREN = "Сирень обыкновенная"
+
+
+def hedge(p: Primer, species: str, points, step: float, rows=(0.0,), stagger: bool = True) -> None:
+    """Живая изгородь вдоль ломаной: ряды со смещением rows поперёк, в
+    шахматном порядке, если рядов больше одного."""
+    for i, offset in enumerate(rows):
+        shift = step / 2 if stagger and i % 2 else 0.0
+        for x, y, tx, ty in along(points, step, start=step / 2 + shift):
+            p.plant(species, x - ty * offset, y + tx * offset)
+
+
+def hedge_with_gaps(p: Primer, species: str, a, b, step: float, gaps=(), gap_half: float = 2.6, corner: float = 0.0) -> None:
+    """Изгородь по отрезку a-b с разрывами: gaps -- расстояния от a до
+    середины разрыва (место скамейки), corner -- отступ от концов отрезка
+    (место фонаря или туи на углу)."""
+    length = math.hypot(b[0] - a[0], b[1] - a[1])
+    tx, ty = (b[0] - a[0]) / length, (b[1] - a[1]) / length
+    d = corner + step / 2
+    while d <= length - corner:
+        if all(abs(d - g) > gap_half for g in gaps):
+            p.plant(species, a[0] + tx * d, a[1] + ty * d)
+        d += step
+
+
+def ring_points(cx, cy, r, a0, a1, step_deg):
+    a = a0
+    while a <= a1 + 1e-9:
+        yield cx + r * math.cos(math.radians(a)), cy + r * math.sin(math.radians(a))
+        a += step_deg
+
+
+def house(p: Primer, x0: float, y0: float, x1: float, y1: float, floors: int, side: str, entrances: int,
+          path_to: float, label: str | None = None, positions: list[float] | None = None) -> list[tuple[float, float]]:
+    """Жилой дом: здание (3 м на этаж), подъезды равномерно по фасаду side
+    ("S", "N", "W", "E") и дорожка 2 м от каждого подъезда до линии path_to
+    (координата y для S/N, x для W/E) -- обычно край тротуара или
+    внутридворовой дорожки. positions -- свои доли длины фасада для подъездов."""
+    p.building(rect(x0, y0, x1, y1), floors * 3.0, label or f"Жилой дом, {floors} эт.")
+    fractions = positions or [(i + 0.5) / entrances for i in range(entrances)]
+    points = []
+    for f in fractions:
+        if side in ("S", "N"):
+            x, y = x0 + (x1 - x0) * f, (y0 if side == "S" else y1)
+            p.zone(f"PATH_ENTRANCE_{len(p.zones)}", rect(x - 1, min(y, path_to), x + 1, max(y, path_to)))
+        else:
+            x, y = (x0 if side == "W" else x1), y0 + (y1 - y0) * f
+            p.zone(f"PATH_ENTRANCE_{len(p.zones)}", rect(min(x, path_to), y - 1, max(x, path_to), y + 1))
+        p.entrance(x, y)
+        points.append((x, y))
+    return points
+
+
+def facade_shrubs(p: Primer, species: str, x0: float, y0: float, x1: float, y1: float, offset: float = 2.5, step: float = 1.6, sides: str = "SNWE") -> None:
+    """Полоса кустов вдоль фасадов дома на offset от стены (кусты -- не
+    ближе 1,5 м к дому, у подъездов разрыв даёт проверка норм)."""
+    for side in sides:
+        if side == "S":
+            hedge(p, species, [(x0, y0 - offset), (x1, y0 - offset)], step)
+        elif side == "N":
+            hedge(p, species, [(x0, y1 + offset), (x1, y1 + offset)], step)
+        elif side == "W":
+            hedge(p, species, [(x0 - offset, y0), (x0 - offset, y1)], step)
+        else:
+            hedge(p, species, [(x1 + offset, y0), (x1 + offset, y1)], step)
