@@ -493,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461310.7561805556
+2461310.8221180555
   9
 $TDUCREATE
  40
@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461310.7561805556
+2461310.8221180555
   9
 $TDUUPDATE
  40
@@ -553,7 +553,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-18C
+1CD
   9
 $SURFTAB1
  70
@@ -933,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{34A0C03C-35AD-41C9-B7FD-4399959CF3C3}
+{920739EB-5F7E-4FBA-8FFB-C47DECEF36BA}
   9
 $VERSIONGUID
   2
-{5074EE64-1BE1-4CD5-94FE-A5D972679A4E}
+{CC52B9FF-2620-4CA8-A281-B46E7D1D469E}
   9
 $EXTNAMES
 290
@@ -1553,7 +1553,7 @@ LAYER
 100
 AcDbSymbolTable
  70
-26
+25
   0
 LAYER
   5
@@ -2095,30 +2095,6 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-КЛЕН ОСТРОЛИСТНЫЙ
- 70
-0
- 62
-3
-  6
-Continuous
-370
--3
-390
-13
-347
-21
-  0
-LAYER
-  5
-7E
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
 СПИРЕЯ БУМАЛЬДА
  70
 0
@@ -2135,7 +2111,7 @@ Continuous
   0
 LAYER
   5
-17B
+1BC
 330
 1
 100
@@ -2159,7 +2135,7 @@ Continuous
   0
 LAYER
   5
-182
+1C3
 330
 1
 100
@@ -2281,7 +2257,7 @@ ACAD
   0
 APPID
   5
-189
+1CA
 330
 3
 100
@@ -2295,7 +2271,7 @@ HATCHBACKGROUNDCOLOR
   0
 APPID
   5
-18A
+1CB
 330
 3
 100
@@ -4625,24 +4601,6 @@ POINT
 100
 AcDbEntity
   8
-КЛЕН ОСТРОЛИСТНЫЙ
-100
-AcDbPoint
- 10
-13.0
- 20
-41.0
- 30
-0.0
-  0
-POINT
-  5
-7F
-330
-17
-100
-AcDbEntity
-  8
 СПИРЕЯ БУМАЛЬДА
 100
 AcDbPoint
@@ -4655,7 +4613,7 @@ AcDbPoint
   0
 POINT
   5
-80
+7E
 330
 17
 100
@@ -4673,7 +4631,7 @@ AcDbPoint
   0
 POINT
   5
-81
+7F
 330
 17
 100
@@ -4691,7 +4649,7 @@ AcDbPoint
   0
 POINT
   5
-82
+80
 330
 17
 100
@@ -4709,7 +4667,7 @@ AcDbPoint
   0
 POINT
   5
-83
+81
 330
 17
 100
@@ -4727,7 +4685,7 @@ AcDbPoint
   0
 POINT
   5
-84
+82
 330
 17
 100
@@ -4745,7 +4703,7 @@ AcDbPoint
   0
 POINT
   5
-85
+83
 330
 17
 100
@@ -4763,7 +4721,7 @@ AcDbPoint
   0
 POINT
   5
-86
+84
 330
 17
 100
@@ -4781,7 +4739,7 @@ AcDbPoint
   0
 POINT
   5
-87
+85
 330
 17
 100
@@ -4799,7 +4757,7 @@ AcDbPoint
   0
 POINT
   5
-88
+86
 330
 17
 100
@@ -4817,7 +4775,7 @@ AcDbPoint
   0
 POINT
   5
-89
+87
 330
 17
 100
@@ -4835,7 +4793,7 @@ AcDbPoint
   0
 POINT
   5
-8A
+88
 330
 17
 100
@@ -4853,7 +4811,7 @@ AcDbPoint
   0
 POINT
   5
-8B
+89
 330
 17
 100
@@ -4871,7 +4829,7 @@ AcDbPoint
   0
 POINT
   5
-8C
+8A
 330
 17
 100
@@ -4889,7 +4847,7 @@ AcDbPoint
   0
 POINT
   5
-8D
+8B
 330
 17
 100
@@ -4907,7 +4865,7 @@ AcDbPoint
   0
 POINT
   5
-8E
+8C
 330
 17
 100
@@ -4925,7 +4883,7 @@ AcDbPoint
   0
 POINT
   5
-8F
+8D
 330
 17
 100
@@ -4943,7 +4901,7 @@ AcDbPoint
   0
 POINT
   5
-90
+8E
 330
 17
 100
@@ -4961,7 +4919,7 @@ AcDbPoint
   0
 POINT
   5
-91
+8F
 330
 17
 100
@@ -4979,7 +4937,7 @@ AcDbPoint
   0
 POINT
   5
-92
+90
 330
 17
 100
@@ -4997,7 +4955,7 @@ AcDbPoint
   0
 POINT
   5
-93
+91
 330
 17
 100
@@ -5015,7 +4973,7 @@ AcDbPoint
   0
 POINT
   5
-94
+92
 330
 17
 100
@@ -5033,7 +4991,7 @@ AcDbPoint
   0
 POINT
   5
-95
+93
 330
 17
 100
@@ -5051,7 +5009,7 @@ AcDbPoint
   0
 POINT
   5
-96
+94
 330
 17
 100
@@ -5069,7 +5027,7 @@ AcDbPoint
   0
 POINT
   5
-97
+95
 330
 17
 100
@@ -5087,25 +5045,7 @@ AcDbPoint
   0
 POINT
   5
-98
-330
-17
-100
-AcDbEntity
-  8
-КЛЕН ОСТРОЛИСТНЫЙ
-100
-AcDbPoint
- 10
-33.0
- 20
-41.0
- 30
-0.0
-  0
-POINT
-  5
-99
+96
 330
 17
 100
@@ -5123,7 +5063,7 @@ AcDbPoint
   0
 POINT
   5
-9A
+97
 330
 17
 100
@@ -5141,7 +5081,7 @@ AcDbPoint
   0
 POINT
   5
-9B
+98
 330
 17
 100
@@ -5159,7 +5099,7 @@ AcDbPoint
   0
 POINT
   5
-9C
+99
 330
 17
 100
@@ -5177,7 +5117,7 @@ AcDbPoint
   0
 POINT
   5
-9D
+9A
 330
 17
 100
@@ -5195,7 +5135,7 @@ AcDbPoint
   0
 POINT
   5
-9E
+9B
 330
 17
 100
@@ -5213,7 +5153,7 @@ AcDbPoint
   0
 POINT
   5
-9F
+9C
 330
 17
 100
@@ -5231,7 +5171,7 @@ AcDbPoint
   0
 POINT
   5
-A0
+9D
 330
 17
 100
@@ -5249,7 +5189,7 @@ AcDbPoint
   0
 POINT
   5
-A1
+9E
 330
 17
 100
@@ -5267,7 +5207,7 @@ AcDbPoint
   0
 POINT
   5
-A2
+9F
 330
 17
 100
@@ -5285,7 +5225,7 @@ AcDbPoint
   0
 POINT
   5
-A3
+A0
 330
 17
 100
@@ -5303,7 +5243,7 @@ AcDbPoint
   0
 POINT
   5
-A4
+A1
 330
 17
 100
@@ -5321,7 +5261,7 @@ AcDbPoint
   0
 POINT
   5
-A5
+A2
 330
 17
 100
@@ -5339,7 +5279,7 @@ AcDbPoint
   0
 POINT
   5
-A6
+A3
 330
 17
 100
@@ -5357,7 +5297,7 @@ AcDbPoint
   0
 POINT
   5
-A7
+A4
 330
 17
 100
@@ -5375,7 +5315,7 @@ AcDbPoint
   0
 POINT
   5
-A8
+A5
 330
 17
 100
@@ -5393,7 +5333,7 @@ AcDbPoint
   0
 POINT
   5
-A9
+A6
 330
 17
 100
@@ -5411,7 +5351,7 @@ AcDbPoint
   0
 POINT
   5
-AA
+A7
 330
 17
 100
@@ -5429,7 +5369,7 @@ AcDbPoint
   0
 POINT
   5
-AB
+A8
 330
 17
 100
@@ -5447,7 +5387,7 @@ AcDbPoint
   0
 POINT
   5
-AC
+A9
 330
 17
 100
@@ -5465,7 +5405,7 @@ AcDbPoint
   0
 POINT
   5
-AD
+AA
 330
 17
 100
@@ -5483,7 +5423,7 @@ AcDbPoint
   0
 POINT
   5
-AE
+AB
 330
 17
 100
@@ -5501,7 +5441,7 @@ AcDbPoint
   0
 POINT
   5
-AF
+AC
 330
 17
 100
@@ -5519,7 +5459,7 @@ AcDbPoint
   0
 POINT
   5
-B0
+AD
 330
 17
 100
@@ -5537,7 +5477,7 @@ AcDbPoint
   0
 POINT
   5
-B1
+AE
 330
 17
 100
@@ -5555,25 +5495,7 @@ AcDbPoint
   0
 POINT
   5
-B2
-330
-17
-100
-AcDbEntity
-  8
-КЛЕН ОСТРОЛИСТНЫЙ
-100
-AcDbPoint
- 10
-53.0
- 20
-41.0
- 30
-0.0
-  0
-POINT
-  5
-B3
+AF
 330
 17
 100
@@ -5591,7 +5513,7 @@ AcDbPoint
   0
 POINT
   5
-B4
+B0
 330
 17
 100
@@ -5609,7 +5531,7 @@ AcDbPoint
   0
 POINT
   5
-B5
+B1
 330
 17
 100
@@ -5627,7 +5549,7 @@ AcDbPoint
   0
 POINT
   5
-B6
+B2
 330
 17
 100
@@ -5645,7 +5567,7 @@ AcDbPoint
   0
 POINT
   5
-B7
+B3
 330
 17
 100
@@ -5663,7 +5585,7 @@ AcDbPoint
   0
 POINT
   5
-B8
+B4
 330
 17
 100
@@ -5681,7 +5603,7 @@ AcDbPoint
   0
 POINT
   5
-B9
+B5
 330
 17
 100
@@ -5699,7 +5621,7 @@ AcDbPoint
   0
 POINT
   5
-BA
+B6
 330
 17
 100
@@ -5717,7 +5639,7 @@ AcDbPoint
   0
 POINT
   5
-BB
+B7
 330
 17
 100
@@ -5735,7 +5657,7 @@ AcDbPoint
   0
 POINT
   5
-BC
+B8
 330
 17
 100
@@ -5753,7 +5675,7 @@ AcDbPoint
   0
 POINT
   5
-BD
+B9
 330
 17
 100
@@ -5771,7 +5693,7 @@ AcDbPoint
   0
 POINT
   5
-BE
+BA
 330
 17
 100
@@ -5789,7 +5711,7 @@ AcDbPoint
   0
 POINT
   5
-BF
+BB
 330
 17
 100
@@ -5807,7 +5729,7 @@ AcDbPoint
   0
 POINT
   5
-C0
+BC
 330
 17
 100
@@ -5825,7 +5747,7 @@ AcDbPoint
   0
 POINT
   5
-C1
+BD
 330
 17
 100
@@ -5843,7 +5765,7 @@ AcDbPoint
   0
 POINT
   5
-C2
+BE
 330
 17
 100
@@ -5861,7 +5783,7 @@ AcDbPoint
   0
 POINT
   5
-C3
+BF
 330
 17
 100
@@ -5879,7 +5801,7 @@ AcDbPoint
   0
 POINT
   5
-C4
+C0
 330
 17
 100
@@ -5897,7 +5819,7 @@ AcDbPoint
   0
 POINT
   5
-C5
+C1
 330
 17
 100
@@ -5915,7 +5837,7 @@ AcDbPoint
   0
 POINT
   5
-C6
+C2
 330
 17
 100
@@ -5933,7 +5855,7 @@ AcDbPoint
   0
 POINT
   5
-C7
+C3
 330
 17
 100
@@ -5951,7 +5873,7 @@ AcDbPoint
   0
 POINT
   5
-C8
+C4
 330
 17
 100
@@ -5969,7 +5891,7 @@ AcDbPoint
   0
 POINT
   5
-C9
+C5
 330
 17
 100
@@ -5987,7 +5909,7 @@ AcDbPoint
   0
 POINT
   5
-CA
+C6
 330
 17
 100
@@ -6005,7 +5927,7 @@ AcDbPoint
   0
 POINT
   5
-CB
+C7
 330
 17
 100
@@ -6023,25 +5945,7 @@ AcDbPoint
   0
 POINT
   5
-CC
-330
-17
-100
-AcDbEntity
-  8
-КЛЕН ОСТРОЛИСТНЫЙ
-100
-AcDbPoint
- 10
-73.0
- 20
-41.0
- 30
-0.0
-  0
-POINT
-  5
-CD
+C8
 330
 17
 100
@@ -6059,7 +5963,7 @@ AcDbPoint
   0
 POINT
   5
-CE
+C9
 330
 17
 100
@@ -6077,7 +5981,7 @@ AcDbPoint
   0
 POINT
   5
-CF
+CA
 330
 17
 100
@@ -6095,7 +5999,7 @@ AcDbPoint
   0
 POINT
   5
-D0
+CB
 330
 17
 100
@@ -6113,7 +6017,7 @@ AcDbPoint
   0
 POINT
   5
-D1
+CC
 330
 17
 100
@@ -6131,7 +6035,7 @@ AcDbPoint
   0
 POINT
   5
-D2
+CD
 330
 17
 100
@@ -6149,7 +6053,7 @@ AcDbPoint
   0
 POINT
   5
-D3
+CE
 330
 17
 100
@@ -6167,7 +6071,7 @@ AcDbPoint
   0
 POINT
   5
-D4
+CF
 330
 17
 100
@@ -6185,7 +6089,7 @@ AcDbPoint
   0
 POINT
   5
-D5
+D0
 330
 17
 100
@@ -6203,7 +6107,7 @@ AcDbPoint
   0
 POINT
   5
-D6
+D1
 330
 17
 100
@@ -6221,7 +6125,7 @@ AcDbPoint
   0
 POINT
   5
-D7
+D2
 330
 17
 100
@@ -6239,7 +6143,7 @@ AcDbPoint
   0
 POINT
   5
-D8
+D3
 330
 17
 100
@@ -6257,7 +6161,7 @@ AcDbPoint
   0
 POINT
   5
-D9
+D4
 330
 17
 100
@@ -6275,7 +6179,7 @@ AcDbPoint
   0
 POINT
   5
-DA
+D5
 330
 17
 100
@@ -6293,7 +6197,7 @@ AcDbPoint
   0
 POINT
   5
-DB
+D6
 330
 17
 100
@@ -6311,7 +6215,7 @@ AcDbPoint
   0
 POINT
   5
-DC
+D7
 330
 17
 100
@@ -6329,7 +6233,7 @@ AcDbPoint
   0
 POINT
   5
-DD
+D8
 330
 17
 100
@@ -6347,7 +6251,7 @@ AcDbPoint
   0
 POINT
   5
-DE
+D9
 330
 17
 100
@@ -6365,7 +6269,7 @@ AcDbPoint
   0
 POINT
   5
-DF
+DA
 330
 17
 100
@@ -6383,7 +6287,7 @@ AcDbPoint
   0
 POINT
   5
-E0
+DB
 330
 17
 100
@@ -6401,7 +6305,7 @@ AcDbPoint
   0
 POINT
   5
-E1
+DC
 330
 17
 100
@@ -6419,7 +6323,7 @@ AcDbPoint
   0
 POINT
   5
-E2
+DD
 330
 17
 100
@@ -6437,7 +6341,7 @@ AcDbPoint
   0
 POINT
   5
-E3
+DE
 330
 17
 100
@@ -6455,7 +6359,7 @@ AcDbPoint
   0
 POINT
   5
-E4
+DF
 330
 17
 100
@@ -6473,7 +6377,7 @@ AcDbPoint
   0
 POINT
   5
-E5
+E0
 330
 17
 100
@@ -6491,25 +6395,7 @@ AcDbPoint
   0
 POINT
   5
-E6
-330
-17
-100
-AcDbEntity
-  8
-КЛЕН ОСТРОЛИСТНЫЙ
-100
-AcDbPoint
- 10
-93.0
- 20
-41.0
- 30
-0.0
-  0
-POINT
-  5
-E7
+E1
 330
 17
 100
@@ -6527,7 +6413,7 @@ AcDbPoint
   0
 POINT
   5
-E8
+E2
 330
 17
 100
@@ -6545,7 +6431,7 @@ AcDbPoint
   0
 POINT
   5
-E9
+E3
 330
 17
 100
@@ -6563,7 +6449,7 @@ AcDbPoint
   0
 POINT
   5
-EA
+E4
 330
 17
 100
@@ -6581,7 +6467,7 @@ AcDbPoint
   0
 POINT
   5
-EB
+E5
 330
 17
 100
@@ -6599,7 +6485,7 @@ AcDbPoint
   0
 POINT
   5
-EC
+E6
 330
 17
 100
@@ -6617,7 +6503,7 @@ AcDbPoint
   0
 POINT
   5
-ED
+E7
 330
 17
 100
@@ -6635,7 +6521,7 @@ AcDbPoint
   0
 POINT
   5
-EE
+E8
 330
 17
 100
@@ -6653,7 +6539,7 @@ AcDbPoint
   0
 POINT
   5
-EF
+E9
 330
 17
 100
@@ -6671,7 +6557,7 @@ AcDbPoint
   0
 POINT
   5
-F0
+EA
 330
 17
 100
@@ -6689,7 +6575,7 @@ AcDbPoint
   0
 POINT
   5
-F1
+EB
 330
 17
 100
@@ -6707,7 +6593,7 @@ AcDbPoint
   0
 POINT
   5
-F2
+EC
 330
 17
 100
@@ -6725,7 +6611,7 @@ AcDbPoint
   0
 POINT
   5
-F3
+ED
 330
 17
 100
@@ -6743,7 +6629,7 @@ AcDbPoint
   0
 POINT
   5
-F4
+EE
 330
 17
 100
@@ -6761,7 +6647,7 @@ AcDbPoint
   0
 POINT
   5
-F5
+EF
 330
 17
 100
@@ -6779,7 +6665,7 @@ AcDbPoint
   0
 POINT
   5
-F6
+F0
 330
 17
 100
@@ -6797,7 +6683,7 @@ AcDbPoint
   0
 POINT
   5
-F7
+F1
 330
 17
 100
@@ -6815,7 +6701,7 @@ AcDbPoint
   0
 POINT
   5
-F8
+F2
 330
 17
 100
@@ -6833,7 +6719,7 @@ AcDbPoint
   0
 POINT
   5
-F9
+F3
 330
 17
 100
@@ -6851,7 +6737,7 @@ AcDbPoint
   0
 POINT
   5
-FA
+F4
 330
 17
 100
@@ -6869,7 +6755,7 @@ AcDbPoint
   0
 POINT
   5
-FB
+F5
 330
 17
 100
@@ -6887,7 +6773,7 @@ AcDbPoint
   0
 POINT
   5
-FC
+F6
 330
 17
 100
@@ -6905,7 +6791,7 @@ AcDbPoint
   0
 POINT
   5
-FD
+F7
 330
 17
 100
@@ -6923,7 +6809,7 @@ AcDbPoint
   0
 POINT
   5
-FE
+F8
 330
 17
 100
@@ -6941,7 +6827,7 @@ AcDbPoint
   0
 POINT
   5
-FF
+F9
 330
 17
 100
@@ -6959,25 +6845,7 @@ AcDbPoint
   0
 POINT
   5
-100
-330
-17
-100
-AcDbEntity
-  8
-КЛЕН ОСТРОЛИСТНЫЙ
-100
-AcDbPoint
- 10
-113.0
- 20
-41.0
- 30
-0.0
-  0
-POINT
-  5
-101
+FA
 330
 17
 100
@@ -6995,7 +6863,7 @@ AcDbPoint
   0
 POINT
   5
-102
+FB
 330
 17
 100
@@ -7013,7 +6881,7 @@ AcDbPoint
   0
 POINT
   5
-103
+FC
 330
 17
 100
@@ -7031,7 +6899,7 @@ AcDbPoint
   0
 POINT
   5
-104
+FD
 330
 17
 100
@@ -7049,7 +6917,7 @@ AcDbPoint
   0
 POINT
   5
-105
+FE
 330
 17
 100
@@ -7067,7 +6935,7 @@ AcDbPoint
   0
 POINT
   5
-106
+FF
 330
 17
 100
@@ -7085,7 +6953,7 @@ AcDbPoint
   0
 POINT
   5
-107
+100
 330
 17
 100
@@ -7103,7 +6971,7 @@ AcDbPoint
   0
 POINT
   5
-108
+101
 330
 17
 100
@@ -7121,7 +6989,7 @@ AcDbPoint
   0
 POINT
   5
-109
+102
 330
 17
 100
@@ -7139,7 +7007,7 @@ AcDbPoint
   0
 POINT
   5
-10A
+103
 330
 17
 100
@@ -7157,7 +7025,1303 @@ AcDbPoint
   0
 POINT
   5
+104
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+5.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+105
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+10.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+106
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+15.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+107
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+20.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+108
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+25.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+109
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+30.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+10A
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+35.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
 10B
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+40.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+10C
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+45.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+10D
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+50.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+10E
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+55.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+10F
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+60.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+110
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+65.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+111
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+70.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+112
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+75.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+113
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+80.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+114
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+85.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+115
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+90.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+116
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+95.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+117
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+100.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+118
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+105.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+119
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+110.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+11A
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+115.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+11B
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+120.0
+ 20
+36.0
+ 30
+0.0
+  0
+POINT
+  5
+11C
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+7.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+11D
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+12.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+11E
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+17.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+11F
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+22.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+120
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+27.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+121
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+32.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+122
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+37.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+123
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+42.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+124
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+47.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+125
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+52.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+126
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+57.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+127
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+62.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+128
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+67.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+129
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+72.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+12A
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+77.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+12B
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+82.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+12C
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+87.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+12D
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+92.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+12E
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+97.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+12F
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+102.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+130
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+107.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+131
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+112.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+132
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+117.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+133
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+122.5
+ 20
+40.33
+ 30
+0.0
+  0
+POINT
+  5
+134
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+5.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+135
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+10.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+136
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+15.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+137
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+20.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+138
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+25.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+139
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+30.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+13A
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+35.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+13B
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+40.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+13C
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+45.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+13D
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+50.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+13E
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+55.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+13F
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+60.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+140
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+65.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+141
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+70.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+142
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+75.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+143
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+80.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+144
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+85.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+145
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+90.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+146
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+95.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+147
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+100.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+148
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+105.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+149
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+110.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+14A
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+115.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+14B
+330
+17
+100
+AcDbEntity
+  8
+ЯБЛОНЯ НЕДЗВЕДЦКОГО
+100
+AcDbPoint
+ 10
+120.0
+ 20
+44.66
+ 30
+0.0
+  0
+POINT
+  5
+14C
 330
 17
 100
@@ -7175,7 +8339,7 @@ AcDbPoint
   0
 POINT
   5
-10C
+14D
 330
 17
 100
@@ -7193,7 +8357,7 @@ AcDbPoint
   0
 POINT
   5
-10D
+14E
 330
 17
 100
@@ -7211,7 +8375,7 @@ AcDbPoint
   0
 POINT
   5
-10E
+14F
 330
 17
 100
@@ -7229,7 +8393,7 @@ AcDbPoint
   0
 POINT
   5
-10F
+150
 330
 17
 100
@@ -7247,7 +8411,7 @@ AcDbPoint
   0
 POINT
   5
-110
+151
 330
 17
 100
@@ -7265,7 +8429,7 @@ AcDbPoint
   0
 POINT
   5
-111
+152
 330
 17
 100
@@ -7283,7 +8447,7 @@ AcDbPoint
   0
 POINT
   5
-112
+153
 330
 17
 100
@@ -7301,7 +8465,7 @@ AcDbPoint
   0
 POINT
   5
-113
+154
 330
 17
 100
@@ -7319,7 +8483,7 @@ AcDbPoint
   0
 POINT
   5
-114
+155
 330
 17
 100
@@ -7337,7 +8501,7 @@ AcDbPoint
   0
 POINT
   5
-115
+156
 330
 17
 100
@@ -7355,7 +8519,7 @@ AcDbPoint
   0
 POINT
   5
-116
+157
 330
 17
 100
@@ -7373,7 +8537,7 @@ AcDbPoint
   0
 POINT
   5
-117
+158
 330
 17
 100
@@ -7391,7 +8555,7 @@ AcDbPoint
   0
 POINT
   5
-118
+159
 330
 17
 100
@@ -7409,7 +8573,7 @@ AcDbPoint
   0
 POINT
   5
-119
+15A
 330
 17
 100
@@ -7427,7 +8591,7 @@ AcDbPoint
   0
 POINT
   5
-11A
+15B
 330
 17
 100
@@ -7445,7 +8609,7 @@ AcDbPoint
   0
 POINT
   5
-11B
+15C
 330
 17
 100
@@ -7463,7 +8627,7 @@ AcDbPoint
   0
 POINT
   5
-11C
+15D
 330
 17
 100
@@ -7481,7 +8645,7 @@ AcDbPoint
   0
 POINT
   5
-11D
+15E
 330
 17
 100
@@ -7499,7 +8663,7 @@ AcDbPoint
   0
 POINT
   5
-11E
+15F
 330
 17
 100
@@ -7517,7 +8681,7 @@ AcDbPoint
   0
 POINT
   5
-11F
+160
 330
 17
 100
@@ -7535,7 +8699,7 @@ AcDbPoint
   0
 POINT
   5
-120
+161
 330
 17
 100
@@ -7553,7 +8717,7 @@ AcDbPoint
   0
 POINT
   5
-121
+162
 330
 17
 100
@@ -7571,7 +8735,7 @@ AcDbPoint
   0
 POINT
   5
-122
+163
 330
 17
 100
@@ -7589,7 +8753,7 @@ AcDbPoint
   0
 POINT
   5
-123
+164
 330
 17
 100
@@ -7607,7 +8771,7 @@ AcDbPoint
   0
 POINT
   5
-124
+165
 330
 17
 100
@@ -7625,7 +8789,7 @@ AcDbPoint
   0
 POINT
   5
-125
+166
 330
 17
 100
@@ -7643,7 +8807,7 @@ AcDbPoint
   0
 POINT
   5
-126
+167
 330
 17
 100
@@ -7661,7 +8825,7 @@ AcDbPoint
   0
 POINT
   5
-127
+168
 330
 17
 100
@@ -7679,7 +8843,7 @@ AcDbPoint
   0
 POINT
   5
-128
+169
 330
 17
 100
@@ -7697,7 +8861,7 @@ AcDbPoint
   0
 POINT
   5
-129
+16A
 330
 17
 100
@@ -7715,7 +8879,7 @@ AcDbPoint
   0
 POINT
   5
-12A
+16B
 330
 17
 100
@@ -7733,7 +8897,7 @@ AcDbPoint
   0
 POINT
   5
-12B
+16C
 330
 17
 100
@@ -7751,7 +8915,7 @@ AcDbPoint
   0
 POINT
   5
-12C
+16D
 330
 17
 100
@@ -7769,7 +8933,7 @@ AcDbPoint
   0
 POINT
   5
-12D
+16E
 330
 17
 100
@@ -7787,7 +8951,7 @@ AcDbPoint
   0
 POINT
   5
-12E
+16F
 330
 17
 100
@@ -7805,7 +8969,7 @@ AcDbPoint
   0
 POINT
   5
-12F
+170
 330
 17
 100
@@ -7823,7 +8987,7 @@ AcDbPoint
   0
 POINT
   5
-130
+171
 330
 17
 100
@@ -7841,7 +9005,7 @@ AcDbPoint
   0
 POINT
   5
-131
+172
 330
 17
 100
@@ -7859,7 +9023,7 @@ AcDbPoint
   0
 POINT
   5
-132
+173
 330
 17
 100
@@ -7877,7 +9041,7 @@ AcDbPoint
   0
 POINT
   5
-133
+174
 330
 17
 100
@@ -7895,7 +9059,7 @@ AcDbPoint
   0
 POINT
   5
-134
+175
 330
 17
 100
@@ -7913,7 +9077,7 @@ AcDbPoint
   0
 POINT
   5
-135
+176
 330
 17
 100
@@ -7931,7 +9095,7 @@ AcDbPoint
   0
 POINT
   5
-136
+177
 330
 17
 100
@@ -7949,7 +9113,7 @@ AcDbPoint
   0
 POINT
   5
-137
+178
 330
 17
 100
@@ -7967,7 +9131,7 @@ AcDbPoint
   0
 POINT
   5
-138
+179
 330
 17
 100
@@ -7985,7 +9149,7 @@ AcDbPoint
   0
 POINT
   5
-139
+17A
 330
 17
 100
@@ -8003,7 +9167,7 @@ AcDbPoint
   0
 POINT
   5
-13A
+17B
 330
 17
 100
@@ -8021,7 +9185,7 @@ AcDbPoint
   0
 POINT
   5
-13B
+17C
 330
 17
 100
@@ -8039,7 +9203,7 @@ AcDbPoint
   0
 POINT
   5
-13C
+17D
 330
 17
 100
@@ -8057,7 +9221,7 @@ AcDbPoint
   0
 POINT
   5
-13D
+17E
 330
 17
 100
@@ -8075,7 +9239,7 @@ AcDbPoint
   0
 POINT
   5
-13E
+17F
 330
 17
 100
@@ -8093,7 +9257,7 @@ AcDbPoint
   0
 POINT
   5
-13F
+180
 330
 17
 100
@@ -8111,7 +9275,7 @@ AcDbPoint
   0
 POINT
   5
-140
+181
 330
 17
 100
@@ -8129,7 +9293,7 @@ AcDbPoint
   0
 POINT
   5
-141
+182
 330
 17
 100
@@ -8147,7 +9311,7 @@ AcDbPoint
   0
 POINT
   5
-142
+183
 330
 17
 100
@@ -8165,7 +9329,7 @@ AcDbPoint
   0
 POINT
   5
-143
+184
 330
 17
 100
@@ -8183,7 +9347,7 @@ AcDbPoint
   0
 POINT
   5
-144
+185
 330
 17
 100
@@ -8201,7 +9365,7 @@ AcDbPoint
   0
 POINT
   5
-145
+186
 330
 17
 100
@@ -8219,7 +9383,7 @@ AcDbPoint
   0
 POINT
   5
-146
+187
 330
 17
 100
@@ -8237,7 +9401,7 @@ AcDbPoint
   0
 POINT
   5
-147
+188
 330
 17
 100
@@ -8255,7 +9419,7 @@ AcDbPoint
   0
 POINT
   5
-148
+189
 330
 17
 100
@@ -8273,7 +9437,7 @@ AcDbPoint
   0
 POINT
   5
-149
+18A
 330
 17
 100
@@ -8291,7 +9455,7 @@ AcDbPoint
   0
 POINT
   5
-14A
+18B
 330
 17
 100
@@ -8309,7 +9473,7 @@ AcDbPoint
   0
 POINT
   5
-14B
+18C
 330
 17
 100
@@ -8327,7 +9491,7 @@ AcDbPoint
   0
 POINT
   5
-14C
+18D
 330
 17
 100
@@ -8345,7 +9509,7 @@ AcDbPoint
   0
 POINT
   5
-14D
+18E
 330
 17
 100
@@ -8363,7 +9527,7 @@ AcDbPoint
   0
 POINT
   5
-14E
+18F
 330
 17
 100
@@ -8381,7 +9545,7 @@ AcDbPoint
   0
 POINT
   5
-14F
+190
 330
 17
 100
@@ -8399,7 +9563,7 @@ AcDbPoint
   0
 POINT
   5
-150
+191
 330
 17
 100
@@ -8417,7 +9581,7 @@ AcDbPoint
   0
 POINT
   5
-151
+192
 330
 17
 100
@@ -8435,7 +9599,7 @@ AcDbPoint
   0
 POINT
   5
-152
+193
 330
 17
 100
@@ -8453,7 +9617,7 @@ AcDbPoint
   0
 POINT
   5
-153
+194
 330
 17
 100
@@ -8471,7 +9635,7 @@ AcDbPoint
   0
 POINT
   5
-154
+195
 330
 17
 100
@@ -8489,7 +9653,7 @@ AcDbPoint
   0
 POINT
   5
-155
+196
 330
 17
 100
@@ -8507,7 +9671,7 @@ AcDbPoint
   0
 POINT
   5
-156
+197
 330
 17
 100
@@ -8525,7 +9689,7 @@ AcDbPoint
   0
 POINT
   5
-157
+198
 330
 17
 100
@@ -8543,7 +9707,7 @@ AcDbPoint
   0
 POINT
   5
-158
+199
 330
 17
 100
@@ -8561,7 +9725,7 @@ AcDbPoint
   0
 POINT
   5
-159
+19A
 330
 17
 100
@@ -8579,7 +9743,7 @@ AcDbPoint
   0
 POINT
   5
-15A
+19B
 330
 17
 100
@@ -8597,7 +9761,7 @@ AcDbPoint
   0
 POINT
   5
-15B
+19C
 330
 17
 100
@@ -8615,7 +9779,7 @@ AcDbPoint
   0
 POINT
   5
-15C
+19D
 330
 17
 100
@@ -8633,7 +9797,7 @@ AcDbPoint
   0
 POINT
   5
-15D
+19E
 330
 17
 100
@@ -8651,7 +9815,7 @@ AcDbPoint
   0
 POINT
   5
-15E
+19F
 330
 17
 100
@@ -8669,7 +9833,7 @@ AcDbPoint
   0
 POINT
   5
-15F
+1A0
 330
 17
 100
@@ -8687,7 +9851,7 @@ AcDbPoint
   0
 POINT
   5
-160
+1A1
 330
 17
 100
@@ -8705,7 +9869,7 @@ AcDbPoint
   0
 POINT
   5
-161
+1A2
 330
 17
 100
@@ -8723,7 +9887,7 @@ AcDbPoint
   0
 POINT
   5
-162
+1A3
 330
 17
 100
@@ -8741,7 +9905,7 @@ AcDbPoint
   0
 POINT
   5
-163
+1A4
 330
 17
 100
@@ -8759,7 +9923,7 @@ AcDbPoint
   0
 POINT
   5
-164
+1A5
 330
 17
 100
@@ -8777,7 +9941,7 @@ AcDbPoint
   0
 POINT
   5
-165
+1A6
 330
 17
 100
@@ -8795,7 +9959,7 @@ AcDbPoint
   0
 POINT
   5
-166
+1A7
 330
 17
 100
@@ -8813,7 +9977,7 @@ AcDbPoint
   0
 POINT
   5
-167
+1A8
 330
 17
 100
@@ -8831,7 +9995,7 @@ AcDbPoint
   0
 POINT
   5
-168
+1A9
 330
 17
 100
@@ -8849,7 +10013,7 @@ AcDbPoint
   0
 POINT
   5
-169
+1AA
 330
 17
 100
@@ -8867,7 +10031,7 @@ AcDbPoint
   0
 POINT
   5
-16A
+1AB
 330
 17
 100
@@ -8885,7 +10049,7 @@ AcDbPoint
   0
 POINT
   5
-16B
+1AC
 330
 17
 100
@@ -8903,7 +10067,7 @@ AcDbPoint
   0
 POINT
   5
-16C
+1AD
 330
 17
 100
@@ -8921,7 +10085,7 @@ AcDbPoint
   0
 POINT
   5
-16D
+1AE
 330
 17
 100
@@ -8939,7 +10103,7 @@ AcDbPoint
   0
 POINT
   5
-16E
+1AF
 330
 17
 100
@@ -8957,7 +10121,7 @@ AcDbPoint
   0
 POINT
   5
-16F
+1B0
 330
 17
 100
@@ -8975,7 +10139,7 @@ AcDbPoint
   0
 POINT
   5
-170
+1B1
 330
 17
 100
@@ -8993,7 +10157,7 @@ AcDbPoint
   0
 POINT
   5
-171
+1B2
 330
 17
 100
@@ -9011,7 +10175,7 @@ AcDbPoint
   0
 POINT
   5
-172
+1B3
 330
 17
 100
@@ -9029,7 +10193,7 @@ AcDbPoint
   0
 POINT
   5
-173
+1B4
 330
 17
 100
@@ -9047,7 +10211,7 @@ AcDbPoint
   0
 POINT
   5
-174
+1B5
 330
 17
 100
@@ -9065,7 +10229,7 @@ AcDbPoint
   0
 POINT
   5
-175
+1B6
 330
 17
 100
@@ -9083,7 +10247,7 @@ AcDbPoint
   0
 POINT
   5
-176
+1B7
 330
 17
 100
@@ -9101,7 +10265,7 @@ AcDbPoint
   0
 POINT
   5
-177
+1B8
 330
 17
 100
@@ -9119,7 +10283,7 @@ AcDbPoint
   0
 POINT
   5
-178
+1B9
 330
 17
 100
@@ -9137,7 +10301,7 @@ AcDbPoint
   0
 POINT
   5
-179
+1BA
 330
 17
 100
@@ -9155,7 +10319,7 @@ AcDbPoint
   0
 POINT
   5
-17A
+1BB
 330
 17
 100
@@ -9173,7 +10337,7 @@ AcDbPoint
   0
 POINT
   5
-17C
+1BD
 330
 17
 100
@@ -9191,7 +10355,7 @@ AcDbPoint
   0
 POINT
   5
-17D
+1BE
 330
 17
 100
@@ -9209,7 +10373,7 @@ AcDbPoint
   0
 POINT
   5
-17E
+1BF
 330
 17
 100
@@ -9227,7 +10391,7 @@ AcDbPoint
   0
 POINT
   5
-17F
+1C0
 330
 17
 100
@@ -9245,7 +10409,7 @@ AcDbPoint
   0
 POINT
   5
-180
+1C1
 330
 17
 100
@@ -9263,7 +10427,7 @@ AcDbPoint
   0
 POINT
   5
-181
+1C2
 330
 17
 100
@@ -9281,7 +10445,7 @@ AcDbPoint
   0
 POINT
   5
-183
+1C4
 330
 17
 100
@@ -9299,7 +10463,7 @@ AcDbPoint
   0
 POINT
   5
-184
+1C5
 330
 17
 100
@@ -9317,7 +10481,7 @@ AcDbPoint
   0
 POINT
   5
-185
+1C6
 330
 17
 100
@@ -9335,7 +10499,7 @@ AcDbPoint
   0
 POINT
   5
-186
+1C7
 330
 17
 100
@@ -9353,7 +10517,7 @@ AcDbPoint
   0
 POINT
   5
-187
+1C8
 330
 17
 100
@@ -9371,7 +10535,7 @@ AcDbPoint
   0
 POINT
   5
-188
+1C9
 330
 17
 100
@@ -10377,7 +11541,7 @@ CREATED_BY_EZDXF
   3
 WRITTEN_BY_EZDXF
 350
-18B
+1CC
   0
 DICTIONARYVAR
   5
@@ -10389,11 +11553,11 @@ DictionaryVariables
 280
 0
   1
-1.4.4 @ 2026-09-26T15:08:54.080227+00:00
+1.4.4 @ 2026-09-26T16:43:51.069950+00:00
   0
 DICTIONARYVAR
   5
-18B
+1CC
 330
 2D
 100
@@ -10401,7 +11565,7 @@ DictionaryVariables
 280
 0
   1
-1.4.4 @ 2026-09-26T15:08:54.083145+00:00
+1.4.4 @ 2026-09-26T16:43:51.077220+00:00
   0
 ENDSEC
   0
