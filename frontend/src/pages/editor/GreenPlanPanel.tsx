@@ -1,6 +1,8 @@
 import { Download, Loader2, Trees } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
+import type { GreenPlanViolation } from "../../api";
 import type { GreenPlanState } from "./editorTypes";
 import { SlidePanel } from "./SlidePanel";
 
@@ -27,6 +29,15 @@ export function GreenPlanPanel({
   onDownloadDocument: () => void;
 }) {
   const existingLawnSqm = (result?.scene.lawns ?? []).filter((l) => l.status === "existing").reduce((sum, l) => sum + l.area_sqm, 0);
+  const [showExisting, setShowExisting] = useState(false);
+  const [newViolations, existingViolations] = useMemo(() => {
+    if (!result) return [[], []];
+    const generated = new Set(result.scene.objects.filter((o) => o.metadata?.generated === true).map((o) => o.id));
+    const own: GreenPlanViolation[] = [];
+    const inherited: GreenPlanViolation[] = [];
+    for (const v of result.violations) (generated.has(v.object_id) ? own : inherited).push(v);
+    return [own, inherited];
+  }, [result]);
   return (
     <SlidePanel open={open} onToggle={onToggle} onClose={onClose} icon={<Trees className="h-4.5 w-4.5 text-brand-600" />} title="GreenPlan">
       <div className="scrollbar-thin flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-4">
@@ -90,18 +101,33 @@ export function GreenPlanPanel({
               )}
             </section>
 
+            {/* Нарушения новой посадки -- проверка работы GreenPlan -- отдельно от
+                нарушений объектов, которые уже были в чертеже: на реальном
+                проекте (Харьковская) их больше тысячи, генератор их не ставил и
+                не трогал, а в общем списке они заслоняли его собственный
+                результат. */}
             <section>
-              <h3 className={SECTION_TITLE}>Нарушения норм ({result.violations.length})</h3>
-              {result.violations.length > 0 ? (
-                <div className="flex flex-col gap-1.5">
-                  {result.violations.map((v, i) => (
-                    <Badge key={`${v.object_id}-${v.zone_id}-${i}`} variant={v.severity === "forbidden" ? "danger" : "warning"} className="justify-start">
-                      ⚠ {v.object_id}: {v.message} (до зоны {v.distance_m} м, нужно {v.required_m} м)
-                    </Badge>
-                  ))}
-                </div>
+              <h3 className={SECTION_TITLE}>Нарушения норм новой посадкой ({newViolations.length})</h3>
+              {newViolations.length > 0 ? (
+                <ViolationList violations={newViolations} />
               ) : (
                 <Badge variant="success">Нарушений нет</Badge>
+              )}
+              {existingViolations.length > 0 && (
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowExisting((v) => !v)}
+                    className="text-left text-xs text-ink-500 underline decoration-dotted underline-offset-2 hover:text-ink-700"
+                  >
+                    {showExisting ? "Скрыть" : "Показать"} нарушения объектов из исходного чертежа ({existingViolations.length})
+                  </button>
+                  {showExisting && (
+                    <div className="mt-1.5">
+                      <ViolationList violations={existingViolations} />
+                    </div>
+                  )}
+                </div>
               )}
             </section>
 
@@ -156,5 +182,17 @@ export function GreenPlanPanel({
         )}
       </div>
     </SlidePanel>
+  );
+}
+
+function ViolationList({ violations }: { violations: GreenPlanViolation[] }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {violations.map((v, i) => (
+        <Badge key={`${v.object_id}-${v.zone_id}-${i}`} variant={v.severity === "forbidden" ? "danger" : "warning"} className="justify-start">
+          ⚠ {v.object_id}: {v.message} (до зоны {v.distance_m} м, нужно {v.required_m} м)
+        </Badge>
+      ))}
+    </div>
   );
 }
