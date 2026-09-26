@@ -159,6 +159,17 @@ def street_corner() -> Primer:
     hedge(p, SP_VANGUTTA, [(22, 15.5), (38, 15.5)], 2.0)
     # Двор: липы и ели не ближе 10 и 5 м к корпусам.
     yard_trees(p, 48, 48, 90, 90, [LIPA, EL, KLEN], step=7.0)
+    # Дорожки вокруг корпусов со стороны улиц и торцов (со двора их роль
+    # играют дворовые дорожки) и изгородь из спиреи серой по их внешнему краю.
+    p.zone("PATH_AROUND_A_S", rect(36, 21, 89, 23))
+    p.zone("PATH_AROUND_A_E", rect(87, 21, 89, 40))
+    p.zone("PATH_AROUND_A_W", rect(37, 21, 39, 39))
+    p.zone("PATH_AROUND_B_W", rect(21, 36, 23, 89))
+    p.zone("PATH_AROUND_B_N", rect(21, 87, 42, 89))
+    p.zone("PATH_AROUND_B_S", rect(21, 37, 39, 39))
+    for pts in ([(36, 20.2), (90, 20.2)], [(89.8, 20.2), (89.8, 39.5)], [(36.2, 20.2), (36.2, 35.8)],
+                [(20.2, 35.8), (20.2, 90)], [(20.2, 89.8), (41.5, 89.8)], [(20.2, 36.2), (35.8, 36.2)]):
+        hedge(p, SP_GRAY, pts, 1.1)
     facade_shrubs(p, SP_JAPAN, 40, 24, 86, 36, offset=2.2, sides="N")
     facade_shrubs(p, SP_JAPAN, 24, 40, 36, 86, offset=2.2, sides="E")
     for v in (54, 70, 86):
@@ -251,8 +262,20 @@ def street_clinic() -> Primer:
         p.put("lamp", 50.9, y + 0.1)
         p.put("lamp", 59.1, y + 0.1)
     facade_shrubs(p, SP_GRAY, 30, 40, 80, 58, offset=2.4, step=2.2, sides="WE")
+    # Края участка: симметричная дорожка справа, дорожка за зданием, по
+    # обеим сторонам -- ряды клёнов и лип и сирень вдоль дорожек.
+    p.zone("PATH_EAST", rect(90, y_side, 92, 62))
+    p.zone("PATH_BACK", rect(18, 62, 92, 64))
+    for x0, shrub_x in ((5.0, 15.6), (95.0, 94.4)):
+        for j, y in enumerate(range(20, 58, 7)):
+            p.plant(KLEN if j % 2 else LIPA, x0, y)
+            p.plant(LIPA if j % 2 else KLEN, x0 + 6.0, y + 3.5)
+        hedge(p, SIREN, [(shrub_x, 20), (shrub_x, 60)], 2.2)
     for x in range(12, 104, 9):
         p.plant(LIPA, x, 69)
+    for y in (26, 42, 56):
+        p.put("lamp", 17.2, y)
+        p.put("lamp", 92.8, y)
     return p
 
 

@@ -249,13 +249,15 @@ def classical_building() -> Primer:
     for pts in ([(6, 14), (84, 14)], [(6, 16.5), (84, 16.5)]):
         p.curb(pts)
 
-    # Периметр: стриженая двухрядная изгородь по границе участка и липы за ней.
+    # Периметр: стриженая двухрядная изгородь по границе участка, за ней --
+    # стройные берёзы по улице и по бокам; с севера, где до дома меньше
+    # 15 м, крупных деревьев нет -- только изгородь.
     perimeter = [(2.3, 2.3), (87.7, 2.3), (87.7, 57.7), (2.3, 57.7), (2.3, 2.3)]
     hedge(p, KIZILNIK, perimeter, 1.0, rows=(-0.45, 0.45))
-    for x, y, _, _ in along([(6.5, 6.5), (83.5, 6.5), (83.5, 53.5), (6.5, 53.5), (6.5, 6.5)], 9.0, start=0.0):
-        p.plant(LIPA, x, y)
-    # Строгое кольцо туй вокруг дома и низкий бордюр спиреи у фасада.
-    for x, y, _, _ in along([(21, 24), (69, 24), (69, 50), (21, 50), (21, 24)], 3.0, start=0.0):
+    for x, y, _, _ in along([(6.5, 44), (6.5, 6.5), (83.5, 6.5), (83.5, 44)], 9.0, start=0.0):
+        p.plant(BEREZA, x, y)
+    # Строгое кольцо туй вокруг дома в 7,5 м от стен и низкий бордюр спиреи у фасада.
+    for x, y, _, _ in along([(19.5, 22.5), (70.5, 22.5), (70.5, 51.5), (19.5, 51.5), (19.5, 22.5)], 3.0, start=0.0):
         p.plant(TUYA, x, y)
     hedge(p, SP_JAPAN, [(25, 28), (65, 28), (65, 46), (25, 46), (25, 28)], 1.2)
     for x in range(10, 84, 15):
@@ -284,11 +286,17 @@ def stripe_garden() -> Primer:
     for i, offset in enumerate((-24.5, -3.5, 17.5)):
         p.zone(f"PATH_DIAGONAL_{i + 1}", strip(line_at(offset), 2.2).intersection(p.boundary))
     p.zone("GAS_PIPE", rect(58, 0, 59.6, size))
-    # Три вида кустарника, каждая полоса -- один вид: белая арочная спирея,
-    # метельчатая гортензия, розовая спирея -- повторяются по кругу.
-    species = [SP_VANGUTTA, GORTENZIYA, SP_JAPAN]
+    # Три вида кустарника, каждая полоса -- один вид: сирень (высокая,
+    # сиреневая), спирея Вангутта (белая арочная), дерен (красные побеги) --
+    # повторяются по кругу. В промежутках без дорожек -- ряды берёз.
+    species = [SIREN, SP_VANGUTTA, DEREN]
     for k in range(-6, 7):
         hedge(p, species[k % 3], line_at(7.0 * k), 1.3, rows=(-0.6, 0.6))
+    for k in range(-6, 6):
+        gap = 3.5 + 7.0 * k
+        if gap not in (-24.5, -3.5, 17.5):
+            for x, y, _, _ in along(line_at(gap), 7.0):
+                p.plant(BEREZA, x, y)
     for offset in (-24.5, -3.5, 17.5):
         pts = line_at(offset)
         for j, (x, y, tx, ty) in enumerate(along(pts, 16.0)):
@@ -320,17 +328,22 @@ def flowing_meadow() -> Primer:
     p.zone("PATH_WAVE_N", strip(wave(45.0), 2.4))
     p.zone("PATH_CROSS", strip([(55, 0), (55, h)], 2.4))
     p.zone("SEWER", rect(88, 0, 89.4, h))
-    bands = [(5.5, DEREN), (24.5, SP_VANGUTTA), (35.5, GORTENZIYA), (54.5, SP_JAPAN)]
+    # Живая изгородь вдоль прямой дорожки -- два ряда спиреи серой.
+    for side in (-1, 1):
+        hedge(p, SP_GRAY, [(55 + side * 2.2, 0), (55 + side * 2.2, h)], 1.2)
+    bands = [(5.5, DEREN), (24.5, SP_VANGUTTA), (35.5, SIREN), (54.5, SP_GRAY)]
     for y0, species in bands:
-        hedge(p, species, wave(y0), 1.3, rows=(-0.6, 0.6))
-    # Берёзовые рощицы и ели -- на гребнях волн, между полосами кустов.
-    for x0 in (9, 45, 81):
-        for dx, dy in ((0, 0), (3.2, 1.5), (-1.5, 3.0)):
+        hedge(p, species, wave(y0), 1.3, rows=(-0.8, 0.0, 0.8))
+    # Берёзовые рощицы и ели -- на гребнях волн между полосами кустов, и
+    # берёзы по волне между южной дорожкой и краем сада.
+    for x0 in (9, 27, 45, 63, 81, 99):
+        for dx, dy in ((0, 0), (3.4, 1.2), (-2.0, 2.6), (1.5, -2.8)):
             x = x0 + dx
-            p.plant(BEREZA, x, 30 + amp * math.sin(2 * math.pi * x / length) + dy)
-    for x0 in (27, 63, 99):
-        x = x0
-        p.plant(EL, x, 30 + amp * math.sin(2 * math.pi * x / length))
+            p.plant(BEREZA if x0 % 36 == 9 else EL if dx == 0 else BEREZA, x, 30 + amp * math.sin(2 * math.pi * x / length) + dy)
+    for x, y, _, _ in along(wave(49.5), 9.0):
+        p.plant(BEREZA, x, y)
+    for x, y, _, _ in along(wave(10.0), 9.0, start=4.5):
+        p.plant(LIPA, x, y)
     for y0 in (15.0, 45.0):
         for j, (x, y, tx, ty) in enumerate(along(wave(y0), 18.0)):
             side = 1 if j % 2 else -1
@@ -356,10 +369,13 @@ def oak_squares() -> Primer:
     for x0, x1 in spans:
         for y0, y1 in spans:
             cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
-            p.plant(DUB, cx, cy)  # в центре каждого квадрата -- дуб
-            for i in range(14):
-                a = 2 * math.pi * i / 14
-                p.plant(SP_GRAY, cx + 6.5 * math.cos(a), cy + 6.5 * math.sin(a))
+            # В центре каждого квадрата -- дубовая рощица: большой дуб
+            # черешчатый и четыре дуба по диагоналям, под ними -- гортензия.
+            p.plant(DUB, cx, cy)
+            for dx, dy in ((1, 1), (1, -1), (-1, 1), (-1, -1)):
+                p.plant(DUB, cx + 3.9 * dx, cy + 3.9 * dy)
+            for dx, dy in ((0, 6.8), (0, -6.8), (6.8, 0), (-6.8, 0)):
+                p.plant(GORTENZIYA, cx + dx, cy + dy)
             # Бордюр из стриженого кизильника по краю квадрата; в середине
             # сторон, выходящих на дорожку, -- разрыв и скамейка лицом к дубу,
             # на углах -- туи, у перекрёстков -- место фонарю.
@@ -450,16 +466,27 @@ def network_corridor_garden() -> Primer:
               ((13, 48), (EL, BEREZA)), ((40, 52), (BEREZA, LISTVENNICA)), ((78, 51), (BEREZA, EL))]
     for (gx, gy), (main, accent) in groves:
         p.plant(accent, gx, gy)
-        for i in range(5):
-            a = 2 * math.pi * i / 5 + 0.4
-            p.plant(main, gx + 4.2 * math.cos(a), gy + 4.2 * math.sin(a))
-        for i in range(9):
-            a = 2 * math.pi * i / 9
-            p.plant(SIREN if i % 2 else SP_VANGUTTA, gx + 8.0 * math.cos(a), gy + 8.0 * math.sin(a))
-    for x, y, tx, ty in along(line(26.5), 15.0):
-        p.put("lamp", x + ty * 5.0, y - tx * 5.0)
-    for x, y, tx, ty in along(line(26.5), 22.0, start=11.0):
-        p.bench_with_urn(x - ty * 4.4, y + tx * 4.4, tx, ty, math.degrees(math.atan2(ty, tx)) + 180)
+        for i in range(6):
+            a = 2 * math.pi * i / 6 + 0.4
+            p.plant(main, gx + 4.0 * math.cos(a), gy + 4.0 * math.sin(a))
+        for i in range(8):
+            a = 2 * math.pi * i / 8 + 0.2
+            p.plant(accent if i % 2 else main, gx + 7.8 * math.cos(a), gy + 7.8 * math.sin(a))
+        for i in range(14):
+            a = 2 * math.pi * i / 14
+            p.plant(SIREN if i % 2 else SP_VANGUTTA, gx + 10.5 * math.cos(a), gy + 10.5 * math.sin(a))
+    # Вдоль коридора сетей -- полосы спиреи (кусту от теплосети -- 1 м, от
+    # водопровода -- без отступа), по краям участка -- ряды лип.
+    hedge(p, SP_VANGUTTA, line(20.5), 1.3, rows=(-0.5, 0.5))
+    hedge(p, SP_VANGUTTA, line(33.4), 1.3, rows=(-0.5, 0.5))
+    for x in range(5, int(w), 7):
+        p.plant(LIPA, x, 2.5)
+        p.plant(LIPA, x, h - 2.5)
+    # Фонари и скамейки -- между водопроводом и полосой кустов, лицом к аллее.
+    for x, y, _, _ in along(line(31.5), 15.0):
+        p.put("lamp", x, y)
+    for x, y, tx, ty in along(line(31.5), 15.0, start=15.0):
+        p.bench_with_urn(x, y, tx, ty, math.degrees(math.atan2(ty, tx)) + 180)
     return p
 
 
