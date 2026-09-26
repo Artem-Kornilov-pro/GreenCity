@@ -25,7 +25,7 @@ from core.placement import (
 )
 from core.plant_catalog import CatalogItem
 from core.schemas import Scene
-from text_editor.operations import LlmPlan
+from text_editor.operations import ChatTurn, LlmPlan
 from text_editor.prompt import INSTRUCTIONS, _build_context
 
 # Локально .env лежит в корне репозитория. В Docker переменные уже приходят из
@@ -46,6 +46,15 @@ TEMPERATURE = 0.3
 # обычно укладывался в ~3-4 тыс., но изредка не хватало и его. Поле
 # reasoning_tokens у Yandex всегда 0 -- ориентироваться можно только на status.
 MAX_OUTPUT_TOKENS = 8000
+
+# Сколько прошлых правок чата уходит модели и насколько коротко: для
+# отсылок ("убери их", "там же") хватает последних просьб и того, что по ним
+# сделано, а каждый символ -- токены на каждом запросе.
+MAX_HISTORY_TURNS = 4
+MAX_HISTORY_TEXT = 300
+MAX_HISTORY_APPLIED = 4
+MAX_HISTORY_APPLIED_TEXT = 160
+
 
 class LlmNotConfiguredError(RuntimeError):
     """Не заданы ключи LLM -- сервис работает, но текстовые правки недоступны."""
@@ -150,11 +159,37 @@ def _call_chat_completions(client: openai.OpenAI, model: str, user_input: str) -
     )
 
 
-def request_plan(scene: Scene, instruction: str, catalog: list[CatalogItem], placer: Placer) -> LlmPlan:
+def _clip(text: str, limit: int) -> str:
+    text = " ".join(text.split())
+    return text if len(text) <= limit else text[: limit - 1] + "…"
+
+
+def _history_block(history: list[ChatTurn]) -> str:
+    """Прошлые правки чата -- коротко, последние MAX_HISTORY_TURNS."""
+    lines = []
+    for number, turn in enumerate(history[-MAX_HISTORY_TURNS:], 1):
+        lines.append(f"{number}. Просьба: {_clip(turn.instruction, MAX_HISTORY_TEXT)}")
+        if turn.explanation:
+            lines.append(f"   Ответ: {_clip(turn.explanation, MAX_HISTORY_TEXT)}")
+        for applied in turn.applied[:MAX_HISTORY_APPLIED]:
+            lines.append(f"   сделано: {_clip(applied, MAX_HISTORY_APPLIED_TEXT)}")
+    return "\n".join(lines)
+
+
+def request_plan(
+    scene: Scene,
+    instruction: str,
+    catalog: list[CatalogItem],
+    placer: Placer,
+    history: list[ChatTurn] = (),
+) -> LlmPlan:
     client, model = _client_and_model()
     provider = _llm_provider()
-    context = _build_context(scene, catalog, placer)
-    user_input = f"Контекст:\n{context}\n\nПросьба пользователя:\n{instruction}"
+    context = _build_context(scene, catalog, placer, instruction)
+    user_input = f"Контекст:\n{context}\n\n"
+    if history:
+        user_input += f"Прошлые правки в этом чате (уже применены):\n{_history_block(list(history))}\n\n"
+    user_input += f"Просьба пользователя:\n{instruction}"
     logger.info("запрос (%s): %r | контекст %d симв.", provider, instruction[:200], len(context))
 
     started = time.monotonic()

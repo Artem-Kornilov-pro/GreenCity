@@ -13,6 +13,7 @@ from text_editor.prompt import (
     _catalog_for_prompt,
     _inner_center,
     _outline,
+    mentioned_species,
 )
 from text_editor.service import LlmPlan, apply_plan
 
@@ -124,6 +125,41 @@ def test_catalog_for_prompt_limits_pack_items_per_shape_class():
         if item.id not in base_ids:
             per_class[(item.category, item.size_class, item.crown_class)] += 1
     assert per_class[("tree", "medium", "regular")] == MAX_PACK_ITEMS_PER_SHAPE_CLASS
+
+
+@pytest.mark.parametrize(
+    ("instruction", "expected"),
+    [
+        ("посади липы вдоль дорожек", "Липа мелколистная"),
+        ("клёны по периметру", "Клен остролистный"),
+        ("добавь ёлки", "Ель колючая"),
+        ("посади березки", "Береза повислая"),
+        ("туи у входа", "Туя западная"),
+        ("сиренью обсади площадку", "Сирень обыкновенная"),
+    ],
+)
+def test_mentioned_species_matches_inflected_names(instruction, expected):
+    assert expected in [item.label for item in mentioned_species(CATALOG, instruction)]
+
+
+def test_mentioned_species_ignores_words_that_only_start_alike():
+    labels = [item.label for item in mentioned_species(CATALOG, "туи и дубы")]
+    assert "Барбарис Тунберга" not in labels and "Спирея дубравколистная" not in labels
+    assert mentioned_species(CATALOG, "убери лавки у парковки") == []
+
+
+def test_catalog_for_prompt_prefers_base_assortment_and_shows_labels():
+    rows = {row[0]: row for row in _catalog_for_prompt(CATALOG)}
+    assert rows["species_lipa_melkolistnaya"][-1] == "Липа мелколистная"
+    assert all(row[-1] for row in rows.values())
+
+
+def test_catalog_for_prompt_adds_named_species_beyond_the_sample():
+    plain = {row[0] for row in _catalog_for_prompt(CATALOG)}
+    hidden = next(item for item in CATALOG if item.id.startswith("species_") and item.id not in plain)
+    asked = {row[0]: row for row in _catalog_for_prompt(CATALOG, f"посади {hidden.label.lower()}")}
+    assert asked[hidden.id][-1] == hidden.label
+    assert plain < set(asked)
 
 
 def test_build_context_is_valid_json_with_expected_top_level_keys(scene1):

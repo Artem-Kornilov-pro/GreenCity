@@ -209,15 +209,25 @@ export interface TextEditResult {
   applied: string[];
   rejected: string[];
   warnings: string[];
+  // Модель выбрала озеленение GreenPlan -- его запускает вызывающий код на scene.
+  greenplan?: GreenPlanOptions | null;
+}
+
+// Прошлая правка чата (backend/text_editor/operations.py::ChatTurn): без неё
+// модель не понимает отсылок вроде "убери их".
+export interface ChatTurn {
+  instruction: string;
+  explanation: string;
+  applied: string[];
 }
 
 // Правка плана текстом через LLM (backend/text_editor/service.py). Модель отвечает
 // несколько секунд -- вызывающему коду нужен индикатор ожидания.
-export async function editWithText(scene: Scene, instruction: string): Promise<TextEditResult> {
+export async function editWithText(scene: Scene, instruction: string, history: ChatTurn[] = []): Promise<TextEditResult> {
   const res = await fetch(`${API_BASE}/api/edit-with-text`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ scene, instruction }),
+    body: JSON.stringify({ scene, instruction, history }),
   });
   if (!res.ok) {
     // FastAPI кладёт текст ошибки в {"detail": "..."} -- показываем его, а не

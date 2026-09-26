@@ -16,6 +16,7 @@ import {
   fetchGreenPlanReport,
   downloadGreenPlanDocument,
   DEFAULT_GREENPLAN_OPTIONS,
+  type ChatTurn,
   type GreenPlanOptions,
 } from "../../api";
 import { buildZoneIndex, checkViolationsAt, computeSceneBounds } from "../../geometry";
@@ -30,7 +31,17 @@ import { GreenPlanOptionsDialog } from "./GreenPlanOptionsDialog";
 import { GreenPlanPanel } from "./GreenPlanPanel";
 import { SaveAsDialog } from "./SaveAsDialog";
 import { StatusBanners } from "./StatusBanners";
-import { makeId, SELECTION_ZONE_NAME, SELECTION_ZONE_TYPE, type ChatMessage, type GreenPlanState } from "./editorTypes";
+import {
+  makeId,
+  SELECTION_ZONE_NAME,
+  SELECTION_ZONE_TYPE,
+  type AiEditSnapshot,
+  type ChatMessage,
+  type GreenPlanState,
+} from "./editorTypes";
+
+// Сколько прошлых правок чата отправлять модели (бэкенд режет так же).
+const MAX_HISTORY_TURNS = 4;
 
 // Страница редактора: состояние сцены и все обработчики -- здесь, отрисовка
 // разнесена по частям в этой же папке (топбар, левая панель, панели
@@ -81,6 +92,7 @@ export default function EditorPage() {
   const [instruction, setInstruction] = useState("");
   const [editing, setEditing] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [lastAiEdit, setLastAiEdit] = useState<AiEditSnapshot | null>(null);
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
   const [greenPlanBusy, setGreenPlanBusy] = useState(false);
@@ -241,36 +253,12 @@ export default function EditorPage() {
     setScene((prev) => (prev ? { ...prev, restrictions: prev.restrictions.filter((z) => z.type !== SELECTION_ZONE_TYPE) } : prev));
   }, []);
 
-  const handleTextEdit = useCallback(async () => {
-    if (!scene || !instruction.trim()) return;
-    const text = instruction.trim();
-    setMessages((prev) => [...prev, { id: makeId(), role: "user", text }]);
-    setInstruction("");
-    setEditing(true);
-    try {
-      const result = await editWithText(scene, text);
-      setScene(result.scene);
-      setSelectedId((prev) => (prev && result.scene.objects.some((o) => o.id === prev) ? prev : null));
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: makeId(),
-          role: "assistant",
-          text: result.explanation || `Применено изменений: ${result.applied.length}`,
-          applied: result.applied,
-          rejected: result.rejected,
-          warnings: result.warnings,
-        },
-      ]);
-    } catch (e) {
-      setMessages((prev) => [...prev, { id: makeId(), role: "error", text: e instanceof Error ? e.message : String(e) }]);
-    } finally {
-      setEditing(false);
-    }
-  }, [scene, instruction]);
-
-  const handleGreenPlan = useCallback(async (options: GreenPlanOptions) => {
-    if (!scene) return;
+  // baseScene -- сцена, на которой запускать, если это не текущая: ассистент
+  // запускает GreenPlan на сцене своего ответа, которая в состояние ещё не
+  // попала. Возвращает сцену с результатом (null -- ошибка).
+  const handleGreenPlan = useCallback(async (options: GreenPlanOptions, baseScene?: Scene): Promise<Scene | null> => {
+    const base = baseScene ?? scene;
+    if (!base) return null;
     setGreenPlanOptions(options);
     saveGreenPlanOptions(options);
     setGreenPlanOptionsOpen(false);
@@ -279,7 +267,7 @@ export default function EditorPage() {
     try {
       // Повторный запуск заменяет прошлый результат GreenPlan в сцене
       // (backend/greenplan/pipeline.py), а не сажает второй слой.
-      const result = await generateGreenPlan(scene, options);
+      const result = await generateGreenPlan(base, options);
       setScene(result.scene);
       // Расстановка/нарушения/ведомость уже готовы -- показываем сразу, не
       // дожидаясь текста-объяснения (тот -- ~30 секунд, локальная LLM).
@@ -288,24 +276,87 @@ export default function EditorPage() {
       setGreenPlanPanelOpen(true);
       setGreenPlanBusy(false);
 
-      // Отдельно, в фоне: не await'ится этим же try -- ошибка здесь не
-      // должна откатывать уже показанный результат расстановки.
+      // Отдельно, в фоне и без await: ошибка здесь не должна откатывать уже
+      // показанный результат расстановки, а вызывающий (ассистент) не должен
+      // ждать эти полминуты.
       setGreenPlanReportLoading(true);
-      try {
-        const { report, report_error } = await fetchGreenPlanReport(result.assignments);
-        setGreenPlanResult((prev) => (prev ? { ...prev, report, report_error } : prev));
-      } catch (e) {
-        setGreenPlanResult((prev) =>
-          (prev ? { ...prev, report: null, report_error: e instanceof Error ? e.message : String(e) } : prev),
-        );
-      } finally {
-        setGreenPlanReportLoading(false);
-      }
+      void (async () => {
+        try {
+          const { report, report_error } = await fetchGreenPlanReport(result.assignments);
+          setGreenPlanResult((prev) => (prev ? { ...prev, report, report_error } : prev));
+        } catch (e) {
+          setGreenPlanResult((prev) =>
+            (prev ? { ...prev, report: null, report_error: e instanceof Error ? e.message : String(e) } : prev),
+          );
+        } finally {
+          setGreenPlanReportLoading(false);
+        }
+      })();
+      return result.scene;
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setGreenPlanBusy(false);
+      return null;
     }
   }, [scene]);
+
+  const handleTextEdit = useCallback(async () => {
+    if (!scene || !instruction.trim()) return;
+    const text = instruction.trim();
+    // Прошлые правки этого чата -- чтобы модель понимала "убери их", "там
+    // же"; отменённые не в счёт. Бэкенд всё равно берёт только последние.
+    const history: ChatTurn[] = messages
+      .filter((m) => m.role === "assistant" && m.instruction && !m.undone)
+      .slice(-MAX_HISTORY_TURNS)
+      .map((m) => ({ instruction: m.instruction ?? "", explanation: m.text, applied: (m.applied ?? []).slice(0, 4) }));
+    const before = scene;
+    setMessages((prev) => [...prev, { id: makeId(), role: "user", text }]);
+    setInstruction("");
+    setEditing(true);
+    try {
+      const result = await editWithText(scene, text, history);
+      setScene(result.scene);
+      setSelectedId((prev) => (prev && result.scene.objects.some((o) => o.id === prev) ? prev : null));
+      const messageId = makeId();
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: messageId,
+          role: "assistant",
+          instruction: text,
+          text: result.explanation || `Применено изменений: ${result.applied.length}`,
+          applied: result.applied,
+          rejected: result.rejected,
+          warnings: result.warnings,
+        },
+      ]);
+      let after = result.scene;
+      if (result.greenplan) {
+        after = (await handleGreenPlan(result.greenplan, result.scene)) ?? result.scene;
+      }
+      setLastAiEdit({ messageId, before, after, ranGreenPlan: Boolean(result.greenplan) });
+    } catch (e) {
+      setMessages((prev) => [...prev, { id: makeId(), role: "error", text: e instanceof Error ? e.message : String(e) }]);
+    } finally {
+      setEditing(false);
+    }
+  }, [scene, instruction, messages, handleGreenPlan]);
+
+  // Отмена последней правки ассистента: план возвращается к виду до неё.
+  // Доступна, только пока план после правки не менялся -- иначе отмена
+  // молча стёрла бы и ручные правки.
+  const handleUndoAiEdit = useCallback(() => {
+    if (!lastAiEdit || scene !== lastAiEdit.after) return;
+    const { before, messageId, ranGreenPlan } = lastAiEdit;
+    setScene(before);
+    setSelectedId((prev) => (prev && before.objects.some((o) => o.id === prev) ? prev : null));
+    setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, undone: true } : m)));
+    if (ranGreenPlan) {
+      setGreenPlanResult(null);
+      setGreenPlanPanelOpen(false);
+    }
+    setLastAiEdit(null);
+  }, [lastAiEdit, scene]);
 
   const handleExportJson = () => {
     if (!scene) return;
@@ -534,6 +585,8 @@ export default function EditorPage() {
             onInstructionChange={setInstruction}
             onSubmit={handleTextEdit}
             sceneLoaded={scene !== null}
+            undoableMessageId={lastAiEdit && scene === lastAiEdit.after ? lastAiEdit.messageId : null}
+            onUndo={handleUndoAiEdit}
           />
 
           <GreenPlanPanel

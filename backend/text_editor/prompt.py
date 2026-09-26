@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from collections import Counter
 
 from shapely.geometry import Polygon
@@ -20,6 +21,7 @@ from core.placement import (
 from core.plant_catalog import CATALOG as BASE_CATALOG
 from core.plant_catalog import CatalogItem
 from core.schemas import Scene
+from greenplan.species_selection import in_base_515
 
 # Лимиты на размер контекста: каждый символ -- токены и деньги на каждый
 # запрос, а на районе (локация 5) полные списки зданий и объектов давали
@@ -33,6 +35,12 @@ MAX_BUILDINGS_IN_PROMPT = 40
 # нужен класс формы, а не каждое из 200 почти одинаковых деревьев. Базовые
 # позиции каталога (МАФ, газон, мощение) показываются все.
 MAX_PACK_ITEMS_PER_SHAPE_CLASS = 6
+
+# Виды, названные в просьбе ("посади липы"), показываются сверх выборки по
+# классам формы: иначе модель не находила липу мелколистную среди 220 видов
+# и сажала что-то похожее по размеру. Верхняя граница -- на случай просьбы,
+# задевающей много названий сразу.
+MAX_MENTIONED_SPECIES = 30
 
 # Контуры упрощаются, пока в них не больше стольких точек.
 MAX_OUTLINE_POINTS = 40
@@ -76,35 +84,74 @@ def _editable_types(catalog: list[CatalogItem]) -> set[str]:
     return {item.object_type for item in catalog}
 
 
-def _catalog_for_prompt(catalog: list[CatalogItem]) -> list[list]:
+def _words(text: str) -> list[str]:
+    return re.findall(r"[а-я]+", text.lower().replace("ё", "е"))
+
+
+def _same_word(asked: str, name: str) -> bool:
+    """Одно слово в разных падежах и числах: "липы" -- "липа", "клёны" --
+    "клен", "березки" -- "береза", "туи" -- "туя". Общее начало -- всё
+    название без окончания (одна-две буквы): "туи" -- не "Тунберга",
+    "дубы" -- не "дубравколистная"."""
+    common = 0
+    for a, b in zip(asked, name):
+        if a != b:
+            break
+        common += 1
+    return common >= max(2, min(len(asked), len(name)) - 1, len(name) - 2)
+
+
+def mentioned_species(catalog: list[CatalogItem], instruction: str) -> list[CatalogItem]:
+    """Виды каталога (species_*), названные в просьбе, -- по любому слову
+    названия вида."""
+    asked = [w for w in _words(instruction) if len(w) >= 3]
+    found = []
+    for item in catalog:
+        if not item.id.startswith("species_"):
+            continue
+        names = [w for w in _words(item.label) if len(w) >= 3]
+        if any(_same_word(a, n) for a in asked for n in names):
+            found.append(item)
+    return found[:MAX_MENTIONED_SPECIES]
+
+
+def _catalog_for_prompt(catalog: list[CatalogItem], instruction: str = "") -> list[list]:
     """Каталог таблицей (строки-массивы, заголовок -- в catalog_columns), а не
     списком словарей: повторяющиеся ключи в 217 записях и были основным
-    объёмом. Модели из пака -- выборкой по классу формы, в порядке файла, чтобы
-    выборка была стабильной от запроса к запросу."""
+    объёмом. Базовые позиции (МАФ, газон, мощение) и виды, названные в
+    просьбе, -- все; остальные виды -- выборкой по классу формы: сначала из
+    базового ассортимента 515-ПП, дальше в порядке файла, чтобы выборка была
+    стабильной от запроса к запросу."""
     base_ids = {item.id for item in BASE_CATALOG}
+    mentioned = {item.id for item in mentioned_species(catalog, instruction)}
+    ordered = sorted(catalog, key=lambda item: not (item.id.startswith("species_") and in_base_515(item)))
     per_class: dict[tuple, int] = {}
-    rows: list[list] = []
-    for item in catalog:
-        is_base = item.id in base_ids
-        if not is_base:
-            key = (item.category, item.size_class, item.crown_class)
-            if per_class.get(key, 0) >= MAX_PACK_ITEMS_PER_SHAPE_CLASS:
-                continue
+    shown: set[str] = set()
+    for item in ordered:
+        if item.id in base_ids or item.id in mentioned:
+            shown.add(item.id)
+            continue
+        key = (item.category, item.size_class, item.crown_class)
+        if per_class.get(key, 0) < MAX_PACK_ITEMS_PER_SHAPE_CLASS:
             per_class[key] = per_class.get(key, 0) + 1
-        rows.append([
+            shown.add(item.id)
+    return [
+        [
             item.id,
             item.category,
             item.size_class or "",
             item.crown_class or "",
             item.dimensions.height,
-            # У базовых позиций подпись осмысленная ("Лавка", "Фонтан"); у
-            # моделей пака она лишь пересказывает размер/крону/высоту.
-            item.label if is_base else "",
-        ])
-    return rows
+            # Название вида ("Липа мелколистная") -- по нему модель и
+            # находит то, что назвал пользователь.
+            item.label,
+        ]
+        for item in catalog
+        if item.id in shown
+    ]
 
 
-def _build_context(scene: Scene, catalog: list[CatalogItem], placer: Placer) -> str:
+def _build_context(scene: Scene, catalog: list[CatalogItem], placer: Placer, instruction: str = "") -> str:
     editable = _editable_types(catalog)
 
     all_buildings = [o for o in scene.objects if o.type == "building"]
@@ -185,7 +232,7 @@ def _build_context(scene: Scene, catalog: list[CatalogItem], placer: Placer) -> 
         "objects_not_shown": max(0, len(editable_objects) - MAX_OBJECTS_IN_PROMPT),
         "object_counts": dict(Counter(o.type for o in editable_objects)),
         "catalog_columns": ["catalog_id", "category", "size", "crown", "height_m", "label"],
-        "catalog_rows": _catalog_for_prompt(catalog),
+        "catalog_rows": _catalog_for_prompt(catalog, instruction),
     }
     return json.dumps(context, ensure_ascii=False, separators=(",", ":"))
 
@@ -194,7 +241,9 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
 
 Координаты групповых посадок считает геометрический планировщик: он сам соблюдает нормативные отступы от зданий, подземных сетей, дорожек, парковок, площадок, фонарей и подъездов, выдерживает шаг посадки и не выходит за участок. Твоя задача — понять намерение и выбрать операции, виды из каталога и параметры. Координаты рядов и групп сам не считай.
 
-Контекст (JSON): контур участка, здания, ориентиры (landmarks: подъезды, площадки), цели для рядов (targets), свободные для посадки области (free_areas), выделенные пользователем мышкой участки (selected_areas: {"name", "outline"}), текущие объекты (objects) и каталог (catalog_rows, колонки описаны в catalog_columns). Координаты в метрах, контуры — точки [x, z].
+Контекст (JSON): контур участка, здания, ориентиры (landmarks: подъезды, площадки), цели для рядов (targets), свободные для посадки области (free_areas), выделенные пользователем мышкой участки (selected_areas: {"name", "outline"}), текущие объекты (objects) и каталог (catalog_rows, колонки описаны в catalog_columns; label — название вида или предмета). Координаты в метрах, контуры — точки [x, z].
+
+Если перед просьбой есть «Прошлые правки в этом чате» — они уже применены к плану, не повторяй их. Они нужны, чтобы понять отсылки: «их», «там же», «ещё столько же», «то же самое у второго дома», «нет, лучше липы».
 
 Верни ТОЛЬКО валидный JSON без markdown, строго такой формы:
 {"operations": [...], "explanation": "..."}
@@ -210,6 +259,8 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
   Выделить именованную зону («детская зона», «здесь ничего не сажать», «зона под цветник») — круг вокруг точки, объекта или цели. Зона сразу видна на плане и учитывается всеми правками (severity "forbidden"/"warning" — туда ничего не сажать; "allowed" — просто пометить). После этого её можно называть по имени в target любой операции (place_along, remove_where, ...) и в area у place_in_area/cover_area — так и решается «посади цветы в этой зоне».
 - {"op": "design_area", "elements": ["paths", "flowerbeds", "fountain", "lamps", "benches", "trash", "hedge", "trees", "bushes"], "style": "<необязательно>", "tree_ids": [<необязательно>], "bush_ids": [<необязательно>], "x": <необязательно>, "z": <необязательно>, "radius_m": <необязательно>}
   Полный дизайн двора одной операцией: планировщик сам прокладывает каркас дорожек (от подъезда к подъезду, с выходом на парковку, если она рядом), расставляет фонари и скамейки с урнами вдоль дорожек, живую изгородь по краю двора, деревья вразброс по свободной площади. В elements перечисли то, что просили: paths — дорожки (прокладываются всегда), flowerbeds — клумбы, fountain — фонтан, lamps — фонари, benches — скамейки, trash — урны, hedge — живая изгородь, trees — деревья, bushes — кусты. Если просят «дизайн», «благоустройство», «сквер», «парк» без перечня — elements не указывай (по умолчанию — всё, КРОМЕ фонтана). fountain указывай, только если фонтан просят явно: площадь для него есть не в каждом дворе, и без явной просьбы он не ставится. style — шаблон каркаса дорожек: spine (дорожки от подъезда к подъезду — по умолчанию для обычного двора), diagonal (площадь на пересечении диагоналей — только если явно просят «крест», «по диагонали»), grid (сетка дорожек, для большого двора), perimeter (дорожка по периметру, для узкого двора); без явной просьбы про форму дорожек не указывай — планировщик сам подберёт по форме двора. x, z, radius_m — только если дизайн нужен в конкретной части участка.
+- {"op": "run_greenplan", "style": "auto"/"regular"/"landscape", "trees": <bool>, "bushes": <bool>, "lawn": <bool>, "paths": <bool>, "lighting": <bool>, "benches": <bool>, "preferred_trees": ["<catalog_id вида>"], "preferred_bushes": ["<catalog_id вида>"]} — все поля необязательные
+  Автоматическое озеленение всего участка GreenPlan: по похожим реализованным проектам, с нормами отступов и ассортиментом для типа территории, с ведомостью и пояснительной запиской. Для «озелени участок», «сделай проект озеленения», «спроектируй посадки», «в регулярном/пейзажном стиле». style: regular — строгая геометрия (сетки, боскеты, ряды), landscape — свободные формы (рощи, волны), auto — по аналогам; указывай, только если стиль назван. trees/bushes/lawn — что сажать (по умолчанию всё; false — только если просят не сажать это). paths/lighting/benches — новые дорожки, фонари, скамейки с урнами (по умолчанию нет; true — если просят). preferred_* — виды, названные в просьбе (только catalog_id вида из catalog_rows). Если просят клумбы, фонтан или дизайн конкретного места — design_area, а не run_greenplan.
 - {"op": "connect", "from_id"/"from_target"/"from_x"+"from_z": "<одно из трёх>", "to_id"/"to_target"/"to_x"+"to_z": "<одно из трёх>"}
   Проложить дорожку между двумя точками: подъезд-подъезд, подъезд или другой объект (например фонтан) — id из objects; сеть дорожек или граница участка до зоны (например парковки) — target из targets. Для "от подъезда к Х" или "соедини сеть дорожек с Y" — эта операция, а не place_along. design_area уже сама тянет дорожки к подъездам и парковке — connect нужен для точечной, дополнительной связи. Если прямая между точками перекрыта зданием, планировщик сам обходит его по кратчайшему пути — не отказывай заранее из-за препятствия, пробуй connect.
 - {"op": "cover_area", "catalog_ids": ["<газон/цветник>"], "area"/"x"+"z"+"radius_m": <необязательно>}
@@ -246,8 +297,9 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
 - В catalog_ids — один или несколько видов подходящего класса; одинаковые деревья сажать можно.
 - spacing_m и offset_m не указывай, если пользователь не просит гуще, реже или дальше: шаг по размеру вида планировщик возьмёт сам.
 - count и max_count — по числу из просьбы; «несколько» — 3–5. Для «вдоль», «по периметру», «засади» без числа max_count не указывай.
-- Если в просьбе вместе дорожки, скамейки, урны, фонари, клумбы, изгородь или «благоустрой/спроектируй двор», «сделай сквер/парк» — ОДНА операция design_area, а не отдельные посадки.
+- Если в просьбе вместе дорожки, скамейки, урны, фонари, клумбы, изгородь или «благоустрой/спроектируй двор», «сделай сквер/парк» — ОДНА операция design_area, а не отдельные посадки. Но если просят озеленить весь участок (проект озеленения, стиль участка) — run_greenplan, а дорожки, фонари и скамейки — его параметрами paths, lighting, benches.
 - «У входа» — координаты подъезда из landmarks. «В центре двора» — center самой большой области из free_areas. «Вокруг фонтана» / «у скамейки» и т.п. — x, z существующего объекта нужного типа из objects (не landmark и не target). «Здесь» / «в этой области» / «в выделении» / просьба без явного места, когда selected_areas не пуст, — это выделенный пользователем участок: используй его name как target (place_along/remove_where/...) или area (place_in_area/cover_area).
+- Названный вид («липы», «сирень», «клён остролистный») — catalog_id строки, где label начинается с этого названия; если вариантов несколько, а уточнения нет — возьми вид с самым обычным названием (мелколистная, обыкновенная, повислая) или несколько вперемешку. Если такого вида в catalog_rows нет — возьми похожий по форме и скажи об этом в explanation.
 - Здания, подъезды, дорожки и зоны менять нельзя.
 - Если просьба невыполнима (например, нужной цели нет в targets) — пустой operations и причина в explanation.
 - explanation — одно-два предложения по-русски: что сделано. Точное количество не называй: его посчитает планировщик.
@@ -259,4 +311,7 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
 {"operations": [{"op": "place_in_area", "catalog_ids": ["<catalog_id дерева>"], "count": 4, "x": 5.0, "z": -12.0, "radius_m": 8}], "explanation": "Вокруг фонтана посажены четыре дерева."}
 
 Пример 3. Просьба: «выдели зону под детскую площадку у второго подъезда радиусом 10 м и посади там кусты по кругу».
-{"operations": [{"op": "define_zone", "name": "Детская площадка", "severity": "forbidden", "x": 12.5, "z": -30.0, "radius_m": 10}, {"op": "enclose", "catalog_ids": ["<catalog_id куста>"], "around_target": "Детская площадка", "offset_m": 1}], "explanation": "Выделена зона под детскую площадку, по её краю высажены кусты."}"""
+{"operations": [{"op": "define_zone", "name": "Детская площадка", "severity": "forbidden", "x": 12.5, "z": -30.0, "radius_m": 10}, {"op": "enclose", "catalog_ids": ["<catalog_id куста>"], "around_target": "Детская площадка", "offset_m": 1}], "explanation": "Выделена зона под детскую площадку, по её краю высажены кусты."}
+
+Пример 4. Просьба: «озелени участок в регулярном стиле, побольше лип, и сделай дорожки с фонарями».
+{"operations": [{"op": "run_greenplan", "style": "regular", "preferred_trees": ["species_lipa_melkolistnaya"], "paths": true, "lighting": true}], "explanation": "Участок озеленит GreenPlan в регулярном стиле с липой мелколистной, с новыми дорожками и освещением."}"""

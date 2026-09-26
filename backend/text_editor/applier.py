@@ -25,6 +25,7 @@ from core.placement import (
 from core.plant_catalog import CatalogItem
 from core.schemas import Point3, RestrictionZone, Scene, SceneObject
 from core.setback_norms import SpeciesArg
+from greenplan.options import GreenPlanOptions
 from text_editor.operations import (
     _OPERATION,
     AddOp,
@@ -46,6 +47,7 @@ from text_editor.operations import (
     ReplaceWhereOp,
     ResizeOp,
     RotateOp,
+    RunGreenPlanOp,
     SetCountOp,
     TextEditResult,
     ThinOutOp,
@@ -72,6 +74,7 @@ class PlanApplier(PlacementOpsMixin, EditingOpsMixin):
         self.rejected: list[str] = []
         self.warnings: list[str] = []
         self.new_zones: list[RestrictionZone] = []  # define_zone -- добавляются в вывод сцены отдельно
+        self.greenplan: Optional[GreenPlanOptions] = None  # run_greenplan -- запускает фронтенд
 
     def run(self, plan: LlmPlan) -> TextEditResult:
         handlers = {
@@ -95,6 +98,7 @@ class PlanApplier(PlacementOpsMixin, EditingOpsMixin):
             SetCountOp: self.set_count,
             DefineZoneOp: self.define_zone,
             DesignAreaOp: self.design_area,
+            RunGreenPlanOp: self.run_greenplan,
         }
         for number, raw in enumerate(plan.operations, 1):
             try:
@@ -122,6 +126,7 @@ class PlanApplier(PlacementOpsMixin, EditingOpsMixin):
             applied=self.applied,
             rejected=self.rejected,
             warnings=self.warnings,
+            greenplan=self.greenplan,
         )
 
     # --- Общие шаги --------------------------------------------------------
@@ -247,6 +252,32 @@ class PlanApplier(PlacementOpsMixin, EditingOpsMixin):
             return
         self.objects[obj.id] = obj.model_copy(update={"rotation": math.radians(op.rotation_deg)})
         self.applied.append(f"повёрнут {obj.id} на {op.rotation_deg:.0f}°")
+
+    # --- GreenPlan -----------------------------------------------------------
+
+    def _preferred(self, ids: list[str], category: str, what: str) -> list[str]:
+        """Предпочтительные виды GreenPlan: только конкретные виды каталога
+        (species_*) своей категории -- как в диалоге параметров на фронтенде."""
+        chosen = []
+        for catalog_id in dict.fromkeys(ids):
+            item = self.by_id.get(catalog_id)
+            if item is None or not item.id.startswith("species_") or item.category != category or item.object_type != category:
+                self.warnings.append(f"GreenPlan: «{catalog_id}» не {what} из каталога видов — пропущено")
+            else:
+                chosen.append(item.id)
+        return chosen
+
+    def run_greenplan(self, op: RunGreenPlanOp) -> None:
+        if self.greenplan is not None:
+            self.warnings.append("GreenPlan запрошен дважды — взяты параметры последнего запроса")
+        values = op.model_dump(exclude={"op", "preferred_trees", "preferred_bushes"}, exclude_none=True)
+        self.greenplan = GreenPlanOptions(
+            **values,
+            preferred_trees=self._preferred(op.preferred_trees, "tree", "дерево"),
+            preferred_bushes=self._preferred(op.preferred_bushes, "bush", "кустарник"),
+        )
+        labels = {item.id: item.label for item in self.catalog}
+        self.applied.append("GreenPlan озеленит участок: " + "; ".join(self.greenplan.summary(labels)))
 
 
 def apply_plan(

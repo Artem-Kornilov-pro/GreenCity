@@ -53,9 +53,10 @@ from core.plant_catalog import load_catalog
 from core.schemas import Scene
 from text_editor.applier import apply_plan
 from text_editor.llm_client import LlmError, LlmNotConfiguredError, request_plan
-from text_editor.operations import LlmPlan, TextEditRequest, TextEditResult
+from text_editor.operations import ChatTurn, LlmPlan, TextEditRequest, TextEditResult
 
 __all__ = [
+    "ChatTurn",
     "LlmError",
     "LlmNotConfiguredError",
     "LlmPlan",
@@ -69,12 +70,12 @@ __all__ = [
 logger = logging.getLogger("greencity.llm")
 
 
-def edit_scene_with_text(scene: Scene, instruction: str) -> TextEditResult:
+def edit_scene_with_text(scene: Scene, instruction: str, history: list[ChatTurn] = ()) -> TextEditResult:
     catalog = load_catalog()
     # Один планировщик на запрос: допустимые области, построенные для
     # контекста модели, переиспользуются при применении плана.
     placer = Placer(scene)
-    plan = request_plan(scene, instruction, catalog, placer)
+    plan = request_plan(scene, instruction, catalog, placer, history)
     logger.info("план: %s", json.dumps(plan.operations, ensure_ascii=False)[:1500])
 
     started = time.monotonic()

@@ -338,7 +338,7 @@ def edit_with_text(request: TextEditRequest):
     почему, какие есть предупреждения.
     """
     try:
-        result = edit_scene_with_text(request.scene, request.instruction)
+        result = edit_scene_with_text(request.scene, request.instruction, request.history)
     except LlmNotConfiguredError as e:
         metrics.llm_edit_requests_total.labels(outcome="not_configured").inc()
         raise HTTPException(503, str(e)) from e
