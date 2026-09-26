@@ -17,6 +17,17 @@
 // вида с числом размещений больше тысячи (сотни бушей одного вида на большом
 // участке -- обычное дело после GreenPlan) молча обрежутся до первой тысячи
 // без явного лимита.
+//
+// frustumCulled={false} -- не оптимизация, а исправление: three.js отсекает
+// InstancedMesh по ограничивающей сфере, которую считает ОДИН раз, при
+// первой отрисовке (Frustum.intersectsObject -> computeBoundingSphere, пока
+// boundingSphere === null), а drei.Instances её потом не пересчитывает.
+// Сфера остаётся вокруг тех экземпляров, что были в первом кадре, -- у
+// объектов из DXF. Посадка GreenPlan в другой части участка при взгляде на неё
+// отсекалась целиком: в газоне оставались вырезы под кусты, а самих кустов и
+// деревьев не было (Харьковская, 1,4 км: камера над новыми кустами -- сфера
+// вокруг старых вне кадра). Сфера на всех экземплярах вида всё равно покрыла
+// бы весь участок, так что отсечение почти ничего не экономит.
 
 import { Merged, useGLTF } from "@react-three/drei";
 import { memo } from "react";
@@ -47,7 +58,7 @@ export const InstancedVegetationGroup = memo(function InstancedVegetationGroup({
   const { nodes } = useGLTF(url);
 
   return (
-    <Merged meshes={nodes} limit={Math.max(placements.length, 1)}>
+    <Merged meshes={nodes} limit={Math.max(placements.length, 1)} frustumCulled={false}>
       {(Model: Record<string, React.ComponentType<{ position?: [number, number, number]; rotation?: [number, number, number]; scale?: number; onClick?: (e: ThreeEvent<MouseEvent>) => void }>>) => {
         const parts = Object.values(Model);
         // Без обёртки-группы на размещение: клик на любую часть модели
