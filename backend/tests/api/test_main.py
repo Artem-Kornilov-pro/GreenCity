@@ -14,6 +14,7 @@ from api import accounts as accounts_api
 from api import editor as editor_api
 from api import greenplan as greenplan_api
 from core.paths import LOCATIONS_DIR
+from exchange import dwg_batch_converter
 from main import app
 from text_editor.service import LlmError, LlmNotConfiguredError, TextEditResult
 
@@ -104,6 +105,15 @@ def test_parse_rejects_corrupt_dxf_content(client):
 # dwg2dxf/LibreDWG на тестовой машине может не быть, а сама эта функция уже
 # покрыта отдельными юнит-тестами (test_dwg_batch_converter.py). Здесь --
 # только контракт эндпоинта: коды ответов, dwgConversionWarnings, метрики.
+# Разбор идёт в том же процессе (DWG_JOB_ISOLATED=0): подмена
+# merge_dwg_files в дочерний процесс не переходит. Сам запуск в отдельном
+# процессе проверяется в tests/exchange/test_dwg_job.py.
+
+
+@pytest.fixture(autouse=True)
+def _dwg_job_in_process(monkeypatch, tmp_path):
+    monkeypatch.setenv("DWG_JOB_ISOLATED", "0")
+    monkeypatch.setenv("DWG_SLOT_DIR", str(tmp_path / "dwg-slots"))
 
 
 def test_parse_dwg_rejects_upload_without_any_dwg_file(client):
@@ -114,9 +124,9 @@ def test_parse_dwg_rejects_upload_without_any_dwg_file(client):
 
 def test_parse_dwg_returns_503_when_tool_missing(client, monkeypatch):
     def _raise(dwg_paths, intermediate_dir):
-        raise editor_api.dwg_batch_converter.Dwg2DxfNotFound("dwg2dxf не найден")
+        raise dwg_batch_converter.Dwg2DxfNotFound("dwg2dxf не найден")
 
-    monkeypatch.setattr(editor_api.dwg_batch_converter, "merge_dwg_files", _raise)
+    monkeypatch.setattr(dwg_batch_converter, "merge_dwg_files", _raise)
     r = client.post("/api/parse-dwg", files=[("files", ("a.dwg", b"whatever", "application/octet-stream"))])
     assert r.status_code == 503
 
@@ -125,11 +135,11 @@ def test_parse_dwg_returns_400_when_every_file_fails(client, monkeypatch):
     def _all_failed(dwg_paths, intermediate_dir):
         import ezdxf
 
-        result = editor_api.dwg_batch_converter.BatchConversionResult(doc=ezdxf.new())
+        result = dwg_batch_converter.BatchConversionResult(doc=ezdxf.new())
         result.failed = {p.name: "не удалось прочитать" for p in dwg_paths}
         return result
 
-    monkeypatch.setattr(editor_api.dwg_batch_converter, "merge_dwg_files", _all_failed)
+    monkeypatch.setattr(dwg_batch_converter, "merge_dwg_files", _all_failed)
     r = client.post("/api/parse-dwg", files=[("files", ("a.dwg", b"whatever", "application/octet-stream"))])
     assert r.status_code == 400
     assert "a.dwg" in r.json()["detail"]
@@ -142,13 +152,13 @@ def test_parse_dwg_success_returns_scene_with_warnings_for_failed_files(client, 
     def _partial_success(dwg_paths, intermediate_dir):
         import ezdxf
 
-        result = editor_api.dwg_batch_converter.BatchConversionResult(doc=ezdxf.new())
+        result = dwg_batch_converter.BatchConversionResult(doc=ezdxf.new())
         result.converted = ["good.dwg"]
         result.failed = {"bad.dwg": "unsupported object type"}
         return result
 
-    monkeypatch.setattr(editor_api.dwg_batch_converter, "merge_dwg_files", _partial_success)
-    monkeypatch.setattr(editor_api, "parse_dxf_file", lambda path: dict(fake_scene))
+    monkeypatch.setattr(dwg_batch_converter, "merge_dwg_files", _partial_success)
+    monkeypatch.setattr("exchange.dxf_parser.parse_dxf_doc", lambda doc: dict(fake_scene))
 
     r = client.post(
         "/api/parse-dwg",
@@ -169,12 +179,12 @@ def test_parse_dwg_success_without_failures_has_no_warnings_key(client, monkeypa
     def _full_success(dwg_paths, intermediate_dir):
         import ezdxf
 
-        result = editor_api.dwg_batch_converter.BatchConversionResult(doc=ezdxf.new())
+        result = dwg_batch_converter.BatchConversionResult(doc=ezdxf.new())
         result.converted = [p.name for p in dwg_paths]
         return result
 
-    monkeypatch.setattr(editor_api.dwg_batch_converter, "merge_dwg_files", _full_success)
-    monkeypatch.setattr(editor_api, "parse_dxf_file", lambda path: dict(fake_scene))
+    monkeypatch.setattr(dwg_batch_converter, "merge_dwg_files", _full_success)
+    monkeypatch.setattr("exchange.dxf_parser.parse_dxf_doc", lambda doc: dict(fake_scene))
 
     r = client.post("/api/parse-dwg", files=[("files", ("good.dwg", b"whatever", "application/octet-stream"))])
     assert r.status_code == 200

@@ -19,7 +19,7 @@ from core.building_setbacks import compute_building_setbacks
 from core.plant_catalog import CatalogItem, load_catalog
 from core.schemas import Scene
 from core.setback_norms import DEFAULT_TREE_SPECIES
-from exchange import dwg_batch_converter
+from exchange import dwg_job
 from exchange.dxf_parser import parse_dxf_file
 from exchange.export_dxf import scene_to_dxf
 from generation.greenery_generator import (
@@ -37,6 +37,7 @@ from generation.greenery_generator import (
     generate_trees,
 )
 from monitoring import metrics
+from monitoring.logging_config import current_request_id
 from storage import cache
 from text_editor.service import (
     LlmError,
@@ -155,45 +156,35 @@ def parse_dwg_folder_endpoint(files: list[UploadFile] = File(...)):
             dest.write_bytes(f.file.read())
             dwg_paths.append(dest)
 
+        # Сам разбор -- в отдельном процессе и не больше DWG_MAX_PARALLEL
+        # пачек одновременно на весь backend: пачка держит до ~1,8 ГБ, и
+        # одновременные загрузки прямо в процессах uvicorn убивали их по
+        # памяти (502). См. docstring exchange/dwg_job.py.
         try:
-            result = dwg_batch_converter.merge_dwg_files(dwg_paths, tmp_path)
-        except dwg_batch_converter.Dwg2DxfNotFound as e:
-            metrics.dwg_batch_conversions_total.labels(outcome="tool_missing").inc()
-            raise HTTPException(503, str(e)) from e
-
-        if not result.converted:
-            metrics.dwg_batch_conversions_total.labels(outcome="all_failed").inc()
-            metrics.dwg_files_processed_total.labels(outcome="failed").inc(len(result.failed))
-            detail = "; ".join(f"{name}: {err}" for name, err in result.failed.items())
-            raise HTTPException(400, f"Не удалось сконвертировать ни один .dwg-файл. {detail}")
-
-        combined_dxf = tmp_path / "combined.dxf"
-        result.doc.saveas(combined_dxf)
-
-        try:
-            scene = parse_dxf_file(str(combined_dxf))
-        except Exception as e:
-            metrics.dxf_parse_errors_total.inc()
-            logging.getLogger("greencity.parse").warning("не удалось разобрать смёрженный DWG-батч: %s", e)
-            raise HTTPException(400, f"Не удалось разобрать результат конвертации: {e}") from e
-
-    scene["buildingSetbacks"] = compute_building_setbacks(scene.get("objects", []))
-    if result.failed:
-        scene["dwgConversionWarnings"] = [{"file": name, "error": err} for name, err in result.failed.items()]
+            with dwg_job.slot():
+                payload, summary = dwg_job.run(dwg_paths, tmp_path, request_id=current_request_id())
+        except dwg_job.DwgJobError as e:
+            metrics.dwg_batch_conversions_total.labels(outcome=e.outcome).inc()
+            if e.failed:
+                metrics.dwg_files_processed_total.labels(outcome="failed").inc(e.failed)
+            if e.outcome == "parse_error":
+                metrics.dxf_parse_errors_total.inc()
+            raise HTTPException(e.status, e.detail) from e
 
     metrics.dwg_batch_conversions_total.labels(outcome="success").inc()
-    metrics.dwg_files_processed_total.labels(outcome="converted").inc(len(result.converted))
-    metrics.dwg_files_processed_total.labels(outcome="failed").inc(len(result.failed))
+    metrics.dwg_files_processed_total.labels(outcome="converted").inc(summary["converted"])
+    metrics.dwg_files_processed_total.labels(outcome="failed").inc(summary["failed"])
     metrics.dxf_parses_total.inc()
     logging.getLogger("greencity.parse").info(
         "DWG-батч разобран: %d/%d файлов сконвертировано, %d объектов, %d зон",
-        len(result.converted),
+        summary["converted"],
         len(dwg_files),
-        len(scene.get("objects", [])),
-        len(scene.get("restrictions", [])),
+        summary["objects"],
+        summary["zones"],
     )
 
-    return scene
+    # Готовый JSON из дочернего процесса -- как есть, без разбора в словарь.
+    return Response(content=payload, media_type="application/json")
 
 
 # Тоже синхронный def -- по той же причине, что и /api/parse выше: внутри
