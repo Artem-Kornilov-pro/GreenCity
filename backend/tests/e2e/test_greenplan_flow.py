@@ -48,11 +48,12 @@ def test_dxf_to_greenplan_to_document_to_dxf(client, e2e, fake_report_llm, slug)
     # Ведомость -- ровно по новым посадкам (в штуках) плюс новый газон (в м²).
     pieces = [row for row in result["assortment"] if row["unit"] == "шт."]
     assert sum(row["count"] for row in pieces) == len(new_objects)
-    new_lawns = [a for a in planned["lawns"] if a["status"] == "new"]
-    assert new_lawns, "на участке есть открытая земля -- должен быть новый газон"
+    # Газон: новый (на открытой земле) идёт в ведомость в м², существующий
+    # (эталон с уже устроенным газоном) -- сохраняется и в ведомость не идёт.
+    assert planned["lawns"], "на участке есть газон -- новый или существующий"
+    new_lawn = round(sum(a["area_sqm"] for a in planned["lawns"] if a["status"] == "new"))
     lawn_rows = [row for row in result["assortment"] if row["unit"] == "м²"]
-    assert [row["species"] for row in lawn_rows] == ["Газон обыкновенный"]
-    assert lawn_rows[0]["count"] == round(sum(a["area_sqm"] for a in new_lawns))
+    assert [(row["species"], row["count"]) for row in lawn_rows] == ([("Газон обыкновенный", new_lawn)] if new_lawn else [])
 
     # 2. Текст-обоснование (локальная LLM подменена): в промпт ушли
     # настоящие решения, включая подобранные виды.
@@ -74,8 +75,9 @@ def test_dxf_to_greenplan_to_document_to_dxf(client, e2e, fake_report_llm, slug)
     assert "Нарушений у новых посадок: 0" in text
     for row in pieces:
         assert f"| {row['species']} | — | {row['count']} |" in text
-    lawn_m2 = f"{lawn_rows[0]['count']:,}".replace(",", " ")
-    assert f"| Газон обыкновенный | — | {lawn_m2} м² |" in text
+    if lawn_rows:
+        lawn_m2 = f"{lawn_rows[0]['count']:,}".replace(",", " ")
+        assert f"| Газон обыкновенный | — | {lawn_m2} м² |" in text
     assert "Приложение А. Обоснование решений (текст ИИ — проверить)" in text
     assert report["report"] in text
 
@@ -88,7 +90,8 @@ def test_dxf_to_greenplan_to_document_to_dxf(client, e2e, fake_report_llm, slug)
     assert len(new_layer_objects) == len(new_objects)
     assert reparsed["boundary"] is not None
     # Новый газон -- заливкой на слое NEW_LAWN, читается обратно как зона газона.
-    assert any(z["severity"] == "allowed" and "NEW_LAWN" in z["name"] for z in reparsed["restrictions"])
+    if new_lawn:
+        assert any(z["severity"] == "allowed" and "NEW_LAWN" in z["name"] for z in reparsed["restrictions"])
 
 
 def test_report_unavailable_does_not_block_the_document(client, e2e, monkeypatch):

@@ -115,6 +115,23 @@ def _to_areas(geom: BaseGeometry, status: str, start_index: int) -> list[LawnAre
     return areas
 
 
+# Сетка привязки для повтора операции, если GEOS не справился с почти
+# совпадающими рёбрами (раскрытие "mitre" на длинных параллельных полосах --
+# бульвар, дорога с тротуарами): 1 см -- заметно меньше точности газона.
+_SNAP_GRID_M = 0.01
+
+
+def _robust(operation: str, a: BaseGeometry, b: BaseGeometry) -> BaseGeometry:
+    """a.<operation>(b), а при TopologyException -- то же после починки и
+    привязки обеих геометрий к сетке _SNAP_GRID_M, вместо падения запроса."""
+    try:
+        return getattr(a, operation)(b)
+    except shapely.errors.GEOSException:
+        a2 = shapely.set_precision(shapely.make_valid(a), _SNAP_GRID_M)
+        b2 = shapely.set_precision(shapely.make_valid(b), _SNAP_GRID_M)
+        return getattr(a2, operation)(b2)
+
+
 def plan_lawns(scene: Scene, catalog: dict[str, CatalogItem]) -> list[LawnArea]:
     """Газон на сцене -- после расстановки посадок (кусты уже стоят)."""
     if scene.boundary is None:
@@ -125,18 +142,18 @@ def plan_lawns(scene: Scene, catalog: dict[str, CatalogItem]) -> list[LawnArea]:
 
     allowed = [z for z in scene.restrictions if z.severity == "allowed" and z.type != "selection"]
     allowed_geoms = [g for g in (_poly(z.polygon) for z in allowed) if g is not None]
-    base = unary_union(allowed_geoms).intersection(boundary) if allowed_geoms else boundary
+    base = _robust("intersection", unary_union(allowed_geoms), boundary) if allowed_geoms else boundary
 
     blockers = [g for g in (_poly(z.polygon) for z in scene.restrictions if _is_hard_surface(z)) if g is not None]
     beds = _shrub_beds(scene, catalog)
     if beds is not None:
         blockers.append(beds)
-    lawn = base.difference(unary_union(blockers)) if blockers else base
+    lawn = _robust("difference", base, unary_union(blockers)) if blockers else base
     # Раскрытие убирает полосы уже MIN_LAWN_WIDTH_M, затем упрощение контура.
     # Углы -- "mitre": круглые скругляли бы каждый угол участка фаской, и
     # упрощение потом срезало бы по фаске весь край (-0,3% площади квадрата).
     half = MIN_LAWN_WIDTH_M / 2
-    lawn = lawn.buffer(-half, join_style="mitre").buffer(half, join_style="mitre").intersection(lawn)
+    lawn = _robust("intersection", lawn.buffer(-half, join_style="mitre").buffer(half, join_style="mitre"), lawn)
     lawn = lawn.simplify(SIMPLIFY_TOLERANCE_M, preserve_topology=True)
     if lawn.is_empty:
         return []
@@ -148,7 +165,7 @@ def plan_lawns(scene: Scene, catalog: dict[str, CatalogItem]) -> list[LawnArea]:
     ]
     if existing_cover:
         cover = unary_union(existing_cover)
-        existing, new = lawn.intersection(cover), lawn.difference(cover)
+        existing, new = _robust("intersection", lawn, cover), _robust("difference", lawn, cover)
     else:
         existing, new = Polygon(), lawn
 

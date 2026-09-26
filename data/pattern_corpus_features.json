@@ -342,153 +342,215 @@
  "21_road_buffer_primer": {
   "characteristics": {
    "building_count": 0,
-   "existing_tree_species": {},
-   "plantable_area_sqm": 1615.0,
-   "plantable_ratio": 0.7727,
+   "existing_tree_species": {
+    "Ель колючая": 36,
+    "Липа мелколистная": 38
+   },
+   "plantable_area_sqm": 3420.0,
+   "plantable_ratio": 0.456,
    "restriction_zone_counts": {
+    "pedestrian_path": 2,
     "protected_zone": 1,
-    "road": 1
+    "road": 1,
+    "signal_cable": 2,
+    "water_pipeline": 1
    },
    "territory_type": "улица",
    "territory_type_is_heuristic": false,
-   "total_area_sqm": 2090.0
+   "total_area_sqm": 7500.0
   },
-  "dxf_sha256": "740144b5d90cb870d1057c60b32dc9a67770006c510214e8d58018150dc085d3"
+  "dxf_sha256": "28c8e7bb373ded1247313904bdd05ea732740133fd449c7f7f61f08677e9cc1d"
  },
  "22_circular_plaza_primer": {
   "characteristics": {
    "building_count": 0,
-   "existing_tree_species": {},
-   "plantable_area_sqm": 1015.0,
-   "plantable_ratio": 1.0,
-   "restriction_zone_counts": {
-    "protected_zone": 1
+   "existing_tree_species": {
+    "Клен остролистный": 10,
+    "Липа мелколистная": 10,
+    "Черемуха Маака": 8,
+    "Яблоня Недзведцкого": 8
    },
-   "territory_type": "неопределено",
-   "territory_type_is_heuristic": true,
-   "total_area_sqm": 1015.0
+   "plantable_area_sqm": 3160.6,
+   "plantable_ratio": 0.7768,
+   "restriction_zone_counts": {
+    "pedestrian_path": 8,
+    "protected_zone": 1,
+    "water_pipeline": 1
+   },
+   "territory_type": "парк_сквер",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 4068.6
   },
-  "dxf_sha256": "9f18622a633dbd27d2b59642f514ac8d6190eafc77b26bd42b6ff88c81bbaca5"
+  "dxf_sha256": "d638bb35392ee163efb1233df62283829404be01966c8c3a43c00d74bb54c541"
  },
- "23_triangular_plot_primer": {
+ "23_playground_yard_primer": {
+  "characteristics": {
+   "building_count": 3,
+   "existing_tree_species": {
+    "Береза повислая": 12,
+    "Клен остролистный": 5,
+    "Липа мелколистная": 7
+   },
+   "plantable_area_sqm": 1518.5,
+   "plantable_ratio": 0.241,
+   "restriction_zone_counts": {
+    "building": 3,
+    "heat_network": 1,
+    "pedestrian_path": 18,
+    "playground_zone": 1,
+    "protected_zone": 1,
+    "water_pipeline": 1
+   },
+   "territory_type": "двор",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 6300.0
+  },
+  "dxf_sha256": "b3febd2daa275572b7233c72c7c1cdde58cc05fc35bf96be737e00381aa3c185"
+ },
+ "24_boulevard_primer": {
   "characteristics": {
    "building_count": 0,
-   "existing_tree_species": {},
-   "plantable_area_sqm": 720.0,
-   "plantable_ratio": 1.0,
-   "restriction_zone_counts": {
-    "protected_zone": 1
+   "existing_tree_species": {
+    "Липа мелколистная": 38
    },
-   "territory_type": "неопределено",
-   "territory_type_is_heuristic": true,
-   "total_area_sqm": 720.0
-  },
-  "dxf_sha256": "dc9e5a4e79b6c21cd7671e5359952e0ceed2118c2d047f243b752443fb20f09e"
- },
- "24_hexagon_courtyard_primer": {
-  "characteristics": {
-   "building_count": 0,
-   "existing_tree_species": {},
-   "plantable_area_sqm": 1039.3,
-   "plantable_ratio": 1.0,
+   "plantable_area_sqm": 2054.7,
+   "plantable_ratio": 0.321,
    "restriction_zone_counts": {
-    "protected_zone": 1
+    "pedestrian_path": 7,
+    "protected_zone": 1,
+    "road": 2,
+    "signal_cable": 1,
+    "water_pipeline": 1
    },
-   "territory_type": "неопределено",
-   "territory_type_is_heuristic": true,
-   "total_area_sqm": 1039.3
+   "territory_type": "улица",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 6400.0
   },
-  "dxf_sha256": "9e82dd2daf750e4b4a8293435fa58fd473cf63b773d8ddb35fa3237d5fb4991b"
+  "dxf_sha256": "27468f008a24840d30a410766ad90901f3e4deb76b35a608742f341406f2d46a"
  },
  "25_classical_building_ring_primer": {
   "characteristics": {
    "building_count": 1,
-   "existing_tree_species": {},
-   "plantable_area_sqm": 1601.6,
-   "plantable_ratio": 0.5932,
+   "existing_tree_species": {
+    "Липа мелколистная": 22,
+    "Туя западная": 41
+   },
+   "plantable_area_sqm": 3663.5,
+   "plantable_ratio": 0.6784,
    "restriction_zone_counts": {
     "building": 1,
-    "protected_zone": 1
+    "pedestrian_path": 5,
+    "protected_zone": 1,
+    "sewer": 1,
+    "water_pipeline": 1
    },
    "territory_type": "неопределено",
    "territory_type_is_heuristic": true,
-   "total_area_sqm": 2700.0
+   "total_area_sqm": 5400.0
   },
-  "dxf_sha256": "7b8f04ff2038fdbc15466ca713444617286ef5d20f494636486ff22f0ee48c3e"
+  "dxf_sha256": "76716b75cab6f13a32f6a13aeca3d9e5b6a198ea20b02cba97b98411d7f34ada"
  },
  "26_diagonal_garden_primer": {
   "characteristics": {
    "building_count": 0,
    "existing_tree_species": {},
-   "plantable_area_sqm": 1800.0,
-   "plantable_ratio": 1.0,
+   "plantable_area_sqm": 3198.9,
+   "plantable_ratio": 0.781,
    "restriction_zone_counts": {
+    "gas_pipeline": 1,
+    "pedestrian_path": 3,
     "protected_zone": 1
    },
-   "territory_type": "неопределено",
-   "territory_type_is_heuristic": true,
-   "total_area_sqm": 1800.0
+   "territory_type": "парк_сквер",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 4096.0
   },
-  "dxf_sha256": "49ccea239f4941dba9aeec931607a39bfd2c8b77d283ae58061657c0573c24ba"
+  "dxf_sha256": "a3782a0f35361d5d93e2b6c66345f381c51bed539460643a1f9ff507b73050e8"
  },
  "27_flowing_meadow_primer": {
   "characteristics": {
    "building_count": 0,
-   "existing_tree_species": {},
-   "plantable_area_sqm": 3500.0,
-   "plantable_ratio": 1.0,
+   "existing_tree_species": {
+    "Береза повислая": 6,
+    "Ель колючая": 3
+   },
+   "plantable_area_sqm": 5271.0,
+   "plantable_ratio": 0.7986,
    "restriction_zone_counts": {
-    "protected_zone": 1
+    "pedestrian_path": 3,
+    "protected_zone": 1,
+    "sewer": 1
    },
    "territory_type": "парк_сквер",
    "territory_type_is_heuristic": false,
-   "total_area_sqm": 3500.0
+   "total_area_sqm": 6600.0
   },
-  "dxf_sha256": "0468cb63b3ca226fd9d80b1151b2295b77c3995a251ff874a9b5698457958764"
+  "dxf_sha256": "cb7a12428dd7d7e9c3698ef62e61161f06068f57f842ba19271a8bc2a9f9785f"
  },
  "28_formal_bosque_primer": {
   "characteristics": {
    "building_count": 0,
-   "existing_tree_species": {},
-   "plantable_area_sqm": 2304.0,
-   "plantable_ratio": 1.0,
+   "existing_tree_species": {
+    "Дуб черешчатый": 9,
+    "Туя западная": 36
+   },
+   "plantable_area_sqm": 3969.0,
+   "plantable_ratio": 0.7656,
    "restriction_zone_counts": {
-    "protected_zone": 1
+    "pedestrian_path": 4,
+    "protected_zone": 1,
+    "signal_cable": 1
    },
    "territory_type": "парк_сквер",
    "territory_type_is_heuristic": false,
-   "total_area_sqm": 2304.0
+   "total_area_sqm": 5184.0
   },
-  "dxf_sha256": "0dec0bea316e37ce51e4ef448b6ab76b7257f6096c0be88a7ee873f32f56a309"
+  "dxf_sha256": "eff2d44a3a76877079c586d2c05e49da5e81374499186657c093f9ca7828c68b"
  },
- "29_concentric_rings_primer": {
+ "29_green_parking_primer": {
   "characteristics": {
-   "building_count": 0,
-   "existing_tree_species": {},
-   "plantable_area_sqm": 3600.0,
-   "plantable_ratio": 1.0,
-   "restriction_zone_counts": {
-    "protected_zone": 1
+   "building_count": 1,
+   "existing_tree_species": {
+    "Береза повислая": 6,
+    "Клен остролистный": 4,
+    "Липа мелколистная": 4
    },
-   "territory_type": "парк_сквер",
-   "territory_type_is_heuristic": false,
-   "total_area_sqm": 3600.0
-  },
-  "dxf_sha256": "3ba991ae14e1c4042a9a97296bd884b05ab42abbc891cd9a3dfddefac150c022"
- },
- "30_triangular_grid_primer": {
-  "characteristics": {
-   "building_count": 0,
-   "existing_tree_species": {},
-   "plantable_area_sqm": 1512.0,
-   "plantable_ratio": 1.0,
+   "plantable_area_sqm": 1200.5,
+   "plantable_ratio": 0.268,
    "restriction_zone_counts": {
-    "protected_zone": 1
+    "building": 1,
+    "custom": 11,
+    "gas_pipeline": 1,
+    "pedestrian_path": 4,
+    "protected_zone": 1,
+    "road": 2
    },
    "territory_type": "неопределено",
    "territory_type_is_heuristic": true,
-   "total_area_sqm": 1512.0
+   "total_area_sqm": 4480.0
   },
-  "dxf_sha256": "db532f015724ca56b7d99386b6246ee1463abbb0b7cb291d2a0f5b1e23baebb0"
+  "dxf_sha256": "b377c0d7ac87143a1514d6876a4df8bd08740130028710f7944d65bcb3b2b11a"
+ },
+ "30_network_corridor_garden_primer": {
+  "characteristics": {
+   "building_count": 0,
+   "existing_tree_species": {
+    "Береза повислая": 22,
+    "Ель колючая": 7,
+    "Лиственница европейская": 7
+   },
+   "plantable_area_sqm": 4175.0,
+   "plantable_ratio": 0.7732,
+   "restriction_zone_counts": {
+    "heat_network": 1,
+    "pedestrian_path": 3,
+    "protected_zone": 1,
+    "water_pipeline": 1
+   },
+   "territory_type": "парк_сквер",
+   "territory_type_is_heuristic": false,
+   "total_area_sqm": 5400.0
+  },
+  "dxf_sha256": "168a2c869e8f6026710d005a8b409ab9926f5474ae03160d978f8c45f251507d"
  }
 }

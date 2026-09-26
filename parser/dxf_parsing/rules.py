@@ -209,6 +209,10 @@ def _species_point_rules() -> list[tuple[str, dict]]:
             continue
         cfg = dict(type="tree", model="/models/tree.glb") if "дерев" in category.lower() \
             else dict(type="bush", model="/models/bush.glb")
+        # Название вида -- в metadata.species объекта (extract_point_objects):
+        # по нему бэкенд находит позицию каталога и 3D-модель вида, а
+        # характеристика участка -- состав существующих пород.
+        cfg["species"] = name
         rules.append((name.upper(), cfg))
     return rules
 

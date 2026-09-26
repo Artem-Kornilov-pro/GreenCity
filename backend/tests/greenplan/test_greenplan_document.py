@@ -149,7 +149,7 @@ def test_empty_assignments_still_produce_a_document():
     ("slug", "title"),
     [
         ("10_stary_gay", "улица Старый Гай"),
-        ("28_formal_bosque_primer", "синтетический эталон «формальный боскет»"),
+        ("28_formal_bosque_primer", "синтетический эталон «Регулярный сад квадратов с дубами»"),
         ("no_such_project", "no_such_project"),
     ],
 )
