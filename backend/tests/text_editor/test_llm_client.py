@@ -15,7 +15,7 @@ from core.plant_catalog import load_catalog
 from text_editor import llm_client
 from text_editor import service as llm_editor
 from text_editor.llm_client import LlmError, LlmNotConfiguredError, _client_and_model, _extract_json, request_plan
-from text_editor.service import LlmPlan, edit_scene_with_text
+from text_editor.service import ChatTurn, LlmPlan, edit_scene_with_text
 
 CATALOG = load_catalog()
 
@@ -269,7 +269,7 @@ def test_request_plan_propagates_not_configured_error(monkeypatch, scene1):
 
 def test_edit_scene_with_text_applies_the_returned_plan(monkeypatch, scene1):
     fake_plan = LlmPlan(operations=[{"op": "remove", "id": "lamp_001"}], explanation="убрал фонарь")
-    monkeypatch.setattr(llm_editor, "request_plan", lambda scene, instruction, catalog, placer: fake_plan)
+    monkeypatch.setattr(llm_editor, "request_plan", lambda scene, instruction, catalog, placer, history=(): fake_plan)
     result = edit_scene_with_text(scene1, "убери фонарь")
     assert "lamp_001" not in {o.id for o in result.scene.objects}
     assert result.explanation == "убрал фонарь"
@@ -291,3 +291,35 @@ def test_edit_scene_with_text_propagates_llm_error(monkeypatch, scene1):
     monkeypatch.setattr(llm_editor, "request_plan", _raise)
     with pytest.raises(LlmError):
         edit_scene_with_text(scene1, "что угодно")
+
+
+# --- История чата: отсылки вроде "убери их" --------------------------------
+
+
+def _captured_input(monkeypatch, scene, history):
+    monkeypatch.setenv("LLM_PROVIDER", "yandex")
+    client = _FakeClient(_ok_response('{"operations": [], "explanation": "ок"}'))
+    monkeypatch.setattr(llm_client, "_client_and_model", lambda: (client, "fake-model"))
+    request_plan(scene, "убери их", CATALOG, Placer(scene), history)
+    return client.responses.last_kwargs["input"]
+
+
+def test_request_plan_sends_only_recent_history_before_the_request(monkeypatch, scene1):
+    history = [ChatTurn(instruction=f"просьба {i}", explanation=f"ответ {i}", applied=[f"сделано {i}"]) for i in range(6)]
+    user_input = _captured_input(monkeypatch, scene1, history)
+    block = user_input[user_input.index("Прошлые правки") : user_input.index("Просьба пользователя")]
+    assert "просьба 1" not in block and "просьба 2" in block and "просьба 5" in block
+    assert "ответ 5" in block and "сделано 5" in block
+    assert user_input.rstrip().endswith("убери их")
+
+
+def test_request_plan_without_history_has_no_history_block(monkeypatch, scene1):
+    assert "Прошлые правки" not in _captured_input(monkeypatch, scene1, [])
+
+
+def test_history_is_clipped(monkeypatch, scene1):
+    from text_editor.llm_client import MAX_HISTORY_TEXT
+
+    user_input = _captured_input(monkeypatch, scene1, [ChatTurn(instruction="я" * 2000)])
+    assert "я" * MAX_HISTORY_TEXT not in user_input
+    assert "я" * (MAX_HISTORY_TEXT - 1) + "…" in user_input

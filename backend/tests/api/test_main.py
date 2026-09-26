@@ -300,7 +300,7 @@ def test_edit_with_text_success(client, monkeypatch):
     fake_result = TextEditResult(
         scene=SceneModel.model_validate(scene), explanation="готово", applied=["удалён lamp_001"], rejected=[], warnings=[]
     )
-    monkeypatch.setattr(editor_api, "edit_scene_with_text", lambda scene, instruction: fake_result)
+    monkeypatch.setattr(editor_api, "edit_scene_with_text", lambda scene, instruction, history=(): fake_result)
     r = client.post("/api/edit-with-text", json={"scene": scene, "instruction": "убери фонарь"})
     assert r.status_code == 200
     assert r.json()["applied"] == ["удалён lamp_001"]
@@ -309,7 +309,7 @@ def test_edit_with_text_success(client, monkeypatch):
 def test_edit_with_text_not_configured_returns_503(client, monkeypatch):
     scene = _parsed_scene(client)
 
-    def _raise(scene, instruction):
+    def _raise(scene, instruction, history=()):
         raise LlmNotConfiguredError("не настроено")
 
     monkeypatch.setattr(editor_api, "edit_scene_with_text", _raise)
@@ -320,7 +320,7 @@ def test_edit_with_text_not_configured_returns_503(client, monkeypatch):
 def test_edit_with_text_llm_error_returns_502(client, monkeypatch):
     scene = _parsed_scene(client)
 
-    def _raise(scene, instruction):
+    def _raise(scene, instruction, history=()):
         raise LlmError("недоступна")
 
     monkeypatch.setattr(editor_api, "edit_scene_with_text", _raise)

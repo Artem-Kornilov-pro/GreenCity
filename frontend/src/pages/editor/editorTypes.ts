@@ -1,4 +1,5 @@
 import type { GreenPlanGenerateResult, GreenPlanOptions } from "../../api";
+import type { Scene } from "../../types";
 
 export function makeId(): string {
   return crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
@@ -19,6 +20,19 @@ export interface ChatMessage {
   applied?: string[];
   rejected?: string[];
   warnings?: string[];
+  // У ответа ассистента: просьба, на которую он ответил (уходит модели как
+  // история чата), и отменена ли правка кнопкой "Отменить".
+  instruction?: string;
+  undone?: boolean;
+}
+
+// Последняя правка ассистента -- для отмены: сцена до неё и после. Отменить
+// можно, пока план не менялся после неё (scene === after).
+export interface AiEditSnapshot {
+  messageId: string;
+  before: Scene;
+  after: Scene;
+  ranGreenPlan: boolean;
 }
 
 // generateGreenPlan (быстро, без LLM) отдаёт всё, кроме report/report_error --

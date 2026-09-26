@@ -151,3 +151,31 @@ def test_add_birch_at_7m_from_building_stays_in_place():
     result = run(scene, {"op": "add", "catalog_id": "species_bereza_povislaya", "x": 12, "z": 0})
     created = [o for o in result.scene.objects if o.metadata.get("catalogId") == "species_bereza_povislaya"]
     assert created[0].position.x == pytest.approx(12)
+
+
+# =============================================================================
+# run_greenplan: параметры для GreenPlan, который запускает фронтенд
+# =============================================================================
+
+
+def test_run_greenplan_returns_options_and_leaves_the_scene_alone(scene1):
+    result = run(scene1, {
+        "op": "run_greenplan", "style": "regular", "lawn": False, "paths": True,
+        "preferred_trees": ["species_lipa_melkolistnaya"],
+    })
+    options = result.greenplan
+    assert (options.style, options.trees, options.lawn, options.paths, options.lighting) == ("regular", True, False, True, False)
+    assert options.preferred_trees == ["species_lipa_melkolistnaya"]
+    assert len(result.scene.objects) == len(scene1.objects)
+    assert result.applied and "регулярный" in result.applied[0] and "Липа мелколистная" in result.applied[0]
+
+
+def test_run_greenplan_drops_preferred_ids_of_the_wrong_kind(scene1):
+    bush = next(c for c in CATALOG if c.id.startswith("species_") and c.category == "bush" and c.object_type == "bush")
+    result = run(scene1, {"op": "run_greenplan", "preferred_trees": [bush.id, "bench", "no_such_id"]})
+    assert result.greenplan.preferred_trees == []
+    assert len([w for w in result.warnings if "не дерево" in w]) == 3
+
+
+def test_plan_without_run_greenplan_has_no_options(scene1):
+    assert run(scene1, {"op": "remove", "id": "lamp_001"}).greenplan is None

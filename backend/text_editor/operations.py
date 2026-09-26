@@ -13,6 +13,7 @@ from typing import Annotated, Literal, Optional
 from pydantic import BaseModel, Field, TypeAdapter
 
 from core.schemas import Scene
+from greenplan.options import GreenPlanOptions
 
 # --- Операции, которые может вернуть модель ---------------------------------
 
@@ -312,6 +313,25 @@ class DesignAreaOp(BaseModel):
     radius_m: Optional[float] = None
 
 
+class RunGreenPlanOp(BaseModel):
+    """Озеленить весь участок GreenPlan (greenplan/pipeline.py) с заданными
+    параметрами -- "озелени участок в регулярном стиле с липами". Сам
+    GreenPlan запускает фронтенд после применения плана: у него своя панель
+    с решениями по зонам, нарушениями и пояснительной запиской. None --
+    параметр по умолчанию (GreenPlanOptions)."""
+
+    op: Literal["run_greenplan"]
+    style: Optional[Literal["auto", "regular", "landscape"]] = None
+    trees: Optional[bool] = None
+    bushes: Optional[bool] = None
+    lawn: Optional[bool] = None
+    paths: Optional[bool] = None
+    lighting: Optional[bool] = None
+    benches: Optional[bool] = None
+    preferred_trees: list[str] = []
+    preferred_bushes: list[str] = []
+
+
 Operation = Annotated[
     AddOp
     | RemoveOp
@@ -332,7 +352,8 @@ Operation = Annotated[
     | DuplicateNearOp
     | SetCountOp
     | DefineZoneOp
-    | DesignAreaOp,
+    | DesignAreaOp
+    | RunGreenPlanOp,
     Field(discriminator="op"),
 ]
 _OPERATION = TypeAdapter(Operation)
@@ -345,9 +366,21 @@ class LlmPlan(BaseModel):
     explanation: str = ""
 
 
+class ChatTurn(BaseModel):
+    """Прошлый обмен в чате ассистента: без него модель не понимает отсылок
+    вроде "убери их" или "то же самое у второго дома" -- каждый запрос
+    иначе приходит к ней как первый."""
+
+    instruction: str = Field(max_length=2000)
+    explanation: str = Field(default="", max_length=2000)
+    applied: list[str] = Field(default=[], max_length=50)
+
+
 class TextEditRequest(BaseModel):
     scene: Scene
     instruction: str = Field(min_length=1, max_length=2000)
+    # Прошлые правки этого чата, старые первыми; уже применены к scene.
+    history: list[ChatTurn] = Field(default=[], max_length=20)
 
 
 class TextEditResult(BaseModel):
@@ -356,3 +389,6 @@ class TextEditResult(BaseModel):
     applied: list[str]
     rejected: list[str]
     warnings: list[str]
+    # Параметры GreenPlan, если модель выбрала run_greenplan: фронтенд
+    # запускает его на scene этого ответа.
+    greenplan: Optional[GreenPlanOptions] = None
