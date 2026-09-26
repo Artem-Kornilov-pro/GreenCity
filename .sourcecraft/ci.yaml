@@ -11,7 +11,7 @@
 # docs/SOURCECRAFT_DEPLOY.md, без неё джоба упадёт на первом же шаге
 # (нет service connection/реестра). Разворачивается только backend: без
 # MongoDB/Redis (аккаунты/проекты ответят понятной ошибкой, сам редактор и
-# GreenPlan работают, см. README.md) и без Ollama (текст-отчёт GreenPlan
+# GreenPlan работают, см. README.md) и без ключа Yandex AI Studio (текст-отчёт GreenPlan
 # ответит report_error, расстановка не пострадает) -- ровно то штатное
 # деградирующее поведение, которое уже заложено в backend/storage/db.py,
 # backend/storage/cache.py и backend/greenplan/decision_report.py, не костыль ради деплоя.

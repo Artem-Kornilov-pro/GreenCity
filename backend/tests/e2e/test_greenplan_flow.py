@@ -55,7 +55,7 @@ def test_dxf_to_greenplan_to_document_to_dxf(client, e2e, fake_report_llm, slug)
     lawn_rows = [row for row in result["assortment"] if row["unit"] == "м²"]
     assert [(row["species"], row["count"]) for row in lawn_rows] == ([("Газон обыкновенный", new_lawn)] if new_lawn else [])
 
-    # 2. Текст-обоснование (локальная LLM подменена): в промпт ушли
+    # 2. Текст-обоснование (LLM подменена): в промпт ушли
     # настоящие решения, включая подобранные виды.
     r = client.post("/api/greenplan/report", json=result["assignments"])
     assert r.status_code == 200
@@ -95,11 +95,11 @@ def test_dxf_to_greenplan_to_document_to_dxf(client, e2e, fake_report_llm, slug)
 
 
 def test_report_unavailable_does_not_block_the_document(client, e2e, monkeypatch):
-    # Ollama недоступна (подменена ошибкой соединения, а не "не запущена":
+    # YandexGPT недоступна (подменена ошибкой соединения, а не "не запущена":
     # на машине разработчика она может и работать) -- текст не приходит, но
     # записка формируется: текст ИИ -- только приложение.
     def _unreachable():
-        raise openai.APIConnectionError(request=httpx.Request("POST", "http://localhost:11434/v1/chat/completions"))
+        raise openai.APIConnectionError(request=httpx.Request("POST", "https://ai.api.cloud.yandex.net/v1/responses"))
 
     monkeypatch.setattr(decision_report, "_client", _unreachable)
     scene = e2e.upload_dxf(client, e2e.location_dxf("25_classical_building_ring_primer"))

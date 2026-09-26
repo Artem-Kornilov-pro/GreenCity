@@ -270,7 +270,7 @@ export default function EditorPage() {
       const result = await generateGreenPlan(base, options);
       setScene(result.scene);
       // Расстановка/нарушения/ведомость уже готовы -- показываем сразу, не
-      // дожидаясь текста-объяснения (тот -- ~30 секунд, локальная LLM).
+      // дожидаясь текста-объяснения (тот -- отдельный запрос к LLM).
       setGreenPlanResult({ ...result, options, report: null, report_error: null });
       setAiPanelOpen(false);
       setGreenPlanPanelOpen(true);

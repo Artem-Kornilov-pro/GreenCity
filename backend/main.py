@@ -31,7 +31,7 @@ FastAPI-бэкенд для веб-редактора озеленения. Эн
                                     Быстро (доли секунды) и без LLM.
     POST /api/greenplan/report  -- текст-объяснение решений (Этап 6) по
                                     списку из /api/greenplan/generate, через
-                                    локальную LLM (mistral:7b/Ollama, ~30 с,
+                                    LLM (YandexGPT, несколько секунд,
                                     отдельно, чтобы не блокировать генерацию)
     POST /api/greenplan/document -- пояснительная записка в DOCX по
                                     результату /api/greenplan/generate

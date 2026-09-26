@@ -73,6 +73,8 @@ def _clean_llm_env(monkeypatch):
         "YANDEX_CLOUD_MODEL",
         "GEMINI_API_KEY",
         "GEMINI_MODEL",
+        # greenplan/decision_report.py -- тот же ключ Yandex, своя модель.
+        "YANDEX_CLOUD_REPORT_MODEL",
     ):
         monkeypatch.delenv(key, raising=False)
 

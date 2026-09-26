@@ -23,17 +23,6 @@ services:
       # были бы недоступны.
       - MONGO_URI=mongodb://mongo:27017
       - REDIS_URL=redis://redis:6379/0
-      # Ollama (mistral:7b, decision_report.py) не сервис compose -- он
-      # запускается на хосте (`ollama serve`), не в этой сети. "localhost"
-      # внутри контейнера -- это сам контейнер, а не хост, поэтому дефолт
-      # OLLAMA_BASE_URL (backend/greenplan/decision_report.py) здесь не достучится;
-      # host.docker.internal -- специальный DNS-хост Docker Desktop, всегда
-      # указывающий на хост-машину (macOS/Windows из коробки, на Linux --
-      # добавлен extra_hosts ниже для docker-compose <=v20 без встроенной
-      # поддержки). Без Ollama на хосте это по-прежнему не ошибка: GreenPlan
-      # (issue #23, Этап 6) отвечает 200 с report=null и заполненным
-      # report_error, а не роняет запрос.
-      - OLLAMA_BASE_URL=http://host.docker.internal:11434/v1
       # 1 -- дев-режим: один процесс с --reload, правки подхватываются на лету
       # (см. развилку в backend/Dockerfile). Поднимать имеет смысл под реальную
       # нагрузку: геометрия на shapely упирается в GIL, и несколько запросов к
@@ -45,7 +34,8 @@ services:
       # Дев-режим: --reload (при UVICORN_WORKERS=1). Продакшен --
       # docker-compose.prod.yml, там 0.
       - UVICORN_RELOAD=${UVICORN_RELOAD:-1}
-    # Ключи LLM и (опционально) свой JWT_SECRET -- см. .env.example.
+    # Ключ и каталог Yandex AI Studio (правка текстом, текст-обоснование GreenPlan) и
+    # (опционально) свой JWT_SECRET -- см. .env.example.
     # required: false -- без .env сервис всё равно поднимется: текстовое
     # редактирование ответит понятной ошибкой, а не упадёт весь compose;
     # JWT_SECRET без .env возьмёт дев-заглушку из auth.py (не для реального
@@ -53,11 +43,6 @@ services:
     env_file:
       - path: .env
         required: false
-    extra_hosts:
-      # host.docker.internal работает из коробки только на Docker Desktop
-      # (macOS/Windows) -- на Linux нужна явная эта запись (host-gateway,
-      # начиная с Docker 20.10), иначе OLLAMA_BASE_URL выше не резолвится.
-      - "host.docker.internal:host-gateway"
     depends_on:
       # service_healthy, а не просто "контейнер запущен": даёт mongo/redis
       # реальный шанс принять первое подключение до первого запроса к

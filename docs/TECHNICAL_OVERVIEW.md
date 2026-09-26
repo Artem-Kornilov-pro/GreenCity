@@ -31,7 +31,7 @@ DXF-файл → parser/parse_dxf.py → Scene (JSON) → backend (FastAPI) → 
 |---|---|
 | `main.py` | Приложение FastAPI, middleware, прогрев корпуса при старте, `/api/health` |
 | `api/` | Эндпоинты: `editor.py` (разбор DXF/DWG, каталог, генерация по сетке, правка текстом, экспорт DXF), `greenplan.py`, `accounts.py` |
-| `core/` | `schemas.py` (сцена), `setback_norms.py` (отступы), `plant_catalog.py`, `invasive_species.py` (369-ПП), `placement.py` (`Placer` — допустимая область и нормы), `placement_geometry.py` (выбор мест, обход препятствий, линии), `building_setbacks.py`, `paths.py` |
+| `core/` | `schemas.py` (сцена), `setback_norms.py` (отступы), `plant_catalog.py`, `invasive_species.py` (369-ПП), `placement.py` (`Placer` — допустимая область и нормы), `placement_geometry.py` (выбор мест, обход препятствий, линии), `building_setbacks.py`, `paths.py`, `yandex_ai.py` (клиент Yandex AI Studio для обеих LLM) |
 | `greenplan/` | Этапы 3–6: `site_characterization`, `zone_partitioning`, `pattern_corpus`/`pattern_retrieval`/`pattern_library`/`pattern_assignment`, `species_selection`, `deterministic_placement`, `lawn`, `violation_report`, `assortment_report`, `decision_report` (LLM), `document` (DOCX), `dxf_export` |
 | `text_editor/` | Правка текстом: `service.py` (точка входа), `operations.py` (словарь операций), `prompt.py` (контекст модели), `llm_client.py` (провайдеры), `applier.py` + `ops_placement.py` + `ops_editing.py` + `plan_common.py` (применение), `courtyard_design.py` + `courtyard_layout.py` (дизайн двора) |
 | `generation/` | Генератор по сетке: `greenery_generator.py`, `natural_sampling.py` (Poisson-disk, шум плотности, смесь видов), `planting_area.py` (где можно сажать) |
@@ -99,7 +99,7 @@ Docker-compose поднимает 8 сервисов с healthcheck на каж�
 
 Последнюю правку ассистента можно отменить кнопкой в чате, пока план после неё не менялся (сцена до и после хранится на фронтенде; ручная правка после неё отмену убирает, чтобы не стереть её молча).
 
-`LLM_PROVIDER` — `gemini` (по умолчанию) или `yandex`, оба через OpenAI-совместимый клиент. Без ключа — `LlmNotConfiguredError` → 503, а не падение сервиса.
+`LLM_PROVIDER` — `yandex` (по умолчанию: Yandex AI Studio, `core/yandex_ai.py`, модель `YANDEX_CLOUD_MODEL` — по умолчанию Qwen3 235B A22B: строгий JSON по длинной инструкции и без рассуждений, которые съедают лимит ответа) или `gemini`, оба через OpenAI-совместимый клиент. Без ключа — `LlmNotConfiguredError` → 503, а не падение сервиса.
 
 `design_area` — самый сложный оператор: `CourtyardDesigner` (`text_editor/courtyard_design.py`, выбор области и каркас дорожек — `courtyard_layout.py`) собирает целый двор одной операцией в порядке "от каркаса к деталям": выбор области (огорожена зданиями) → скелет дорожек (MST между входами) → мощение → фонтан/клумбы/фонари/лавки/изгородь/деревья вразброс/кусты вдоль дорожек. Виды, которые модель не назвала сама (`tree_ids`/`bush_ids`), подбирает `species_selection.courtyard_palette()` — тот же подбор, что у GreenPlan, для дворовой территории: три дерева разных родов из ассортимента Москвы с приоритетом базового ассортимента 515-ПП и вид для изгороди вдоль дорожек (без колючих и чувствительных к реагентам).
 
@@ -127,7 +127,7 @@ Docker-compose поднимает 8 сервисов с healthcheck на каж�
 | 3. Характеризация + retrieval | `site_characterization.py`, `pattern_retrieval.py` | Готово, корпус — 14 реальных проектов + 20 синтетических эталонов |
 | 4. Назначение паттернов | `zone_partitioning.py`, `pattern_assignment.py` | Готово правилами; ранжирование LLM — нет |
 | 5. Расстановка | `deterministic_placement.py` (поверх `core/placement.py`), виды — `species_selection.py`, газон — `lawn.py` | Готово |
-| 6. Отчёт решений | `violation_report.py`, `assortment_report.py`, `decision_report.py`, `greenplan/document.py` | Готово: нарушения + ассортимент + текст через локальную LLM + пояснительная записка в DOCX |
+| 6. Отчёт решений | `violation_report.py`, `assortment_report.py`, `decision_report.py`, `greenplan/document.py` | Готово: нарушения + ассортимент + текст через YandexGPT 5.1 Pro + пояснительная записка в DOCX |
 
 Принцип на всех этапах: **LLM не считает координаты и не придумывает паттерн** — только (опционально) ранжирует уже отфильтрованный список.
 
@@ -160,7 +160,7 @@ Docker-compose поднимает 8 сервисов с healthcheck на каж�
 6. `lawn.plan_lawns()` → газон (раздел 6.5): площадь, а не объекты.
 7. `violation_report.find_violations()` → независимая проверка всех объектов сцены против всех зон (STRtree для отсечения кандидатов, точная геометрия для итогового решения — иначе на крупных участках O(объекты×зоны) уходил в 13+ секунд).
 8. `assortment_report.summarize_assortment()` + `lawn_assortment()` → сводка по видам/категориям только сгенерированных объектов (шт.) и строка нового газона (м²).
-9. `decision_report.generate_report()` → связный текст-объяснение через локальную LLM (Ollama/mistral:7b) по уже посчитанным решениям — LLM пересказывает факты человеческим языком, не считает и не придумывает.
+9. `decision_report.generate_report()` → связный текст-объяснение через YandexGPT 5.1 Pro в Yandex AI Studio (Responses API; тот же ключ и каталог, что у ИИ-ассистента, модель — `YANDEX_CLOUD_REPORT_MODEL`) по уже посчитанным решениям — LLM пересказывает факты человеческим языком, не считает и не придумывает.
 
 ### 6.2 Как работает поиск похожих проектов (`backend/greenplan/pattern_retrieval.py`)
 
@@ -177,7 +177,7 @@ Docker-compose поднимает 8 сервисов с healthcheck на каж�
 
 ### 6.3 API
 
-`POST /api/greenplan/generate` — быстрый путь (секунды, без LLM): тело `{scene, options}` (параметры — раздел 6.6), ответ — сцена с результатом, решения по зонам, нарушения, ведомость посадок, ведомость благоустройства (`improvements`) и замечания к параметрам (`notes`). Повторный запуск заменяет прошлый результат GreenPlan в присланной сцене, а не добавляет второй слой (`greenplan/pipeline.py`). `POST /api/greenplan/report` — отдельно текст-объяснение (~30с, локальная LLM) — разнесены специально, чтобы фронт не ждал текст ради уже готовой расстановки. Оба под `threading.Lock` — конкурентные тяжёлые запросы под одним GIL-процессом иначе не параллелятся, а тормозят друг друга (~11x).
+`POST /api/greenplan/generate` — быстрый путь (секунды, без LLM): тело `{scene, options}` (параметры — раздел 6.6), ответ — сцена с результатом, решения по зонам, нарушения, ведомость посадок, ведомость благоустройства (`improvements`) и замечания к параметрам (`notes`). Повторный запуск заменяет прошлый результат GreenPlan в присланной сцене, а не добавляет второй слой (`greenplan/pipeline.py`). `POST /api/greenplan/report` — отдельно текст-объяснение (YandexGPT, секунды) — разнесены специально, чтобы фронт не ждал текст ради уже готовой расстановки. Оба под `threading.Lock` — конкурентные тяжёлые запросы под одним GIL-процессом иначе не параллелятся, а тормозят друг друга (~11x).
 
 `POST /api/greenplan/document` — пояснительная записка в DOCX (`greenplan/document.py`) по текущей сцене и решениям GreenPlan — «сценарий выгрузки документации» из ТЗ. Разделы: сведения об участке, нормативная база и применённые отступы (в т.ч. по породе), принятые решения с происхождением каждого («по аналогии с проектом X» / «типовое решение — проверить»), проекты-аналоги с цитатами, ведомость элементов озеленения по форме 9 ГОСТ 21.508-2020, проверка норм (нарушения новых посадок — поимённо, существующих — сводкой по видам ограничений), технические требования к посадке по СП 82.13330.2016, ограничения и допущения; текст от LLM — только приложением с пометкой «текст ИИ — проверить». Нарушения, ведомость и характеристики пересчитываются на сервере по присланной сцене. Кнопка на панели GreenPlan.
 
