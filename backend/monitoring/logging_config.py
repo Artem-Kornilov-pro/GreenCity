@@ -38,6 +38,13 @@ _STANDARD_RECORD_FIELDS = frozenset(
 # обычная переменная модуля путала бы id разных запросов друг с другом.
 _request_id_ctx: ContextVar[str] = ContextVar("request_id", default="-")
 
+# Сторонние библиотеки, которые пишут в лог сотни строк на один запрос без
+# пользы для разбора инцидентов, -- не ниже этого уровня. ezdxf при сборке
+# DWG-батча (exchange/dwg_batch_converter.py, Importer) на каждый FIELD
+# AutoCAD пишет WARNING "copy process ignored FIELD(...)": на реальном
+# чертеже -- сотни строк на загрузку, и они забивали Loki.
+NOISY_LIBRARY_LEVELS = {"ezdxf": logging.ERROR}
+
 
 def current_request_id() -> str:
     return _request_id_ctx.get()
@@ -98,6 +105,9 @@ def configure_logging() -> None:
     root = logging.getLogger()
     root.setLevel(level)
     root.handlers = [handler]
+
+    for name, floor in NOISY_LIBRARY_LEVELS.items():
+        logging.getLogger(name).setLevel(max(level, floor))
 
 
 class RequestLoggingMiddleware:

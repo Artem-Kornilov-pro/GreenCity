@@ -123,6 +123,16 @@ def test_configure_logging_falls_back_to_info_for_garbage_level(monkeypatch):
     assert logging.getLogger().level == logging.INFO
 
 
+def test_configure_logging_silences_ezdxf_warnings(monkeypatch):
+    # "copy process ignored FIELD(...)" -- сотни WARNING на одну загрузку DWG.
+    monkeypatch.setenv("LOG_LEVEL", "DEBUG")
+    configure_logging()
+    ezdxf_logger = logging.getLogger("ezdxf")
+    assert not ezdxf_logger.isEnabledFor(logging.WARNING)
+    assert ezdxf_logger.isEnabledFor(logging.ERROR)
+    assert logging.getLogger("greencity.parse").isEnabledFor(logging.DEBUG)
+
+
 # --- RequestLoggingMiddleware -------------------------------------------------
 
 
