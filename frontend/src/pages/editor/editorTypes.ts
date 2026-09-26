@@ -1,4 +1,4 @@
-import type { GreenPlanGenerateResult } from "../../api";
+import type { GreenPlanGenerateResult, GreenPlanOptions } from "../../api";
 
 export function makeId(): string {
   return crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
@@ -25,6 +25,8 @@ export interface ChatMessage {
 // те приходят отдельным запросом (fetchGreenPlanReport) и домешиваются в это
 // же состояние по готовности, см. handleGreenPlan в EditorPage.
 export interface GreenPlanState extends GreenPlanGenerateResult {
+  // С какими параметрами запускали -- они же уходят в пояснительную записку.
+  options: GreenPlanOptions;
   report: string | null;
   report_error: string | null;
 }

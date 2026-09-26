@@ -18,7 +18,9 @@ from collections import Counter
 from pydantic import BaseModel
 
 from core.plant_catalog import CatalogItem
-from core.schemas import LawnArea, SceneObject
+from core.schemas import LawnArea, Scene, SceneObject
+from core.shapes import polygon_from_points
+from greenplan.improvements import SOURCE, is_greenplan_zone
 
 CATEGORY_LABELS: dict[str, str] = {
     "tree": "дерево",
@@ -46,9 +48,11 @@ def summarize_assortment(objects: list[SceneObject], catalog: dict[str, CatalogI
         if not obj.metadata.get("generated"):
             continue
         item = catalog.get(obj.metadata.get("catalogId"))
-        if item is None:
+        # Только растения: фонари и скамейки благоустройства -- в своей
+        # ведомости (improvements_assortment), а не в форме 9.
+        if item is None or item.category not in CATEGORY_LABELS:
             continue
-        category = CATEGORY_LABELS.get(item.category, item.category)
+        category = CATEGORY_LABELS[item.category]
         counts[(category, item.label)] += 1
 
     rows = [AssortmentRow(category=category, species=species, count=count) for (category, species), count in counts.items()]
@@ -64,3 +68,24 @@ def lawn_assortment(lawns: list[LawnArea]) -> list[AssortmentRow]:
         return []
     kind = next((a.kind for a in lawns if a.status == "new"), "Газон обыкновенный")
     return [AssortmentRow(category="газон", species=kind, count=new_area, unit="м²")]
+
+
+IMPROVEMENT_LABELS: dict[str, str] = {"lamp": "Фонарь", "bench": "Скамейка", "trash": "Урна"}
+
+
+def improvements_assortment(scene: Scene) -> list[AssortmentRow]:
+    """Благоустройство GreenPlan (greenplan/improvements.py): площадь новых
+    дорожек и число фонарей, скамеек и урн -- по самой сцене, чтобы записка
+    считала так же, как ответ /generate."""
+    rows = []
+    paths = [polygon_from_points(z.polygon) for z in scene.restrictions if is_greenplan_zone(z)]
+    area = round(sum(p.area for p in paths if p is not None))
+    if area:
+        rows.append(AssortmentRow(category="благоустройство", species="Дорожка (новая)", count=area, unit="м²"))
+    counts = Counter(o.type for o in scene.objects if o.metadata.get("source") == SOURCE and o.type in IMPROVEMENT_LABELS)
+    rows += [
+        AssortmentRow(category="благоустройство", species=IMPROVEMENT_LABELS[t], count=counts[t])
+        for t in IMPROVEMENT_LABELS
+        if counts[t]
+    ]
+    return rows

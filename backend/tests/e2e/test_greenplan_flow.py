@@ -25,7 +25,7 @@ def test_dxf_to_greenplan_to_document_to_dxf(client, e2e, fake_report_llm, slug)
     existing_ids = {o["id"] for o in scene["objects"]}
 
     # 1. GreenPlan
-    r = client.post("/api/greenplan/generate", json=scene)
+    r = client.post("/api/greenplan/generate", json={"scene": scene})
     assert r.status_code == 200, r.text
     result = r.json()
     planned = result["scene"]
@@ -100,7 +100,7 @@ def test_report_unavailable_does_not_block_the_document(client, e2e, monkeypatch
 
     monkeypatch.setattr(decision_report, "_client", _unreachable)
     scene = e2e.upload_dxf(client, e2e.location_dxf("25_classical_building_ring_primer"))
-    result = client.post("/api/greenplan/generate", json=scene).json()
+    result = client.post("/api/greenplan/generate", json={"scene": scene}).json()
 
     report = client.post("/api/greenplan/report", json=result["assignments"]).json()
     assert report["report"] is None and report["report_error"]
@@ -114,7 +114,41 @@ def test_report_unavailable_does_not_block_the_document(client, e2e, monkeypatch
 
 def test_greenplan_is_deterministic_across_requests(client, e2e):
     scene = e2e.upload_dxf(client, e2e.location_dxf("12_natashinsky_proezd"))
-    first = client.post("/api/greenplan/generate", json=scene).json()
-    second = client.post("/api/greenplan/generate", json=scene).json()
+    first = client.post("/api/greenplan/generate", json={"scene": scene}).json()
+    second = client.post("/api/greenplan/generate", json={"scene": scene}).json()
     assert first["scene"]["objects"] == second["scene"]["objects"]
     assert first["assignments"] == second["assignments"]
+
+
+def test_greenplan_with_user_options(client, e2e):
+    # Параметры из диалога GreenPlan: стиль, предпочтительный вид,
+    # благоустройство -- через HTTP, записку и DXF туда и обратно.
+    scene = e2e.upload_dxf(client, e2e.location_dxf("10_stary_gay"))
+    options = {
+        "style": "landscape", "lawn": False, "preferred_trees": ["species_lipa_melkolistnaya"],
+        "paths": True, "lighting": True, "benches": True,
+    }
+    result = client.post("/api/greenplan/generate", json={"scene": scene, "options": options}).json()
+    planned = result["scene"]
+    assert {a["site_style"] for a in result["assignments"]} == {"landscape"}
+    assert planned["lawns"] == []
+    trees = [o for o in planned["objects"] if o["type"] == "tree" and o["metadata"].get("source") == "greenplan"]
+    assert any(t["metadata"]["species"] == "Липа мелколистная" for t in trees)
+    rows = {row["species"]: row for row in result["improvements"]}
+    assert rows["Дорожка (новая)"]["count"] > 0 and rows["Фонарь"]["count"] > 0
+    new_ids = {o["id"] for o in planned["objects"] if o["metadata"].get("source") == "greenplan"}
+    assert [v for v in result["violations"] if v["object_id"] in new_ids] == []
+
+    r = client.post("/api/greenplan/document", json={
+        "scene": planned, "assignments": result["assignments"], "title": "двор",
+        "options": options, "notes": result["notes"],
+    })
+    text = e2e.docx_text(r.content)
+    assert "Параметры, заданные пользователем" in text and "Стиль участка: пейзажный." in text
+    assert "4.1. Благоустройство" in text and "Газон обыкновенный" not in text
+
+    exported = client.post("/api/export-dxf", json=planned).content
+    reparsed = client.post("/api/parse", files={"file": ("export.dxf", exported, "application/dxf")}).json()
+    assert any(z["type"] == "pedestrian_path" and "NEW_PATHS" in z["name"] for z in reparsed["restrictions"])
+    new_lamps = [o for o in reparsed["objects"] if o["type"] == "lamp" and str(o["metadata"].get("sourceLayer", "")).startswith("NEW_")]
+    assert len(new_lamps) == rows["Фонарь"]["count"]

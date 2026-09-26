@@ -15,6 +15,8 @@ import {
   generateGreenPlan,
   fetchGreenPlanReport,
   downloadGreenPlanDocument,
+  DEFAULT_GREENPLAN_OPTIONS,
+  type GreenPlanOptions,
 } from "../../api";
 import { buildZoneIndex, checkViolationsAt, computeSceneBounds } from "../../geometry";
 import { plantKindOfObjectType } from "../../setbackNorms";
@@ -24,6 +26,7 @@ import { PageTransition } from "../../components/PageTransition";
 import { AssistantPanel } from "./AssistantPanel";
 import { EditorSidebar } from "./EditorSidebar";
 import { EditorTopBar } from "./EditorTopBar";
+import { GreenPlanOptionsDialog } from "./GreenPlanOptionsDialog";
 import { GreenPlanPanel } from "./GreenPlanPanel";
 import { SaveAsDialog } from "./SaveAsDialog";
 import { StatusBanners } from "./StatusBanners";
@@ -85,6 +88,8 @@ export default function EditorPage() {
   const [greenPlanResult, setGreenPlanResult] = useState<GreenPlanState | null>(null);
   const [greenPlanReportLoading, setGreenPlanReportLoading] = useState(false);
   const [greenPlanDocBusy, setGreenPlanDocBusy] = useState(false);
+  const [greenPlanOptionsOpen, setGreenPlanOptionsOpen] = useState(false);
+  const [greenPlanOptions, setGreenPlanOptions] = useState<GreenPlanOptions>(loadGreenPlanOptions);
 
   const [selectionMode, setSelectionMode] = useState(false);
 
@@ -264,16 +269,21 @@ export default function EditorPage() {
     }
   }, [scene, instruction]);
 
-  const handleGreenPlan = useCallback(async () => {
+  const handleGreenPlan = useCallback(async (options: GreenPlanOptions) => {
     if (!scene) return;
+    setGreenPlanOptions(options);
+    saveGreenPlanOptions(options);
+    setGreenPlanOptionsOpen(false);
     setGreenPlanBusy(true);
     setError(null);
     try {
-      const result = await generateGreenPlan(scene);
+      // Повторный запуск заменяет прошлый результат GreenPlan в сцене
+      // (backend/greenplan/pipeline.py), а не сажает второй слой.
+      const result = await generateGreenPlan(scene, options);
       setScene(result.scene);
       // Расстановка/нарушения/ведомость уже готовы -- показываем сразу, не
       // дожидаясь текста-объяснения (тот -- ~30 секунд, локальная LLM).
-      setGreenPlanResult({ ...result, report: null, report_error: null });
+      setGreenPlanResult({ ...result, options, report: null, report_error: null });
       setAiPanelOpen(false);
       setGreenPlanPanelOpen(true);
       setGreenPlanBusy(false);
@@ -332,7 +342,14 @@ export default function EditorPage() {
     setGreenPlanDocBusy(true);
     setError(null);
     try {
-      const blob = await downloadGreenPlanDocument(scene, greenPlanResult.assignments, greenPlanResult.report, projectName);
+      const blob = await downloadGreenPlanDocument(
+        scene,
+        greenPlanResult.assignments,
+        greenPlanResult.report,
+        projectName,
+        greenPlanResult.options,
+        greenPlanResult.notes,
+      );
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -446,7 +463,7 @@ export default function EditorPage() {
             setAiPanelOpen((v) => !v);
           }}
           greenPlanBusy={greenPlanBusy}
-          onGreenPlan={handleGreenPlan}
+          onGreenPlan={() => setGreenPlanOptionsOpen(true)}
           exportingDxf={exportingDxf}
           onExportDxf={handleExportDxf}
           onExportJson={handleExportJson}
@@ -531,6 +548,14 @@ export default function EditorPage() {
         </main>
       </div>
 
+      <GreenPlanOptionsDialog
+        open={greenPlanOptionsOpen}
+        onOpenChange={setGreenPlanOptionsOpen}
+        catalog={catalog}
+        initial={greenPlanOptions}
+        busy={greenPlanBusy}
+        onRun={handleGreenPlan}
+      />
       <SaveAsDialog
         open={saveAsOpen}
         onOpenChange={setSaveAsOpen}
@@ -541,4 +566,25 @@ export default function EditorPage() {
       />
     </PageTransition>
   );
+}
+
+// Последние параметры GreenPlan -- удобство для этого браузера, не данные
+// проекта: хранилища может не быть (приватный режим), тогда -- по умолчанию.
+const GREENPLAN_OPTIONS_KEY = "greencity.greenplanOptions";
+
+function loadGreenPlanOptions(): GreenPlanOptions {
+  try {
+    const raw = localStorage.getItem(GREENPLAN_OPTIONS_KEY);
+    return raw ? { ...DEFAULT_GREENPLAN_OPTIONS, ...(JSON.parse(raw) as Partial<GreenPlanOptions>) } : DEFAULT_GREENPLAN_OPTIONS;
+  } catch {
+    return DEFAULT_GREENPLAN_OPTIONS;
+  }
+}
+
+function saveGreenPlanOptions(options: GreenPlanOptions): void {
+  try {
+    localStorage.setItem(GREENPLAN_OPTIONS_KEY, JSON.stringify(options));
+  } catch {
+    // хранилище недоступно -- параметры просто не запомнятся
+  }
 }

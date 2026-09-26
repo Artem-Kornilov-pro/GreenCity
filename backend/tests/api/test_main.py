@@ -220,7 +220,7 @@ def test_generate_greenery_rejects_grid_spacing_out_of_range(client):
 
 def test_greenplan_generate_returns_full_deterministic_result(client):
     scene = _parsed_scene(client)
-    r = client.post("/api/greenplan/generate", json=scene)
+    r = client.post("/api/greenplan/generate", json={"scene": scene})
     assert r.status_code == 200
     body = r.json()
     assert body["assignments"]
@@ -234,7 +234,7 @@ def test_greenplan_generate_returns_full_deterministic_result(client):
 
 
 def test_greenplan_generate_plans_lawn_and_lists_it_in_square_metres(client):
-    body = client.post("/api/greenplan/generate", json=_parsed_scene(client)).json()
+    body = client.post("/api/greenplan/generate", json={"scene": _parsed_scene(client)}).json()
     lawns = body["scene"]["lawns"]
     assert lawns and all(a["area_sqm"] > 0 for a in lawns)
     new_sqm = round(sum(a["area_sqm"] for a in lawns if a["status"] == "new"))
@@ -244,7 +244,7 @@ def test_greenplan_generate_plans_lawn_and_lists_it_in_square_metres(client):
 
 def test_greenplan_generate_rejects_k_out_of_range(client):
     scene = _parsed_scene(client)
-    r = client.post("/api/greenplan/generate?k=0", json=scene)
+    r = client.post("/api/greenplan/generate?k=0", json={"scene": scene})
     assert r.status_code == 422
 
 
@@ -253,7 +253,7 @@ def test_greenplan_generate_rejects_k_out_of_range(client):
 
 def test_greenplan_report_success(client, monkeypatch):
     scene = _parsed_scene(client)
-    assignments = client.post("/api/greenplan/generate", json=scene).json()["assignments"]
+    assignments = client.post("/api/greenplan/generate", json={"scene": scene}).json()["assignments"]
 
     monkeypatch.setattr(greenplan_api, "generate_report", lambda assignments: "связный текст отчёта")
     r = client.post("/api/greenplan/report", json=assignments)
@@ -267,7 +267,7 @@ def test_greenplan_report_survives_llm_unavailable(client, monkeypatch):
     from greenplan.decision_report import DecisionReportUnavailable
 
     scene = _parsed_scene(client)
-    assignments = client.post("/api/greenplan/generate", json=scene).json()["assignments"]
+    assignments = client.post("/api/greenplan/generate", json={"scene": scene}).json()["assignments"]
 
     def _raise(assignments):
         raise DecisionReportUnavailable("Ollama не запущена")
@@ -564,7 +564,7 @@ def test_greenplan_document_returns_docx_for_generated_plan(client):
     from docx import Document
 
     scene = _parsed_scene(client)
-    generated = client.post("/api/greenplan/generate", json=scene).json()
+    generated = client.post("/api/greenplan/generate", json={"scene": scene}).json()
     r = client.post(
         "/api/greenplan/document",
         json={"scene": generated["scene"], "assignments": generated["assignments"], "report": None, "title": "Двор"},

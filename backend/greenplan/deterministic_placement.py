@@ -38,6 +38,7 @@ setback_norms.py: липе 10 м от здания и т.п.), а не пост�
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass, field
 
 from shapely.geometry import Polygon
 
@@ -59,7 +60,7 @@ from core.schemas import Point3, Scene, SceneObject
 from greenplan.pattern_assignment import ZoneAssignment, assign_patterns
 from greenplan.pattern_library import PATTERN_LIBRARY, PatternSpec
 from greenplan.site_characterization import characterize_site, usable_planting_area
-from greenplan.species_selection import SiteContext, SpeciesPalette, select_site_species, site_key
+from greenplan.species_selection import SiteContext, SpeciesPalette, preference_note, select_site_species, site_key
 from greenplan.zone_partitioning import GeometricZone, partition_zones
 
 log = logging.getLogger("greencity.greenplan")
@@ -140,6 +141,7 @@ def _scene_object(
             "species": item.label,
             "category": "vegetation",
             "generated": True,
+            "source": "greenplan",  # по нему повторный запуск убирает прошлый результат
             "catalogId": item.id,
             "pattern_id": assignment.pattern_id,
             "zone_id": zone.id,
@@ -386,6 +388,14 @@ def place_zone(
     return _place_area_fill(placer, zone, spec, assignment, trees, bushes)
 
 
+@dataclass
+class SitePlan:
+    objects: list[SceneObject]
+    assignments: list[ZoneAssignment]
+    # Для пользователя: почему предпочтительные виды не попали в посадку.
+    notes: list[str] = field(default_factory=list)
+
+
 def generate_for_scene(
     scene: Scene,
     trees: list[CatalogItem] | None = None,
@@ -397,7 +407,25 @@ def generate_for_scene(
     НОВЫЕ объекты (как generate_trees/generate_bushes в greenery_generator.py
     -- вызывающий код сам решает, добавлять ли их в scene.objects) и список
     ZoneAssignment с provenance -- на нём в следующей итерации строится
-    Этап 6 (отчёт "по аналогии с проектом X"), без переделки этой функции."""
+    Этап 6 (отчёт "по аналогии с проектом X"), без переделки этой функции.
+    С параметрами пользователя (стиль, предпочтительные виды) -- plan_site."""
+    plan = plan_site(scene, trees, bushes, k)
+    return plan.objects, plan.assignments
+
+
+def plan_site(
+    scene: Scene,
+    trees: list[CatalogItem] | None = None,
+    bushes: list[CatalogItem] | None = None,
+    k: int = 3,
+    style: str = "auto",
+    preferred: list[CatalogItem] | None = None,
+) -> SitePlan:
+    """То же, что generate_for_scene, с параметрами пользователя: style --
+    стиль участка ("auto" -- по похожим проектам), preferred -- виды,
+    которые ставятся первыми в любой роли своей категории (если проходят
+    нормы)."""
+    preferred = preferred or []
     trees = trees or []
     bushes = bushes or []
     # usable_planting_area -- unary_union по всем forbidden/warning-зонам
@@ -408,7 +436,7 @@ def generate_for_scene(
     usable = usable_planting_area(scene)
     zones = partition_zones(scene, usable=usable)
     characteristics = characterize_site(scene, usable=usable)
-    assignments = assign_patterns(scene, zones, k=k, characteristics=characteristics)
+    assignments = assign_patterns(scene, zones, k=k, characteristics=characteristics, style=style)
     placer = Placer(scene)
 
     # Виды -- по нормативному ассортименту для типа территории, форме,
@@ -419,6 +447,7 @@ def generate_for_scene(
         territory_type=characteristics.territory_type if characteristics else "неопределено",
         has_playground=any(zone.type == "playground_zone" for zone in scene.restrictions),
         site_key=site_key(scene),
+        preferred=frozenset(item.label for item in preferred),
     )
     # Единая палитра видов на участок: крупнейшие решения задают её первыми.
     area_by_key: dict[tuple[str, str], float] = {}
@@ -443,7 +472,11 @@ def generate_for_scene(
                 }
             )
         )
-    return _thin_to_site_cap(objects), placed_assignments
+    objects = _thin_to_site_cap(objects)
+    planted = {obj.metadata.get("species") for obj in objects}
+    kinds = [zone.kind for zone in zones]
+    notes = [preference_note(item, kinds, site) for item in preferred if item.label not in planted]
+    return SitePlan(objects=objects, assignments=placed_assignments, notes=notes)
 
 
 def _thin_to_site_cap(objects: list[SceneObject]) -> list[SceneObject]:

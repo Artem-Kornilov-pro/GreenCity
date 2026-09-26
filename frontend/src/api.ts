@@ -74,12 +74,14 @@ export async function downloadGreenPlanDocument(
   scene: Scene,
   assignments: GreenPlanZoneAssignment[],
   report: string | null,
-  title: string | null
+  title: string | null,
+  options: GreenPlanOptions | null = null,
+  notes: string[] = []
 ): Promise<Blob> {
   const res = await fetch(`${API_BASE}/api/greenplan/document`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ scene, assignments, report, title }),
+    body: JSON.stringify({ scene, assignments, report, title, options, notes }),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
@@ -139,13 +141,42 @@ export interface GreenPlanGenerateResult {
   assignments: GreenPlanZoneAssignment[];
   violations: GreenPlanViolation[];
   assortment: GreenPlanAssortmentRow[];
+  // Благоустройство: новые дорожки (м²), фонари, скамейки, урны.
+  improvements: GreenPlanAssortmentRow[];
+  // Что из параметров не удалось выполнить и почему.
+  notes: string[];
 }
 
-export async function generateGreenPlan(scene: Scene): Promise<GreenPlanGenerateResult> {
+// Параметры GreenPlan (backend/greenplan/options.py) -- диалог перед запуском.
+export interface GreenPlanOptions {
+  style: "auto" | "regular" | "landscape";
+  trees: boolean;
+  bushes: boolean;
+  lawn: boolean;
+  preferred_trees: string[];
+  preferred_bushes: string[];
+  paths: boolean;
+  lighting: boolean;
+  benches: boolean;
+}
+
+export const DEFAULT_GREENPLAN_OPTIONS: GreenPlanOptions = {
+  style: "auto",
+  trees: true,
+  bushes: true,
+  lawn: true,
+  preferred_trees: [],
+  preferred_bushes: [],
+  paths: false,
+  lighting: false,
+  benches: false,
+};
+
+export async function generateGreenPlan(scene: Scene, options: GreenPlanOptions = DEFAULT_GREENPLAN_OPTIONS): Promise<GreenPlanGenerateResult> {
   const res = await fetch(`${API_BASE}/api/greenplan/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(scene),
+    body: JSON.stringify({ scene, options }),
   });
   if (!res.ok) {
     throw new Error(`Не удалось построить GreenPlan (${res.status}): ${await readErrorDetail(res)}`);
