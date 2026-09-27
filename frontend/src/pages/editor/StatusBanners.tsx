@@ -34,11 +34,25 @@ export function StatusBanners({
     );
   }
   if (dwgWarnings && dwgWarnings.length > 0) {
+    // Побайтно одинаковый файл пачки бэкенд пропускает сам (dwg_batch_converter.
+    // _skip_identical_files) -- это не ошибка, и в общем списке "не удалось"
+    // он пугал: пользователь видел отказ там, где всё отработало как надо.
+    const duplicates = dwgWarnings.filter((w) => w.error.includes("пропущен как дубль"));
+    const failures = dwgWarnings.filter((w) => !duplicates.includes(w));
     return (
       <div className="absolute inset-x-0 top-14 z-30 flex items-start justify-between gap-3 border-b border-warning-500/30 bg-warning-500/90 px-4 py-2 text-sm text-ink-900 backdrop-blur-sm">
-        <span>
-          Сцена загружена, но {dwgWarnings.length} из {totalDwgFiles} .dwg-файлов не удалось сконвертировать:{" "}
-          {dwgWarnings.map((w) => w.file).join(", ")}
+        <span className="flex flex-col gap-0.5">
+          {failures.length > 0 && (
+            <span>
+              Сцена загружена, но {failures.length} из {totalDwgFiles} .dwg-файлов не удалось сконвертировать:{" "}
+              {failures.map((w) => `${w.file} (${w.error})`).join("; ")}
+            </span>
+          )}
+          {duplicates.length > 0 && (
+            <span>
+              Пропущены одинаковые файлы: {duplicates.map((w) => `${w.file} — ${w.error.replace(/ -- пропущен как дубль$/, "")}`).join("; ")}
+            </span>
+          )}
         </span>
         <button onClick={onDismissDwgWarnings} className="shrink-0 opacity-70 hover:opacity-100">
           <X className="h-4 w-4" />
