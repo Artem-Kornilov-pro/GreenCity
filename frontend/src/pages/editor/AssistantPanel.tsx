@@ -4,6 +4,8 @@ import { Textarea } from "../../components/ui/input";
 import type { ChatMessage } from "./editorTypes";
 import { SlidePanel } from "./SlidePanel";
 
+const MAX_APPLIED_SHOWN = 3;
+
 // Примеры просьб на пустом чате: по клику подставляются в поле ввода (не
 // отправляются сразу -- каждый запрос к модели платный).
 const EXAMPLES = [
@@ -77,8 +79,14 @@ export function AssistantPanel({
           >
             <p className={m.undone ? "line-through opacity-60" : undefined}>{m.text}</p>
             {m.undone && <p className="mt-1 text-xs text-ink-500">Правка отменена</p>}
-            {((m.rejected && m.rejected.length > 0) || (m.warnings && m.warnings.length > 0)) && (
+            {((m.applied && m.applied.length > 0) || (m.rejected && m.rejected.length > 0) || (m.warnings && m.warnings.length > 0)) && (
               <div className="mt-1.5 flex flex-col gap-1 border-t border-ink-900/10 pt-1.5 text-xs opacity-80">
+                {/* Что реально сделал планировщик: ответ модели пишется до
+                    применения и числа в нём -- её намерение, а не факт. */}
+                {m.applied?.slice(0, MAX_APPLIED_SHOWN).map((a, i) => (
+                  <p key={`a-${i}`}>✓ {a}</p>
+                ))}
+                {m.applied && m.applied.length > MAX_APPLIED_SHOWN && <p>✓ и ещё {m.applied.length - MAX_APPLIED_SHOWN}</p>}
                 {m.rejected?.map((r, i) => (
                   <p key={`r-${i}`}>✕ {r}</p>
                 ))}

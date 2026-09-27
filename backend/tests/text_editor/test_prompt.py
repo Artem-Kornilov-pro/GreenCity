@@ -168,7 +168,7 @@ def test_build_context_is_valid_json_with_expected_top_level_keys(scene1):
     assert set(context.keys()) == {
         "coordinates", "site_outline", "buildings", "buildings_not_shown", "landmarks", "landmarks_not_shown",
         "targets", "free_areas", "selected_areas", "restriction_zones", "objects", "objects_not_shown",
-        "object_counts", "catalog_columns", "catalog_rows",
+        "object_counts", "species_counts", "catalog_columns", "catalog_rows",
     }
     assert context["site_outline"] is not None
     assert context["object_counts"]
@@ -200,10 +200,30 @@ def test_build_context_selected_areas_empty_without_allowed_zones(scene1):
     assert context["selected_areas"] == []
 
 
-def test_build_context_includes_entrances_as_landmarks(scene1):
+def test_build_context_includes_entrances_as_numbered_landmarks_with_ids(scene1):
+    # Номер -- чтобы "первый подъезд" был однозначен, id -- чтобы на подъезд
+    # можно было сослаться в connect/face/duplicate_near.
     placer = Placer(scene1)
     context = json.loads(_build_context(scene1, CATALOG, placer))
-    assert any(lm["type"] == "подъезд" for lm in context["landmarks"])
+    entrances = [lm for lm in context["landmarks"] if lm["name"].startswith("подъезд ")]
+    assert entrances[0]["name"] == "подъезд 1"
+    ids = {o.id for o in scene1.objects if o.type == "entrance"}
+    assert all(lm["id"] in ids for lm in entrances)
+
+
+def test_build_context_counts_species(location_scene):
+    # Эталон 23: клёны, липы, берёзы -- модель должна знать, что клёны есть
+    # и сколько, даже если в обрезанный список objects они не попали.
+    import glob
+
+    from core.schemas import Scene
+    from exchange.dxf_parser import parse_dxf_file
+    from tests.conftest import ROOT
+
+    scene = Scene.model_validate(parse_dxf_file(glob.glob(str(ROOT / "locations" / "23_*" / "*.dxf"))[0]))
+    context = json.loads(_build_context(scene, CATALOG, Placer(scene)))
+    trees = [o for o in scene.objects if o.type == "tree" and str(o.metadata.get("species", "")).startswith("Клен")]
+    assert context["species_counts"]["Клен остролистный"] == len(trees) > 0
 
 
 def test_build_context_without_boundary_has_null_site_outline():

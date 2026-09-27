@@ -40,6 +40,7 @@ from text_editor.plan_common import (
     CANDIDATES_NEAR_POINT,
     CANDIDATES_PER_PLACEMENT,
     DEFAULT_ALONG_RADIUS_M,
+    DEFAULT_NEAR_TARGET_M,
     _default_spacing,
     _half_depth,
     _is_oriented,
@@ -179,6 +180,33 @@ class PlacementOpsMixin:
             inset = area.buffer(-spacing / 2)
             if not inset.is_empty:
                 area = inset
+
+        if op.target is not None:
+            # "Две скамейки у детской площадки": полоса вокруг цели, а не весь
+            # участок (раньше поле target у группы молча отбрасывалось).
+            geom = self.placer.target_geometry(op.target)
+            if geom is None:
+                self.rejected.append(f"{what}: на участке нет цели «{TARGET_LABELS.get(op.target, op.target)}»")
+                return
+            reach = clamp(op.distance_m or DEFAULT_NEAR_TARGET_M, 1.0, MAX_AREA_RADIUS_M)
+
+            def near_band(reach: float):
+                if op.target == "site_boundary":
+                    return self.placer.site.difference(self.placer.site.buffer(-reach))
+                return geom.buffer(reach).difference(geom)
+
+            # Вплотную к площадке часто одни дорожки: если в полосе нет места
+            # на всё, расширяем её (как и группу вокруг точки ниже).
+            base_area = area
+            for attempt in (reach, max(2 * reach, DEFAULT_NEAR_TARGET_M), reach + MAX_SNAP_DISTANCE_M):
+                band = near_band(attempt)
+                area = band if base_area is None else base_area.intersection(band)
+                probe = self.placer.points_in_area(kind, spacing / 2, area, count * CANDIDATES_PER_PLACEMENT, species)
+                if len([p for p in probe if self.placer.is_free(p[0], p[1], kind, species=species)]) >= count:
+                    break
+            if attempt > reach:
+                self.warnings.append(f"{what}: ближе {reach:.0f} м к цели места нет — взято до {attempt:.0f} м")
+            where = f"у цели «{TARGET_LABELS.get(op.target, op.target)}» (до {attempt:.0f} м)"
 
         if op.x is None or op.z is None:
             candidates = self.placer.points_in_area(kind, spacing / 2, area, count * CANDIDATES_PER_PLACEMENT, species)
@@ -323,7 +351,13 @@ class PlacementOpsMixin:
             if geom is None:
                 self.rejected.append(f"{what}: на участке нет цели «{TARGET_LABELS.get(op.around_target, op.around_target)}»")
                 return
-            offset = op.offset_m if op.offset_m is not None else self.placer.min_offset(op.around_target, kind, half_depth, species)
+            # Отступ не меньше нормативного: "огороди площадку с отступом 1 м"
+            # при норме больше метра раньше отклонялось целиком, хотя
+            # пользователю нужна изгородь, а не именно этот метр.
+            least = self.placer.min_offset(op.around_target, kind, half_depth, species)
+            offset = max(op.offset_m, least) if op.offset_m is not None else least
+            if op.offset_m is not None and offset > op.offset_m + 1e-6:
+                self.warnings.append(f"{what}: отступ {op.offset_m:.1f} м меньше нормы — взято {offset:.1f} м")
         else:
             center = self._resolve_endpoint(what, op.around_id, None, op.around_x, op.around_z, "центр")
             if center is None:
@@ -336,26 +370,46 @@ class PlacementOpsMixin:
         # Как и в line_of: у вытянутых объектов центр может стоять по норме,
         # а край -- нет.
         half_length = max((item.dimensions.width / 2 for item in items if _is_oriented(item)), default=0.0)
-        band = geom.buffer(offset)
-        polys = [band] if band.geom_type == "Polygon" else [g for g in getattr(band, "geoms", []) if g.geom_type == "Polygon"]
-        rings = [r for poly in polys for r in (poly.exterior, *poly.interiors)]
 
-        accepted = []
-        for ring in rings:
-            length = ring.length
-            if length < 1.0:
-                continue
-            count = max(1, int(length // spacing))
-            for i in range(count):
-                d = i * length / count
-                p = ring.interpolate(d)
-                ahead = ring.interpolate((d + 0.5) % length)
-                tx, tz = ahead.x - p.x, ahead.y - p.y
-                rotation = math.degrees(math.atan2(-tz, tx)) if (tx or tz) else 0.0
-                if self.placer.is_free(p.x, p.y, kind, species=species) and (
-                    not half_length or self._ends_fit(p.x, p.y, rotation, half_length, kind, species)
-                ):
-                    accepted.append((p.x, p.y, rotation))
+        def ring_spots(offset: float) -> tuple[list, int]:
+            """(места кольца без нарушений, всего мест на кольце)."""
+            band = geom.buffer(offset)
+            polys = [band] if band.geom_type == "Polygon" else [g for g in getattr(band, "geoms", []) if g.geom_type == "Polygon"]
+            rings = [r for poly in polys for r in (poly.exterior, *poly.interiors)]
+            spots, total = [], 0
+            for ring in rings:
+                length = ring.length
+                if length < 1.0:
+                    continue
+                count = max(1, int(length // spacing))
+                total += count
+                for i in range(count):
+                    d = i * length / count
+                    p = ring.interpolate(d)
+                    ahead = ring.interpolate((d + 0.5) % length)
+                    tx, tz = ahead.x - p.x, ahead.y - p.y
+                    rotation = math.degrees(math.atan2(-tz, tx)) if (tx or tz) else 0.0
+                    if self.placer.is_free(p.x, p.y, kind, species=species) and (
+                        not half_length or self._ends_fit(p.x, p.y, rotation, half_length, kind, species)
+                    ):
+                        spots.append((p.x, p.y, rotation))
+            return spots, total
+
+        # Кольцо вплотную к цели часто перерезают дорожки и сети: если на нём
+        # помещается меньше половины мест, пробуем чуть дальше и берём
+        # лучшее -- огородить площадку на 2 м дальше лучше, чем не огородить.
+        # (Эталон 23: площадку в 2 м обходят дорожки -- кольцо у края почти
+        # целиком ложится на них, а за дорожками встаёт полностью.)
+        accepted, total = ring_spots(offset)
+        used_offset = offset
+        for extra in (1.0, 2.5, 4.0, 6.0):
+            if total and len(accepted) >= total / 2:
+                break
+            wider, wider_total = ring_spots(offset + extra)
+            if len(wider) > len(accepted):
+                accepted, total, used_offset = wider, wider_total, offset + extra
+        if used_offset > offset:
+            self.warnings.append(f"{what}: у самого края мешают дорожки или сети — кольцо отодвинуто на {used_offset:.1f} м")
         if not accepted:
             self.rejected.append(f"{what}: нет места без нарушений норм по контуру")
             return
@@ -379,27 +433,33 @@ class PlacementOpsMixin:
         count = int(clamp(op.count, 1, 20))
         kind = item.setback_kind
         spacing = _default_spacing(item)
-        if near.geom_type == "Point":
-            within = near.buffer(max(8.0, spacing * count))
+        # Как и у группы вокруг точки: у подъезда рядом уже стоят прошлые
+        # посадки, и на "ещё столько же" места в первом круге не хватало --
+        # копий выходило меньше просьбы, причём молча.
+        reach = max(8.0, spacing * count) if near.geom_type == "Point" else 10.0
+        for attempt in (reach, reach + MAX_SNAP_DISTANCE_M):
+            within = near.buffer(attempt)
             candidates = self.placer.points_in_area(kind, spacing / 4, within, CANDIDATES_NEAR_POINT, item.label)
             free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind, species=item.label)]
-            chosen = pick_near(free, count, 0.9 * spacing, (near.x, near.y))
-        else:
-            within = near.buffer(10.0)
-            candidates = self.placer.points_in_area(kind, spacing / 4, within, CANDIDATES_NEAR_POINT, item.label)
-            free = [p for p in candidates if self.placer.is_free(p[0], p[1], kind, species=item.label)]
-            chosen = pick_spread(free, count, 0.9 * spacing)
+            if near.geom_type == "Point":
+                chosen = pick_near(free, count, 0.9 * spacing, (near.x, near.y))
+            else:
+                chosen = pick_spread(free, count, 0.9 * spacing)
+            if len(chosen) >= count:
+                break
         if not chosen:
             self.rejected.append(f"{what}: рядом нет места без нарушений норм")
             return
         for x, z in chosen:
             self._create(item, x, z, math.degrees(obj.rotation))
         self.applied.append(f"{what}: добавлено {_plural(len(chosen), _OBJECT_FORMS)}")
+        if len(chosen) < op.count:
+            self.warnings.append(f"{what}: добавлено {len(chosen)} из {op.count} — больше мест без нарушений норм рядом нет")
 
     def set_count(self, op: SetCountOp) -> None:
         what = "нужное количество"
         count = int(clamp(op.count, 0, MAX_BULK_PLACEMENTS))
-        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, what)
+        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, what, op.species, op.ids)
         if found is None:
             return
         matches, scope = found

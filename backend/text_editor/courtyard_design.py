@@ -104,6 +104,10 @@ _ELEMENT_TYPES = {
 
 
 # Позиции базового каталога, из которых собирается дизайн.
+# Площадь с фонтаном: дорожки обрываются на столько раньше её кольца --
+# само кольцо (мощение по краю площади) остаётся.
+PLAZA_RING_KEEP_M = 1.0
+
 DESIGN_ITEM_IDS = ("path_segment", "flowerbed_patch", "fountain", "lamp", "bench", "trash", "hedge_segment")
 
 
@@ -394,6 +398,13 @@ class CourtyardDesigner(CourtyardLayoutMixin):
         if poly is None:
             return None, [f"нет связного свободного места под дизайн (нужно от {MIN_DESIGN_AREA_M2:.0f} м²)"]
         center, plaza, network, links, style_used = self.layout(poly, style, want_fountain="fountain" in elements)
+        if plaza and "fountain" in elements:
+            # Площадь с фонтаном: дорожки подходят к её кольцу и там
+            # кончаются, середина -- свободна. Иначе у "сетки" и "креста"
+            # дорожки шли прямо через центр, плитка ложилась под место
+            # фонтана, и он не вставал ("не нашлось места").
+            hole = center.buffer(max(plaza - PLAZA_RING_KEEP_M, 0.5))
+            network = [g for line in network for g in lines_of(line.difference(hole)) if g.length >= 0.5]
         # Порядок -- от главного к второстепенному: каждый следующий элемент
         # обходит уже поставленные.
         self.pave(network, items["path_segment"])
@@ -414,7 +425,7 @@ class CourtyardDesigner(CourtyardLayoutMixin):
             if plaza:
                 fountain = self._put(items["fountain"], center.x, center.y, on_axis=True)
             else:
-                notes.append("для этого шаблона дорожек площадь с фонтаном не предусмотрена")
+                notes.append("фонтан: не нашлось места под площадь (круг от 4 м без сетей, дорожек и площадок)")
         if "flowerbeds" in elements:
             self.flowerbeds(center, plaza, links, items["flowerbed_patch"], fountain)
         if "lamps" in elements:

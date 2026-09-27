@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 import math
-import re
 from collections import Counter
 
 from shapely.geometry import Polygon
@@ -22,6 +21,7 @@ from core.plant_catalog import CATALOG as BASE_CATALOG
 from core.plant_catalog import CatalogItem
 from core.schemas import Scene
 from greenplan.species_selection import in_base_515
+from text_editor.plan_common import TYPE_ALIASES, name_words, same_word
 
 # Лимиты на размер контекста: каждый символ -- токены и деньги на каждый
 # запрос, а на районе (локация 5) полные списки зданий и объектов давали
@@ -50,6 +50,7 @@ FREE_AREA_OUTLINE_POINTS = 24
 # просьбы вида "у входа" или "рядом с площадкой".
 LANDMARK_TYPES = {"entrance": "подъезд", "playground": "детская площадка"}
 MAX_LANDMARKS_IN_PROMPT = 60
+MAX_SPECIES_COUNTS_IN_PROMPT = 30
 
 # --- Контекст для модели ----------------------------------------------------
 
@@ -81,36 +82,20 @@ def _inner_center(poly: Polygon) -> list[float]:
 
 
 def _editable_types(catalog: list[CatalogItem]) -> set[str]:
-    return {item.object_type for item in catalog}
-
-
-def _words(text: str) -> list[str]:
-    return re.findall(r"[а-я]+", text.lower().replace("ё", "е"))
-
-
-def _same_word(asked: str, name: str) -> bool:
-    """Одно слово в разных падежах и числах: "липы" -- "липа", "клёны" --
-    "клен", "березки" -- "береза", "туи" -- "туя". Общее начало -- всё
-    название без окончания (одна-две буквы): "туи" -- не "Тунберга",
-    "дубы" -- не "дубравколистная"."""
-    common = 0
-    for a, b in zip(asked, name):
-        if a != b:
-            break
-        common += 1
-    return common >= max(2, min(len(asked), len(name)) - 1, len(name) - 2)
+    types = {item.object_type for item in catalog}
+    return types | {alias for t in types for alias in TYPE_ALIASES.get(t, ())}
 
 
 def mentioned_species(catalog: list[CatalogItem], instruction: str) -> list[CatalogItem]:
     """Виды каталога (species_*), названные в просьбе, -- по любому слову
     названия вида."""
-    asked = [w for w in _words(instruction) if len(w) >= 3]
+    asked = [w for w in name_words(instruction) if len(w) >= 3]
     found = []
     for item in catalog:
         if not item.id.startswith("species_"):
             continue
-        names = [w for w in _words(item.label) if len(w) >= 3]
-        if any(_same_word(a, n) for a in asked for n in names):
+        names = [w for w in name_words(item.label) if len(w) >= 3]
+        if any(same_word(a, n) for a in asked for n in names):
             found.append(item)
     return found[:MAX_MENTIONED_SPECIES]
 
@@ -163,11 +148,18 @@ def _build_context(scene: Scene, catalog: list[CatalogItem], placer: Placer, ins
             entry["outline"] = _outline([(p["x"], p["z"]) for p in footprint])
         buildings.append(entry)
 
+    # Номер ("подъезд 3") -- чтобы "у первого подъезда" значило одно и то же
+    # от запроса к запросу; id -- чтобы на подъезд можно было сослаться в
+    # from_id/to_id/near_id/at_id (раньше модель пыталась target «подъезд»,
+    # которого нет, и дорожка к подъезду не прокладывалась).
     all_landmarks = [o for o in scene.objects if o.type in LANDMARK_TYPES]
-    landmarks = [
-        {"type": LANDMARK_TYPES[o.type], "x": round(o.position.x, 1), "z": round(o.position.z, 1)}
-        for o in all_landmarks[:MAX_LANDMARKS_IN_PROMPT]
-    ]
+    numbers: Counter = Counter()
+    landmarks = []
+    for o in all_landmarks[:MAX_LANDMARKS_IN_PROMPT]:
+        numbers[o.type] += 1
+        landmarks.append(
+            {"name": f"{LANDMARK_TYPES[o.type]} {numbers[o.type]}", "id": o.id, "x": round(o.position.x, 1), "z": round(o.position.z, 1)}
+        )
 
     # Модели не нужны контуры каждой трубы и дорожки: ряды считает
     # планировщик. Ей нужно знать, какие цели для рядов есть и насколько они
@@ -231,6 +223,14 @@ def _build_context(scene: Scene, catalog: list[CatalogItem], placer: Placer, ins
         "objects": objects,
         "objects_not_shown": max(0, len(editable_objects) - MAX_OBJECTS_IN_PROMPT),
         "object_counts": dict(Counter(o.type for o in editable_objects)),
+        # Какие виды уже растут и сколько -- для "замени клёны на липы",
+        # "убери все туи", "сколько берёз" (в objects их может не быть:
+        # список обрезан до MAX_OBJECTS_IN_PROMPT).
+        "species_counts": dict(
+            Counter(
+                str(o.metadata["species"]) for o in editable_objects if o.type in ("tree", "bush") and o.metadata.get("species")
+            ).most_common(MAX_SPECIES_COUNTS_IN_PROMPT)
+        ),
         "catalog_columns": ["catalog_id", "category", "size", "crown", "height_m", "label"],
         "catalog_rows": _catalog_for_prompt(catalog, instruction),
     }
@@ -241,9 +241,9 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
 
 Координаты групповых посадок считает геометрический планировщик: он сам соблюдает нормативные отступы от зданий, подземных сетей, дорожек, парковок, площадок, фонарей и подъездов, выдерживает шаг посадки и не выходит за участок. Твоя задача — понять намерение и выбрать операции, виды из каталога и параметры. Координаты рядов и групп сам не считай.
 
-Контекст (JSON): контур участка, здания, ориентиры (landmarks: подъезды, площадки), цели для рядов (targets), свободные для посадки области (free_areas), выделенные пользователем мышкой участки (selected_areas: {"name", "outline"}), текущие объекты (objects) и каталог (catalog_rows, колонки описаны в catalog_columns; label — название вида или предмета). Координаты в метрах, контуры — точки [x, z].
+Контекст (JSON): контур участка, здания, ориентиры (landmarks: {"name": "подъезд 1", "id", "x", "z"} — подъезды и площадки по номерам), цели для рядов (targets), свободные для посадки области (free_areas), выделенные пользователем мышкой участки (selected_areas: {"name", "outline"}), текущие объекты (objects, список может быть обрезан — полные числа в object_counts), какие виды растут и сколько (species_counts) и каталог (catalog_rows, колонки описаны в catalog_columns; label — название вида или предмета). Координаты в метрах, контуры — точки [x, z].
 
-Если перед просьбой есть «Прошлые правки в этом чате» — они уже применены к плану, не повторяй их. Они нужны, чтобы понять отсылки: «их», «там же», «ещё столько же», «то же самое у второго дома», «нет, лучше липы».
+Если перед просьбой есть «Прошлые правки в этом чате» — они уже применены к плану, не повторяй их. Они нужны, чтобы понять отсылки: «их», «там же», «ещё столько же», «то же самое у второго дома», «нет, лучше липы». «Их», «эти», «только что посаженные» — это ровно «новые объекты (id)» прошлой правки: передай эти id в фильтр ids (remove_where, replace_where, resize, …), а не удаляй всё в радиусе — там стоят и другие объекты.
 
 Верни ТОЛЬКО валидный JSON без markdown, строго такой формы:
 {"operations": [...], "explanation": "..."}
@@ -251,10 +251,10 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
 Групповые операции — для рядов, аллей, изгородей, «вдоль», «вокруг», «по периметру», «засадить», «много»:
 - {"op": "place_along", "target": "<target из targets>", "catalog_ids": ["..."], "spacing_m": <необязательно>, "offset_m": <необязательно>, "max_count": <необязательно>, "x": <необязательно>, "z": <необязательно>, "radius_m": <необязательно>}
   Ряд посадок вдоль контура цели с обеих сторон: pedestrian_path — вдоль дорожек, road — вдоль дорог, building — вдоль фасадов, parking — вокруг парковок, playground — вокруг детских площадок, site_boundary — по периметру участка. x, z, radius_m — только если ряд нужен в одном месте (например, у конкретного подъезда).
-- {"op": "place_in_area", "catalog_ids": ["..."], "count": <сколько, необязательно, по умолчанию 5>, "spacing_m": <необязательно>, "area": "<id из free_areas, необязательно>", "x": <необязательно>, "z": <необязательно>, "radius_m": <необязательно>}
-  Группа посадок: с x и z — компактно вокруг точки; с area — равномерно по свободной области; без них — равномерно по всему участку. count указывай по числу из просьбы, но если просьба только про разнообразие видов без числа ("посади разные виды деревьев") — не выдумывай число сам, просто не указывай count вовсе.
-- {"op": "remove_where", "object_types": ["<тип из objects>"], "target": "<необязательно>", "distance_m": <необязательно>, "x": <необязательно>, "z": <необязательно>, "radius_m": <необязательно>}
-  Удалить все объекты этих типов, подходящие под фильтры: у цели ближе distance_m (по умолчанию 3 м) и/или в радиусе от точки. Без фильтров — все объекты этих типов. object_types можно не указывать («очисти эту зону») — тогда под фильтры проверяются все виды объектов, какие есть.
+- {"op": "place_in_area", "catalog_ids": ["..."], "count": <сколько, необязательно, по умолчанию 5>, "spacing_m": <необязательно>, "area": "<id из free_areas, необязательно>", "x": <необязательно>, "z": <необязательно>, "radius_m": <необязательно>, "target": "<необязательно>", "distance_m": <необязательно>}
+  Группа посадок или МАФ: с x и z — компактно вокруг точки; с target — у цели, не дальше distance_m (по умолчанию 6 м) от её края («две скамейки у детской площадки» — target playground); с area — равномерно по свободной области; без них — равномерно по всему участку. count указывай по числу из просьбы, но если просьба только про разнообразие видов без числа ("посади разные виды деревьев") — не выдумывай число сам, просто не указывай count вовсе.
+- {"op": "remove_where", "object_types": ["<тип из objects>"], "species": [<необязательно>], "ids": [<необязательно>], "target": "<необязательно>", "distance_m": <необязательно>, "x": <необязательно>, "z": <необязательно>, "radius_m": <необязательно>}
+  Удалить все объекты этих типов, подходящие под фильтры: species — только эти виды («Клен», «Туя западная» — название из species_counts), ids — только эти объекты, у цели ближе distance_m (по умолчанию 3 м) и/или в радиусе от точки. Без фильтров — все объекты этих типов. object_types можно не указывать («очисти эту зону») — тогда под фильтры проверяются все виды объектов, какие есть.
 - {"op": "define_zone", "name": "<имя>", "severity": "forbidden"/"warning"/"allowed", "message": <необязательно>, "x"+"z"/"around_id"/"around_target", "radius_m": <необязательно>}
   Выделить именованную зону («детская зона», «здесь ничего не сажать», «зона под цветник») — круг вокруг точки, объекта или цели. Зона сразу видна на плане и учитывается всеми правками (severity "forbidden"/"warning" — туда ничего не сажать; "allowed" — просто пометить). После этого её можно называть по имени в target любой операции (place_along, remove_where, ...) и в area у place_in_area/cover_area — так и решается «посади цветы в этой зоне».
 - {"op": "design_area", "elements": ["paths", "flowerbeds", "fountain", "lamps", "benches", "trash", "hedge", "trees", "bushes"], "style": "<необязательно>", "tree_ids": [<необязательно>], "bush_ids": [<необязательно>], "x": <необязательно>, "z": <необязательно>, "radius_m": <необязательно>}
@@ -269,19 +269,19 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
   Ряд объектов (изгородь, забор из фонарей) прямой линией между двумя произвольными точками/объектами/целями — не вдоль контура существующей цели (для этого place_along), а от точки А до точки Б.
 - {"op": "enclose", "catalog_ids": ["..."], "around_id"/"around_target"/"around_x"+"around_z", "radius_m": <для around_id/around_x,z>, "offset_m": <необязательно>, "spacing_m": <необязательно>}
   Кольцо объектов (изгородь, забор, фонари) вокруг существующего объекта, цели (например playground) или точки — "огороди площадку", "обведи фонтан клумбами".
-- {"op": "replace_where", "object_types": ["<тип>"], "catalog_ids": ["<новый вид>"], "target"/"distance_m"/"x"+"z"+"radius_m": <необязательно>}
+- {"op": "replace_where", "object_types": ["<тип>"], "species"/"ids": [<необязательно>], "catalog_ids": ["<новый вид>"], "target"/"distance_m"/"x"+"z"+"radius_m": <необязательно>}
   Заменить вид у существующих подходящих объектов (положение и поворот сохраняются) — "замени низкие деревья на высокие", "сделай кусты разнообразнее" (несколько catalog_ids вперемешку).
-- {"op": "thin_out", "object_types": ["<тип>"], "min_spacing_m": <необязательно>, "target"/"distance_m"/"x"+"z"+"radius_m": <необязательно>}
+- {"op": "thin_out", "object_types": ["<тип>"], "species"/"ids": [<необязательно>], "min_spacing_m": <необязательно>, "target"/"distance_m"/"x"+"z"+"radius_m": <необязательно>}
   Убрать лишние объекты этих типов там, где они стоят гуще min_spacing_m, — "проредить кусты", "не так часто".
-- {"op": "resize", "object_types": ["<тип>"], "scale": <множитель, 1.0 = как в каталоге>, "target"/"distance_m"/"x"+"z"+"radius_m": <необязательно>}
+- {"op": "resize", "object_types": ["<тип>"], "species"/"ids": [<необязательно>], "scale": <множитель, 1.0 = как в каталоге>, "target"/"distance_m"/"x"+"z"+"radius_m": <необязательно>}
   Изменить масштаб существующих объектов — "сделай деревья у входа покрупнее" (scale > 1) / помельче (scale < 1).
-- {"op": "face", "object_types": ["<тип>"], "at_id"/"at_target"/"at_x"+"at_z", "target"/"distance_m"/"x"+"z"+"radius_m": <необязательно, какие именно объекты>}
+- {"op": "face", "object_types": ["<тип>"], "species"/"ids": [<необязательно>], "at_id"/"at_target"/"at_x"+"at_z", "target"/"distance_m"/"x"+"z"+"radius_m": <необязательно, какие именно объекты>}
   Развернуть существующие объекты к точке/объекту/цели — "разверни лавки к фонтану", "разверни фонари к дорожке".
-- {"op": "align_along", "object_types": ["<тип>"], "target": "<target>", "spacing_m"/"offset_m": <необязательно>, "x"+"z"+"radius_m": <необязательно>}
+- {"op": "align_along", "object_types": ["<тип>"], "species"/"ids": [<необязательно>], "target": "<target>", "spacing_m"/"offset_m": <необязательно>, "x"+"z"+"radius_m": <необязательно>}
   Подровнять уже стоящие вразнобой объекты в аккуратный ряд вдоль цели — передвигает существующие, не добавляет новые. Для "выровняй фонари вдоль дорожки", когда они и так там стоят, но криво.
 - {"op": "duplicate_near", "id": "<id объекта>", "near_id"/"near_target"/"near_x"+"near_z", "count": <необязательно, по умолчанию 1>}
   Скопировать существующий объект (тот же вид) рядом с другой точкой/объектом/целью — "сделай такую же лавку у второго подъезда".
-- {"op": "set_count", "object_types": ["<тип>"], "count": <нужное число>, "catalog_ids": [<необязательно, чем добавлять, если не хватает>], "target"/"distance_m"/"x"+"z"+"radius_m": <необязательно>}
+- {"op": "set_count", "object_types": ["<тип>"], "species"/"ids": [<необязательно>], "count": <нужное число>, "catalog_ids": [<необязательно, чем добавлять, если не хватает>], "target"/"distance_m"/"x"+"z"+"radius_m": <необязательно>}
   Довести суммарное число объектов этих типов (по всему участку/у цели/в области) ровно до count — добавит недостающие или уберёт лишние.
 
 Точечные операции — только для конкретных объектов или одной-двух посадок в названном месте:
@@ -293,15 +293,18 @@ INSTRUCTIONS = """Ты — ассистент ландшафтного архи�
 Правила:
 - catalog_id бери только из catalog_rows, id — только из objects, target — только из targets ИЛИ имени зоны, выделенной define_zone, area — только из free_areas ИЛИ имени такой зоны. Не выдумывай.
 - object_types (remove_where/replace_where/thin_out/resize/face/set_count) можно не указывать — тогда под фильтры проверяются все виды объектов сразу; align_along всегда требует конкретный тип (ряд из разнородных объектов не построить).
+- Фильтры species и ids есть у всех операций правки существующего (remove_where, replace_where, thin_out, resize, face, align_along, set_count). «Замени клёны на липы» — replace_where с species ["Клен"], без target и радиуса; «убери все туи» — remove_where с species ["Туя"]. Фильтр по месту (target, x/z) добавляй, только если место названо в просьбе.
 - Деревья, кустарники, МАФ и покрытия — разными операциями. Кустарники — строки с category "bush" (живая изгородь — только hedge_segment), деревья — "tree", газон/цветник для cover_area — "groundcover".
 - В catalog_ids — один или несколько видов подходящего класса; одинаковые деревья сажать можно.
 - spacing_m и offset_m не указывай, если пользователь не просит гуще, реже или дальше: шаг по размеру вида планировщик возьмёт сам.
 - count и max_count — по числу из просьбы; «несколько» — 3–5. Для «вдоль», «по периметру», «засади» без числа max_count не указывай.
 - Если в просьбе вместе дорожки, скамейки, урны, фонари, клумбы, изгородь или «благоустрой/спроектируй двор», «сделай сквер/парк» — ОДНА операция design_area, а не отдельные посадки. Но если просят озеленить весь участок (проект озеленения, стиль участка) — run_greenplan, а дорожки, фонари и скамейки — его параметрами paths, lighting, benches.
-- «У входа» — координаты подъезда из landmarks. «В центре двора» — center самой большой области из free_areas. «Вокруг фонтана» / «у скамейки» и т.п. — x, z существующего объекта нужного типа из objects (не landmark и не target). «Здесь» / «в этой области» / «в выделении» / просьба без явного места, когда selected_areas не пуст, — это выделенный пользователем участок: используй его name как target (place_along/remove_where/...) или area (place_in_area/cover_area).
-- Названный вид («липы», «сирень», «клён остролистный») — catalog_id строки, где label начинается с этого названия; если вариантов несколько, а уточнения нет — возьми вид с самым обычным названием (мелколистная, обыкновенная, повислая) или несколько вперемешку. Если такого вида в catalog_rows нет — возьми похожий по форме и скажи об этом в explanation.
+- «У входа», «у первого подъезда» — подъезд из landmarks по номеру в name («первый» — «подъезд 1»): его x, z для групп и рядов, его id для connect/line_of/face/duplicate_near (from_id, to_id, at_id, near_id). В фильтрах правки существующего «у подъезда» — это его x, z и radius_m, без target building (фасад рядом с подъездом тянется на весь дом). «В центре двора» — center самой большой области из free_areas. «Вокруг фонтана» / «у скамейки» и т.п. — x, z существующего объекта нужного типа из objects (не landmark и не target). «Здесь» / «в этой области» / «в выделении» / просьба без явного места, когда selected_areas не пуст, — это выделенный пользователем участок: используй его name как target (place_along/remove_where/...) или area (place_in_area/cover_area).
+- Названный вид («липы», «сирень», «клён остролистный») — catalog_id строки, где label начинается с этого названия; если вариантов несколько, а уточнения нет — возьми вид с самым обычным названием (мелколистная, обыкновенная, повислая) или несколько вперемешку. Если такого вида в catalog_rows нет (например, баобаб или пальма) — не отказывай: посади самый похожий по облику вид из каталога и назови в explanation, что посажено вместо чего.
 - Здания, подъезды, дорожки и зоны менять нельзя.
 - Если просьба невыполнима (например, нужной цели нет в targets) — пустой operations и причина в explanation.
+- «Отмени», «верни как было», «откати» — отменить правку ты не можешь: пустой operations, а в explanation подскажи нажать «Отменить правку» под последним ответом в чате.
+- Вопрос, а не просьба что-то изменить («что ты умеешь?», «сколько деревьев?», «какие виды растут?»), — пустой operations и ответ в explanation. Числа бери из object_counts и species_counts (они полные), не считай по objects.
 - explanation — одно-два предложения по-русски: что сделано. Точное количество не называй: его посчитает планировщик.
 
 Пример 1. Просьба: «посади кусты вдоль дорожек и два дерева у первого подъезда».

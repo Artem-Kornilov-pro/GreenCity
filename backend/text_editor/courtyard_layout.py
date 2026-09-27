@@ -392,10 +392,22 @@ class CourtyardLayoutMixin:
         # дорожек и так уже сошлись в центр двора как в запасной узел
         # (hub_uses) -- то есть площадь тут появилась бы сама по себе, а не
         # декоративно навязана.
-        if style == "spine" and not plaza and depth >= PLAZA_MIN_DEPTH_M and (want_fountain or hub_uses >= SPINE_HUB_MIN_USES):
+        # Явная просьба про фонтан -- повод для площади при любом шаблоне: у
+        # "сетки" и "периметра" своей площади нет, и фонтан раньше молча
+        # выпадал ("для этого шаблона площадь не предусмотрена"), хотя его
+        # просили прямо.
+        wants_plaza = want_fountain or (style == "spine" and hub_uses >= SPINE_HUB_MIN_USES)
+        if not plaza and depth >= PLAZA_MIN_DEPTH_M and wants_plaza:
             target_radius = min(max(0.3 * depth, 4.0), 8.0)
             plaza_center = center
-            fits_at_center = self.placer.region_contains(center.buffer(target_radius, quad_segs=12), None)
+            # Площадь поменьше в самом центре лучше, чем площадь на краю сети
+            # или никакой: в пустом дворе без подъездов сети ещё нет вовсе,
+            # и без этого перебора фонтан там не вставал.
+            fits_at_center = False
+            for radius in (target_radius, 0.7 * target_radius, 4.0):
+                if radius >= 4.0 and self.placer.region_contains(center.buffer(radius, quad_segs=12), None):
+                    target_radius, fits_at_center = radius, True
+                    break
             if fits_at_center and network and not hub_uses:
                 # Место у центра есть, но дорожки сами к нему не вышли
                 # (hub_uses == 0, площадь вызвана только просьбой про фонтан)

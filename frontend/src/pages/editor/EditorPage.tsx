@@ -40,8 +40,10 @@ import {
   type GreenPlanState,
 } from "./editorTypes";
 
-// Сколько прошлых правок чата отправлять модели (бэкенд режет так же).
+// Сколько прошлых правок чата отправлять модели и сколько id новых объектов
+// у каждой (бэкенд режет так же: text_editor/llm_client.py).
 const MAX_HISTORY_TURNS = 4;
+const MAX_HISTORY_IDS = 60;
 
 // Страница редактора: состояние сцены и все обработчики -- здесь, отрисовка
 // разнесена по частям в этой же папке (топбар, левая панель, панели
@@ -307,7 +309,12 @@ export default function EditorPage() {
     const history: ChatTurn[] = messages
       .filter((m) => m.role === "assistant" && m.instruction && !m.undone)
       .slice(-MAX_HISTORY_TURNS)
-      .map((m) => ({ instruction: m.instruction ?? "", explanation: m.text, applied: (m.applied ?? []).slice(0, 4) }));
+      .map((m) => ({
+        instruction: m.instruction ?? "",
+        explanation: m.text,
+        applied: (m.applied ?? []).slice(0, 4),
+        added_ids: (m.addedIds ?? []).slice(0, MAX_HISTORY_IDS),
+      }));
     const before = scene;
     setMessages((prev) => [...prev, { id: makeId(), role: "user", text }]);
     setInstruction("");
@@ -327,13 +334,16 @@ export default function EditorPage() {
           applied: result.applied,
           rejected: result.rejected,
           warnings: result.warnings,
+          addedIds: result.added_ids ?? [],
         },
       ]);
       let after = result.scene;
       if (result.greenplan) {
         after = (await handleGreenPlan(result.greenplan, result.scene)) ?? result.scene;
       }
-      setLastAiEdit({ messageId, before, after, ranGreenPlan: Boolean(result.greenplan) });
+      // Отменять нечего, если план не изменился (вопрос, «не получилось»).
+      const changed = result.applied.length > 0 || Boolean(result.greenplan);
+      setLastAiEdit(changed ? { messageId, before, after, ranGreenPlan: Boolean(result.greenplan) } : null);
     } catch (e) {
       setMessages((prev) => [...prev, { id: makeId(), role: "error", text: e instanceof Error ? e.message : String(e) }]);
     } finally {

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Annotated, Literal, Optional
 
-from pydantic import BaseModel, Field, TypeAdapter
+from pydantic import BaseModel, Field, TypeAdapter, field_validator
 
 from core.schemas import Scene
 from greenplan.options import GreenPlanOptions
@@ -84,6 +84,10 @@ class PlaceInAreaOp(BaseModel):
     x: Optional[float] = None
     z: Optional[float] = None
     radius_m: Optional[float] = None
+    # "У детской площадки", "вдоль парковки группой": у цели, не дальше
+    # distance_m от её края (по умолчанию DEFAULT_NEAR_TARGET_M).
+    target: Optional[Target] = None
+    distance_m: Optional[float] = None
 
 
 class RemoveWhereOp(BaseModel):
@@ -98,6 +102,11 @@ class RemoveWhereOp(BaseModel):
     x: Optional[float] = None
     z: Optional[float] = None
     radius_m: Optional[float] = None
+    # Какие именно объекты: по виду ("Клен", "Липа мелколистная" -- без учёта
+    # падежа и ё) и/или по id (например новые объекты прошлой правки: "убери
+    # их"). Сочетаются с остальными фильтрами через И.
+    species: list[str] = []
+    ids: list[str] = []
 
 
 class ConnectOp(BaseModel):
@@ -148,6 +157,11 @@ class ReplaceWhereOp(BaseModel):
     x: Optional[float] = None
     z: Optional[float] = None
     radius_m: Optional[float] = None
+    # Какие именно объекты: по виду ("Клен", "Липа мелколистная" -- без учёта
+    # падежа и ё) и/или по id (например новые объекты прошлой правки: "убери
+    # их"). Сочетаются с остальными фильтрами через И.
+    species: list[str] = []
+    ids: list[str] = []
 
 
 class ThinOutOp(BaseModel):
@@ -163,6 +177,11 @@ class ThinOutOp(BaseModel):
     x: Optional[float] = None
     z: Optional[float] = None
     radius_m: Optional[float] = None
+    # Какие именно объекты: по виду ("Клен", "Липа мелколистная" -- без учёта
+    # падежа и ё) и/или по id (например новые объекты прошлой правки: "убери
+    # их"). Сочетаются с остальными фильтрами через И.
+    species: list[str] = []
+    ids: list[str] = []
 
 
 class ResizeOp(BaseModel):
@@ -177,6 +196,11 @@ class ResizeOp(BaseModel):
     x: Optional[float] = None
     z: Optional[float] = None
     radius_m: Optional[float] = None
+    # Какие именно объекты: по виду ("Клен", "Липа мелколистная" -- без учёта
+    # падежа и ё) и/или по id (например новые объекты прошлой правки: "убери
+    # их"). Сочетаются с остальными фильтрами через И.
+    species: list[str] = []
+    ids: list[str] = []
 
 
 class FaceOp(BaseModel):
@@ -196,6 +220,11 @@ class FaceOp(BaseModel):
     x: Optional[float] = None
     z: Optional[float] = None
     radius_m: Optional[float] = None
+    # Какие именно объекты: по виду ("Клен", "Липа мелколистная" -- без учёта
+    # падежа и ё) и/или по id (например новые объекты прошлой правки: "убери
+    # их"). Сочетаются с остальными фильтрами через И.
+    species: list[str] = []
+    ids: list[str] = []
 
 
 class AlignAlongOp(BaseModel):
@@ -212,6 +241,11 @@ class AlignAlongOp(BaseModel):
     x: Optional[float] = None
     z: Optional[float] = None
     radius_m: Optional[float] = None
+    # Какие именно объекты: по виду ("Клен", "Липа мелколистная" -- без учёта
+    # падежа и ё) и/или по id (например новые объекты прошлой правки: "убери
+    # их"). Сочетаются с остальными фильтрами через И.
+    species: list[str] = []
+    ids: list[str] = []
 
 
 class LineOfOp(BaseModel):
@@ -276,6 +310,11 @@ class SetCountOp(BaseModel):
     x: Optional[float] = None
     z: Optional[float] = None
     radius_m: Optional[float] = None
+    # Какие именно объекты: по виду ("Клен", "Липа мелколистная" -- без учёта
+    # падежа и ё) и/или по id (например новые объекты прошлой правки: "убери
+    # их"). Сочетаются с остальными фильтрами через И.
+    species: list[str] = []
+    ids: list[str] = []
 
 
 class DefineZoneOp(BaseModel):
@@ -366,6 +405,9 @@ class LlmPlan(BaseModel):
     explanation: str = ""
 
 
+MAX_TURN_IDS = 500
+
+
 class ChatTurn(BaseModel):
     """Прошлый обмен в чате ассистента: без него модель не понимает отсылок
     вроде "убери их" или "то же самое у второго дома" -- каждый запрос
@@ -374,6 +416,16 @@ class ChatTurn(BaseModel):
     instruction: str = Field(max_length=2000)
     explanation: str = Field(default="", max_length=2000)
     applied: list[str] = Field(default=[], max_length=50)
+    # id объектов, созданных этой правкой: "убери их" -- это ровно они, а не
+    # всё в радиусе от места посадки. Не отклоняем длинный список (дизайн
+    # двора создаёт сотни объектов), а обрезаем: модели всё равно уходят
+    # только первые llm_client.MAX_HISTORY_IDS.
+    added_ids: list[str] = []
+
+    @field_validator("added_ids")
+    @classmethod
+    def _cap_ids(cls, ids: list[str]) -> list[str]:
+        return ids[:MAX_TURN_IDS]
 
 
 class TextEditRequest(BaseModel):
@@ -392,3 +444,5 @@ class TextEditResult(BaseModel):
     # Параметры GreenPlan, если модель выбрала run_greenplan: фронтенд
     # запускает его на scene этого ответа.
     greenplan: Optional[GreenPlanOptions] = None
+    # id созданных объектов -- фронтенд возвращает их в истории чата.
+    added_ids: list[str] = []
