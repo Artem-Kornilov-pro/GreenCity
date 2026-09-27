@@ -3,15 +3,17 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
-import { CATEGORY_LABELS, type CatalogCategory, type CatalogItem } from "../../catalog";
+import { CATEGORY_LABELS, objectTypeLabel, type CatalogCategory, type CatalogItem } from "../../catalog";
 import type { ZoneViolation } from "../../geometry";
 import type { TransformMode } from "../../scene/PlacedObjects";
 import type { RestrictionZone, SceneObject } from "../../types";
 
-const CARD = "border-white/30 bg-white/25 p-4 backdrop-blur-md";
+// Карточки почти белые: сквозь прозрачное стекло просвечивала сцена, и на
+// зелёном газоне или тёмных зданиях текст карточек было не прочитать.
+const CARD = "border-ink-200/60 bg-white/90 p-4 shadow-soft backdrop-blur-md";
 
-// Левая панель плавает поверх сцены (как и топбар), иначе сквозь неё нечего
-// блюрить, кроме однотонного фона страницы, и эффект стекла не виден.
+// Левая панель плавает поверх сцены (как и топбар): сама колонка прозрачная,
+// сцена видна между карточками.
 export function EditorSidebar({
   sceneLoaded,
   catalog,
@@ -27,6 +29,7 @@ export function EditorSidebar({
   onClearSelection,
   hoveredZone,
   selectedObject,
+  selectedObjectName,
   selectedViolations,
   transformMode,
   onTransformModeChange,
@@ -46,13 +49,14 @@ export function EditorSidebar({
   onClearSelection: () => void;
   hoveredZone: RestrictionZone | null;
   selectedObject: SceneObject | null;
+  selectedObjectName: string | null;
   selectedViolations: ZoneViolation[];
   transformMode: TransformMode;
   onTransformModeChange: (mode: TransformMode) => void;
   onDelete: (id: string) => void;
 }) {
   return (
-    <aside className="scrollbar-thin absolute left-0 top-0 z-20 flex h-full w-80 flex-col gap-3 overflow-y-auto border-r border-white/20 bg-white/10 px-3 pb-3 pt-16 shadow-sm backdrop-blur-2xl backdrop-saturate-150">
+    <aside className="scrollbar-thin absolute left-0 top-0 z-20 flex h-full w-80 flex-col gap-3 overflow-y-auto border-r border-white/30 bg-white/25 px-3 pb-3 pt-16 shadow-sm backdrop-blur-2xl backdrop-saturate-150">
       {sceneLoaded && (
         <Card className={CARD}>
           <h3 className="text-sm font-semibold text-ink-900">Добавить объект</h3>
@@ -86,7 +90,7 @@ export function EditorSidebar({
               <Plus className="h-4 w-4" />
             </Button>
           </div>
-          <p className="mt-2 text-xs text-ink-400">
+          <p className="mt-2 text-xs text-ink-500">
             {catalogFilter ? `${filteredCatalog.length} из ${catalog.length}` : `${catalog.length} видов`} в каталоге
             {availableModelsCount > 0 ? `, 3D-моделей: ${availableModelsCount}` : ", модели не подключены — рисуются заглушки"}
           </p>
@@ -104,7 +108,7 @@ export function EditorSidebar({
               <X className="h-3.5 w-3.5" />
             </Button>
           </div>
-          <p className="mt-1 text-xs text-ink-400">Можно сослаться на неё в правке текстом: «посади здесь кусты», «убери отсюда лавки».</p>
+          <p className="mt-1 text-xs text-ink-500">Можно сослаться на неё в правке текстом: «посади здесь кусты», «убери отсюда лавки».</p>
         </Card>
       )}
 
@@ -112,7 +116,7 @@ export function EditorSidebar({
         <Card className={CARD}>
           <h3 className="text-sm font-semibold text-ink-900">{hoveredZone.name}</h3>
           <p className="mt-1 text-sm text-ink-500">{hoveredZone.message}</p>
-          <p className="mt-2 text-xs text-ink-400">
+          <p className="mt-2 text-xs text-ink-500">
             severity: {hoveredZone.severity}, minDistance: {hoveredZone.minDistance} м
           </p>
         </Card>
@@ -120,10 +124,11 @@ export function EditorSidebar({
 
       {selectedObject && (
         <Card className={CARD}>
-          <h3 className="text-sm font-semibold text-ink-900">
-            {selectedObject.type} <span className="font-normal text-ink-400">({selectedObject.id})</span>
-          </h3>
-          <p className="mt-1 text-xs text-ink-400">
+          <h3 className="text-sm font-semibold text-ink-900">{selectedObjectName}</h3>
+          <p className="mt-0.5 truncate text-xs text-ink-500" title={selectedObject.id}>
+            {objectTypeLabel(selectedObject.type)} · {selectedObject.id}
+          </p>
+          <p className="mt-1 text-xs text-ink-500">
             x={selectedObject.position.x.toFixed(2)} z={selectedObject.position.z.toFixed(2)}, поворот=
             {((selectedObject.rotation * 180) / Math.PI).toFixed(0)}°
           </p>
@@ -170,7 +175,7 @@ export function EditorSidebar({
               <span className="h-2.5 w-2.5 rounded-full bg-success-500" /> разрешено
             </div>
           </div>
-          <p className="mt-3 leading-relaxed text-ink-400">
+          <p className="mt-3 leading-relaxed text-ink-500">
             Клик по объекту — выбрать. «Двигать» — тащить по земле, «Вращать» — вокруг своей оси. Delete/Backspace — удалить выбранный
             объект.
           </p>

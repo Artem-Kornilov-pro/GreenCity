@@ -1,9 +1,9 @@
 import { memo, Suspense, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
-import { TransformControls } from "@react-three/drei";
+import { Html, TransformControls } from "@react-three/drei";
 import type { RestrictionZone, SceneObject } from "../types";
 import type { CatalogItem } from "../catalog";
-import { resolveCatalogItem } from "../catalog";
+import { objectDisplayName, resolveCatalogItem } from "../catalog";
 import { buildZoneIndex, violatesAt } from "../geometry";
 import { plantKindOfObjectType } from "../setbackNorms";
 import { ObjectVisual } from "./ObjectVisual";
@@ -110,6 +110,7 @@ export function PlacedObjects({
           hasModel={hasModel}
           violated={violated}
           selected={obj.id === selectedId}
+          label={obj.id === selectedId ? objectDisplayName(obj, catalogById) : undefined}
           transformMode={transformMode}
           onSelect={onSelect}
           onMove={onMove}
@@ -136,6 +137,7 @@ const PlacedObjectItem = memo(function PlacedObjectItem({
   hasModel,
   violated,
   selected,
+  label,
   transformMode,
   onSelect,
   onMove,
@@ -146,6 +148,9 @@ const PlacedObjectItem = memo(function PlacedObjectItem({
   hasModel: boolean;
   violated: boolean;
   selected: boolean;
+  // Вид выбранного объекта -- подпись над ним, едет вместе с ним при
+  // перетаскивании (группа двигается TransformControls).
+  label?: string;
   transformMode: TransformMode;
   onSelect: (id: string | null) => void;
   onMove: (id: string, x: number, z: number) => void;
@@ -169,6 +174,15 @@ const PlacedObjectItem = memo(function PlacedObjectItem({
       }}
     >
       <ObjectVisual type={obj.type} item={item} hasModel={hasModel} violated={violated} />
+      {label && (
+        // zIndexRange ниже боковой панели (z-20) и выдвижных (z-30): иначе
+        // подпись drei по умолчанию рисуется поверх всего интерфейса.
+        <Html position={[0, (item?.dimensions.height ?? 1.5) + 0.8, 0]} center zIndexRange={[15, 10]} style={{ pointerEvents: "none" }}>
+          <div className="whitespace-nowrap rounded-lg border border-ink-200/70 bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink-900 shadow-soft">
+            {label}
+          </div>
+        </Html>
+      )}
     </group>
   );
 

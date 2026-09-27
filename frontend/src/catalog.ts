@@ -45,6 +45,41 @@ export const CATEGORY_LABELS: Record<CatalogCategory, string> = {
   furniture: "Малые формы",
 };
 
+const OBJECT_TYPE_LABELS: Record<string, string> = {
+  tree: "Дерево",
+  bush: "Кустарник",
+  hedge: "Живая изгородь",
+  bench: "Скамейка",
+  lamp: "Фонарь",
+  trash: "Урна",
+  urn: "Урна",
+  fountain: "Фонтан",
+  flowerbed: "Клумба",
+  lawn: "Газон",
+  path_segment: "Дорожка",
+  entrance: "Подъезд",
+  playground: "Детская площадка",
+};
+
+export function objectTypeLabel(type: string): string {
+  return OBJECT_TYPE_LABELS[type] ?? type;
+}
+
+// Название объекта для подписи: вид (metadata.species -- его ставят парсер,
+// GreenPlan и ассистент), иначе подпись записи каталога из metadata.catalogId,
+// иначе тип ("Дерево"). Не через resolveCatalogItem: объектам без вида он
+// раздаёт случайную модель пака, и её название выдавало бы выдуманный вид.
+export function objectDisplayName(obj: SceneObject, byId: Map<string, CatalogItem>): string {
+  const species = obj.metadata?.species;
+  if (typeof species === "string" && species.trim()) return species;
+  const catalogId = obj.metadata?.catalogId;
+  const item = typeof catalogId === "string" ? byId.get(catalogId) : undefined;
+  if (item) return item.label;
+  const label = obj.metadata?.label;
+  if (typeof label === "string" && label.trim()) return label;
+  return objectTypeLabel(obj.type);
+}
+
 export async function fetchCatalog(): Promise<CatalogItem[]> {
   const res = await fetch(`${API_BASE}/api/catalog`);
   if (!res.ok) throw new Error(`Не удалось загрузить каталог (${res.status})`);

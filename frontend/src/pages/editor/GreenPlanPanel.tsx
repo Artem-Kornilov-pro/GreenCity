@@ -6,7 +6,7 @@ import type { GreenPlanViolation } from "../../api";
 import type { GreenPlanState } from "./editorTypes";
 import { SlidePanel } from "./SlidePanel";
 
-const SECTION_TITLE = "mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-400";
+const SECTION_TITLE = "mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-500";
 const STYLE_LABELS: Record<string, string> = { regular: "регулярный", landscape: "пейзажный" };
 
 // Результат GreenPlan: без чат-формы, только отчёт по уже готовой расстановке --
@@ -39,10 +39,21 @@ export function GreenPlanPanel({
     return [own, inherited];
   }, [result]);
   return (
-    <SlidePanel open={open} onToggle={onToggle} onClose={onClose} icon={<Trees className="h-4.5 w-4.5 text-brand-600" />} title="GreenPlan">
-      <div className="scrollbar-thin flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-4">
+    <SlidePanel
+      open={open}
+      onToggle={onToggle}
+      onClose={onClose}
+      icon={<Trees className="h-4.5 w-4.5 text-brand-600" />}
+      title="GreenPlan"
+      handleTop="top-[35%]"
+      accent
+    >
+      {/* [&>*]:shrink-0 -- колонка прокручивается, а не ужимает содержимое:
+          иначе с приходом длинного текста-обоснования браузер сжимал по
+          высоте кнопку записки (у неё фиксированная высота, у текста -- нет). */}
+      <div className="scrollbar-thin flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-4 [&>*]:shrink-0">
         {!result && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center text-sm text-ink-400">
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center text-sm text-ink-500">
             <Trees className="h-8 w-8 text-brand-300" />
             <p>Нажмите «GreenPlan» на панели инструментов — участок озеленится по аналогии с похожими прошлыми проектами.</p>
           </div>
@@ -136,9 +147,9 @@ export function GreenPlanPanel({
               {result.assortment.length > 0 ? (
                 <div className="flex flex-col gap-1 text-sm text-ink-700">
                   {result.assortment.map((row, i) => (
-                    <div key={`${row.category}-${row.species}-${i}`} className="flex items-center justify-between gap-2 rounded-lg bg-white/40 px-3 py-1.5">
+                    <div key={`${row.category}-${row.species}-${i}`} className="flex items-center justify-between gap-2 rounded-lg bg-ink-100/70 px-3 py-1.5">
                       <span>
-                        {row.species} <span className="text-ink-400">({row.category})</span>
+                        {row.species} <span className="text-ink-500">({row.category})</span>
                       </span>
                       <span className="font-medium">
                         {row.unit === "м²" ? `${row.count.toLocaleString("ru-RU")} м²` : row.count}
@@ -147,7 +158,7 @@ export function GreenPlanPanel({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-ink-400">Новых объектов не добавлено.</p>
+                <p className="text-sm text-ink-500">Новых объектов не добавлено.</p>
               )}
               {existingLawnSqm > 0 && (
                 <p className="mt-2 text-xs text-ink-500">
@@ -168,7 +179,7 @@ export function GreenPlanPanel({
                 <h3 className={SECTION_TITLE}>Благоустройство</h3>
                 <div className="flex flex-col gap-1 text-sm text-ink-700">
                   {result.improvements.map((row) => (
-                    <div key={row.species} className="flex items-center justify-between gap-2 rounded-lg bg-white/40 px-3 py-1.5">
+                    <div key={row.species} className="flex items-center justify-between gap-2 rounded-lg bg-ink-100/70 px-3 py-1.5">
                       <span>{row.species}</span>
                       <span className="font-medium">
                         {row.unit === "м²" ? `${row.count.toLocaleString("ru-RU")} м²` : row.count}

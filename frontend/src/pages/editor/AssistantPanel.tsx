@@ -44,9 +44,9 @@ export function AssistantPanel({
 }) {
   return (
     <SlidePanel open={open} onToggle={onToggle} onClose={onClose} icon={<Sparkles className="h-4.5 w-4.5 text-brand-600" />} title="Ассистент">
-      <div className="scrollbar-thin flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4">
+      <div className="scrollbar-thin flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4 [&>*]:shrink-0">
         {messages.length === 0 && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center text-sm text-ink-400">
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center text-sm text-ink-500">
             <Sparkles className="h-8 w-8 text-brand-300" />
             <p>Опишите на русском, что изменить в плане. Виды можно называть по-русски: «липы», «сирень», «клён остролистный».</p>
             <div className="mt-2 flex flex-col gap-1.5">

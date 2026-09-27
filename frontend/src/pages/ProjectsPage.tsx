@@ -9,6 +9,7 @@ import { Input } from "../components/ui/input";
 import { PageTransition } from "../components/PageTransition";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../components/ui/dialog";
 import { useAuth } from "../context/useAuth";
+import { typograph } from "../lib/typograph";
 
 const MAX_PROJECTS = 3; // держим в паре с backend/accounts/projects.py::MAX_PROJECTS_PER_USER — лимит проверяет бэкенд, тут только для подсказки
 
@@ -82,7 +83,7 @@ export default function ProjectsPage() {
 
   return (
     <PageTransition>
-      <div className="min-h-full bg-ink-50">
+      <div className="min-h-screen bg-ink-50">
         <header className="sticky top-0 z-40 border-b border-white/60 bg-white/55 shadow-sm backdrop-blur-xl backdrop-saturate-150">
           <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
             <Link to="/" className="flex items-center gap-2 font-semibold text-ink-900">
@@ -126,7 +127,9 @@ export default function ProjectsPage() {
           ) : projects.length === 0 ? (
             <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink-300 bg-white py-16 text-center">
               <FolderKanban className="h-10 w-10 text-ink-300" />
-              <p className="text-ink-500">Проектов пока нет — загрузите DXF в редакторе и сохраните первый.</p>
+              <p className="max-w-md text-balance px-6 text-ink-500">
+                {typograph("Проектов пока нет — загрузите чертёж DXF или DWG в редакторе и сохраните первый.")}
+              </p>
               <Button className="mt-2" onClick={() => navigate("/editor")}>
                 <Plus className="h-4 w-4" />
                 Создать проект

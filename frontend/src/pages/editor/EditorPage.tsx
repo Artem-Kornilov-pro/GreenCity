@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { UploadCloud } from "lucide-react";
 import { SceneView } from "../../scene/SceneView";
 import type { TransformMode } from "../../scene/PlacedObjects";
-import { fetchCatalog, fetchModelManifest, type CatalogItem } from "../../catalog";
+import { fetchCatalog, fetchModelManifest, objectDisplayName, type CatalogItem } from "../../catalog";
 import {
   uploadDxf,
   uploadDwgFolder,
@@ -70,7 +70,8 @@ export default function EditorPage() {
   const [selectedItemId, setSelectedItemId] = useState<string>("");
   const [catalogFilter, setCatalogFilter] = useState("");
   const [hoveredZone, setHoveredZone] = useState<RestrictionZone | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // сохранённый проект с сервера
+  const [dxfUploading, setDxfUploading] = useState(false);
   const [exportingDxf, setExportingDxf] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Файлы .dwg, которые backend не смог сконвертировать при загрузке папки
@@ -141,7 +142,7 @@ export default function EditorPage() {
   }, [projectId, session]);
 
   const handleFile = useCallback(async (file: File) => {
-    setLoading(true);
+    setDxfUploading(true);
     setError(null);
     setDwgWarnings(null);
     try {
@@ -152,7 +153,7 @@ export default function EditorPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setLoading(false);
+      setDxfUploading(false);
     }
   }, []);
 
@@ -165,7 +166,6 @@ export default function EditorPage() {
       setError("В выбранной папке нет файлов .dwg");
       return;
     }
-    setLoading(true);
     setDwgUploading(true);
     setError(null);
     setDwgWarnings(null);
@@ -179,7 +179,6 @@ export default function EditorPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setLoading(false);
       setDwgUploading(false);
     }
   }, []);
@@ -502,7 +501,9 @@ export default function EditorPage() {
       <div className="relative flex h-screen flex-col overflow-hidden bg-ink-50">
         <EditorTopBar
           title={projectName ?? (projectId ? "Загрузка…" : "Новый проект")}
-          loading={loading}
+          dxfLoading={dxfUploading}
+          dwgLoading={dwgUploading}
+          projectLoading={loading}
           onDxfFile={handleFile}
           onDwgFolder={handleDwgFolder}
           sceneLoaded={scene !== null}
@@ -569,6 +570,7 @@ export default function EditorPage() {
             onClearSelection={handleClearSelection}
             hoveredZone={hoveredZone}
             selectedObject={selectedObj}
+            selectedObjectName={selectedObj ? objectDisplayName(selectedObj, catalogById) : null}
             selectedViolations={selectedViolations}
             transformMode={transformMode}
             onTransformModeChange={setTransformMode}
@@ -577,7 +579,11 @@ export default function EditorPage() {
 
           <AssistantPanel
             open={aiPanelOpen}
-            onToggle={() => setAiPanelOpen((v) => !v)}
+            onToggle={() => {
+              // Панели занимают одно место справа -- открытая одна закрывает другую.
+              setGreenPlanPanelOpen(false);
+              setAiPanelOpen((v) => !v);
+            }}
             onClose={() => setAiPanelOpen(false)}
             messages={messages}
             editing={editing}
@@ -591,7 +597,10 @@ export default function EditorPage() {
 
           <GreenPlanPanel
             open={greenPlanPanelOpen}
-            onToggle={() => setGreenPlanPanelOpen((v) => !v)}
+            onToggle={() => {
+              setAiPanelOpen(false);
+              setGreenPlanPanelOpen((v) => !v);
+            }}
             onClose={() => setGreenPlanPanelOpen(false)}
             result={greenPlanResult}
             reportLoading={greenPlanReportLoading}
