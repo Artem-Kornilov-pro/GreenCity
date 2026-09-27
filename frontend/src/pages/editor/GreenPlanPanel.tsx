@@ -48,7 +48,10 @@ export function GreenPlanPanel({
       handleTop="top-[35%]"
       accent
     >
-      <div className="scrollbar-thin flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-4">
+      {/* [&>*]:shrink-0 -- колонка прокручивается, а не ужимает содержимое:
+          иначе с приходом длинного текста-обоснования браузер сжимал по
+          высоте кнопку записки (у неё фиксированная высота, у текста -- нет). */}
+      <div className="scrollbar-thin flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-4 [&>*]:shrink-0">
         {!result && (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center text-sm text-ink-500">
             <Trees className="h-8 w-8 text-brand-300" />
