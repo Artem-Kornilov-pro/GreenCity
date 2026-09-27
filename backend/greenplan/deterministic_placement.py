@@ -38,6 +38,7 @@ setback_norms.py: липе 10 м от здания и т.п.), а не пост�
 from __future__ import annotations
 
 import logging
+import random
 from dataclasses import dataclass, field
 
 from shapely.geometry import Polygon
@@ -127,16 +128,39 @@ def _polygon_of(zone: GeometricZone) -> Polygon:
     return Polygon([(p.x, p.z) for p in zone.polygon])
 
 
+# Разброс масштаба деревьев (доля): в свободных посадках (рощи, разброс) --
+# заметный, в регулярных (ряды, аллеи, сетки) -- небольшой, иначе теряется
+# строгость рисунка.
+TREE_SCALE_JITTER_NATURAL = 0.15
+TREE_SCALE_JITTER_FORMAL = 0.06
+
+
+def _tree_scale_jitter(spec: PatternSpec) -> float:
+    natural = spec.geometry_family == "clustered" or (spec.geometry_family == "area_fill" and not spec.dense_lattice)
+    return TREE_SCALE_JITTER_NATURAL if natural else TREE_SCALE_JITTER_FORMAL
+
+
 def _scene_object(
     key: str, item: CatalogItem, x: float, z: float, rotation: float, zone: GeometricZone, assignment: ZoneAssignment
 ) -> SceneObject:
+    scale = 1.0
+    if item.object_type == "tree":
+        # Сотни одинаковых деревьев одного размера и одного поворота сразу
+        # выдают клонов. Поворот ряда дереву не нужен (у кроны нет "лица"),
+        # размер -- с разбросом, как у реального посадочного материала.
+        # Детерминированно: сид -- ключ и место объекта (random.Random хеширует
+        # строку через sha512, от PYTHONHASHSEED не зависит).
+        rng = random.Random(f"{key}|{x:.1f}|{z:.1f}")
+        rotation = round(rng.uniform(0.0, 360.0), 1)
+        jitter = _tree_scale_jitter(PATTERN_LIBRARY[assignment.pattern_id])
+        scale = round(rng.uniform(1 - jitter, 1 + jitter), 3)
     return SceneObject(
         id=key,
         type=item.object_type,
         model=item.model,
         position=Point3(x=x, y=0.0, z=z),
         rotation=rotation,
-        scale=1.0,
+        scale=scale,
         metadata={
             "species": item.label,
             "category": "vegetation",

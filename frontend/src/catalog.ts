@@ -107,6 +107,13 @@ export async function fetchModelManifest(): Promise<Set<string>> {
 // Какие типы объектов сцены пользователь может создавать/двигать. Берётся из
 // каталога, а не хардкодится: добавили запись в plant_catalog.py -- тип сразу
 // стал доступен и в панели добавления, и для перетаскивания.
+// Высота из каталога, под которую подгоняется модель, -- только у деревьев:
+// у них высота в каталоге -- реальная высота вида, а не габарит модели из
+// пака (см. scene/geometryHelpers.modelFitScale). Кусты и МАФ -- как есть.
+export function fitHeight(item: CatalogItem): number | undefined {
+  return item.category === "tree" ? item.dimensions.height : undefined;
+}
+
 export function editableTypesFrom(catalog: CatalogItem[]): Set<string> {
   return new Set(catalog.map((i) => i.object_type));
 }

@@ -32,12 +32,15 @@
 import { Merged, useGLTF } from "@react-three/drei";
 import { memo } from "react";
 import type { ThreeEvent } from "@react-three/fiber";
+import { modelFitScale } from "./geometryHelpers";
 
 export type InstancePlacement = {
   id: string;
   position: [number, number, number];
   rotation: number;
   scale: number;
+  // Высота из каталога, под которую подгоняется модель (см. modelFitScale).
+  height?: number;
 };
 
 // memo по (url, placements, onSelect): placements -- новый массив на каждый
@@ -55,7 +58,7 @@ export const InstancedVegetationGroup = memo(function InstancedVegetationGroup({
   placements: InstancePlacement[];
   onSelect: (id: string) => void;
 }) {
-  const { nodes } = useGLTF(url);
+  const { nodes, scene } = useGLTF(url);
 
   return (
     <Merged meshes={nodes} limit={Math.max(placements.length, 1)} frustumCulled={false}>
@@ -73,7 +76,7 @@ export const InstancedVegetationGroup = memo(function InstancedVegetationGroup({
                   key={`${p.id}-${i}`}
                   position={p.position}
                   rotation={[0, p.rotation, 0]}
-                  scale={p.scale}
+                  scale={p.scale * modelFitScale(scene, p.height)}
                   onClick={(e: ThreeEvent<MouseEvent>) => {
                     e.stopPropagation();
                     onSelect(p.id);
