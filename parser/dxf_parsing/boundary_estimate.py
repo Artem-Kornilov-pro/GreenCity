@@ -7,7 +7,7 @@
 
 import shapely
 from shapely import concave_hull
-from shapely.geometry import MultiPoint
+from shapely.geometry import LineString, MultiPoint, Point, Polygon
 
 # "Дальний выброс" по Тьюки -- за пределами IQR*_OUTLIER_IQR_FACTOR от
 # межквартильного размаха (3.0 -- стандартный порог именно для "дальних", а
@@ -127,19 +127,9 @@ def _estimate_boundary_from_content(objects, restrictions, curbs):
     if len(points) < _OUTLIER_MIN_POINTS:
         return None
 
-    multipoint = MultiPoint(points)
-    try:
-        # GEOS-триангуляция внутри concave_hull иногда падает на почти
-        # вырожденных наборах точек (например, объекты почти на одной
-        # прямой -- узкий вытянутый участок с малым числом объектов) --
-        # "Tri::getAdjacent - invalid index", воспроизведено на 12 точках
-        # вдоль прямой. convex_hull не строит триангуляцию Делоне вообще,
-        # поэтому устойчив там, где concave_hull ломается -- ценой более
-        # грубой формы (это всё равно лучше, чем совсем без границы).
-        hull = concave_hull(multipoint, ratio=_ESTIMATED_BOUNDARY_CONCAVITY_RATIO)
-    except shapely.errors.GEOSException:
-        hull = multipoint.convex_hull
-    hull = hull.buffer(_ESTIMATED_BOUNDARY_MARGIN_M)
+    hull = _data_footprint(objects, restrictions, curbs)
+    if hull is None:
+        hull = _concave_hull(MultiPoint(points)).buffer(_ESTIMATED_BOUNDARY_MARGIN_M)
     if hull.geom_type != "Polygon" or not hull.is_valid or hull.area <= 0:
         return None
 
@@ -150,3 +140,71 @@ def _estimate_boundary_from_content(objects, restrictions, curbs):
         "polygon": [{"x": round(x, 3), "z": round(z, 3)} for x, z in pts],
         "sourceLayer": ESTIMATED_BOUNDARY_SOURCE_LAYER,
     }
+
+
+# "След данных": область в пределах этого расстояния от любого снятого объекта
+# (сети, бордюры, здания, посадки) -- там, где съёмка вообще что-то знает.
+_FOOTPRINT_RADIUS_M = 15.0
+# Промежутки между кусками следа уже этого заклеиваются (двор между двумя
+# трассами, газон между бортом и зданием) -- это тот же участок.
+_FOOTPRINT_CLOSING_M = 25.0
+# Кусок следа меньше этой доли крупнейшего -- одинокая далёкая геометрия
+# (обрывок чужого листа съёмки), а не часть участка.
+_FOOTPRINT_MIN_SHARE = 0.1
+# Упрощение контура следа: сантиметровая точность границе не нужна, а
+# вершин у объединения тысяч буферов -- десятки тысяч.
+_FOOTPRINT_SIMPLIFY_M = 1.0
+
+
+def _data_footprint(objects, restrictions, curbs):
+    """Граница "по следу данных" -- там, где в съёмке что-то есть, а не
+    вогнутая оболочка всех точек. Оболочка одним контуром перекрывала
+    промежутки между листами съёмки и одинокие далёкие объекты: на Академика
+    Понтрягина коридор улицы превращался в клин на 195 га с шипом за 2 км, и
+    всё это заливалось "открытой землёй" и газоном GreenPlan. Здесь -- буфер
+    вокруг каждого объекта, склейка мелких промежутков, отброс мелких
+    одиноких кусков. Несколько крупных кусков (два участка одной улицы) --
+    вогнутая оболочка только их: схема сцены хранит одну границу.
+    None -- если посчитать не удалось (тогда -- прежняя оболочка точек)."""
+    geoms = [Point(o["position"]["x"], o["position"]["z"]) for o in objects]
+    for r in restrictions:
+        if len(r["polygon"]) >= 3:
+            poly = Polygon([(p["x"], p["z"]) for p in r["polygon"]])
+            geoms.append(poly if poly.is_valid else poly.buffer(0))
+    geoms += [LineString([(p["x"], p["z"]) for p in c]) for c in curbs if len(c) >= 2]
+    geoms = [g for g in geoms if not g.is_empty]
+    if not geoms:
+        return None
+    try:
+        footprint = shapely.union_all(shapely.buffer(geoms, _FOOTPRINT_RADIUS_M, quad_segs=2))
+        footprint = footprint.buffer(_FOOTPRINT_CLOSING_M, quad_segs=2).buffer(-_FOOTPRINT_CLOSING_M, quad_segs=2)
+    except shapely.errors.GEOSException:
+        return None
+    parts = sorted(
+        (p for p in getattr(footprint, "geoms", [footprint]) if p.geom_type == "Polygon" and p.area > 0),
+        key=lambda p: -p.area,
+    )
+    if not parts:
+        return None
+    kept = [p for p in parts if p.area >= parts[0].area * _FOOTPRINT_MIN_SHARE]
+    if len(kept) == 1:
+        # Дырки следа (пустота внутри кольца трасс) -- внутри участка.
+        shape = Polygon(kept[0].exterior)
+    else:
+        shape = _concave_hull(MultiPoint([c for p in kept for c in p.exterior.coords]))
+    shape = shape.simplify(_FOOTPRINT_SIMPLIFY_M)
+    return shape if shape.geom_type == "Polygon" and shape.is_valid else None
+
+
+def _concave_hull(multipoint):
+    try:
+        # GEOS-триангуляция внутри concave_hull иногда падает на почти
+        # вырожденных наборах точек (например, объекты почти на одной
+        # прямой -- узкий вытянутый участок с малым числом объектов) --
+        # "Tri::getAdjacent - invalid index", воспроизведено на 12 точках
+        # вдоль прямой. convex_hull не строит триангуляцию Делоне вообще,
+        # поэтому устойчив там, где concave_hull ломается -- ценой более
+        # грубой формы (это всё равно лучше, чем совсем без границы).
+        return concave_hull(multipoint, ratio=_ESTIMATED_BOUNDARY_CONCAVITY_RATIO)
+    except shapely.errors.GEOSException:
+        return multipoint.convex_hull

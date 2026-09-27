@@ -111,3 +111,81 @@ def test_parse_merges_the_same_tree_layer_coming_from_several_files(empty_doc):
         msp.add_point((25, 8), dxfattribs={"layer": "! ПР ДЕРЕВЬЯ"})
     scene = parse_dxf_doc(empty_doc, center=False)
     assert sum(o["type"] == "tree" for o in scene["objects"]) == 2
+
+
+# --- Граница участка из слоёв проекта и "след данных" -----------------------------
+
+
+def _square(msp, x0, y0, size, layer):
+    msp.add_lwpolyline([(x0, y0), (x0 + size, y0), (x0 + size, y0 + size), (x0, y0 + size)], close=True, dxfattribs={"layer": layer})
+
+
+def _boundary_poly(scene):
+    return Polygon([(p["x"], p["z"]) for p in scene["boundary"]["polygon"]])
+
+
+def test_project_work_boundary_layer_is_the_site_boundary(empty_doc):
+    msp = empty_doc.modelspace()
+    _square(msp, 1000, 2000, 100, "ДВ_ГП_П_Граница работ")
+    scene = parse_dxf_doc(empty_doc)
+    assert scene["boundary"]["sourceLayer"] == "ДВ_ГП_П_Граница работ"
+    assert _boundary_poly(scene).area == pytest.approx(10000)
+    assert scene["meta"]["origin"] == {"x": pytest.approx(1050), "y": pytest.approx(2050)}
+
+
+def test_work_boundary_drawn_as_separate_lines_is_assembled(empty_doc):
+    # Куликовская: граница работ -- 1120 отдельных LINE, ни одного контура.
+    msp = empty_doc.modelspace()
+    for a, b in (((0, 0), (100, 0)), ((100, 0), (100, 80)), ((100, 80), (0, 80)), ((0, 80), (0, 0))):
+        msp.add_line(a, b, dxfattribs={"layer": "ДВ_ГП_П_Граница работ"})
+    scene = parse_dxf_doc(empty_doc, center=False)
+    assert _boundary_poly(scene).area == pytest.approx(8000, rel=0.01)
+
+
+def test_far_piece_of_work_boundary_is_dropped(empty_doc):
+    # Харьковская: кусок на том же слое за 4,5 км (врезка или соседний лист) --
+    # вогнутая оболочка тянула к нему полосу через весь город.
+    msp = empty_doc.modelspace()
+    _square(msp, 0, 0, 200, "ДВ_ГП_П_Граница работ")
+    _square(msp, 4500, 0, 60, "ДВ_ГП_П_Граница работ")
+    scene = parse_dxf_doc(empty_doc, center=False)
+    assert _boundary_poly(scene).bounds[2] < 300
+
+
+def test_tiny_piece_on_work_boundary_layer_is_not_trusted(empty_doc):
+    # Академика Понтрягина: на слое "Граница работ" генплана -- кусок 322 м².
+    msp = empty_doc.modelspace()
+    _square(msp, 0, 0, 15, "ДВ_ГП_П_Граница работ")
+    for i in range(30):
+        msp.add_point((i * 10, 50), dxfattribs={"layer": "! ПР ДЕРЕВЬЯ"})
+    scene = parse_dxf_doc(empty_doc, center=False)
+    assert scene["boundary"]["sourceLayer"] == "__estimated_from_content__"
+
+
+def test_objects_and_curbs_far_outside_real_boundary_are_dropped(empty_doc):
+    msp = empty_doc.modelspace()
+    _square(msp, 0, 0, 100, "ДВ_ГП_П_Граница работ")
+    msp.add_point((50, 50), dxfattribs={"layer": "! ПР ДЕРЕВЬЯ"})
+    msp.add_point((10000, 50), dxfattribs={"layer": "! ПР ДЕРЕВЬЯ"})
+    msp.add_lwpolyline([(20, 20), (80, 20)], dxfattribs={"layer": "Бортовой камень"})
+    msp.add_lwpolyline([(9000, 20), (9080, 20)], dxfattribs={"layer": "Бортовой камень"})
+    scene = parse_dxf_doc(empty_doc, center=False)
+    assert [o["position"]["x"] for o in scene["objects"] if o["type"] == "tree"] == [50]
+    assert len(scene["curbs"]) == 1
+
+
+def test_estimated_boundary_follows_data_not_a_hull_over_empty_land(empty_doc):
+    # Академика Понтрягина: оболочка всех точек накрывала пустоту между
+    # участками и тянулась к одинокому далёкому объекту -- 195 га "участка".
+    msp = empty_doc.modelspace()
+    for i in range(40):  # улица 400 x 20 м вдоль X
+        msp.add_point((i * 10, 0), dxfattribs={"layer": "! ПР ДЕРЕВЬЯ"})
+        msp.add_point((i * 10, 20), dxfattribs={"layer": "! ПР ДЕРЕВЬЯ"})
+    for i in range(30):  # поперечная улица 20 x 300 м вдоль Z
+        msp.add_point((0, i * 10), dxfattribs={"layer": "! ПР ДЕРЕВЬЯ"})
+        msp.add_point((20, i * 10), dxfattribs={"layer": "! ПР ДЕРЕВЬЯ"})
+    scene = parse_dxf_doc(empty_doc, center=False)
+    boundary = _boundary_poly(scene)
+    assert boundary.covers(Point(200, 10)) and boundary.covers(Point(10, 250))
+    assert not boundary.covers(Point(250, 150))  # угол между улицами -- не участок
+    assert boundary.area < 400 * 60 + 300 * 60

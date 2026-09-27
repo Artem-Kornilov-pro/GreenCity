@@ -23,6 +23,8 @@ from collections import Counter
 from pathlib import Path
 
 import ezdxf
+import shapely
+from shapely.geometry import Polygon
 
 from dxf_parsing.boundary_estimate import (
     ESTIMATED_BOUNDARY_SOURCE_LAYER,
@@ -42,16 +44,17 @@ from dxf_parsing.objects import (
     nearest_text,
 )
 from dxf_parsing.rules import (
-    BOUNDARY_LAYER_KEYWORDS,
     INSUNITS_TO_METERS,
     POLYGON_RULES,
     layer_matches,
     match_rule,
 )
 from dxf_parsing.zones import (
+    _RESTRICTION_RELEVANCE_MARGIN_M,
     GROUND_ZONE_SOURCE_NAME,
     _clip_offsite_zones,
     _compute_ground_zone,
+    boundary_outline,
     extract_boundary,
     extract_restrictions,
 )
@@ -117,12 +120,9 @@ def parse_dxf_doc(doc, scale=None, center=True):
 
     origin_x, origin_y = 0.0, 0.0
     if center:
-        for e in msp.query("LWPOLYLINE POLYLINE"):
-            if layer_matches(e.dxf.layer, BOUNDARY_LAYER_KEYWORDS):
-                pts = polygon_points(e)
-                if pts:
-                    origin_x, origin_y = centroid(pts)
-                break
+        found = boundary_outline(msp, resolved_scale)
+        if found is not None:
+            origin_x, origin_y = centroid(found[0])
 
     tf = Transform(scale=resolved_scale, origin_x=origin_x, origin_y=origin_y)
 
@@ -159,6 +159,13 @@ def parse_dxf_doc(doc, scale=None, center=True):
         # Считаем её ПОСЛЕ отсева выбросов выше, чтобы редкая дальняя точка
         # не растянула и сам контур.
         boundary = _estimate_boundary_from_content(objects, restrictions, curbs)
+    else:
+        # С настоящей границей зоны уже обрезаны по ней (_clip_offsite_zones);
+        # то же -- для посадок, фонарей и бордюров. Граница работ реальной
+        # пачки -- кусок улицы, а топосъёмка и сети тянут объекты с соседних
+        # листов за километры (на Харьковской -- бордюры за 10 км), и сцена
+        # растягивалась до них. Здания не трогаем -- как и в зонах.
+        objects, curbs = _clip_offsite_points(objects, curbs, boundary)
 
     # Открытая земля (issue #53) -- участок минус всё уже известное. Не
     # только для сцен без явного слоя границы: план покрытий (газон/тротуар)
@@ -181,6 +188,20 @@ def parse_dxf_doc(doc, scale=None, center=True):
             "pointObjectCount": len(points),
         },
     }
+
+
+def _clip_offsite_points(objects, curbs, boundary):
+    region = Polygon([(p["x"], p["z"]) for p in boundary["polygon"]])
+    if not region.is_valid:
+        region = region.buffer(0)
+    region = region.buffer(_RESTRICTION_RELEVANCE_MARGIN_M)
+    shapely.prepare(region)
+    kept_objects = [
+        o for o in objects
+        if o["type"] == "building" or shapely.contains_xy(region, o["position"]["x"], o["position"]["z"])
+    ]
+    kept_curbs = [c for c in curbs if any(shapely.contains_xy(region, p["x"], p["z"]) for p in c)]
+    return kept_objects, kept_curbs
 
 
 def parse_dxf_file(path, scale=None, center=True):
