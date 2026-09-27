@@ -169,14 +169,9 @@ class PlacementOpsMixin:
                 self.rejected.append(f"{what}: нет свободной области {op.area!r}")
                 return
             where = f"по области {op.area}"
-            # Проверяется точка-центр посадки, а не её крона/габарит. Для
-            # free_areas это не страшно -- они сами уже вырезаны из допустимой
-            # области с запасом (region()). А вот именованная зона (define_zone
-            # или выделенная мышкой вручную) -- сырой полигон без единого
-            # отступа, и дерево с центром у самого её края визуально вылезает
-            # за границу, хотя формально "за границы" никто не просил. Отступаем
-            # внутрь на радиус посадки; если зона меньше отступа целиком --
-            # сажаем как есть, лучше по центру мелкой зоны, чем нигде.
+            # Проверяется центр посадки, а у именованной зоны нет отступов:
+            # отступаем внутрь на радиус посадки, чтобы крона не вылезала за
+            # край. Зона меньше отступа -- сажаем как есть.
             inset = area.buffer(-spacing / 2)
             if not inset.is_empty:
                 area = inset
@@ -265,10 +260,7 @@ class PlacementOpsMixin:
             where = f"вокруг ({op.x:.1f}, {op.z:.1f}), радиус {radius:.0f} м"
 
         candidates = self.placer.points_in_area(kind, width * 0.95, area, MAX_BULK_PLACEMENTS * 3)
-        # Проверяем весь прямоугольник плитки (4x4 м у газона), а не только
-        # её центр -- см. region_contains: центр на 2 м от края уже
-        # пропускал бы плитку, чей угол при этом торчит за границей участка
-        # или залезает на здание/трубу.
+        # Проверяется вся плитка, а не её центр.
         free = [
             p
             for p in candidates
@@ -351,9 +343,8 @@ class PlacementOpsMixin:
             if geom is None:
                 self.rejected.append(f"{what}: на участке нет цели «{TARGET_LABELS.get(op.around_target, op.around_target)}»")
                 return
-            # Отступ не меньше нормативного: "огороди площадку с отступом 1 м"
-            # при норме больше метра раньше отклонялось целиком, хотя
-            # пользователю нужна изгородь, а не именно этот метр.
+            # Отступ не меньше нормативного: пользователю нужна изгородь, а не
+            # именно этот метр.
             least = self.placer.min_offset(op.around_target, kind, half_depth, species)
             offset = max(op.offset_m, least) if op.offset_m is not None else least
             if op.offset_m is not None and offset > op.offset_m + 1e-6:
@@ -396,10 +387,7 @@ class PlacementOpsMixin:
             return spots, total
 
         # Кольцо вплотную к цели часто перерезают дорожки и сети: если на нём
-        # помещается меньше половины мест, пробуем чуть дальше и берём
-        # лучшее -- огородить площадку на 2 м дальше лучше, чем не огородить.
-        # (Эталон 23: площадку в 2 м обходят дорожки -- кольцо у края почти
-        # целиком ложится на них, а за дорожками встаёт полностью.)
+        # меньше половины мест, пробуем чуть дальше и берём лучшее.
         accepted, total = ring_spots(offset)
         used_offset = offset
         for extra in (1.0, 2.5, 4.0, 6.0):
@@ -433,9 +421,8 @@ class PlacementOpsMixin:
         count = int(clamp(op.count, 1, 20))
         kind = item.setback_kind
         spacing = _default_spacing(item)
-        # Как и у группы вокруг точки: у подъезда рядом уже стоят прошлые
-        # посадки, и на "ещё столько же" места в первом круге не хватало --
-        # копий выходило меньше просьбы, причём молча.
+        # Как у группы вокруг точки: рядом уже стоят прошлые посадки, и в
+        # первом круге места может не хватить.
         reach = max(8.0, spacing * count) if near.geom_type == "Point" else 10.0
         for attempt in (reach, reach + MAX_SNAP_DISTANCE_M):
             within = near.buffer(attempt)

@@ -1,0 +1,56 @@
+{
+ "site": "12_natashinsky_proezd",
+ "source_dxf": "locations/12_natashinsky_proezd/12_natashinsky_proezd.dxf",
+ "site_style": "landscape",
+ "lead_project": "12_natashinsky_proezd",
+ "zones": 44,
+ "new_trees": 115,
+ "new_bushes": 483,
+ "new_lawn_sqm": 2085,
+ "violations_new_objects": 0,
+ "rejected_by_norm": 269,
+ "assortment": [
+  {
+   "category": "дерево",
+   "species": "Клен остролистный",
+   "count": 46,
+   "unit": "шт."
+  },
+  {
+   "category": "дерево",
+   "species": "Липа мелколистная",
+   "count": 44,
+   "unit": "шт."
+  },
+  {
+   "category": "дерево",
+   "species": "Бархат Амурский",
+   "count": 20,
+   "unit": "шт."
+  },
+  {
+   "category": "дерево",
+   "species": "Черемуха Маака",
+   "count": 5,
+   "unit": "шт."
+  },
+  {
+   "category": "кустарник",
+   "species": "Жимолость золотистая",
+   "count": 337,
+   "unit": "шт."
+  },
+  {
+   "category": "кустарник",
+   "species": "Бересклет европейский",
+   "count": 146,
+   "unit": "шт."
+  },
+  {
+   "category": "газон",
+   "species": "Газон обыкновенный",
+   "count": 2085,
+   "unit": "м²"
+  }
+ ]
+}

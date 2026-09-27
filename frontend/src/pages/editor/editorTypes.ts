@@ -5,11 +5,8 @@ export function makeId(): string {
   return crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
 }
 
-// Зона выделения мышкой (issue "Выделение участка карты мышкой") -- тип
-// строго "selection", это то, по чему backend (text_editor/prompt.py::_build_context)
-// узнаёт её в scene.restrictions и отдаёт модели как selected_areas, отдельно
-// от обычных зон плана. severity "allowed" -- сама по себе ничего не
-// запрещает (Placer.region() её игнорирует), это просто именованный маркер.
+// Зона, выделенная мышкой: type "selection" -- по нему ассистент отличает её
+// от зон плана; severity "allowed" -- ничего не запрещает.
 export const SELECTION_ZONE_TYPE = "selection";
 export const SELECTION_ZONE_NAME = "Выделение";
 
@@ -37,9 +34,7 @@ export interface AiEditSnapshot {
   ranGreenPlan: boolean;
 }
 
-// generateGreenPlan (быстро, без LLM) отдаёт всё, кроме report/report_error --
-// те приходят отдельным запросом (fetchGreenPlanReport) и домешиваются в это
-// же состояние по готовности, см. handleGreenPlan в EditorPage.
+// Результат GreenPlan; report и report_error приходят отдельным запросом.
 export interface GreenPlanState extends GreenPlanGenerateResult {
   // С какими параметрами запускали -- они же уходят в пояснительную записку.
   options: GreenPlanOptions;

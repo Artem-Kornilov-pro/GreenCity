@@ -1,12 +1,11 @@
 """
-Применение плана правки текстом: PlanApplier выполняет операции от LLM
-(text_editor/operations.py) детерминированно поверх placement.Placer. Невыполнимая
-операция -- не исключение, а запись в rejected с человекочитаемой причиной:
-одна сломанная операция от модели не роняет весь план.
+Применение плана правки текстом: PlanApplier детерминированно выполняет
+операции от LLM поверх placement.Placer. Невыполнимая операция -- запись в
+rejected с понятной причиной, а не исключение.
 
-Операции разнесены по файлам: здесь -- общие шаги и точечные add/remove/
-move/rotate, в text_editor/ops_placement.py -- групповые посадки, в
-text_editor/ops_editing.py -- правка существующего, дорожки, зоны и дизайн двора.
+Здесь -- общие шаги и точечные add/remove/move/rotate; групповые посадки --
+в ops_placement.py, правка существующего, дорожки, зоны и дизайн двора -- в
+ops_editing.py.
 """
 
 from __future__ import annotations
@@ -115,9 +114,8 @@ class PlanApplier(PlacementOpsMixin, EditingOpsMixin):
                 detail = f"{field}: {error['msg']}" if field else error["msg"]
                 self.rejected.append(f"операция {number} ({raw.get('op', '?')}): не разобрать — {detail}")
                 continue
-            # Лишние поля pydantic молча отбрасывает -- а за ними стоит
-            # намерение модели ("у площадки", "только клёны"), которое тогда
-            # тихо терялось. Пусть это будет видно.
+            # Лишние поля pydantic молча отбрасывает, а за ними стоит
+            # намерение модели -- показываем их.
             unknown = sorted(set(normalized) - set(type(op).model_fields))
             if unknown:
                 self.warnings.append(f"операция {number} ({op.op}): не поддерживается и пропущено — {', '.join(unknown)}")

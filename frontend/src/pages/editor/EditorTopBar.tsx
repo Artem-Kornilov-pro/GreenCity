@@ -11,9 +11,7 @@ import {
 } from "../../components/ui/dropdown-menu";
 import { useAuth } from "../../context/useAuth";
 
-// Топбар плавает поверх сцены (не занимает место в потоке), поэтому сквозь
-// него видна и блюрится сама 3D-сцена, а не плоский фон страницы -- без этого
-// эффект "жидкого стекла" на однотонном фоне почти не заметен.
+// Топбар плавает поверх сцены, чтобы сквозь стекло была видна сама сцена.
 export function EditorTopBar({
   title,
   dxfLoading,
@@ -94,7 +92,7 @@ export function EditorTopBar({
           />
         </label>
 
-        <label title="Выбрать папку проекта с исходными .dwg -- каждый файл конвертируется в DXF на сервере и сливается в одну сцену (issue #50)">
+        <label title="Выбрать папку проекта с исходными .dwg -- каждый файл конвертируется в DXF на сервере и сливается в одну сцену">
           <Button asChild variant="outline" size="sm" disabled={busy}>
             <span className={busy ? "pointer-events-none opacity-50" : "cursor-pointer"}>
               {dwgLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FolderUp className="h-3.5 w-3.5" />}
@@ -103,9 +101,7 @@ export function EditorTopBar({
           </Button>
           <input
             type="file"
-            // webkitdirectory -- нестандартный, но широко поддерживаемый
-            // атрибут (Chrome/Firefox/Edge; Safari частично) для выбора
-            // папки целиком вместо отдельных файлов.
+            // webkitdirectory -- выбор папки целиком.
             // @ts-expect-error -- webkitdirectory отсутствует в типах React для input
             webkitdirectory=""
             multiple

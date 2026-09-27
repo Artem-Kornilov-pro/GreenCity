@@ -1,8 +1,6 @@
 """
-Общие константы и вспомогательные функции применения плана правки текстом
-(text_editor/applier.py и его части text_editor/ops_placement.py/plan_ops_editing.py):
-шаги посадки по габаритам вида, подписи для сообщений пользователю,
-нормализация операций от модели.
+Общие константы и функции применения плана правки текстом: шаги посадки по
+габаритам вида, подписи для сообщений, нормализация операций от модели.
 """
 
 from __future__ import annotations
@@ -32,15 +30,12 @@ CANDIDATES_NEAR_POINT = 2000
 ALIGN_MATCH_REACH_M = 15.0  # align_along: искать сбившиеся объекты не дальше этого от цели
 MIN_SCALE, MAX_SCALE = 0.3, 3.0
 
-# Один и тот же предмет под разными типами: урны из DXF-подосновы и
-# эталонов -- "urn", а в каталоге (и у всего, что ставят ассистент и
-# GreenPlan) -- "trash". Без этого "удали все урны" не находило ни одной.
+# Один предмет под разными типами: урна из DXF -- «urn», в каталоге -- «trash».
 TYPE_ALIASES: dict[str, tuple[str, ...]] = {"trash": ("urn",), "urn": ("trash",)}
 
 
-# Русские названия типов -- для фильтра species у объектов без вида: шезлонги
-# и лавки из реального чертежа приходят без записи каталога, и "убери
-# шезлонги" по названию их иначе не находило.
+# Русские названия типов -- для фильтра species у объектов без вида
+# (шезлонги и скамейки из чертежа приходят без записи каталога).
 TYPE_LABELS_RU: dict[str, str] = {
     "tree": "дерево",
     "bush": "кустарник куст",
@@ -100,20 +95,16 @@ def name_matches(asked: str, name: str) -> bool:
 def _normalize(raw: dict) -> dict:
     """Мелкие вольности модели, которые проще поправить, чем отклонять
     операцию: строка вместо списка, catalog_id вместо catalog_ids, null у
-    необязательного поля со значением по умолчанию (например style: null) --
-    для необязательных полей это то же самое, что их не прислать, но pydantic
-    null и "отсутствует" не путает: явный null проходит мимо default и падает
-    на полях без Optional (см. design_area: style: null отклонял всю
-    операцию, хотя auto -- и так поведение по умолчанию)."""
+    необязательного поля (pydantic иначе не подставил бы значение по
+    умолчанию)."""
     op = {k: v for k, v in raw.items() if v is not None}
     kind = op.get("op")
     if kind in ("place_along", "place_in_area") and "catalog_ids" not in op and "catalog_id" in op:
         op["catalog_ids"] = op.pop("catalog_id")
     if "object_types" not in op and "object_type" in op:
         op["object_types"] = op.pop("object_type")
-    # "Посади 5 лип вдоль дорожек": модель пишет count, а у ряда это
-    # max_count -- без этого count молча отбрасывался и вдоль дорожек
-    # вставало 53 липы вместо 5. И наоборот у группы.
+    # «Посади 5 лип вдоль дорожек»: модель пишет count, а у ряда это
+    # max_count. И наоборот у группы.
     if kind == "place_along" and "max_count" not in op and "count" in op:
         op["max_count"] = op.pop("count")
     if kind == "place_in_area" and "count" not in op and "max_count" in op:

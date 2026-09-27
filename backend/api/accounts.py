@@ -1,7 +1,7 @@
 """
-Эндпоинты аккаунтов и проектов: регистрация и вход по логину/паролю,
-refresh/logout, сохранённые проекты пользователя (MongoDB). Гостевой режим --
-это отсутствие токена: редактор и GreenPlan токена не требуют.
+Эндпоинты аккаунтов и проектов: регистрация и вход по имени и паролю,
+обновление и отзыв токена, сохранённые проекты пользователя в MongoDB.
+Без токена работает всё, кроме проектов (гостевой режим).
 """
 
 from __future__ import annotations
@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel
 from pymongo.errors import PyMongoError
 
 from accounts import projects as projects_service
@@ -30,27 +31,17 @@ from monitoring import metrics
 from storage import cache
 
 router = APIRouter()
-
-
-# --- Аккаунты и проекты (auth.py, projects.py, db.py, cache.py) --------------
-#
-# Регистрация -- только логин/пароль, без подтверждения почты (по условию
-# задачи). Гостевой режим -- это отсутствие этих эндпоинтов в обиходе:
-# распарсить DXF, сгенерировать растительность и править текстом можно и без
-# токена (эндпоинты выше его не требуют) -- только сохранить именованный
-# проект нельзя, для этого и нужен аккаунт.
-#
-# Всё здесь асинхронно (AsyncMongoClient в db.py, redis.asyncio в cache.py) --
-# сервис рассчитан на много одновременных пользователей, блокирующие клиенты
-# заняли бы поток из ограниченного пула на каждое обращение к базе.
-#
-# Ошибки бизнес-логики (занятое имя, неверный пароль, лимит проектов, чужой
-# проект, недействительный refresh-токен) -- ожидаемые, превращаются в
-# понятный 400/401/404, а не 500; недоступность самой MongoDB -- в 503, как и
-# недоступность LLM выше.
-
-
 _auth_logger = logging.getLogger("greencity.auth")
+
+# Ограничение частоты по IP -- защита от подбора пароля и массовой регистрации.
+REGISTER_MAX_ATTEMPTS, REGISTER_WINDOW_S = 5, 3600
+LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_S = 10, 300
+
+AUTH_ERRORS = {401: {"description": "Нет входа или токен недействителен."}, 503: {"description": "Хранилище недоступно."}}
+
+
+class StatusOk(BaseModel):
+    status: str = "ok"
 
 
 def _mongo_unavailable(e: PyMongoError) -> HTTPException:
@@ -58,24 +49,20 @@ def _mongo_unavailable(e: PyMongoError) -> HTTPException:
     return HTTPException(503, "Хранилище аккаунтов и проектов сейчас недоступно, попробуйте позже")
 
 
-# Ограничение частоты (cache.py, Redis) -- по IP, отдельно на регистрацию и
-# на вход: при большом числе пользователей это единственная защита от
-# подбора пароля/массовой регистрации ботами, которая тут вообще есть, раз
-# самого подтверждения почты по условию задачи нет. Недоступный Redis не
-# блокирует вход -- см. cache.check_rate_limit.
-REGISTER_MAX_ATTEMPTS, REGISTER_WINDOW_S = 5, 3600  # 5 регистраций в час с одного адреса
-LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_S = 10, 300  # 10 попыток входа за 5 минут с одного адреса
-
-
 def _client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
-@router.post("/api/auth/register", response_model=AuthResponse)
+@router.post(
+    "/api/auth/register",
+    response_model=AuthResponse,
+    tags=["Аккаунты"],
+    summary="Регистрация",
+    responses={400: {"description": "Имя занято или пароль не подходит."}, 429: {"description": "Слишком много регистраций."}},
+)
 async def register(request: RegisterRequest, http_request: Request):
-    """Регистрация: только имя пользователя и пароль, без почты и её
-    подтверждения. Сразу возвращает access- и refresh-токен -- отдельный
-    вход после регистрации не нужен."""
+    """Только имя пользователя и пароль, без почты. Сразу возвращает
+    access- и refresh-токен."""
     client_ip = _client_ip(http_request)
     if not await cache.check_rate_limit(f"rl:register:{client_ip}", REGISTER_MAX_ATTEMPTS, REGISTER_WINDOW_S):
         metrics.auth_registrations_total.labels(outcome="rate_limited").inc()
@@ -95,8 +82,15 @@ async def register(request: RegisterRequest, http_request: Request):
     return result
 
 
-@router.post("/api/auth/login", response_model=AuthResponse)
+@router.post(
+    "/api/auth/login",
+    response_model=AuthResponse,
+    tags=["Аккаунты"],
+    summary="Вход",
+    responses={401: {"description": "Неверное имя или пароль."}, 429: {"description": "Слишком много попыток."}},
+)
 async def login(request: LoginRequest, http_request: Request):
+    """Возвращает access-токен (для заголовка Authorization) и refresh-токен."""
     client_ip = _client_ip(http_request)
     rate_key = f"rl:login:{client_ip}"
     if not await cache.check_rate_limit(rate_key, LOGIN_MAX_ATTEMPTS, LOGIN_WINDOW_S):
@@ -112,17 +106,21 @@ async def login(request: LoginRequest, http_request: Request):
         raise HTTPException(401, str(e)) from e
     except PyMongoError as e:
         raise _mongo_unavailable(e) from e
-    await cache.reset_rate_limit(rate_key)  # успешный вход -- не копить неудачные попытки на будущее
+    await cache.reset_rate_limit(rate_key)
     metrics.auth_logins_total.labels(outcome="success").inc()
     _auth_logger.info("успешный вход", extra={"client_ip": client_ip, "username": request.username})
     return result
 
 
-@router.post("/api/auth/refresh", response_model=AccessTokenResponse)
+@router.post(
+    "/api/auth/refresh",
+    response_model=AccessTokenResponse,
+    tags=["Аккаунты"],
+    summary="Обновить access-токен",
+    responses={401: {"description": "Refresh-токен отозван или недействителен."}},
+)
 async def refresh(request: RefreshRequest):
-    """Новый access-токен по refresh-токену -- фронтенд дёргает это сам,
-    когда прежний access-токен истёк (см. frontend/src/auth.ts), не спрашивая
-    пароль заново. Отозванный (logout) или битый refresh-токен -- 401."""
+    """Новый access-токен по refresh-токену без повторного ввода пароля."""
     try:
         access_token, username = await refresh_access_token(request.refresh_token)
     except AuthError as e:
@@ -130,43 +128,41 @@ async def refresh(request: RefreshRequest):
     return AccessTokenResponse(access_token=access_token, username=username)
 
 
-@router.post("/api/auth/logout")
+@router.post("/api/auth/logout", response_model=StatusOk, tags=["Аккаунты"], summary="Выход")
 async def logout(request: RefreshRequest):
-    """Отозвать refresh-токен немедленно (Redis: cache.revoke_session), не
-    дожидаясь истечения REFRESH_TOKEN_TTL_SECONDS -- без этого выход был бы
-    только локальным удалением токенов во фронтенде, а сам refresh-токен
-    оставался бы действителен ещё до 30 дней. Не требует access-токена --
-    предъявление самого refresh-токена и есть право его отозвать, как и в
-    типичных эндпоинтах отзыва OAuth."""
+    """Отзывает refresh-токен сразу, не дожидаясь срока его действия."""
     payload = decode_token(request.refresh_token)
     sid = payload.get("sid") if payload else None
     if sid:
         await cache.revoke_session(sid)
         _auth_logger.info("выход, сессия отозвана", extra={"username": payload.get("username")})
-    return {"status": "ok"}
+    return StatusOk()
 
 
-@router.get("/api/auth/me", response_model=MeResponse)
+@router.get("/api/auth/me", response_model=MeResponse, tags=["Аккаунты"], summary="Текущий пользователь", responses=AUTH_ERRORS)
 async def whoami(user: CurrentUser = Depends(require_user)):
-    """Проверить access-токен и узнать, под кем он выдан -- фронтенд дёргает
-    это при загрузке страницы, чтобы решить, показывать вход или уже
-    авторизованный вид."""
+    """Проверяет access-токен и возвращает имя пользователя."""
     return MeResponse(username=user.username)
 
 
-@router.get("/api/projects", response_model=list[ProjectSummary])
+@router.get("/api/projects", response_model=list[ProjectSummary], tags=["Проекты"], summary="Список проектов", responses=AUTH_ERRORS)
 async def list_projects(user: CurrentUser = Depends(require_user)):
+    """Проекты пользователя без сцены -- для выбора, какой открыть."""
     try:
         return await projects_service.list_projects(user.id)
     except PyMongoError as e:
         raise _mongo_unavailable(e) from e
 
 
-@router.post("/api/projects", response_model=Project)
+@router.post(
+    "/api/projects",
+    response_model=Project,
+    tags=["Проекты"],
+    summary="Сохранить новый проект",
+    responses={**AUTH_ERRORS, 400: {"description": "Лимит проектов на аккаунт исчерпан."}},
+)
 async def create_project(request: ProjectCreate, user: CurrentUser = Depends(require_user)):
-    """Сохранить текущую сцену как новый проект. Не больше
-    projects.MAX_PROJECTS_PER_USER на пользователя (по условию задачи) --
-    лишний создать нельзя, нужно сперва удалить один из существующих."""
+    """Сохраняет сцену как новый проект. Не больше трёх проектов на аккаунт."""
     try:
         return await projects_service.create_project(user.id, request.name, request.scene)
     except ProjectsError as e:
@@ -175,7 +171,13 @@ async def create_project(request: ProjectCreate, user: CurrentUser = Depends(req
         raise _mongo_unavailable(e) from e
 
 
-@router.get("/api/projects/{project_id}", response_model=Project)
+@router.get(
+    "/api/projects/{project_id}",
+    response_model=Project,
+    tags=["Проекты"],
+    summary="Открыть проект",
+    responses={**AUTH_ERRORS, 404: {"description": "Проект не найден."}},
+)
 async def get_project(project_id: str, user: CurrentUser = Depends(require_user)):
     try:
         return await projects_service.get_project(user.id, project_id)
@@ -185,10 +187,15 @@ async def get_project(project_id: str, user: CurrentUser = Depends(require_user)
         raise _mongo_unavailable(e) from e
 
 
-@router.put("/api/projects/{project_id}", response_model=Project)
+@router.put(
+    "/api/projects/{project_id}",
+    response_model=Project,
+    tags=["Проекты"],
+    summary="Обновить проект",
+    responses={**AUTH_ERRORS, 404: {"description": "Проект не найден."}},
+)
 async def update_project(project_id: str, request: ProjectUpdate, user: CurrentUser = Depends(require_user)):
-    """Сохранить правки в уже существующий проект -- переименовать,
-    перезаписать сцену, или и то, и другое; оба поля необязательны."""
+    """Переименовать проект, перезаписать сцену или и то, и другое."""
     try:
         return await projects_service.update_project(user.id, project_id, request.name, request.scene)
     except NotFoundError as e:
@@ -197,7 +204,13 @@ async def update_project(project_id: str, request: ProjectUpdate, user: CurrentU
         raise _mongo_unavailable(e) from e
 
 
-@router.delete("/api/projects/{project_id}")
+@router.delete(
+    "/api/projects/{project_id}",
+    response_model=StatusOk,
+    tags=["Проекты"],
+    summary="Удалить проект",
+    responses={**AUTH_ERRORS, 404: {"description": "Проект не найден."}},
+)
 async def delete_project(project_id: str, user: CurrentUser = Depends(require_user)):
     try:
         await projects_service.delete_project(user.id, project_id)
@@ -205,4 +218,4 @@ async def delete_project(project_id: str, user: CurrentUser = Depends(require_us
         raise HTTPException(404, str(e)) from e
     except PyMongoError as e:
         raise _mongo_unavailable(e) from e
-    return {"status": "ok"}
+    return StatusOk()

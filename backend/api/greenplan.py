@@ -1,7 +1,6 @@
 """
-Эндпоинты GreenPlan (issue #23): автоозеленение по прошлым проектам
-(/generate, без LLM), текст-объяснение решений через YandexGPT
-(/report) и пояснительная записка в DOCX (/document).
+Эндпоинты GreenPlan: озеленение участка по похожим проектам, текст-обоснование
+решений, объяснения посадок и пояснительная записка.
 """
 
 from __future__ import annotations
@@ -14,7 +13,7 @@ from urllib.parse import quote
 
 from fastapi import APIRouter, Query
 from fastapi.responses import Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from core.plant_catalog import catalog_by_id
 from core.schemas import Scene
@@ -29,69 +28,73 @@ from greenplan.violation_report import Violation, find_violations
 from monitoring import metrics
 
 router = APIRouter()
+log = logging.getLogger("greencity.greenplan")
 
-
-# threading.Lock, не asyncio.Lock -- эти эндпоинты синхронные (def, не async
-# def) и выполняются в пуле потоков FastAPI, вне event loop, где asyncio.Lock
-# не работает предсказуемо между потоками. Замер этой же сессии: 3
-# параллельных /api/greenplan/generate на крупном участке шли не параллельно,
-# а ~11x медленнее КАЖДЫЙ (19.5с вместо 1.7с) -- чистая CPU-геометрия на
-# shapely не распараллеливается общим GIL (см. тот же аргумент в
-# backend/Dockerfile про UVICORN_WORKERS), конкурирующие потоки друг друга
-# только тормозят. Лок сериализует запросы вместо того, чтобы позволить им
-# толкаться за GIL -- сумма времени по факту меньше, а event loop (и
-# healthcheck на нём) не голодает, пока несколько тяжёлых запросов crunch'ат
-# геометрию одновременно.
+# Геометрия на shapely упирается в GIL: параллельные тяжёлые запросы в одном
+# процессе не ускоряются, а тормозят друг друга. Лок выстраивает их в очередь.
 _greenplan_generate_lock = threading.Lock()
 _greenplan_report_lock = threading.Lock()
 
+DOCX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
 
 class GreenPlanGenerateRequest(BaseModel):
-    scene: Scene
-    # Параметры пользователя (диалог GreenPlan): стиль, что сажать,
-    # предпочтительные виды, благоустройство. Без них -- поведение по умолчанию.
-    options: GreenPlanOptions = GreenPlanOptions()
+    scene: Scene = Field(description="Сцена участка из /api/parse или /api/parse-dwg, можно с правками.")
+    options: GreenPlanOptions = Field(default_factory=GreenPlanOptions, description="Параметры озеленения.")
 
 
 class GreenPlanGenerateResult(BaseModel):
+    scene: Scene = Field(description="Сцена с новой посадкой, газоном и благоустройством.")
+    assignments: list[ZoneAssignment] = Field(description="Решение по каждой геометрической зоне участка.")
+    violations: list[Violation] = Field(description="Нарушения норм отступов на участке (исходные объекты и новые).")
+    assortment: list[AssortmentRow] = Field(description="Ведомость новой посадки по видам, газон -- в м².")
+    improvements: list[AssortmentRow] = Field(default=[], description="Ведомость благоустройства: дорожки, фонари, скамейки, урны.")
+    notes: list[str] = Field(default=[], description="Что из параметров не удалось выполнить и почему.")
+    rejections: RejectionStats = Field(
+        default_factory=RejectionStats,
+        description="Точки, отклонённые по нормам при расстановке; передайте их в /api/greenplan/explanations.",
+    )
+
+
+class GreenPlanReportResult(BaseModel):
+    report: Optional[str] = Field(description="Текст-обоснование решений или null.")
+    report_error: Optional[str] = Field(description="Почему текст не получен (нет ключа, модель недоступна) или null.")
+
+
+class GreenPlanDocumentRequest(BaseModel):
     scene: Scene
     assignments: list[ZoneAssignment]
-    violations: list[Violation]
-    assortment: list[AssortmentRow]
-    # Ведомость благоустройства: новые дорожки (м²), фонари, скамейки, урны.
-    improvements: list[AssortmentRow] = []
-    # Для пользователя: что из параметров не удалось выполнить и почему
-    # (предпочтительный вид не по нормам, нет двора под дорожки и т.п.).
+    report: Optional[str] = Field(default=None, description="Текст из /api/greenplan/report -- идёт приложением с пометкой «текст ИИ».")
+    title: Optional[str] = Field(default=None, description="Название участка для титула записки.")
+    options: Optional[GreenPlanOptions] = Field(default=None, description="Параметры запуска -- в раздел «Принятые решения».")
     notes: list[str] = []
-    # Точки, отклонённые по нормам при расстановке, -- для файла объяснений
-    # (/api/greenplan/explanations): фронтенд возвращает их туда как есть.
-    rejections: RejectionStats = RejectionStats()
 
 
-# Синхронный def -- расстановка, нарушения и ведомость -- чистая
-# CPU-геометрия, ни одного await. НАМЕРЕННО без текста-отчёта (LLM) -- тот
-# вынесен в отдельный /api/greenplan/report ниже: вызов LLM занимает секунды
-# (а с локальной моделью -- до ~30 с), и фронтенд не должен ждать его ради
-# уже готовой расстановки.
-@router.post("/api/greenplan/generate", response_model=GreenPlanGenerateResult)
+class GreenPlanExplanationsRequest(BaseModel):
+    scene: Scene
+    assignments: list[ZoneAssignment] = []
+    rejections: RejectionStats = Field(default_factory=RejectionStats)
+
+
+@router.post(
+    "/api/greenplan/generate",
+    response_model=GreenPlanGenerateResult,
+    tags=["GreenPlan"],
+    summary="Озеленить участок",
+)
 def greenplan_generate(
     request: GreenPlanGenerateRequest,
-    k: int = Query(default=3, ge=1, le=9, description="Число ближайших проектов-соседей для retrieval."),
+    k: int = Query(default=3, ge=1, le=9, description="Сколько похожих проектов голосуют за стиль и приёмы."),
 ):
-    """Автоозеленение по прошлым проектам (GreenPlan, issue #23, Этапы 3-6)
-    с параметрами пользователя (greenplan/options.py). Сначала общее решение
-    на участок (стиль, палитра видов), потом приёмы зон; благоустройство --
-    до посадок. Повторный запуск заменяет прошлый результат GreenPlan в
-    присланной сцене, а не добавляет второй слой (greenplan/pipeline.py).
-
-    Текст-объяснение -- отдельным запросом, см. /api/greenplan/report ниже:
-    он ждёт ответа LLM и не должен блокировать уже
-    готовый детерминированный результат.
-    """
+    """Проектирует озеленение участка по реализованным проектам-аналогам:
+    стиль участка и единая палитра видов, приём для каждой зоны, расстановка
+    с проверкой норм отступов в каждой точке, газон на свободной земле.
+    Работает без LLM, за секунды. Повторный запуск заменяет прошлый результат.
+    Алгоритм -- в docs/GREENPLAN_ALGORITHM.md."""
     with _greenplan_generate_lock:
         run = run_greenplan(request.scene, request.options, k)
-        logging.getLogger("greencity.greenplan").info(
-            "GreenPlan: %d новых посадок, %d объектов и %d дорожек благоустройства, %d зон, газон %d участков",
+        log.info(
+            "GreenPlan: %d посадок, %d объектов и %d дорожек благоустройства, %d зон, газон %d участков",
             len(run.new_plants), len(run.improvements.objects), len(run.improvements.zones),
             len(run.assignments), len(run.scene.lawns),
         )
@@ -106,25 +109,16 @@ def greenplan_generate(
         )
 
 
-class GreenPlanReportResult(BaseModel):
-    report: Optional[str]
-    report_error: Optional[str]
-
-
-# Синхронный def -- клиент openai блокирующий (как и у /api/edit-with-text
-# ниже), FastAPI уводит в пул потоков; сам вызов -- секунды (YandexGPT),
-# поэтому отдельный от /api/greenplan/generate эндпоинт: фронтенд
-# показывает уже готовую расстановку сразу и дотягивает текст в фоне, не
-# блокируя ничего остальным ожиданием LLM. Свой лок (не общий с generate
-# выше) -- это разные ресурсы (CPU-геометрия vs сетевой вызов к LLM),
-# нет причины заставлять их ждать друг друга.
-@router.post("/api/greenplan/report", response_model=GreenPlanReportResult)
+@router.post(
+    "/api/greenplan/report",
+    response_model=GreenPlanReportResult,
+    tags=["GreenPlan"],
+    summary="Текст-обоснование решений",
+)
 def greenplan_report(assignments: list[ZoneAssignment]):
-    """Текст-объяснение решений GreenPlan (Этап 6) через LLM (YandexGPT в
-    Yandex AI Studio, backend/greenplan/decision_report.py) -- по списку решений,
-    уже посчитанному /api/greenplan/generate (передаётся сюда как есть, не
-    пересчитывается). Недоступность LLM или нет ключа -- не ошибка запроса: 200 с
-    report=None и понятной report_error, а не 500."""
+    """Связный текст для заказчика по решениям из `/api/greenplan/generate`
+    (YandexGPT). Модель только пересказывает готовые решения и ничего не
+    добавляет от себя. Если модель недоступна, ответ 200 с `report_error`."""
     with _greenplan_report_lock:
         try:
             report = generate_report(assignments)
@@ -135,40 +129,26 @@ def greenplan_report(assignments: list[ZoneAssignment]):
             return GreenPlanReportResult(report=None, report_error=str(e))
 
 
-class GreenPlanDocumentRequest(BaseModel):
-    scene: Scene
-    assignments: list[ZoneAssignment]
-    # Текст из /api/greenplan/report, если фронтенд его уже получил: идёт в
-    # приложение с пометкой "текст ИИ -- проверить". Заново LLM не вызываем.
-    report: Optional[str] = None
-    title: Optional[str] = None
-    # Параметры запуска и заметки из /generate -- в записку ("Параметры,
-    # заданные пользователем"); без них записка -- как раньше.
-    options: Optional[GreenPlanOptions] = None
-    notes: list[str] = []
-
-
-DOCX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-
-
-# Синхронный def -- characterize_site и find_violations -- CPU-геометрия,
-# под тем же локом, что и генерация (см. _greenplan_generate_lock выше).
-@router.post("/api/greenplan/document")
+@router.post(
+    "/api/greenplan/document",
+    tags=["GreenPlan"],
+    summary="Пояснительная записка (DOCX)",
+    responses={200: {"content": {DOCX_MEDIA_TYPE: {}}, "description": "Документ Word."}},
+)
 def greenplan_document(request: GreenPlanDocumentRequest):
-    """Пояснительная записка в DOCX ("сценарий выгрузки/генерации
-    документации для внедрения предложенного решения" из ТЗ) по сцене
-    с результатом /api/greenplan/generate и его решениям по зонам. Нарушения,
-    ведомость и характеристики участка пересчитываются здесь по присланной
-    сцене, а не берутся с фронтенда на веру."""
+    """Пояснительная записка к проекту озеленения: сведения об участке,
+    нормативная база и применённые отступы, принятые решения с
+    происхождением, ведомость элементов озеленения по форме 9 ГОСТ 21.508,
+    проверка норм, технические требования и ограничения. Нарушения и
+    ведомость пересчитываются по присланной сцене."""
     with _greenplan_generate_lock:
         content = build_document(
             request.scene, request.assignments, report=request.report, title=request.title,
             options=request.options, notes=request.notes,
         )
     metrics.greenplan_documents_total.inc()
-    logging.getLogger("greencity.greenplan").info("выгружена пояснительная записка: %d зон", len(request.assignments))
-    # filename -- ASCII для старых клиентов, filename* -- с названием участка
-    # по RFC 5987 (кириллица в обычном filename ломает часть браузеров).
+    log.info("выгружена пояснительная записка: %d зон", len(request.assignments))
+    # filename* по RFC 5987 -- кириллица в обычном filename ломает часть браузеров.
     name = quote(f"Пояснительная записка — {request.title or 'участок'}.docx")
     return Response(
         content=content,
@@ -177,32 +157,32 @@ def greenplan_document(request: GreenPlanDocumentRequest):
     )
 
 
-class GreenPlanExplanationsRequest(BaseModel):
-    scene: Scene
-    assignments: list[ZoneAssignment] = []
-    rejections: RejectionStats = RejectionStats()
-
-
-@router.post("/api/greenplan/explanations")
+@router.post(
+    "/api/greenplan/explanations",
+    tags=["GreenPlan"],
+    summary="Объяснения посадок со ссылками на НПА",
+    responses={200: {"content": {"application/json": {}, "text/csv": {}}, "description": "Файл объяснений."}},
+)
 def greenplan_explanations(
     request: GreenPlanExplanationsRequest,
-    format: str = Query(default="json", pattern="^(json|csv)$", description="json или csv (разделитель ;)"),
+    format: str = Query(default="json", pattern="^(json|csv)$", description="json или csv (разделитель «;», UTF-8 с BOM)."),
 ):
-    """Объяснение КАЖДОЙ новой посадки со ссылкой на НПА и пункт (ТЗ, п. 8
-    и 7.2.6): вид, место и приём, проект-аналог, основание подбора вида,
-    ближайшие ограничения с фактическим расстоянием, нормой и пунктом;
-    отклонённые по нормам точки и зоны запрета посадки. id посадки -- тот
-    же, что в XDATA сущности выгруженного DXF (слои NEW_* / USER_*)."""
+    """Для каждой новой посадки: вид, координаты в сцене и в исходном
+    чертеже, слой DXF, приём и проект-аналог, основание подбора вида и
+    ближайшие ограничения с фактическим расстоянием, нормой и пунктом НПА.
+    Отдельно -- отклонённые по нормам точки и зоны запрета посадки. id
+    посадки совпадает с XDATA сущности в выгруженном DXF."""
     with _greenplan_generate_lock:
         plants = explain_plants(request.scene, request.assignments)
         if format == "csv":
-            # BOM -- чтобы Excel сразу открыл кириллицу в UTF-8.
-            content = ("\ufeff" + explanations_csv(request.scene, plants, request.rejections)).encode("utf-8")
+            # BOM -- чтобы Excel сразу распознал UTF-8.
+            content = ("﻿" + explanations_csv(request.scene, plants, request.rejections)).encode("utf-8")
             media, ext = "text/csv; charset=utf-8", "csv"
         else:
-            content = json.dumps(explanations_json(request.scene, plants, request.rejections), ensure_ascii=False, indent=1).encode("utf-8")
+            data = explanations_json(request.scene, plants, request.rejections)
+            content = json.dumps(data, ensure_ascii=False, indent=1).encode("utf-8")
             media, ext = "application/json", "json"
-    logging.getLogger("greencity.greenplan").info("выгружены объяснения посадок (%s): %d посадок", format, len(plants))
+    log.info("выгружены объяснения посадок (%s): %d посадок", format, len(plants))
     return Response(
         content=content,
         media_type=media,

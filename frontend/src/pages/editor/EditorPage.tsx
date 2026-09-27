@@ -56,15 +56,9 @@ export default function EditorPage() {
   const { session } = useAuth();
 
   const [scene, setScene] = useState<Scene | null>(null);
-  // Счётчик "загружена новая сцена" для FitCamera -- НЕ scene.boundary
-  // напрямую: у реальных DWG-проектов без слоя границы (issue #50 follow-up)
-  // boundary у ДВУХ РАЗНЫХ сцен подряд одинаково null, а null === null в JS
-  // -- SceneView/FitCamera раньше принимал это за "та же сцена" и молча не
-  // перецентровывал камеру на второй, третий и т.д. проект без границы,
-  // оставляя её там, где она была для самого первого. Инкрементируется
-  // только при загрузке ДЕЙСТВИТЕЛЬНО новой сцены (файл/папка/проект), не
-  // при редактировании текущей (drag, правка текстом, GreenPlan) -- иначе
-  // камера дёргалась бы на каждое такое действие.
+  // Растёт при загрузке новой сцены (файл, папка, проект) -- сигнал FitCamera
+  // перецентровать камеру. Сравнивать boundary нельзя: у двух сцен без границы
+  // он одинаково null. Правки текущей сцены счётчик не трогают.
   const [sceneLoadToken, setSceneLoadToken] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [transformMode, setTransformMode] = useState<TransformMode>("translate");
@@ -78,20 +72,12 @@ export default function EditorPage() {
   const [exportingDxf, setExportingDxf] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // Файлы .dwg, которые backend не смог сконвертировать при загрузке папки
-  // (issue #50) -- не ошибка (сцена уже загружена и отображена), просто
-  // предупреждение, отдельное от error, чтобы не выглядеть как сбой загрузки.
-  // totalDwgFiles -- сколько .dwg вообще было отправлено (известно только на
-  // клиенте, backend его не возвращает), для сообщения "N из M не удалось".
+  // .dwg, которые не удалось сконвертировать, -- предупреждение, а не ошибка:
+  // сцена уже загружена. totalDwgFiles -- сколько файлов было отправлено.
   const [dwgWarnings, setDwgWarnings] = useState<{ file: string; error: string }[] | null>(null);
   const [totalDwgFiles, setTotalDwgFiles] = useState(0);
-  // Только для сообщения во время загрузки -- backend не отдаёт прогресс
-  // по ходу конвертации (один HTTP-запрос на весь батч), а сама конвертация
-  // не быстрая (issue #50 follow-up: реальный замер -- конвертация .dwg
-  // сама по себе быстрая, ~1с/файл, а вот разбор итогового DXF занимает
-  // 3-4.5с/файл на крупных реальных файлах -- параллелить его надёжно не
-  // получилось, см. docstring backend/exchange/dwg_batch_converter.py). Оценка "~10с
-  // на файл" не точный прогресс, а ожидание, чтобы не выглядело зависшим.
+  // Для сообщения во время загрузки: прогресса бэкенд не отдаёт, это лишь
+  // ожидаемое время, чтобы загрузка не выглядела зависшей.
   const [dwgUploading, setDwgUploading] = useState(false);
 
   const [instruction, setInstruction] = useState("");
@@ -161,9 +147,8 @@ export default function EditorPage() {
     }
   }, []);
 
-  // Папка .dwg целиком (issue #50) -- webkitdirectory отдаёт ВСЕ файлы папки
-  // (в реальных проектах Мосгеотреста рядом с .dwg лежат PDF/xlsx/фото),
-  // поэтому фильтруем по расширению уже на клиенте, до отправки на бэкенд.
+  // webkitdirectory отдаёт все файлы папки (рядом с .dwg лежат PDF, xlsx,
+  // фото), поэтому фильтруем по расширению до отправки.
   const handleDwgFolder = useCallback(async (fileList: FileList) => {
     const dwgFiles = Array.from(fileList).filter((f) => f.name.toLowerCase().endsWith(".dwg"));
     if (dwgFiles.length === 0) {
@@ -213,9 +198,8 @@ export default function EditorPage() {
         position: { x: cx + offsetX, y: 0, z: cz + offsetZ },
         rotation: 0,
         scale: 1,
-        // species -- для правил отступа по породе (setbackNorms.ts: липе
-        // 10 м от здания и т.п.); у МАФ и мощения нормы по породе нет.
-        // source: "manual" -- правка пользователя: при экспорте -- слой USER_*.
+        // species -- для правил отступа по породе (липе 10 м от здания);
+        // source: "manual" -- при экспорте объект идёт на слой USER_*.
         metadata: { catalogId: item.id, label: item.label, source: "manual", ...(item.setback_kind ? { species: item.label } : {}) },
       };
       setSelectedId(newObject.id);
@@ -393,9 +377,8 @@ export default function EditorPage() {
       a.download = "greencity_plan.dxf";
       a.click();
       URL.revokeObjectURL(url);
-      // Исходника на сервере нет (проект сохранён до этой версии или
-      // хранилище очищено): файл собран из сцены -- координаты в метрах от
-      // центра участка, слои подосновы только распознанные. Сказать об этом.
+      // Исходника на сервере нет: файл собран из сцены -- координаты в метрах
+      // от центра участка, из подосновы только распознанные слои.
       setExportNotice(
         mode === "rebuilt"
           ? "Исходный чертёж на сервере не найден — DXF собран из сцены (метры от центра участка). Чтобы получить результат поверх исходника, загрузите чертёж заново."
@@ -507,17 +490,12 @@ export default function EditorPage() {
 
   const selectedArea = scene?.restrictions.find((z) => z.type === SELECTION_ZONE_TYPE) ?? null;
 
-  // scene меняется по ссылке на каждое перемещение/добавление объекта, но
-  // restrictions -- только когда меняется сама разметка участка (загрузка
-  // DXF, GreenPlan) -- индекс не нужно перестраивать на каждый drag.
+  // Индекс зон перестраивается только при смене разметки участка, а не на
+  // каждое перемещение объекта.
   const restrictionZoneIndex = useMemo(() => buildZoneIndex(scene?.restrictions ?? []), [scene?.restrictions]);
 
-  // Раньше это пересчитывалось на КАЖДЫЙ ре-рендер страницы линейным
-  // checkViolations по всем зонам сцены (тысячи на реальных участках) -- в
-  // частности, на каждое наведение мыши на зону ограничения (см. onHover в
-  // RestrictionZones.tsx), не имеющее отношения к выделенному объекту.
-  // useMemo + индексированный checkViolationsAt пересчитывают только когда
-  // реально меняется само выделение или сцена.
+  // Нарушения выделенного объекта -- только при смене выделения или сцены,
+  // а не на каждый ре-рендер (например наведение мыши на зону).
   const selectedObj = useMemo(
     () => scene?.objects.find((o) => o.id === selectedId) ?? null,
     [scene?.objects, selectedId]

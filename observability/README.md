@@ -74,7 +74,7 @@ healthcheck, promtail -- раньше loki. У всех `restart: unless-stopped
 | `greencity_dxf_exports_total` | Counter | -- | `/api/export-dxf` |
 | `greencity_greenery_generated_total` | Counter | `object_type` (tree/bush/lawn_patch) | `/api/generate-greenery`, на каждый добавленный объект |
 | `greencity_llm_edit_requests_total` | Counter | `outcome` (success/llm_error/not_configured) | `/api/edit-with-text` |
-| `greencity_greenplan_generate_total` | Counter | `report_outcome` (success/unavailable) | `/api/greenplan/report` (GreenPlan, issue #23) |
+| `greencity_greenplan_generate_total` | Counter | `report_outcome` (success/unavailable) | `/api/greenplan/report` (GreenPlan) |
 | `greencity_auth_registrations_total` | Counter | `outcome` (success/rejected/rate_limited) | `/api/auth/register` |
 | `greencity_auth_logins_total` | Counter | `outcome` (success/rejected/rate_limited) | `/api/auth/login` |
 | `greencity_rate_limit_blocks_total` | Counter | `endpoint` (register/login) | Запрос отклонён `cache.check_rate_limit` |

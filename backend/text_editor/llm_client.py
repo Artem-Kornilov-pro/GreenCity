@@ -1,12 +1,9 @@
 """
-Вызов LLM для правки текстом (text_editor/service.py): выбор провайдера по
-LLM_PROVIDER ("yandex" по умолчанию -- Yandex AI Studio, core/yandex_ai.py,
-модель YANDEX_CLOUD_MODEL, по умолчанию Qwen3 235B; или "gemini"), оба через
-OpenAI-совместимый API, запрос и разбор ответа в LlmPlan. Gemini
-поддерживает только Chat Completions, yandex-путь использует Responses API --
-поэтому два метода (_call_responses/_call_chat_completions) под одной
-_client_and_model. Без ключей -- LlmNotConfiguredError (503 в main.py), а не
-падение сервиса.
+Вызов LLM для правки текстом: провайдер по LLM_PROVIDER («yandex» по
+умолчанию -- Yandex AI Studio, модель YANDEX_CLOUD_MODEL, по умолчанию Qwen3
+235B; или «gemini»), запрос и разбор ответа в LlmPlan. Оба через
+OpenAI-совместимый API: yandex -- Responses API, gemini -- Chat Completions.
+Без ключей -- LlmNotConfiguredError (ответ 503).
 """
 
 from __future__ import annotations
@@ -34,24 +31,18 @@ logger = logging.getLogger("greencity.llm")
 
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 TEMPERATURE = 0.3
-# С запасом под рассуждающие модели. Текущая yandexgpt не рассуждает и тратит на
-# ответ ~150-250 токенов -- лимит её не замедляет. Но если переключить
-# YANDEX_CLOUD_MODEL на рассуждающую (deepseek-v4-flash), рассуждение и ответ
-# идут в один лимит: на 2000 ответ обрывался пустым (status=incomplete), на 8000
-# обычно укладывался в ~3-4 тыс., но изредка не хватало и его. Поле
-# reasoning_tokens у Yandex всегда 0 -- ориентироваться можно только на status.
+# С запасом под рассуждающие модели: у них рассуждение и ответ идут в один
+# лимит, и при 2000 ответ обрывался пустым.
 MAX_OUTPUT_TOKENS = 8000
 
-# Сколько прошлых правок чата уходит модели и насколько коротко: для
-# отсылок ("убери их", "там же") хватает последних просьб и того, что по ним
-# сделано, а каждый символ -- токены на каждом запросе.
+# Сколько прошлых правок чата уходит модели и насколько коротко: для отсылок
+# («убери их», «там же») хватает последних просьб и их итогов.
 MAX_HISTORY_TURNS = 4
 MAX_HISTORY_TEXT = 300
 MAX_HISTORY_APPLIED = 4
 MAX_HISTORY_APPLIED_TEXT = 160
-# id новых объектов прошлой правки -- для "убери их", "сделай их крупнее".
-# Больше -- уже не "их", а заметная часть участка; тогда модель берёт фильтр
-# по месту и виду.
+# id новых объектов прошлой правки -- для «убери их». Больше -- уже не «их»,
+# а заметная часть участка; тогда модель фильтрует по месту и виду.
 MAX_HISTORY_IDS = 60
 
 

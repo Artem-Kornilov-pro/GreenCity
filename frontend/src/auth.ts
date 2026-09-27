@@ -1,17 +1,9 @@
-// Аккаунты: логин/пароль, без подтверждения почты (backend/accounts/auth.py,
-// backend/accounts/projects.py). Гостевой режим — это просто отсутствие сессии:
-// редактор (загрузка DXF, генерация, правка текстом) им не интересуется,
-// им пользуются только запросы к /api/projects (см. api.ts).
+// Аккаунты: имя и пароль, без почты. Гостевой режим -- просто отсутствие
+// сессии; токен нужен только запросам к /api/projects.
 //
-// Access + refresh, а не один токен: access живёт недолго (см.
-// ACCESS_TOKEN_LIFETIME_MS, держится в паре с backend/accounts/auth.py::
-// ACCESS_TOKEN_TTL_SECONDS) и идёт в заголовке каждого запроса; в
-// localStorage переживает перезагрузку страницы только refresh-токен —
-// именно по нему при необходимости молча получается новый access, не
-// заставляя вводить пароль заново. Сам access-токен и его срок жизни живут
-// только в памяти вкладки (см. cachedAccess) — независимо от того, что
-// хранится в React-состоянии сессии, поэтому вызывающему коду не нужно
-// самому заботиться о его свежести.
+// Access-токен короткоживущий и хранится только в памяти вкладки
+// (cachedAccess); в localStorage переживает перезагрузку только
+// refresh-токен, по которому access молча обновляется.
 
 const REFRESH_KEY = "greencity_refresh_token";
 const USERNAME_KEY = "greencity_username";
@@ -60,11 +52,8 @@ async function requestNewAccessToken(refreshToken: string): Promise<string | nul
   return body.access_token as string;
 }
 
-// Действительный access-токен для запроса — обновляет его через refresh,
-// только если истёк или скоро истечёт (5 c запаса на сам запрос). Не
-// привязан к тому, какой Session-объект держит React в состоянии: два
-// вызова подряд с разными (но одинаковыми по refreshToken) объектами Session
-// не будут дважды обновлять токен впустую.
+// Действительный access-токен: обновляется через refresh, только если истёк
+// или истечёт в ближайшие 5 с.
 export async function getAccessToken(refreshToken: string): Promise<string | null> {
   if (cachedAccess && cachedAccess.refreshToken === refreshToken && cachedAccess.expiresAt > Date.now() + 5000) {
     return cachedAccess.token;
@@ -101,9 +90,8 @@ export function login(username: string, password: string): Promise<Session> {
   return authRequest("/api/auth/login", username, password);
 }
 
-// Проверить, что сохранённый refresh-токен ещё действителен (не истёк за
-// 30 дней, не отозван через logout, пользователь не удалён) — вызывается
-// один раз при загрузке страницы.
+// Проверить сохранённый refresh-токен (не истёк, не отозван) -- один раз
+// при загрузке страницы.
 export async function whoAmI(refreshToken: string): Promise<string | null> {
   const token = await getAccessToken(refreshToken);
   if (!token) return null;
@@ -113,10 +101,7 @@ export async function whoAmI(refreshToken: string): Promise<string | null> {
   return body.username as string;
 }
 
-// Отозвать refresh-токен на сервере (Redis) — без этого выход был бы только
-// локальным удалением токенов, а сам refresh-токен оставался бы действителен
-// ещё до 30 дней. Не бросает исключение при сбое сети — локальный выход
-// (clearSession) не должен зависеть от того, доехал ли запрос до сервера.
+// Отозвать refresh-токен на сервере. Сбой сети не мешает локальному выходу.
 export async function logout(refreshToken: string): Promise<void> {
   await fetch(`${API_BASE}/api/auth/logout`, {
     method: "POST",

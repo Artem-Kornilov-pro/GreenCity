@@ -1,0 +1,56 @@
+GreenCity — лицензия только на просмотр исходного кода
+Copyright (c) 2026 Артемий Корнилов, Константин Жадько (команда «Вороны»).
+Все права защищены.
+
+1. Разрешено: просматривать исходный код этого репозитория и сопроводительные
+   материалы в том месте, где они опубликованы правообладателями.
+
+2. Не разрешено без предварительного письменного согласия правообладателей:
+   копировать, скачивать для иного использования, запускать, изменять,
+   создавать производные работы, объединять с другим программным
+   обеспечением, публиковать, распространять, сублицензировать, продавать
+   или иным образом использовать код и материалы полностью или частично,
+   в том числе для обучения моделей машинного обучения.
+
+3. Исключение для оценки на конкурсе. Организаторы и эксперты конкурса
+   «Лидеры цифровой трансформации 2026» и постановщик задачи (Департамент
+   природопользования и охраны окружающей среды города Москвы) могут
+   собирать и запускать решение по инструкции из README исключительно для
+   экспертной оценки в рамках конкурса. Иное использование, включая
+   пилотирование и внедрение, требует отдельного письменного согласия.
+
+4. Файлы сторонних библиотек и моделей, включённые в репозиторий, остаются
+   под своими лицензиями.
+
+5. Код предоставляется «как есть», без каких-либо гарантий. Правообладатели
+   не несут ответственности за любой ущерб, связанный с его просмотром.
+
+По вопросам использования обращайтесь к правообладателям через репозиторий.
+
+-------------------------------------------------------------------------------
+
+GreenCity — View-Only Source License
+Copyright (c) 2026 Artemii Kornilov, Konstantin Zhadko (team "Vorony").
+All rights reserved.
+
+1. You may view the source code and accompanying materials of this
+   repository where they are published by the copyright holders.
+
+2. Without prior written permission of the copyright holders you may not
+   copy, download for any other use, run, modify, create derivative works,
+   merge, publish, distribute, sublicense, sell or otherwise use the code or
+   materials, in whole or in part, including for training machine learning
+   models.
+
+3. Competition evaluation exception. The organizers and experts of the
+   "Leaders of Digital Transformation 2026" competition and the task owner
+   (Moscow Department of Nature Management and Environmental Protection) may
+   build and run the solution following the README solely for expert
+   evaluation within the competition. Any other use, including piloting and
+   deployment, requires separate written permission.
+
+4. Third-party libraries and models included in the repository remain under
+   their own licenses.
+
+5. The code is provided "as is", without warranty of any kind. The copyright
+   holders are not liable for any damages arising from viewing it.

@@ -8,7 +8,7 @@ OUT      ?= output
 CATEGORY ?= tree
 
 .PHONY: help venv backend frontend-install frontend frontend-build parse clean \
-        lint lint-py lint-web lint-fix models test test-e2e test-cov corpus-features primers \
+        lint lint-py lint-web lint-fix models test test-e2e test-cov corpus-features primers examples docs \
         docker-build docker-up docker-down docker-logs docker-prod-up docker-prod-down docker-prune
 
 help:
@@ -23,6 +23,8 @@ help:
 	@echo "make test-cov          - то же самое + отчёт о покрытии (terminal + htmlcov/)"
 	@echo "make corpus-features   - пересчитать data/pattern_corpus_features.json (после правки DXF корпуса)"
 	@echo "make primers           - пересобрать синтетические эталоны locations/2x_*_primer и признаки корпуса"
+	@echo "make examples          - пересобрать примеры результата examples/ (без LLM) и проверить выходные DXF"
+	@echo "make docs              - схемы BPMN (docs/bpmn/) и PDF документации (docs/pdf/; нужны markdown и Chromium)"
 	@echo "make lint              - прогнать все линтеры (Python + фронтенд)"
 	@echo "make lint-py           - только Python (ruff, конфиг в pyproject.toml)"
 	@echo "make lint-web          - только фронтенд (oxlint, конфиг .oxlintrc.json)"
@@ -85,6 +87,16 @@ corpus-features: $(VENV)/bin/activate
 primers: $(VENV)/bin/activate
 	$(PYTHON) tools/primers/build_primers.py
 	$(MAKE) corpus-features
+
+examples: $(VENV)/bin/activate
+	$(PYTHON) tools/build_examples.py
+	for s in 07_nizhnie_polya 06_kamchatskaya_ulitsa 12_natashinsky_proezd; do \
+		$(PYTHON) tools/check_export.py locations/$$s/$$s.dxf examples/$$s/$${s}_greenplan.dxf examples/$$s/$${s}_explanations.json || exit 1; \
+	done
+
+docs:
+	python3 tools/docs/build_bpmn.py
+	python3 tools/docs/build_pdf.py
 
 test-cov: $(VENV)/bin/activate
 	$(PYTEST) -n auto --cov --cov-report=term-missing --cov-report=html
