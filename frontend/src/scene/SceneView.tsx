@@ -14,6 +14,9 @@ import { Curbs } from "./CurbStrips";
 import { Lawns } from "./Lawns";
 import { AreaSelectionDraw } from "./AreaSelectionDraw";
 
+// Высота сетки-ориентира: под землёй (Ground, -0.02), см. комментарий у gridHelper.
+const GRID_Y = -0.3;
+
 export function SceneView({
   scene,
   sceneLoadToken,
@@ -100,9 +103,16 @@ export function SceneView({
         onMove={onMove}
         onRotate={onRotate}
       />
+      {/* Сетка -- заметно ниже земли (Ground, -0.02), а не в сантиметре над
+          ней: у земли, газона и зон вершины лежат в буфере мировыми
+          координатами, и у сцен из DWG вдали от начала координат во float32
+          они "дрожат" на миллиметры-сантиметры при каждом движении камеры.
+          Сантиметрового зазора не хватало -- линии сетки мерцали сквозь
+          землю (Берзарина). Над участком сетку закрывает земля, вокруг --
+          она видна как ориентир. */}
       <gridHelper
         args={[gridSize, gridDivisions, "#8fa6b3", "#b9cdd6"]}
-        position={[(bounds.minX + bounds.maxX) / 2, -0.01, (bounds.minZ + bounds.maxZ) / 2]}
+        position={[(bounds.minX + bounds.maxX) / 2, GRID_Y, (bounds.minZ + bounds.maxZ) / 2]}
       />
       <AreaSelectionDraw active={selectionMode} onComplete={onAreaSelected} />
       {/* В режиме выделения drag должен обводить участок, а не крутить
