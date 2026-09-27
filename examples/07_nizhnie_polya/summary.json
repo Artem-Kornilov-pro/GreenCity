@@ -1,0 +1,56 @@
+{
+ "site": "07_nizhnie_polya",
+ "source_dxf": "locations/07_nizhnie_polya/07_nizhnie_polya.dxf",
+ "site_style": "landscape",
+ "lead_project": "19_2ya_pryadilnaya",
+ "zones": 246,
+ "new_trees": 290,
+ "new_bushes": 1253,
+ "new_lawn_sqm": 670,
+ "violations_new_objects": 0,
+ "rejected_by_norm": 1065,
+ "assortment": [
+  {
+   "category": "дерево",
+   "species": "Вяз гибридный Резиста",
+   "count": 199,
+   "unit": "шт."
+  },
+  {
+   "category": "дерево",
+   "species": "Клен остролистный",
+   "count": 68,
+   "unit": "шт."
+  },
+  {
+   "category": "дерево",
+   "species": "Липа европейская",
+   "count": 23,
+   "unit": "шт."
+  },
+  {
+   "category": "кустарник",
+   "species": "Спирея березолистная",
+   "count": 1176,
+   "unit": "шт."
+  },
+  {
+   "category": "кустарник",
+   "species": "Жимолость золотистая",
+   "count": 42,
+   "unit": "шт."
+  },
+  {
+   "category": "кустарник",
+   "species": "Смородина золотистая",
+   "count": 35,
+   "unit": "шт."
+  },
+  {
+   "category": "газон",
+   "species": "Газон обыкновенный",
+   "count": 670,
+   "unit": "м²"
+  }
+ ]
+}

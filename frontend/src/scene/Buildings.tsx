@@ -3,12 +3,8 @@ import * as THREE from "three";
 import type { Point2, SceneObject } from "../types";
 import { extrudedPolygonGeometry } from "./geometryHelpers";
 
-// Здания ни на что не реагируют (двигать можно только посадки и МАФ, см.
-// PlacedObjects) и выглядят одинаково, поэтому держать их отдельными мешами
-// незачем: каждый такой меш -- это ещё и собственный экземпляр
-// meshStandardMaterial, то есть полноценный PBR-шейдер со своими uniform'ами.
-// На файле из 20 улиц это 291 материал и 291 вызов отрисовки (вдвое больше с
-// учётом прохода теней) вместо одного.
+// Здания неподвижны и одинаковы, поэтому сливаются в одну геометрию с одним
+// материалом: один вызов отрисовки вместо сотен.
 function mergeBuildings(objects: SceneObject[]): THREE.BufferGeometry | null {
   const positions: number[] = [];
   const normals: number[] = [];

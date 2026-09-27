@@ -1,25 +1,15 @@
 """
-Аутентификация: логин/пароль, без подтверждения почты -- по требованию
-задачи ("не надо делать верификацию почты и остальное просто логин пароль").
-Гостевой режим (тоже по требованию, "для тестов") не описан здесь вообще:
-это просто отсутствие токена -- эндпоинты DXF/генерации/правки текстом
-как были, так и остались полностью открытыми (main.py их не трогает), и
-только эндпоинты проектов (projects.py) требуют токен. Гость может пользоваться
-редактором как раньше, только не может сохранять именованные проекты.
+Аутентификация по имени и паролю, без почты. Гостевой режим -- просто
+отсутствие токена: разбор, генерация и правка открыты всем, токен нужен
+только для сохранённых проектов.
 
-Access + refresh, а не один долгоживущий токен:
-* access-токен (ACCESS_TOKEN_TTL_SECONDS, короткий) идёт в заголовке каждого
-  запроса. Проверяется ЧИСТО по подписи и сроку (require_user) -- никакого
-  похода в Redis на каждый запрос, поэтому его компрометация опасна лишь на
-  короткое окно, и это вся его защита;
-* refresh-токен (REFRESH_TOKEN_TTL_SECONDS, долгий) нужен только чтобы
-  получить новый access-токен (/api/auth/refresh) и не спрашивать пароль
-  заново каждые 15 минут. Его сессия хранится в Redis (cache.py:
-  store_session/session_is_active/revoke_session) -- это и даёт настоящий
-  отзыв: logout удаляет сессию, и refresh-токен сразу перестаёт работать,
-  даже если сам JWT ещё валиден по подписи и сроку. Если Redis недоступен --
-  сессии считаются активными (fail open, см. cache.py): доступность важнее,
-  чем то, что отзыв временно не сработает, пока Redis не поднимут.
+Два токена:
+* access (ACCESS_TOKEN_TTL_SECONDS, короткий) -- в заголовке каждого
+  запроса, проверяется только по подписи и сроку, без обращения к Redis;
+* refresh (REFRESH_TOKEN_TTL_SECONDS, долгий) -- только для получения нового
+  access (/api/auth/refresh). Его сессия хранится в Redis, поэтому logout
+  отзывает его сразу. Если Redis недоступен, сессии считаются активными
+  (fail open).
 """
 
 from __future__ import annotations
@@ -33,24 +23,19 @@ from typing import Optional
 import bcrypt
 import jwt
 from dotenv import load_dotenv
-from fastapi import Header, HTTPException
+from fastapi import HTTPException, Security
+from fastapi.security import APIKeyHeader
 
 from core.paths import ENV_FILE
 from storage import cache
 
-# Локально .env лежит в корне репозитория, читает его не только text_editor/service.py
-# -- JWT_SECRET нужен здесь же, при импорте модуля (см. ниже). В Docker
-# переменные уже приходят из env_file, а load_dotenv без override
-# существующие значения не перетирает, так что повторный вызов из другого
-# модуля (text_editor/service.py) безвреден.
+# Локально .env лежит в корне репозитория; JWT_SECRET нужен уже при импорте.
+# load_dotenv без override не перетирает уже заданные переменные.
 load_dotenv(ENV_FILE)
 
-# Дев-заглушка -- ЛЮБОЙ, кто прочитает исходники, сможет подделать токен.
-# Годится для хакатон-прототипа за закрытым портом; при реальном общем доступе
-# JWT_SECRET обязателен в .env. Фиксированная (не случайная при каждом
-# запуске) заглушка -- намеренно: со случайной каждый `uvicorn --reload`
-# отзывал бы все выданные токены, и в разработке пришлось бы логиниться заново
-# после любой правки кода.
+# Заглушка для разработки: с ней токен может подделать любой, кто видел
+# исходники, поэтому в проде JWT_SECRET обязателен. Фиксированная, чтобы
+# перезапуск с --reload не отзывал все токены.
 _DEV_SECRET = "greencity-insecure-dev-secret-change-me"
 JWT_SECRET = os.environ.get("JWT_SECRET") or _DEV_SECRET
 JWT_ALGORITHM = "HS256"
@@ -155,20 +140,19 @@ class CurrentUser:
         self.username = username
 
 
-async def require_user(authorization: Optional[str] = Header(default=None)) -> CurrentUser:
-    """FastAPI-зависимость для эндпоинтов, которым нужен вошедший
-    пользователь (проекты). Остальные эндпоинты (DXF, генерация, правка
-    текстом) эту зависимость не используют -- гостевой режим не требует
-    отдельного флага, он просто не ходит в эндпоинты с этой зависимостью.
+# Схема для Swagger: кнопка Authorize, значение -- "Bearer <access_token>".
+_authorization_header = APIKeyHeader(
+    name="Authorization",
+    scheme_name="Bearer",
+    description="Введите: Bearer <access_token> (токен из /api/auth/login).",
+    auto_error=False,
+)
 
-    async def без единого await внутри -- намеренно, не забытый рефакторинг.
-    Синхронную зависимость FastAPI уводит в пул потоков, а здесь работы на
-    микросекунды и без всякого I/O (декодирование JWT в памяти, см. docstring
-    CurrentUser). Пока пул занят долгой геометрией из /api/generate-greenery,
-    синхронная версия заставляла КАЖДЫЙ авторизованный запрос ждать свободный
-    поток только ради проверки токена: под нагрузкой в 100 пользователей даже
-    async-эндпоинт /api/projects отвечал в среднем 22 с, тогда как /api/catalog
-    без этой зависимости укладывался в 14 мс."""
+
+async def require_user(authorization: Optional[str] = Security(_authorization_header)) -> CurrentUser:
+    """Зависимость для эндпоинтов проектов: нужен действующий access-токен.
+    async -- проверка JWT мгновенная, и ей незачем ждать свободный поток
+    из пула, занятого тяжёлой геометрией."""
     token = _bearer_token(authorization)
     payload = decode_token(token) if token else None
     if payload is None or payload.get("type") != "access":

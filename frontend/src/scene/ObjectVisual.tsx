@@ -1,10 +1,6 @@
-// Отрисовка объекта сцены по записи каталога (backend/core/plant_catalog.py).
-//
-// Если для записи есть .glb (путь перечислен в frontend/public/models/
-// manifest.json, который пишет tools/convert_models.mjs) -- рисуется модель.
-// Если нет -- примитив-заглушка по `render.shape` и габаритам из каталога.
-// Поэтому добавление пака готовых моделей не требует правок этого файла:
-// положили .glb, прогнали конвертацию -- объекты начали рисоваться моделями.
+// Отрисовка объекта сцены по записи каталога: есть .glb в
+// public/models/manifest.json -- модель, нет -- примитив по render.shape и
+// габаритам из каталога.
 
 import { Suspense, useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
@@ -24,15 +20,8 @@ const CLUSTER_LOBES: [number, number, number, number][] = [
 
 function GltfModel({ url, height }: { url: string; height?: number }) {
   const { scene } = useGLTF(url);
-  // Клон обязателен: загруженный glTF переиспользуется всеми экземплярами
-  // этого вида, а один и тот же Object3D нельзя вставить в несколько мест
-  // графа сцены -- он "переедет" в последнее.
-  //
-  // useMemo здесь не косметика: без него clone() выполняется на КАЖДЫЙ рендер
-  // компонента, а рендерятся все объекты сцены разом (см. React.memo в
-  // PlacedObjects). На сцене в пару тысяч деревьев один клик по объекту
-  // означал тысячи глубоких клонов графа glTF, которые никто не освобождает --
-  // именно так браузер и не укладывался в 64 ГБ.
+  // Клон обязателен: один Object3D нельзя вставить в несколько мест сцены.
+  // useMemo -- чтобы не клонировать граф glTF на каждый рендер.
   const object = useMemo(() => scene.clone(), [scene]);
   return <primitive object={object} scale={modelFitScale(scene, height)} />;
 }
@@ -248,9 +237,8 @@ export function ObjectVisual({
 }) {
   if (!item) return <StructuralVisual type={type} />;
 
-  // Нарушение отступа подсвечивается цветом, а на .glb-модели цвет так просто
-  // не подменить -- поэтому в состоянии нарушения намеренно рисуем примитив:
-  // увидеть проблему важнее, чем красивую модель.
+  // При нарушении рисуется примитив: цвет .glb-модели так просто не
+  // подменить, а увидеть проблему важнее.
   if (!hasModel || violated) return <Primitive item={item} violated={violated} />;
 
   return (

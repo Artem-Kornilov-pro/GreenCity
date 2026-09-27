@@ -10,7 +10,7 @@
 Нормативные числа в проекте лежат в четырёх местах и продублированы
 между `.py` и `.ts`:
 
-- `parser/parse_dxf.py` — полуширина охранных зон сетей (`POLYGON_RULES`);
+- `parser/dxf_parsing/rules.py` — полуширина охранных зон сетей (`POLYGON_RULES`);
 - `backend/core/setback_norms.py` и `frontend/src/setbackNorms.ts` — таблица отступов
   посадок и правила по породе, синхронизируются **вручную**. Таблица сверяется
   с `sp-42-13330-2016/setbacks.csv` автотестом;

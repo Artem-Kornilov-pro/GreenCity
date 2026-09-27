@@ -19,11 +19,9 @@ export async function uploadDxf(file: File): Promise<Scene> {
   return res.json() as Promise<Scene>;
 }
 
-// Папка проекта из .dwg (issue #50) -- backend конвертирует каждый файл через
-// dwg2dxf/LibreDWG и сливает их в один документ (dwg_batch_converter.py)
-// прежде чем прогнать через тот же parser/parse_dxf.py, что и /api/parse.
-// Файлы, которые не удалось сконвертировать, не считаются ошибкой всего
-// запроса -- попадают в Scene.dwgConversionWarnings.
+// Папка .dwg: бэкенд конвертирует файлы, склеивает в один документ и
+// разбирает тем же парсером. Файлы, которые не удалось сконвертировать,
+// перечислены в Scene.dwgConversionWarnings.
 export async function uploadDwgFolder(files: File[]): Promise<Scene> {
   const form = new FormData();
   for (const file of files) form.append("files", file);
@@ -32,30 +30,9 @@ export async function uploadDwgFolder(files: File[]): Promise<Scene> {
   return res.json() as Promise<Scene>;
 }
 
-// Бэкенд-эндпоинт сейчас заглушка (backend/main.py::generate_greenery) --
-// возвращает null, пока алгоритм не реализован. null здесь не ошибка сети,
-// поэтому не бросаем исключение, а даём вызывающему коду решить, что делать
-// (см. App.tsx -- сцену в этом случае не трогаем и показываем сообщение).
-export async function generateGreenery(scene: Scene): Promise<Scene | null> {
-  const res = await fetch(`${API_BASE}/api/generate-greenery`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(scene),
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Не удалось сгенерировать растительность (${res.status}): ${text || res.statusText}`);
-  }
-  return res.json() as Promise<Scene | null>;
-}
-
-// Итоговый план -> файл .dxf (backend/exchange/export_dxf.py; ТЗ: "итоговый план
-// должен экспортироваться обратно в формат DXF"). Возвращаем Blob, а не сами
-// триггерим скачивание -- так функцию можно переиспользовать (например для
-// предпросмотра), а вызывающий код (App.tsx) сам решает, что делать дальше.
-// mode: "overlay" -- слои результата дописаны в исходный чертёж (исходные
-// слои и координаты не тронуты), "rebuilt" -- исходника на сервере нет, DXF
-// собран из сцены (backend/api/editor.py::export_dxf_endpoint).
+// Итоговый план -> .dxf. mode: "overlay" -- слои результата дописаны в
+// исходный чертёж (исходные слои и координаты не тронуты), "rebuilt" --
+// исходника на сервере нет, DXF собран из сцены.
 export async function exportDxf(scene: Scene): Promise<{ blob: Blob; mode: "overlay" | "rebuilt" }> {
   const res = await fetch(`${API_BASE}/api/export-dxf`, {
     method: "POST",
@@ -88,10 +65,9 @@ export async function downloadGreenPlanExplanations(
   return res.blob();
 }
 
-// Пояснительная записка GreenPlan в DOCX (backend/greenplan/document.py).
-// scene -- ТЕКУЩАЯ сцена редактора (с правками после GreenPlan), нарушения и
-// ведомость бэкенд пересчитывает по ней сам; report -- уже полученный текст
-// из /api/greenplan/report, заново LLM не вызывается.
+// Пояснительная записка GreenPlan (DOCX). scene -- текущая сцена с правками:
+// нарушения и ведомость бэкенд пересчитывает по ней; report -- уже полученный
+// текст, LLM заново не вызывается.
 export async function downloadGreenPlanDocument(
   scene: Scene,
   assignments: GreenPlanZoneAssignment[],
@@ -112,16 +88,9 @@ export async function downloadGreenPlanDocument(
   return res.blob();
 }
 
-// GreenPlan -- автоозеленение по прошлым проектам (backend: pattern_assignment.py,
-// violation_report.py, assortment_report.py, decision_report.py). Решения
-// (assignments) считаются полностью детерминированно, без LLM, и быстро
-// (find_violations -- через пространственный индекс, доли секунды даже на
-// крупных участках). Текст-объяснение (report) -- через LLM (YandexGPT в
-// Yandex AI Studio), занимает секунды, поэтому отдельный запрос
-// (/api/greenplan/report), а не часть /api/greenplan/generate -- иначе
-// пользователь ждал бы уже готовую расстановку ради текста, который к ней
-// не относится. Недоступность LLM -- не ошибка
-// запроса (report_error заполнен, report null), сама расстановка не страдает.
+// GreenPlan: расстановка -- детерминированно, без LLM, за секунды. Текст-
+// обоснование (YandexGPT) -- отдельным запросом, чтобы не задерживать
+// расстановку; недоступность модели -- не ошибка (report_error).
 export interface GreenPlanZoneAssignment {
   zone_id: string;
   zone_kind: string;
@@ -270,14 +239,8 @@ export async function editWithText(scene: Scene, instruction: string, history: C
   return res.json() as Promise<TextEditResult>;
 }
 
-// --- Проекты (backend/accounts/projects.py) -------------------------------------------
-//
-// Требуют вход в аккаунт -- гостевой режим их не касается: редактор выше
-// работает без сессии совсем. authHeader (auth.ts) сам получает свежий
-// access-токен (обновляя его через refresh-токен сессии, если истёк), так
-// что каждая функция здесь просто передаёт текущую сессию, а не голый токен.
-// Не больше трёх проектов на пользователя -- лимит проверяет бэкенд, здесь
-// только прокидывается его сообщение об ошибке.
+// Проекты -- только с входом в аккаунт. authHeader (auth.ts) сам обновляет
+// истёкший access-токен. Лимит проектов проверяет бэкенд.
 
 export interface ProjectSummary {
   id: string;

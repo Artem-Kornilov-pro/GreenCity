@@ -1,17 +1,10 @@
-// Нормативные отступы посадок от зданий и инженерных сетей различаются по
-// виду посадки (дерево/кустарник) — у дерева корни глубже и шире, крона
-// крупнее, поэтому ему требуется больший отступ, чем кустарнику. Источник:
-// СП 42.13330.2016, п. 9.6, табл. 9.1 и совпадающая с ней табл. 3.6.1
-// ППМ 743-ПП "Расстояния от зданий, сооружений и объектов инженерного
-// благоустройства до оси растения".
+// Нормативные отступы посадок от зданий и сетей по виду посадки (дерево или
+// кустарник): СП 42.13330.2016, п. 9.6, табл. 9.1 и табл. 3.6.1 ППМ 743-ПП.
+// Отступ добавляется к зоне, которая для сетей уже включает охранный
+// коридор. 0 -- не нормируется.
 //
-// Это ДОПОЛНИТЕЛЬНЫЙ запас поверх уже нарисованной зоны (для труб/кабелей она
-// уже отбуферена на minDistance из parser/parse_dxf.py — это охранная зона
-// самой сети, не связанная с видом посадки). 0 означает "не нормируется" —
-// кустарник можно сажать вплотную к границе зоны.
-//
-// Портировано 1:1 из backend/core/setback_norms.py — синхронизация ручная, при
-// правке обновить оба файла. Обоснование каждого числа — там же.
+// Копия backend/core/setback_norms.py: при правке обновить оба файла.
+// Обоснование чисел -- там.
 export type PlantKind = "tree" | "bush";
 
 interface SetbackRule {
@@ -53,7 +46,7 @@ const SPECIES_SETBACK_RULES: SpeciesSetbackRule[] = [
   { genera: THORNY, zoneType: "playground_zone", distance: 2.0, kinds: BOTH },
   { genera: HEAT_2M, zoneType: "heat_network", distance: 2.0, kinds: BOTH },
   { genera: HEAT_4M, zoneType: "heat_network", distance: 4.0, kinds: BOTH },
-  // Экспертная оценка (issue #43), не норма акта.
+  // Экспертная оценка, не норма акта.
   { genera: ["тополь"], zoneType: "sewer", distance: 3.0, kinds: ["tree"] },
   { genera: ["тополь"], zoneType: "water_pipeline", distance: 3.0, kinds: ["tree"] },
   { genera: ["ива"], zoneType: "building", distance: 6.0, kinds: ["tree"] },
@@ -73,10 +66,8 @@ export function genusOf(species?: string): string | undefined {
   return first ? first.toLowerCase().replace(/ё/g, "е") : undefined;
 }
 
-// Для зон без табличного значения (трансформатор, детская площадка, парковка,
-// охраняемая зона, наземная ЛЭП) — берём minDistance зоны как есть, без
-// выдумывания цифр, которые нечем подтвердить. species — опционален: правила
-// по породе только ужесточают табличную норму.
+// Зоны без табличного значения (трансформатор, площадка, парковка, ЛЭП) --
+// minDistance зоны. Правила по породе только ужесточают норму.
 export function setbackFor(zoneType: string, plantKind: PlantKind, zoneMinDistance: number, species?: string): number {
   const rule = SETBACK_NORMS[zoneType];
   let distance = rule ? rule[plantKind] : zoneMinDistance;

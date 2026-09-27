@@ -86,13 +86,9 @@ export async function fetchCatalog(): Promise<CatalogItem[]> {
   return res.json() as Promise<CatalogItem[]>;
 }
 
-// Манифест реально имеющихся .glb -- его пишет скрипт конвертации моделей
-// (tools/convert_models.mjs). Нет манифеста -- значит моделей ещё не положили,
-// и всё рисуется примитивами-заглушками; это штатный режим, не ошибка.
-//
-// try/catch тут обязателен и проверку res.ok не заменяет: dev-сервер Vite на
-// отсутствующий файл отдаёт не 404, а 200 с index.html (SPA-фолбэк), и ловится
-// это только на разборе JSON.
+// Манифест имеющихся .glb (пишет tools/convert_models.mjs). Нет манифеста --
+// всё рисуется примитивами, это штатный режим. try/catch нужен и при res.ok:
+// dev-сервер Vite на отсутствующий файл отдаёт 200 с index.html.
 export async function fetchModelManifest(): Promise<Set<string>> {
   try {
     const res = await fetch("/models/manifest.json");
@@ -104,12 +100,10 @@ export async function fetchModelManifest(): Promise<Set<string>> {
   }
 }
 
-// Какие типы объектов сцены пользователь может создавать/двигать. Берётся из
-// каталога, а не хардкодится: добавили запись в plant_catalog.py -- тип сразу
-// стал доступен и в панели добавления, и для перетаскивания.
+// Типы объектов, которые пользователь может создавать и двигать, -- из
+// каталога: новая запись в plant_catalog.py сразу доступна в редакторе.
 // Высота из каталога, под которую подгоняется модель, -- только у деревьев:
-// у них высота в каталоге -- реальная высота вида, а не габарит модели из
-// пака (см. scene/geometryHelpers.modelFitScale). Кусты и МАФ -- как есть.
+// это реальная высота вида (см. scene/geometryHelpers.modelFitScale).
 export function fitHeight(item: CatalogItem): number | undefined {
   return item.category === "tree" ? item.dimensions.height : undefined;
 }
@@ -137,9 +131,7 @@ const DEFAULT_ITEM_BY_TYPE: Record<string, string> = {
   crosswalk: "crosswalk",
 };
 
-// Стабильный хеш строки: нужен, чтобы у объекта без явного вида модель была
-// всегда одна и та же (не менялась на каждый рендер), но у разных объектов --
-// разная.
+// Стабильный хеш строки: объект без вида всегда получает одну и ту же модель.
 function hashString(value: string): number {
   let hash = 0;
   for (let i = 0; i < value.length; i++) {
@@ -164,9 +156,8 @@ export function resolveCatalogItem(
     if (byId.has(legacyId)) return byId.get(legacyId);
   }
 
-  // Деревья из DXF-подосновы и от автогенератора приходят без вида. Если
-  // подключен пак моделей -- раздаём им РАЗНЫЕ модели вместо одной и той же:
-  // ради этого пак и подключался, иначе весь двор зарастает клонами.
+  // Деревья без вида (из подосновы) получают разные модели пака, иначе двор
+  // зарастает клонами.
   if (availableModels && availableModels.size > 0) {
     const category: CatalogCategory | null =
       obj.type === "tree" ? "tree" : obj.type === "bush" ? "bush" : null;

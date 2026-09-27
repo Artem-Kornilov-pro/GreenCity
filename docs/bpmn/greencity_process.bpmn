@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="GreenCityDefinitions" targetNamespace="https://github.com/Artem-Kornilov-pro/GreenCity" exporter="tools/docs/build_bpmn.py" exporterVersion="1.0">
+<bpmn:collaboration id="Collaboration"><bpmn:participant id="Pool" name="GreenCity: от входного DXF до выходного DXF и файла объяснений" processRef="Process"/></bpmn:collaboration>
+<bpmn:process id="Process" name="От входного DXF до выходного DXF" isExecutable="false">
+<bpmn:laneSet id="LaneSet"><bpmn:lane id="Lane_User" name="Пользователь (редактор)"><bpmn:flowNodeRef>Start</bpmn:flowNodeRef><bpmn:flowNodeRef>Upload</bpmn:flowNodeRef><bpmn:flowNodeRef>Review</bpmn:flowNodeRef><bpmn:flowNodeRef>Check</bpmn:flowNodeRef><bpmn:flowNodeRef>TextEdit</bpmn:flowNodeRef><bpmn:flowNodeRef>EditJoin</bpmn:flowNodeRef><bpmn:flowNodeRef>Fork</bpmn:flowNodeRef><bpmn:flowNodeRef>End</bpmn:flowNodeRef></bpmn:lane><bpmn:lane id="Lane_Backend" name="Бэкенд GreenCity"><bpmn:flowNodeRef>Format</bpmn:flowNodeRef><bpmn:flowNodeRef>Dwg</bpmn:flowNodeRef><bpmn:flowNodeRef>FormatJoin</bpmn:flowNodeRef><bpmn:flowNodeRef>Store</bpmn:flowNodeRef><bpmn:flowNodeRef>Parse</bpmn:flowNodeRef><bpmn:flowNodeRef>GreenPlan</bpmn:flowNodeRef><bpmn:flowNodeRef>Apply</bpmn:flowNodeRef><bpmn:flowNodeRef>Export</bpmn:flowNodeRef><bpmn:flowNodeRef>Explain</bpmn:flowNodeRef><bpmn:flowNodeRef>Note</bpmn:flowNodeRef><bpmn:flowNodeRef>Join</bpmn:flowNodeRef></bpmn:lane><bpmn:lane id="Lane_LLM" name="Yandex AI Studio (LLM)"><bpmn:flowNodeRef>Assistant</bpmn:flowNodeRef><bpmn:flowNodeRef>Report</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet>
+<bpmn:startEvent id="Start" name="Чертёж участка: DXF или папка DWG"><bpmn:outgoing>Main_Flow_0</bpmn:outgoing></bpmn:startEvent>
+<bpmn:task id="Upload" name="Загрузить чертёж в редактор"><bpmn:incoming>Main_Flow_0</bpmn:incoming><bpmn:outgoing>Main_Flow_1</bpmn:outgoing></bpmn:task>
+<bpmn:exclusiveGateway id="Format" name="Формат?"><bpmn:incoming>Main_Flow_1</bpmn:incoming><bpmn:outgoing>Main_Flow_2</bpmn:outgoing><bpmn:outgoing>Main_Flow_3</bpmn:outgoing></bpmn:exclusiveGateway>
+<bpmn:task id="Dwg" name="DWG → DXF (LibreDWG), склейка пачки в один документ"><bpmn:incoming>Main_Flow_2</bpmn:incoming><bpmn:outgoing>Main_Flow_4</bpmn:outgoing></bpmn:task>
+<bpmn:exclusiveGateway id="FormatJoin" name=""><bpmn:incoming>Main_Flow_3</bpmn:incoming><bpmn:incoming>Main_Flow_4</bpmn:incoming><bpmn:outgoing>Main_Flow_5</bpmn:outgoing></bpmn:exclusiveGateway>
+<bpmn:task id="Store" name="Сохранить исходный чертёж (id = sha256)"><bpmn:incoming>Main_Flow_5</bpmn:incoming><bpmn:outgoing>Main_Flow_6</bpmn:outgoing><bpmn:dataOutputAssociation id="Main_Assoc_0"><bpmn:targetRef>Sources</bpmn:targetRef></bpmn:dataOutputAssociation></bpmn:task>
+<bpmn:dataStoreReference id="Sources" name="Хранилище исходных чертежей"/>
+<bpmn:task id="Parse" name="Разбор слоёв: граница, зоны ограничений, здания, объекты → сцена"><bpmn:incoming>Main_Flow_6</bpmn:incoming><bpmn:outgoing>Main_Flow_7</bpmn:outgoing></bpmn:task>
+<bpmn:task id="Review" name="3D-сцена, зоны ограничений; параметры GreenPlan"><bpmn:incoming>Main_Flow_7</bpmn:incoming><bpmn:outgoing>Main_Flow_8</bpmn:outgoing></bpmn:task>
+<bpmn:subProcess id="GreenPlan" name="GreenPlan: озеленение по проектам-аналогам"><bpmn:incoming>Main_Flow_8</bpmn:incoming><bpmn:outgoing>Main_Flow_9</bpmn:outgoing><bpmn:property id="GreenPlan_In1" name="__targetRef_placeholder"/><bpmn:dataInputAssociation id="Main_Assoc_1"><bpmn:sourceRef>Corpus</bpmn:sourceRef><bpmn:targetRef>GreenPlan_In1</bpmn:targetRef></bpmn:dataInputAssociation><bpmn:startEvent id="GP_Start" name="Сцена участка и параметры GreenPlan"><bpmn:outgoing>Sub_Flow_0</bpmn:outgoing></bpmn:startEvent><bpmn:task id="GP_Clean" name="Убрать прошлый результат GreenPlan"><bpmn:incoming>Sub_Flow_0</bpmn:incoming><bpmn:outgoing>Sub_Flow_1</bpmn:outgoing></bpmn:task><bpmn:exclusiveGateway id="GP_Impr" name="Благоустройство?"><bpmn:incoming>Sub_Flow_1</bpmn:incoming><bpmn:outgoing>Sub_Flow_2</bpmn:outgoing><bpmn:outgoing>Sub_Flow_3</bpmn:outgoing></bpmn:exclusiveGateway><bpmn:task id="GP_Paths" name="Дорожки, освещение, скамейки с урнами"><bpmn:incoming>Sub_Flow_2</bpmn:incoming><bpmn:outgoing>Sub_Flow_4</bpmn:outgoing></bpmn:task><bpmn:exclusiveGateway id="GP_ImprJoin" name=""><bpmn:incoming>Sub_Flow_3</bpmn:incoming><bpmn:incoming>Sub_Flow_4</bpmn:incoming><bpmn:outgoing>Sub_Flow_5</bpmn:outgoing></bpmn:exclusiveGateway><bpmn:task id="GP_Features" name="Признаки участка: площадь, пригодная доля, состав зон, тип территории"><bpmn:incoming>Sub_Flow_5</bpmn:incoming><bpmn:outgoing>Sub_Flow_6</bpmn:outgoing></bpmn:task><bpmn:task id="GP_Retrieval" name="Поиск аналогов: k ближайших по косинусному сходству"><bpmn:incoming>Sub_Flow_6</bpmn:incoming><bpmn:outgoing>Sub_Flow_7</bpmn:outgoing><bpmn:property id="GP_Retrieval_In0" name="__targetRef_placeholder"/><bpmn:dataInputAssociation id="Sub_Assoc_0"><bpmn:sourceRef>GP_Corpus</bpmn:sourceRef><bpmn:targetRef>GP_Retrieval_In0</bpmn:targetRef></bpmn:dataInputAssociation></bpmn:task><bpmn:dataStoreReference id="GP_Corpus" name="Корпус: 14 реальных + 20 эталонов"/><bpmn:task id="GP_Zones" name="Разбиение на зоны: у зданий, вдоль дорожек, по краю, открытые"><bpmn:incoming>Sub_Flow_7</bpmn:incoming><bpmn:outgoing>Sub_Flow_8</bpmn:outgoing></bpmn:task><bpmn:task id="GP_Assign" name="Стиль участка и приёмы зон: взвешенное голосование аналогов"><bpmn:incoming>Sub_Flow_8</bpmn:incoming><bpmn:outgoing>Sub_Flow_9</bpmn:outgoing></bpmn:task><bpmn:task id="GP_Species" name="Подбор видов: ассортимент Москвы, 515-ПП, без 369-ПП"><bpmn:incoming>Sub_Flow_9</bpmn:incoming><bpmn:outgoing>Sub_Flow_10</bpmn:outgoing><bpmn:property id="GP_Species_In1" name="__targetRef_placeholder"/><bpmn:dataInputAssociation id="Sub_Assoc_1"><bpmn:sourceRef>GP_Assortment</bpmn:sourceRef><bpmn:targetRef>GP_Species_In1</bpmn:targetRef></bpmn:dataInputAssociation></bpmn:task><bpmn:dataStoreReference id="GP_Assortment" name="Ассортимент Москвы, 369-ПП, 515-ПП"/><bpmn:task id="GP_Place" name="Расстановка: ряды, заливка, группы; отступ по норме в каждой точке"><bpmn:incoming>Sub_Flow_10</bpmn:incoming><bpmn:outgoing>Sub_Flow_11</bpmn:outgoing><bpmn:property id="GP_Place_In2" name="__targetRef_placeholder"/><bpmn:dataInputAssociation id="Sub_Assoc_2"><bpmn:sourceRef>GP_Norms</bpmn:sourceRef><bpmn:targetRef>GP_Place_In2</bpmn:targetRef></bpmn:dataInputAssociation><bpmn:dataOutputAssociation id="Sub_Assoc_3"><bpmn:targetRef>GP_Rejected</bpmn:targetRef></bpmn:dataOutputAssociation></bpmn:task><bpmn:dataStoreReference id="GP_Norms" name="Отступы: СП 42, 743-ПП, МГСН 1.02-02, СП 82"/><bpmn:dataObject id="GP_Rejected_Data"/><bpmn:dataObjectReference id="GP_Rejected" name="Журнал отклонённых точек" dataObjectRef="GP_Rejected_Data"/><bpmn:task id="GP_Lawn" name="Газон на свободной от покрытий и клумб земле"><bpmn:incoming>Sub_Flow_11</bpmn:incoming><bpmn:outgoing>Sub_Flow_12</bpmn:outgoing></bpmn:task><bpmn:task id="GP_Check" name="Независимая проверка нарушений, ведомость"><bpmn:incoming>Sub_Flow_12</bpmn:incoming><bpmn:outgoing>Sub_Flow_13</bpmn:outgoing></bpmn:task><bpmn:endEvent id="GP_End" name="Сцена с посадкой, решения по зонам"><bpmn:incoming>Sub_Flow_13</bpmn:incoming></bpmn:endEvent><bpmn:sequenceFlow id="Sub_Flow_0" sourceRef="GP_Start" targetRef="GP_Clean"/><bpmn:sequenceFlow id="Sub_Flow_1" sourceRef="GP_Clean" targetRef="GP_Impr"/><bpmn:sequenceFlow id="Sub_Flow_2" name="да" sourceRef="GP_Impr" targetRef="GP_Paths"/><bpmn:sequenceFlow id="Sub_Flow_3" name="нет" sourceRef="GP_Impr" targetRef="GP_ImprJoin"/><bpmn:sequenceFlow id="Sub_Flow_4" sourceRef="GP_Paths" targetRef="GP_ImprJoin"/><bpmn:sequenceFlow id="Sub_Flow_5" sourceRef="GP_ImprJoin" targetRef="GP_Features"/><bpmn:sequenceFlow id="Sub_Flow_6" sourceRef="GP_Features" targetRef="GP_Retrieval"/><bpmn:sequenceFlow id="Sub_Flow_7" sourceRef="GP_Retrieval" targetRef="GP_Zones"/><bpmn:sequenceFlow id="Sub_Flow_8" sourceRef="GP_Zones" targetRef="GP_Assign"/><bpmn:sequenceFlow id="Sub_Flow_9" sourceRef="GP_Assign" targetRef="GP_Species"/><bpmn:sequenceFlow id="Sub_Flow_10" sourceRef="GP_Species" targetRef="GP_Place"/><bpmn:sequenceFlow id="Sub_Flow_11" sourceRef="GP_Place" targetRef="GP_Lawn"/><bpmn:sequenceFlow id="Sub_Flow_12" sourceRef="GP_Lawn" targetRef="GP_Check"/><bpmn:sequenceFlow id="Sub_Flow_13" sourceRef="GP_Check" targetRef="GP_End"/></bpmn:subProcess>
+<bpmn:dataStoreReference id="Corpus" name="Корпус 34 проектов, нормы НПА, ассортимент"/>
+<bpmn:task id="Check" name="Проверка результата, ручные правки на сцене"><bpmn:incoming>Main_Flow_9</bpmn:incoming><bpmn:outgoing>Main_Flow_10</bpmn:outgoing></bpmn:task>
+<bpmn:exclusiveGateway id="TextEdit" name="Правка текстом?"><bpmn:incoming>Main_Flow_10</bpmn:incoming><bpmn:outgoing>Main_Flow_11</bpmn:outgoing><bpmn:outgoing>Main_Flow_12</bpmn:outgoing></bpmn:exclusiveGateway>
+<bpmn:serviceTask id="Assistant" name="ИИ-ассистент: список операций правки (Qwen3 235B)"><bpmn:incoming>Main_Flow_11</bpmn:incoming><bpmn:outgoing>Main_Flow_13</bpmn:outgoing></bpmn:serviceTask>
+<bpmn:task id="Apply" name="Применение операций планировщиком с проверкой норм"><bpmn:incoming>Main_Flow_13</bpmn:incoming><bpmn:outgoing>Main_Flow_14</bpmn:outgoing></bpmn:task>
+<bpmn:exclusiveGateway id="EditJoin" name=""><bpmn:incoming>Main_Flow_12</bpmn:incoming><bpmn:incoming>Main_Flow_14</bpmn:incoming><bpmn:outgoing>Main_Flow_15</bpmn:outgoing></bpmn:exclusiveGateway>
+<bpmn:parallelGateway id="Fork" name=""><bpmn:incoming>Main_Flow_15</bpmn:incoming><bpmn:outgoing>Main_Flow_16</bpmn:outgoing><bpmn:outgoing>Main_Flow_17</bpmn:outgoing><bpmn:outgoing>Main_Flow_18</bpmn:outgoing></bpmn:parallelGateway>
+<bpmn:task id="Export" name="Экспорт DXF поверх исходника: слои NEW_*, USER_*, XDATA с id"><bpmn:incoming>Main_Flow_16</bpmn:incoming><bpmn:outgoing>Main_Flow_20</bpmn:outgoing></bpmn:task>
+<bpmn:task id="Explain" name="Объяснения посадок со ссылками на НПА (JSON, CSV)"><bpmn:incoming>Main_Flow_17</bpmn:incoming><bpmn:outgoing>Main_Flow_21</bpmn:outgoing></bpmn:task>
+<bpmn:serviceTask id="Report" name="Текст-обоснование решений (YandexGPT 5.1 Pro)"><bpmn:incoming>Main_Flow_18</bpmn:incoming><bpmn:outgoing>Main_Flow_19</bpmn:outgoing></bpmn:serviceTask>
+<bpmn:task id="Note" name="Пояснительная записка (DOCX)"><bpmn:incoming>Main_Flow_19</bpmn:incoming><bpmn:outgoing>Main_Flow_22</bpmn:outgoing></bpmn:task>
+<bpmn:parallelGateway id="Join" name=""><bpmn:incoming>Main_Flow_20</bpmn:incoming><bpmn:incoming>Main_Flow_21</bpmn:incoming><bpmn:incoming>Main_Flow_22</bpmn:incoming><bpmn:outgoing>Main_Flow_23</bpmn:outgoing></bpmn:parallelGateway>
+<bpmn:endEvent id="End" name="Выходной DXF, файл объяснений, записка"><bpmn:incoming>Main_Flow_23</bpmn:incoming></bpmn:endEvent>
+<bpmn:sequenceFlow id="Main_Flow_0" sourceRef="Start" targetRef="Upload"/>
+<bpmn:sequenceFlow id="Main_Flow_1" sourceRef="Upload" targetRef="Format"/>
+<bpmn:sequenceFlow id="Main_Flow_2" name="DWG" sourceRef="Format" targetRef="Dwg"/>
+<bpmn:sequenceFlow id="Main_Flow_3" name="DXF" sourceRef="Format" targetRef="FormatJoin"/>
+<bpmn:sequenceFlow id="Main_Flow_4" sourceRef="Dwg" targetRef="FormatJoin"/>
+<bpmn:sequenceFlow id="Main_Flow_5" sourceRef="FormatJoin" targetRef="Store"/>
+<bpmn:sequenceFlow id="Main_Flow_6" sourceRef="Store" targetRef="Parse"/>
+<bpmn:sequenceFlow id="Main_Flow_7" sourceRef="Parse" targetRef="Review"/>
+<bpmn:sequenceFlow id="Main_Flow_8" sourceRef="Review" targetRef="GreenPlan"/>
+<bpmn:sequenceFlow id="Main_Flow_9" sourceRef="GreenPlan" targetRef="Check"/>
+<bpmn:sequenceFlow id="Main_Flow_10" sourceRef="Check" targetRef="TextEdit"/>
+<bpmn:sequenceFlow id="Main_Flow_11" name="да" sourceRef="TextEdit" targetRef="Assistant"/>
+<bpmn:sequenceFlow id="Main_Flow_12" name="нет" sourceRef="TextEdit" targetRef="EditJoin"/>
+<bpmn:sequenceFlow id="Main_Flow_13" sourceRef="Assistant" targetRef="Apply"/>
+<bpmn:sequenceFlow id="Main_Flow_14" sourceRef="Apply" targetRef="EditJoin"/>
+<bpmn:sequenceFlow id="Main_Flow_15" sourceRef="EditJoin" targetRef="Fork"/>
+<bpmn:sequenceFlow id="Main_Flow_16" sourceRef="Fork" targetRef="Export"/>
+<bpmn:sequenceFlow id="Main_Flow_17" sourceRef="Fork" targetRef="Explain"/>
+<bpmn:sequenceFlow id="Main_Flow_18" sourceRef="Fork" targetRef="Report"/>
+<bpmn:sequenceFlow id="Main_Flow_19" sourceRef="Report" targetRef="Note"/>
+<bpmn:sequenceFlow id="Main_Flow_20" sourceRef="Export" targetRef="Join"/>
+<bpmn:sequenceFlow id="Main_Flow_21" sourceRef="Explain" targetRef="Join"/>
+<bpmn:sequenceFlow id="Main_Flow_22" sourceRef="Note" targetRef="Join"/>
+<bpmn:sequenceFlow id="Main_Flow_23" sourceRef="Join" targetRef="End"/>
+</bpmn:process>
+<bpmndi:BPMNDiagram id="MainDiagram" name="GreenCity: от входного DXF до выходного DXF"><bpmndi:BPMNPlane id="MainPlane" bpmnElement="Collaboration">
+<bpmndi:BPMNShape id="Pool_di" bpmnElement="Pool" isHorizontal="false"><dc:Bounds x="24" y="24" width="950" height="1912"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Lane_User_di" bpmnElement="Lane_User" isHorizontal="false"><dc:Bounds x="24" y="58" width="190" height="1878"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Lane_Backend_di" bpmnElement="Lane_Backend" isHorizontal="false"><dc:Bounds x="214" y="58" width="570" height="1878"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Lane_LLM_di" bpmnElement="Lane_LLM" isHorizontal="false"><dc:Bounds x="784" y="58" width="190" height="1878"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Start_di" bpmnElement="Start"><dc:Bounds x="101" y="122" width="36" height="36"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Upload_di" bpmnElement="Upload"><dc:Bounds x="35" y="203" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Format_di" bpmnElement="Format"><dc:Bounds x="286" y="309" width="46" height="46"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Dwg_di" bpmnElement="Dwg"><dc:Bounds x="415" y="395" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="FormatJoin_di" bpmnElement="FormatJoin"><dc:Bounds x="286" y="501" width="46" height="46"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Store_di" bpmnElement="Store"><dc:Bounds x="225" y="587" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Sources_di" bpmnElement="Sources"><dc:Bounds x="660" y="596" width="58" height="48"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Parse_di" bpmnElement="Parse"><dc:Bounds x="225" y="683" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Review_di" bpmnElement="Review"><dc:Bounds x="35" y="779" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GreenPlan_di" bpmnElement="GreenPlan" isExpanded="false"><dc:Bounds x="225" y="875" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Corpus_di" bpmnElement="Corpus"><dc:Bounds x="660" y="884" width="58" height="48"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Check_di" bpmnElement="Check"><dc:Bounds x="35" y="971" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="TextEdit_di" bpmnElement="TextEdit"><dc:Bounds x="96" y="1077" width="46" height="46"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Assistant_di" bpmnElement="Assistant"><dc:Bounds x="795" y="1163" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Apply_di" bpmnElement="Apply"><dc:Bounds x="225" y="1259" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="EditJoin_di" bpmnElement="EditJoin"><dc:Bounds x="96" y="1365" width="46" height="46"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Fork_di" bpmnElement="Fork"><dc:Bounds x="96" y="1461" width="46" height="46"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Export_di" bpmnElement="Export"><dc:Bounds x="225" y="1547" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Explain_di" bpmnElement="Explain"><dc:Bounds x="415" y="1547" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Report_di" bpmnElement="Report"><dc:Bounds x="795" y="1547" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Note_di" bpmnElement="Note"><dc:Bounds x="605" y="1643" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Join_di" bpmnElement="Join"><dc:Bounds x="286" y="1749" width="46" height="46"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="End_di" bpmnElement="End"><dc:Bounds x="101" y="1850" width="36" height="36"/></bpmndi:BPMNShape>
+<bpmndi:BPMNEdge id="Main_Flow_0_di" bpmnElement="Main_Flow_0"><di:waypoint x="119" y="158"/><di:waypoint x="119" y="203"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_1_di" bpmnElement="Main_Flow_1"><di:waypoint x="119" y="269"/><di:waypoint x="119" y="332"/><di:waypoint x="286" y="332"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_2_di" bpmnElement="Main_Flow_2"><di:waypoint x="332" y="332"/><di:waypoint x="499" y="332"/><di:waypoint x="499" y="395"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_3_di" bpmnElement="Main_Flow_3"><di:waypoint x="309" y="355"/><di:waypoint x="309" y="501"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_4_di" bpmnElement="Main_Flow_4"><di:waypoint x="499" y="461"/><di:waypoint x="499" y="524"/><di:waypoint x="332" y="524"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_5_di" bpmnElement="Main_Flow_5"><di:waypoint x="309" y="547"/><di:waypoint x="309" y="587"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_6_di" bpmnElement="Main_Flow_6"><di:waypoint x="309" y="653"/><di:waypoint x="309" y="683"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_7_di" bpmnElement="Main_Flow_7"><di:waypoint x="309" y="749"/><di:waypoint x="309" y="812"/><di:waypoint x="203" y="812"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_8_di" bpmnElement="Main_Flow_8"><di:waypoint x="119" y="845"/><di:waypoint x="119" y="908"/><di:waypoint x="225" y="908"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_9_di" bpmnElement="Main_Flow_9"><di:waypoint x="309" y="941"/><di:waypoint x="309" y="1004"/><di:waypoint x="203" y="1004"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_10_di" bpmnElement="Main_Flow_10"><di:waypoint x="119" y="1037"/><di:waypoint x="119" y="1077"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_11_di" bpmnElement="Main_Flow_11"><di:waypoint x="142" y="1100"/><di:waypoint x="879" y="1100"/><di:waypoint x="879" y="1163"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_12_di" bpmnElement="Main_Flow_12"><di:waypoint x="119" y="1123"/><di:waypoint x="119" y="1365"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_13_di" bpmnElement="Main_Flow_13"><di:waypoint x="879" y="1229"/><di:waypoint x="879" y="1292"/><di:waypoint x="393" y="1292"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_14_di" bpmnElement="Main_Flow_14"><di:waypoint x="309" y="1325"/><di:waypoint x="309" y="1388"/><di:waypoint x="142" y="1388"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_15_di" bpmnElement="Main_Flow_15"><di:waypoint x="119" y="1411"/><di:waypoint x="119" y="1461"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_16_di" bpmnElement="Main_Flow_16"><di:waypoint x="142" y="1484"/><di:waypoint x="309" y="1484"/><di:waypoint x="309" y="1547"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_17_di" bpmnElement="Main_Flow_17"><di:waypoint x="142" y="1484"/><di:waypoint x="499" y="1484"/><di:waypoint x="499" y="1547"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_18_di" bpmnElement="Main_Flow_18"><di:waypoint x="142" y="1484"/><di:waypoint x="879" y="1484"/><di:waypoint x="879" y="1547"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_19_di" bpmnElement="Main_Flow_19"><di:waypoint x="879" y="1613"/><di:waypoint x="879" y="1676"/><di:waypoint x="773" y="1676"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_20_di" bpmnElement="Main_Flow_20"><di:waypoint x="309" y="1613"/><di:waypoint x="309" y="1749"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_21_di" bpmnElement="Main_Flow_21"><di:waypoint x="499" y="1613"/><di:waypoint x="499" y="1772"/><di:waypoint x="332" y="1772"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_22_di" bpmnElement="Main_Flow_22"><di:waypoint x="689" y="1709"/><di:waypoint x="689" y="1772"/><di:waypoint x="332" y="1772"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Flow_23_di" bpmnElement="Main_Flow_23"><di:waypoint x="286" y="1772"/><di:waypoint x="119" y="1772"/><di:waypoint x="119" y="1850"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Assoc_0_di" bpmnElement="Main_Assoc_0"><di:waypoint x="393" y="620"/><di:waypoint x="660" y="620"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Main_Assoc_1_di" bpmnElement="Main_Assoc_1"><di:waypoint x="660" y="908"/><di:waypoint x="393" y="908"/></bpmndi:BPMNEdge>
+</bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+<bpmndi:BPMNDiagram id="SubDiagram" name="Подпроцесс GreenPlan"><bpmndi:BPMNPlane id="SubPlane" bpmnElement="GreenPlan">
+<bpmndi:BPMNShape id="GP_Start_di" bpmnElement="GP_Start"><dc:Bounds x="101" y="88" width="36" height="36"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_Clean_di" bpmnElement="GP_Clean"><dc:Bounds x="35" y="169" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_Impr_di" bpmnElement="GP_Impr"><dc:Bounds x="96" y="275" width="46" height="46"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_Paths_di" bpmnElement="GP_Paths"><dc:Bounds x="225" y="361" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_ImprJoin_di" bpmnElement="GP_ImprJoin"><dc:Bounds x="96" y="467" width="46" height="46"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_Features_di" bpmnElement="GP_Features"><dc:Bounds x="35" y="553" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_Retrieval_di" bpmnElement="GP_Retrieval"><dc:Bounds x="35" y="649" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_Corpus_di" bpmnElement="GP_Corpus"><dc:Bounds x="470" y="658" width="58" height="48"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_Zones_di" bpmnElement="GP_Zones"><dc:Bounds x="35" y="745" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_Assign_di" bpmnElement="GP_Assign"><dc:Bounds x="35" y="841" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_Species_di" bpmnElement="GP_Species"><dc:Bounds x="35" y="937" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_Assortment_di" bpmnElement="GP_Assortment"><dc:Bounds x="280" y="946" width="58" height="48"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_Place_di" bpmnElement="GP_Place"><dc:Bounds x="35" y="1033" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_Norms_di" bpmnElement="GP_Norms"><dc:Bounds x="470" y="1042" width="58" height="48"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_Rejected_di" bpmnElement="GP_Rejected"><dc:Bounds x="287" y="1134" width="44" height="56"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_Lawn_di" bpmnElement="GP_Lawn"><dc:Bounds x="35" y="1129" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_Check_di" bpmnElement="GP_Check"><dc:Bounds x="35" y="1225" width="168" height="66"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="GP_End_di" bpmnElement="GP_End"><dc:Bounds x="101" y="1336" width="36" height="36"/></bpmndi:BPMNShape>
+<bpmndi:BPMNEdge id="Sub_Flow_0_di" bpmnElement="Sub_Flow_0"><di:waypoint x="119" y="124"/><di:waypoint x="119" y="169"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Flow_1_di" bpmnElement="Sub_Flow_1"><di:waypoint x="119" y="235"/><di:waypoint x="119" y="275"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Flow_2_di" bpmnElement="Sub_Flow_2"><di:waypoint x="142" y="298"/><di:waypoint x="309" y="298"/><di:waypoint x="309" y="361"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Flow_3_di" bpmnElement="Sub_Flow_3"><di:waypoint x="119" y="321"/><di:waypoint x="119" y="467"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Flow_4_di" bpmnElement="Sub_Flow_4"><di:waypoint x="309" y="427"/><di:waypoint x="309" y="490"/><di:waypoint x="142" y="490"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Flow_5_di" bpmnElement="Sub_Flow_5"><di:waypoint x="119" y="513"/><di:waypoint x="119" y="553"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Flow_6_di" bpmnElement="Sub_Flow_6"><di:waypoint x="119" y="619"/><di:waypoint x="119" y="649"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Flow_7_di" bpmnElement="Sub_Flow_7"><di:waypoint x="119" y="715"/><di:waypoint x="119" y="745"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Flow_8_di" bpmnElement="Sub_Flow_8"><di:waypoint x="119" y="811"/><di:waypoint x="119" y="841"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Flow_9_di" bpmnElement="Sub_Flow_9"><di:waypoint x="119" y="907"/><di:waypoint x="119" y="937"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Flow_10_di" bpmnElement="Sub_Flow_10"><di:waypoint x="119" y="1003"/><di:waypoint x="119" y="1033"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Flow_11_di" bpmnElement="Sub_Flow_11"><di:waypoint x="119" y="1099"/><di:waypoint x="119" y="1129"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Flow_12_di" bpmnElement="Sub_Flow_12"><di:waypoint x="119" y="1195"/><di:waypoint x="119" y="1225"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Flow_13_di" bpmnElement="Sub_Flow_13"><di:waypoint x="119" y="1291"/><di:waypoint x="119" y="1336"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Assoc_0_di" bpmnElement="Sub_Assoc_0"><di:waypoint x="470" y="682"/><di:waypoint x="203" y="682"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Assoc_1_di" bpmnElement="Sub_Assoc_1"><di:waypoint x="280" y="970"/><di:waypoint x="203" y="970"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Assoc_2_di" bpmnElement="Sub_Assoc_2"><di:waypoint x="470" y="1066"/><di:waypoint x="203" y="1066"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Sub_Assoc_3_di" bpmnElement="Sub_Assoc_3"><di:waypoint x="203" y="1066"/><di:waypoint x="287" y="1162"/></bpmndi:BPMNEdge>
+</bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+</bpmn:definitions>
