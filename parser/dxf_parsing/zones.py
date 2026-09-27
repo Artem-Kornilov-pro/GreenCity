@@ -585,4 +585,37 @@ def extract_restrictions(msp, tf, boundary=None):
     _reconstruct_buildings_from_line_fragments(zones, idx_by_type, building_lines, tf)
     _merge_corridors(zones, idx_by_type, corridors, tf)
     _merge_polygon_zones(zones, idx_by_type, polygon_zones, tf)
-    return _clip_offsite_zones(zones, boundary)
+    return _clip_offsite_zones(_dedupe_buildings(zones), boundary)
+
+
+# Здание, которое на эту долю площади лежит внутри другого (не меньшего), --
+# то же здание второй раз.
+_BUILDING_DUPLICATE_SHARE = 0.9
+
+
+def _dedupe_buildings(zones):
+    """Одно здание на место. Как и бордюры (objects.dedupe_curbs), контуры
+    зданий приходят из нескольких файлов пачки (на Академика Понтрягина --
+    124 почти совпадающих пары), и совпадающие стены и крыши мерцали
+    (z-fighting). Из дублей остаётся крупнейший (при равных -- первый)."""
+    buildings = [i for i, z in enumerate(zones) if z["type"] == "building" and len(z["polygon"]) >= 3]
+    if len(buildings) < 2:
+        return zones
+    polys = []
+    for i in buildings:
+        poly = Polygon([(p["x"], p["z"]) for p in zones[i]["polygon"]])
+        polys.append(poly if poly.is_valid else poly.buffer(0))
+    tree = shapely.STRtree(polys)
+    removed = set()
+    for k in sorted(range(len(polys)), key=lambda k: (-polys[k].area, k)):
+        if k in removed or polys[k].is_empty:
+            continue
+        for m in tree.query(polys[k]):
+            if m == k or m in removed or polys[m].is_empty:
+                continue
+            if polys[m].area > polys[k].area:  # меньшее большее не поглощает
+                continue
+            if polys[k].intersection(polys[m]).area >= _BUILDING_DUPLICATE_SHARE * polys[m].area:
+                removed.add(m)
+    drop = {buildings[k] for k in removed}
+    return [z for i, z in enumerate(zones) if i not in drop]

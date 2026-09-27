@@ -5,6 +5,7 @@ import type { Point2, RestrictionZone, Scene } from "../types";
 import type { CatalogItem } from "../catalog";
 import { computeSceneBounds } from "../geometry";
 import { Ground } from "./Ground";
+import { FLAT_LAYER_ORDER } from "./geometryHelpers";
 import { RestrictionZones } from "./RestrictionZones";
 import { Buildings } from "./Buildings";
 import { PlacedObjects, type TransformMode } from "./PlacedObjects";
@@ -13,6 +14,10 @@ import { Windows, Canopies } from "./FacadeFeatures";
 import { Curbs } from "./CurbStrips";
 import { Lawns } from "./Lawns";
 import { AreaSelectionDraw } from "./AreaSelectionDraw";
+
+// Высота сетки-ориентира: над газоном (0.02), под зонами (0.04). Видимость
+// решает порядок отрисовки, не высота -- см. комментарий у gridHelper.
+const GRID_Y = 0.03;
 
 export function SceneView({
   scene,
@@ -100,9 +105,17 @@ export function SceneView({
         onMove={onMove}
         onRotate={onRotate}
       />
+      {/* Сетка -- поверх земли и газона по порядку отрисовки
+          (FLAT_LAYER_ORDER), без записи и без сравнения глубины с ними.
+          Раньше она стояла в сантиметре над землёй и решала видимость
+          буфером глубины -- на крупной DWG-сцене его точности не хватало, и
+          линии мерцали сквозь землю (Берзарина). Здания, деревья и бордюры
+          рисуются позже и закрывают сетку как обычно. */}
       <gridHelper
         args={[gridSize, gridDivisions, "#8fa6b3", "#b9cdd6"]}
-        position={[(bounds.minX + bounds.maxX) / 2, -0.01, (bounds.minZ + bounds.maxZ) / 2]}
+        position={[(bounds.minX + bounds.maxX) / 2, GRID_Y, (bounds.minZ + bounds.maxZ) / 2]}
+        renderOrder={FLAT_LAYER_ORDER.grid}
+        material-depthWrite={false}
       />
       <AreaSelectionDraw active={selectionMode} onComplete={onAreaSelected} />
       {/* В режиме выделения drag должен обводить участок, а не крутить

@@ -330,10 +330,11 @@ def test_parse_dxf_doc_without_boundary_keeps_elongated_site_intact(empty_doc):
     assert len(result["objects"]) == 50
     xs = [o["position"]["x"] for o in result["objects"]]
     assert max(xs) - min(xs) == pytest.approx(49 * 20.0)
-    # Оценённая граница должна накрывать весь участок, а не только середину.
+    # Оценённая граница должна накрывать весь участок, а не только середину
+    # (сцена с оценённой границей центрируется -- сравниваем с самими объектами).
     bxs = [p["x"] for p in result["boundary"]["polygon"]]
-    assert min(bxs) < 0
-    assert max(bxs) > 49 * 20.0
+    assert min(bxs) < min(xs)
+    assert max(bxs) > max(xs)
 
 
 def test_parse_dxf_doc_without_boundary_and_too_few_points_skips_filtering(empty_doc):

@@ -2,12 +2,14 @@ import { useMemo } from "react";
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { LawnArea } from "../types";
+import { FLAT_LAYER_ORDER } from "./geometryHelpers";
 
 // Газон GreenPlan -- заливка поверх земли участка (Ground.tsx), ниже зон
 // ограничений (RestrictionZones.tsx, Y от 0.01): зоны остаются читаемыми и
 // наводимыми мышью. Клумбы кустарника -- дырками в шейпе. Все участки газона
 // одного статуса слиты в одну геометрию: на крупных сценах их сотни.
-const LAWN_Y = 0.005;
+// Порядок и высоты плоских слоёв -- см. FLAT_LAYER_ORDER в geometryHelpers.ts.
+const LAWN_Y = 0.02;
 const COLOR_BY_STATUS: Record<LawnArea["status"], string> = {
   new: "#7cc35a",
   existing: "#5f9a48",
@@ -43,8 +45,8 @@ export function Lawns({ lawns }: { lawns: LawnArea[] }) {
   return (
     <>
       {groups.map(({ status, geometry }) => (
-        <mesh key={status} geometry={geometry} position={[0, LAWN_Y, 0]} receiveShadow>
-          <meshStandardMaterial color={COLOR_BY_STATUS[status]} side={THREE.DoubleSide} />
+        <mesh key={status} geometry={geometry} position={[0, LAWN_Y, 0]} renderOrder={FLAT_LAYER_ORDER.lawn} receiveShadow>
+          <meshStandardMaterial color={COLOR_BY_STATUS[status]} side={THREE.DoubleSide} depthWrite={false} />
         </mesh>
       ))}
     </>
