@@ -8,6 +8,9 @@ import math
 import re
 from collections import Counter
 
+from shapely.geometry import LineString
+from shapely.strtree import STRtree
+
 from dxf_parsing.geometry import polygon_points
 from dxf_parsing.rules import (
     BUILDING_MESH_LAYER_KEYWORDS,
@@ -274,6 +277,59 @@ def extract_curb_polylines(msp, tf):
         if math.hypot(en.x - s.x, en.y - s.y) < 1e-6:
             continue
         result.append(tf.polygon([(s.x, s.y, 0.0), (en.x, en.y, 0.0)]))
+    return dedupe_curbs(result)
+
+
+# Отрезок бордюра, который почти целиком (_CURB_COVERED_SHARE длины) лежит в
+# полосе _CURB_DUPLICATE_TOLERANCE_M от уже взятого, -- тот же борт второй раз.
+_CURB_DUPLICATE_TOLERANCE_M = 0.05
+_CURB_COVERED_SHARE = 0.9
+
+
+def dedupe_curbs(polylines):
+    """Один бордюр на место. Пачка DWG сливается по слоям, и один и тот же
+    борт приходит из топосъёмки ("Бортовой камень") и из проекта
+    ("ДВ_ГП_П_Борт_…"), часто по нескольку раз: на Харьковской 6 из 12,9 км
+    бордюров -- дубли, на Академика Понтрягина 9,6 из 21,6 км. Фронтенд рисует
+    бордюр полоской на одной высоте, и две совпадающие полоски мерцали
+    (z-fighting) при каждом движении камеры. Отрезки-дубли выбрасываются
+    (первый встреченный остаётся), остальные куски полилинии склеиваются
+    обратно."""
+    segments, owners = [], []
+    for index, pl in enumerate(polylines):
+        for a, b in zip(pl, pl[1:]):
+            if (a["x"], a["z"]) != (b["x"], b["z"]):
+                segments.append(LineString([(a["x"], a["z"]), (b["x"], b["z"])]))
+                owners.append(index)
+    if not segments:
+        return polylines
+    tree = STRtree(segments)
+    duplicate = [False] * len(segments)
+    for i, seg in enumerate(segments):
+        for j in tree.query(seg.buffer(_CURB_DUPLICATE_TOLERANCE_M)):
+            if j >= i or duplicate[j]:
+                continue
+            band = segments[j].buffer(_CURB_DUPLICATE_TOLERANCE_M, cap_style=2)
+            if seg.intersection(band).length >= _CURB_COVERED_SHARE * seg.length:
+                duplicate[i] = True
+                break
+    if not any(duplicate):
+        return polylines
+
+    result, run, run_owner = [], [], None
+
+    def flush():
+        if len(run) >= 2:
+            result.append([{"x": x, "z": z} for x, z in run])
+
+    for seg, owner, dup in zip(segments, owners, duplicate):
+        (x0, z0), (x1, z1) = seg.coords
+        if dup or owner != run_owner or not run or run[-1] != (x0, z0):
+            flush()
+            run, run_owner = ([] if dup else [(x0, z0)]), owner
+        if not dup:
+            run.append((x1, z1))
+    flush()
     return result
 
 

@@ -217,3 +217,43 @@ def test_scene_with_estimated_boundary_is_centered_near_origin(empty_doc):
     zone = next(z for z in scene["restrictions"] if z["type"] == "building")
     assert building["metadata"]["footprint"] == zone["polygon"]
     assert min(p["x"] for p in zone["polygon"]) + origin["x"] == pytest.approx(ox + 40, abs=0.01)
+
+
+# --- Дубли бордюров и зданий (z-fighting: мерцание при движении камеры) ------------
+
+
+def _pl(*pts):
+    return [{"x": float(x), "z": float(z)} for x, z in pts]
+
+
+def _curb_length(polylines):
+    return sum(((b["x"] - a["x"]) ** 2 + (b["z"] - a["z"]) ** 2) ** 0.5 for pl in polylines for a, b in zip(pl, pl[1:]))
+
+
+def test_dedupe_curbs_drops_repeated_curb_from_another_file():
+    from dxf_parsing.objects import dedupe_curbs
+
+    survey = _pl((0, 0), (50, 0), (50, 30))
+    design = _pl((0, 0.02), (50, 0.02))  # тот же борт из проекта, в 2 см
+    other_edge = _pl((0, 0.15), (50, 0.15))  # вторая кромка камня -- не дубль
+    kept = dedupe_curbs([survey, design, other_edge])
+    assert _curb_length(kept) == pytest.approx(50 + 30 + 50)
+    assert kept[0] == survey
+
+
+def test_dedupe_curbs_keeps_the_new_part_of_a_partly_repeated_curb():
+    from dxf_parsing.objects import dedupe_curbs
+
+    first = _pl((0, 0), (20, 0))
+    longer = _pl((0, 0), (20, 0), (40, 0))  # первая половина -- дубль, вторая -- новая
+    kept = dedupe_curbs([first, longer])
+    assert _curb_length(kept) == pytest.approx(40)
+
+
+def test_parse_keeps_one_copy_of_a_building_coming_from_several_files(empty_doc):
+    msp = empty_doc.modelspace()
+    _square(msp, 0, 0, 20, "Здания")
+    _square(msp, 0.01, 0.01, 20, "Здания")  # тот же дом из второго файла пачки
+    _square(msp, 50, 0, 20, "Здания")
+    buildings = [z for z in extract_restrictions(msp, Transform()) if z["type"] == "building"]
+    assert len(buildings) == 2
