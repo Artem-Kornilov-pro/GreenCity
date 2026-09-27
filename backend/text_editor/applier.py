@@ -68,6 +68,9 @@ class PlanApplier(PlacementOpsMixin, EditingOpsMixin):
         self.catalog = catalog
         self.by_id = {item.id: item for item in catalog}
         self.editable = _editable_types(catalog)
+        self.category_types: dict[str, set[str]] = {}
+        for item in catalog:
+            self.category_types.setdefault(item.category, set()).add(item.object_type)
         self.placer = placer
         self.objects = {o.id: o for o in scene.objects}
         self.applied: list[str] = []
@@ -75,6 +78,7 @@ class PlanApplier(PlacementOpsMixin, EditingOpsMixin):
         self.warnings: list[str] = []
         self.new_zones: list[RestrictionZone] = []  # define_zone -- добавляются в вывод сцены отдельно
         self.greenplan: Optional[GreenPlanOptions] = None  # run_greenplan -- запускает фронтенд
+        self.created: list[str] = []  # id новых объектов -- в историю чата ("убери их")
 
     def run(self, plan: LlmPlan) -> TextEditResult:
         handlers = {
@@ -101,8 +105,9 @@ class PlanApplier(PlacementOpsMixin, EditingOpsMixin):
             RunGreenPlanOp: self.run_greenplan,
         }
         for number, raw in enumerate(plan.operations, 1):
+            normalized = _normalize(raw)
             try:
-                op = _OPERATION.validate_python(_normalize(raw))
+                op = _OPERATION.validate_python(normalized)
             except ValidationError as e:
                 error = e.errors()[0]
                 # loc вида ("place_along", "target"): первый элемент -- тег операции.
@@ -110,6 +115,12 @@ class PlanApplier(PlacementOpsMixin, EditingOpsMixin):
                 detail = f"{field}: {error['msg']}" if field else error["msg"]
                 self.rejected.append(f"операция {number} ({raw.get('op', '?')}): не разобрать — {detail}")
                 continue
+            # Лишние поля pydantic молча отбрасывает -- а за ними стоит
+            # намерение модели ("у площадки", "только клёны"), которое тогда
+            # тихо терялось. Пусть это будет видно.
+            unknown = sorted(set(normalized) - set(type(op).model_fields))
+            if unknown:
+                self.warnings.append(f"операция {number} ({op.op}): не поддерживается и пропущено — {', '.join(unknown)}")
             handlers[type(op)](op)
 
         # Исходную сцену не трогаем: при ошибке посередине у фронтенда
@@ -122,12 +133,23 @@ class PlanApplier(PlacementOpsMixin, EditingOpsMixin):
         )
         return TextEditResult(
             scene=scene,
-            explanation=plan.explanation,
+            explanation=self._explanation(plan),
             applied=self.applied,
             rejected=self.rejected,
             warnings=self.warnings,
             greenplan=self.greenplan,
+            added_ids=[i for i in self.created if i in self.objects],
         )
+
+    def _explanation(self, plan: LlmPlan) -> str:
+        """Ответ модели пишется до применения плана и всегда звучит как успех
+        ("площадка огорожена") -- даже когда планировщик всё отклонил. Если
+        не сделано ничего, пользователь должен это увидеть сразу, а не
+        разбирать мелкий список отказов под бодрым ответом."""
+        if self.applied or not self.rejected:
+            return plan.explanation
+        reasons = "; ".join(self.rejected[:2])
+        return f"Не получилось: {reasons}."
 
     # --- Общие шаги --------------------------------------------------------
 
@@ -157,6 +179,7 @@ class PlanApplier(PlacementOpsMixin, EditingOpsMixin):
             metadata={"catalogId": item.id, "label": item.label, "species": item.label, "source": "llm"},
         )
         self.placer.occupy(new_id, x, z, item.object_type)
+        self.created.append(new_id)
 
     def _plant(self, items: list[CatalogItem], spots: list[tuple]) -> str:
         """Создать объекты в точках, чередуя виды; вернуть подписи видов."""

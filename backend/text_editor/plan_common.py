@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Optional
 
 from core.placement import (
@@ -23,12 +24,75 @@ GOLDEN_ANGLE_DEG = 137.5
 DEFAULT_REMOVE_DISTANCE_M = 3.0
 DEFAULT_ALONG_RADIUS_M = 15.0
 DEFAULT_REMOVE_RADIUS_M = 10.0
+DEFAULT_NEAR_TARGET_M = 6.0  # place_in_area с target: "у площадки" -- не дальше этого от её края
 # Кандидатов на одно место при равномерной посадке по области и всего -- для
 # компактной группы вокруг точки.
 CANDIDATES_PER_PLACEMENT = 12
 CANDIDATES_NEAR_POINT = 2000
 ALIGN_MATCH_REACH_M = 15.0  # align_along: искать сбившиеся объекты не дальше этого от цели
 MIN_SCALE, MAX_SCALE = 0.3, 3.0
+
+# Один и тот же предмет под разными типами: урны из DXF-подосновы и
+# эталонов -- "urn", а в каталоге (и у всего, что ставят ассистент и
+# GreenPlan) -- "trash". Без этого "удали все урны" не находило ни одной.
+TYPE_ALIASES: dict[str, tuple[str, ...]] = {"trash": ("urn",), "urn": ("trash",)}
+
+
+# Русские названия типов -- для фильтра species у объектов без вида: шезлонги
+# и лавки из реального чертежа приходят без записи каталога, и "убери
+# шезлонги" по названию их иначе не находило.
+TYPE_LABELS_RU: dict[str, str] = {
+    "tree": "дерево",
+    "bush": "кустарник куст",
+    "hedge_segment": "живая изгородь",
+    "bench": "скамейка лавка",
+    "lamp": "фонарь",
+    "trash": "урна",
+    "urn": "урна",
+    "fountain": "фонтан",
+    "lounger": "шезлонг",
+    "chair": "стул кресло",
+    "table": "стол",
+    "picnic_table": "стол для пикника",
+    "stool": "табурет",
+    "lawn_patch": "газон",
+    "flowerbed_patch": "клумба цветник",
+    "path_segment": "дорожка",
+}
+
+
+def with_aliases(types: list[str]) -> list[str]:
+    return list(dict.fromkeys(t for base in types for t in (base, *TYPE_ALIASES.get(base, ()))))
+
+
+# --- Названия видов -------------------------------------------------------------
+
+
+def name_words(text: str) -> list[str]:
+    return re.findall(r"[а-яa-z]+", text.lower().replace("ё", "е"))
+
+
+def same_word(asked: str, name: str) -> bool:
+    """Одно слово в разных падежах и числах: "липы" -- "липа", "клёны" --
+    "клен", "березки" -- "береза", "туи" -- "туя". Общее начало -- всё
+    название без окончания (одна-две буквы): "туи" -- не "Тунберга",
+    "дубы" -- не "дубравколистная"."""
+    common = 0
+    for a, b in zip(asked, name):
+        if a != b:
+            break
+        common += 1
+    return common >= max(2, min(len(asked), len(name)) - 1, len(name) - 2)
+
+
+def name_matches(asked: str, name: str) -> bool:
+    """Вид name подходит под названное пользователем asked: каждое слово
+    asked есть среди слов name ("Клен" -- любой клён, "Клен остролистный" --
+    только он)."""
+    asked_words = [w for w in name_words(asked) if len(w) >= 2]
+    words = name_words(name)
+    return bool(asked_words) and all(any(same_word(a, w) for w in words) for a in asked_words)
+
 
 # --- Применение ---------------------------------------------------------------
 
@@ -45,9 +109,16 @@ def _normalize(raw: dict) -> dict:
     kind = op.get("op")
     if kind in ("place_along", "place_in_area") and "catalog_ids" not in op and "catalog_id" in op:
         op["catalog_ids"] = op.pop("catalog_id")
-    if kind == "remove_where" and "object_types" not in op and "object_type" in op:
+    if "object_types" not in op and "object_type" in op:
         op["object_types"] = op.pop("object_type")
-    for key in ("catalog_ids", "object_types", "elements", "tree_ids", "bush_ids"):
+    # "Посади 5 лип вдоль дорожек": модель пишет count, а у ряда это
+    # max_count -- без этого count молча отбрасывался и вдоль дорожек
+    # вставало 53 липы вместо 5. И наоборот у группы.
+    if kind == "place_along" and "max_count" not in op and "count" in op:
+        op["max_count"] = op.pop("count")
+    if kind == "place_in_area" and "count" not in op and "max_count" in op:
+        op["count"] = op.pop("max_count")
+    for key in ("catalog_ids", "object_types", "elements", "tree_ids", "bush_ids", "species", "ids"):
         if isinstance(op.get(key), str):
             op[key] = [op[key]]
     return op

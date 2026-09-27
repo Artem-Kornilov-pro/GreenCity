@@ -211,6 +211,8 @@ export interface TextEditResult {
   warnings: string[];
   // Модель выбрала озеленение GreenPlan -- его запускает вызывающий код на scene.
   greenplan?: GreenPlanOptions | null;
+  // id созданных объектов -- возвращаются в истории чата ("убери их").
+  added_ids?: string[];
 }
 
 // Прошлая правка чата (backend/text_editor/operations.py::ChatTurn): без неё
@@ -219,6 +221,7 @@ export interface ChatTurn {
   instruction: string;
   explanation: string;
   applied: string[];
+  added_ids: string[];
 }
 
 // Правка плана текстом через LLM (backend/text_editor/service.py). Модель отвечает

@@ -47,11 +47,14 @@ from text_editor.plan_common import (
     DEFAULT_REMOVE_RADIUS_M,
     MAX_SCALE,
     MIN_SCALE,
+    TYPE_LABELS_RU,
     _default_spacing,
     _half_depth,
     _is_oriented,
     _labels,
     _plural,
+    name_matches,
+    with_aliases,
 )
 
 # Без этого лога причину сбоя правки текстом было не узнать: в логе доступа
@@ -96,6 +99,10 @@ class EditingOpsMixin:
             return Point(obj.position.x, obj.position.z)
         if target is not None:
             geom = self.placer.target_geometry(target)
+            if geom is None and target in self.objects:
+                # id объекта (чаще всего подъезда) в поле target вместо *_id.
+                obj = self.objects[target]
+                return Point(obj.position.x, obj.position.z)
             if geom is None:
                 self.rejected.append(f"{what}: {label} — на участке нет цели «{TARGET_LABELS.get(target, target)}»")
                 return None
@@ -189,6 +196,9 @@ class EditingOpsMixin:
         z: Optional[float],
         radius_m: Optional[float],
         what: str,
+        species: list[str] = (),
+        ids: list[str] = (),
+        widen: bool = False,
     ) -> Optional[tuple[list[SceneObject], str]]:
         """Существующие объекты этих типов, попадающие под необязательные
         фильтры (у цели ближе distance_m и/или в радиусе от точки) --
@@ -197,11 +207,20 @@ class EditingOpsMixin:
         remove_where, replace_where, thin_out, resize, face, align_along,
         set_count -- каждая применяет свою правку к одному и тому же набору.
         Пустой object_types -- все редактируемые типы сразу ("очисти эту
-        зону" не должно требовать перечислять всё, что там может стоять)."""
+        зону" не должно требовать перечислять всё, что там может стоять).
+        species -- только эти виды (plan_common.name_matches), ids -- только
+        эти объекты (например созданные прошлой правкой: "убери их").
+        widen -- для правок, которые ничего не удаляют (масштаб, замена вида,
+        разворот, выравнивание): если в круге у точки пусто, круг
+        расширяется до ближайших объектов -- "деревья у подъезда" стоят по
+        норме в 10-15 м от него, а не в 5."""
         if not object_types:
             types = sorted(self.editable)
         else:
-            types = list(dict.fromkeys(object_types))
+            # Модель иногда называет категорию каталога ("furniture", "tree")
+            # вместо типа объекта ("lounger") -- раскрываем в типы категории.
+            expanded = [t for asked in object_types for t in self.category_types.get(asked, (asked,))]
+            types = with_aliases(list(dict.fromkeys(expanded)))
             locked = [t for t in types if t not in self.editable]
             types = [t for t in types if t in self.editable]
             if locked:
@@ -223,21 +242,60 @@ class EditingOpsMixin:
             circle = (x, z, clamp(radius_m or DEFAULT_REMOVE_RADIUS_M, 0.5, MAX_AREA_RADIUS_M))
             conditions.append(f"в радиусе {circle[2]:.0f} м от ({x:.1f}, {z:.1f})")
 
-        matches = []
-        for obj in self.objects.values():
-            if obj.type not in types:
-                continue
-            ox, oz = obj.position.x, obj.position.z
-            if circle is not None and math.hypot(ox - circle[0], oz - circle[1]) > circle[2]:
-                continue
-            if target is not None and self.placer.target_distance(target, ox, oz) > distance:
-                continue
-            matches.append(obj)
+        if species:
+            conditions.append(f"вид: {', '.join(species)}")
+        wanted_ids = set(ids)
+        if wanted_ids:
+            missing = wanted_ids - self.objects.keys()
+            if missing:
+                self.warnings.append(f"{what}: {len(missing)} объектов из списка уже нет на плане")
+            conditions.append(f"{_plural(len(wanted_ids), _OBJECT_FORMS)} по id")
+
+        def named(obj: SceneObject, asked: str) -> bool:
+            return name_matches(asked, self._species(obj) or "") or name_matches(asked, TYPE_LABELS_RU.get(obj.type, ""))
+
+        def collect(circle, use_target: bool = True) -> list[SceneObject]:
+            matches = []
+            for obj in self.objects.values():
+                if obj.type not in types:
+                    continue
+                if wanted_ids and obj.id not in wanted_ids:
+                    continue
+                if species and not any(named(obj, asked) for asked in species):
+                    continue
+                ox, oz = obj.position.x, obj.position.z
+                if circle is not None and math.hypot(ox - circle[0], oz - circle[1]) > circle[2]:
+                    continue
+                if use_target and target is not None and self.placer.target_distance(target, ox, oz) > distance:
+                    continue
+                matches.append(obj)
+            return matches
+
+        matches = collect(circle)
+        if not matches and widen and circle is not None:
+            circle_label = f"в радиусе {circle[2]:.0f} м от ({x:.1f}, {z:.1f})"
+            # Сначала шире круг, потом -- без фильтра по цели: модель к "у
+            # подъезда" упорно добавляет "у здания", а деревья по норме
+            # стоят от стены дальше, чем она просит.
+            attempts = [(2 * circle[2], True), (circle[2] + 15.0, True)]
+            if target is not None:
+                attempts.append((circle[2] + 15.0, False))
+            for radius, use_target in attempts:
+                wider = (circle[0], circle[1], min(radius, MAX_AREA_RADIUS_M))
+                matches = collect(wider, use_target)
+                if matches:
+                    conditions[conditions.index(circle_label)] = f"в радиусе {wider[2]:.0f} м от ({x:.1f}, {z:.1f})"
+                    note = f"в радиусе {circle[2]:.0f} м ничего нет — взято в радиусе {wider[2]:.0f} м"
+                    if not use_target:
+                        conditions = [c for c in conditions if not c.startswith("ближе ")]
+                        note += f", без условия «{TARGET_LABELS.get(target, target)}»"
+                    self.warnings.append(f"{what}: {note}")
+                    break
         scope = f" ({'; '.join(conditions)})" if conditions else ""
         return matches, scope
 
     def remove_where(self, op: RemoveWhereOp) -> None:
-        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, "удаление")
+        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, "удаление", op.species, op.ids)
         if found is None:
             return
         matches, scope = found
@@ -258,7 +316,7 @@ class EditingOpsMixin:
         items = self._pool(op.catalog_ids, what)
         if items is None:
             return
-        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, what)
+        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, what, op.species, op.ids, widen=True)
         if found is None:
             return
         matches, scope = found
@@ -288,7 +346,7 @@ class EditingOpsMixin:
 
     def thin_out(self, op: ThinOutOp) -> None:
         what = "прореживание"
-        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, what)
+        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, what, op.species, op.ids)
         if found is None:
             return
         matches, scope = found
@@ -315,7 +373,7 @@ class EditingOpsMixin:
     def resize(self, op: ResizeOp) -> None:
         what = "масштаб"
         scale = clamp(op.scale, MIN_SCALE, MAX_SCALE)
-        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, what)
+        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, what, op.species, op.ids, widen=True)
         if found is None:
             return
         matches, scope = found
@@ -333,7 +391,7 @@ class EditingOpsMixin:
         at = self._resolve_endpoint(what, op.at_id, op.at_target, op.at_x, op.at_z, "цель")
         if at is None:
             return
-        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, what)
+        found = self._matching(op.object_types, op.target, op.distance_m, op.x, op.z, op.radius_m, what, op.species, op.ids, widen=True)
         if found is None:
             return
         matches, scope = found
@@ -361,7 +419,7 @@ class EditingOpsMixin:
         if self.placer.target_geometry(op.target) is None:
             self.rejected.append(f"{what}: на участке таких объектов нет")
             return
-        found = self._matching(op.object_types, op.target, ALIGN_MATCH_REACH_M, op.x, op.z, op.radius_m, what)
+        found = self._matching(op.object_types, op.target, ALIGN_MATCH_REACH_M, op.x, op.z, op.radius_m, what, op.species, op.ids)
         if found is None:
             return
         matches, _ = found

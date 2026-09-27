@@ -49,6 +49,10 @@ MAX_HISTORY_TURNS = 4
 MAX_HISTORY_TEXT = 300
 MAX_HISTORY_APPLIED = 4
 MAX_HISTORY_APPLIED_TEXT = 160
+# id новых объектов прошлой правки -- для "убери их", "сделай их крупнее".
+# Больше -- уже не "их", а заметная часть участка; тогда модель берёт фильтр
+# по месту и виду.
+MAX_HISTORY_IDS = 60
 
 
 class LlmNotConfiguredError(RuntimeError):
@@ -167,6 +171,10 @@ def _history_block(history: list[ChatTurn]) -> str:
             lines.append(f"   Ответ: {_clip(turn.explanation, MAX_HISTORY_TEXT)}")
         for applied in turn.applied[:MAX_HISTORY_APPLIED]:
             lines.append(f"   сделано: {_clip(applied, MAX_HISTORY_APPLIED_TEXT)}")
+        if turn.added_ids:
+            ids = turn.added_ids[:MAX_HISTORY_IDS]
+            more = f" и ещё {len(turn.added_ids) - len(ids)}" if len(turn.added_ids) > len(ids) else ""
+            lines.append(f"   новые объекты (id): {', '.join(ids)}{more}")
     return "\n".join(lines)
 
 
