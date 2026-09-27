@@ -491,3 +491,19 @@ def test_dense_real_site_gets_trees():
     trees, bushes = _trees_and_bushes(load_catalog())
     objects, _ = generate_for_scene(scene, trees, bushes)
     assert sum(1 for o in objects if o.type == "tree") > 100
+
+
+def test_generated_trees_vary_in_scale_and_rotation_deterministically(scene_02, catalog):
+    # Сотни одинаковых деревьев одного размера и поворота выдают клонов.
+    from greenplan.deterministic_placement import TREE_SCALE_JITTER_NATURAL
+
+    trees, bushes = _trees_and_bushes(catalog)
+    objects, _ = generate_for_scene(scene_02, trees=trees, bushes=bushes, k=3)
+    placed_trees = [o for o in objects if o.type == "tree"]
+    assert placed_trees
+    assert len({o.scale for o in placed_trees}) > 20  # ±6% с шагом 0.001 -- не больше ~120 разных
+    assert len({o.rotation for o in placed_trees}) > len(placed_trees) / 2
+    assert all(abs(o.scale - 1.0) <= TREE_SCALE_JITTER_NATURAL + 1e-9 for o in placed_trees)
+    assert all(o.scale == 1.0 for o in objects if o.type == "bush")
+    again, _ = generate_for_scene(scene_02, trees=trees, bushes=bushes, k=3)
+    assert [(o.id, o.scale, o.rotation) for o in again] == [(o.id, o.scale, o.rotation) for o in objects]

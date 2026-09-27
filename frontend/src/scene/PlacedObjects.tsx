@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { Html, TransformControls } from "@react-three/drei";
 import type { RestrictionZone, SceneObject } from "../types";
 import type { CatalogItem } from "../catalog";
-import { objectDisplayName, resolveCatalogItem } from "../catalog";
+import { fitHeight, objectDisplayName, resolveCatalogItem } from "../catalog";
 import { buildZoneIndex, violatesAt } from "../geometry";
 import { plantKindOfObjectType } from "../setbackNorms";
 import { ObjectVisual } from "./ObjectVisual";
@@ -90,6 +90,7 @@ export function PlacedObjects({
           position: [obj.position.x, obj.position.y, obj.position.z],
           rotation: obj.rotation,
           scale: obj.scale,
+          height: fitHeight(item),
         };
         if (list) list.push(placement);
         else groups.set(item.model, [placement]);

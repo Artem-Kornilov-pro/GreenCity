@@ -33,3 +33,27 @@ export function extrudedPolygonGeometry(points: Point2[], height: number): THREE
 // рисуются поверх. Высоты оставлены разнесёнными -- на случай, если порядок
 // когда-нибудь поменяется.
 export const FLAT_LAYER_ORDER = { ground: -4, lawn: -3, grid: -2 } as const;
+
+// Высота загруженной модели (по габариту всего графа glTF), с кешем на
+// объект: модель одна на вид, а спрашивают её для тысяч размещений.
+const modelHeightCache = new WeakMap<THREE.Object3D, number>();
+
+function modelHeight(object: THREE.Object3D): number {
+  let height = modelHeightCache.get(object);
+  if (height === undefined) {
+    const box = new THREE.Box3().setFromObject(object);
+    height = box.isEmpty() ? 0 : box.max.y - box.min.y;
+    modelHeightCache.set(object, height);
+  }
+  return height;
+}
+
+// Во сколько раз увеличить модель, чтобы она встала в высоту из каталога.
+// Высота дерева в каталоге -- реальная высота вида (липа 12 м), а модели из
+// пака -- какой угодно высоты (commontree_1 -- 2,7 м): без подгонки деревья
+// выглядели игрушечными рядом с домами в 15+ м. Нет высоты -- модель как есть.
+export function modelFitScale(object: THREE.Object3D, targetHeight: number | undefined): number {
+  if (!targetHeight) return 1;
+  const height = modelHeight(object);
+  return height > 0 ? targetHeight / height : 1;
+}

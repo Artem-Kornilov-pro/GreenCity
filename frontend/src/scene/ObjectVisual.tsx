@@ -8,7 +8,8 @@
 
 import { Suspense, useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
-import type { CatalogItem } from "../catalog";
+import { fitHeight, type CatalogItem } from "../catalog";
+import { modelFitScale } from "./geometryHelpers";
 
 const VIOLATION_COLOR = "#e0433b";
 
@@ -21,7 +22,7 @@ const CLUSTER_LOBES: [number, number, number, number][] = [
   [0.1, 0.65, -0.55, 0.58],
 ];
 
-function GltfModel({ url }: { url: string }) {
+function GltfModel({ url, height }: { url: string; height?: number }) {
   const { scene } = useGLTF(url);
   // Клон обязателен: загруженный glTF переиспользуется всеми экземплярами
   // этого вида, а один и тот же Object3D нельзя вставить в несколько мест
@@ -33,7 +34,7 @@ function GltfModel({ url }: { url: string }) {
   // означал тысячи глубоких клонов графа glTF, которые никто не освобождает --
   // именно так браузер и не укладывался в 64 ГБ.
   const object = useMemo(() => scene.clone(), [scene]);
-  return <primitive object={object} />;
+  return <primitive object={object} scale={modelFitScale(scene, height)} />;
 }
 
 function Trunk({ height }: { height: number }) {
@@ -254,7 +255,7 @@ export function ObjectVisual({
 
   return (
     <Suspense fallback={<Primitive item={item} violated={false} />}>
-      <GltfModel url={item.model} />
+      <GltfModel url={item.model} height={fitHeight(item)} />
     </Suspense>
   );
 }
