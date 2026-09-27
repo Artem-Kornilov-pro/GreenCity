@@ -5,6 +5,7 @@ import type { Point2, RestrictionZone, Scene } from "../types";
 import type { CatalogItem } from "../catalog";
 import { computeSceneBounds } from "../geometry";
 import { Ground } from "./Ground";
+import { FLAT_LAYER_ORDER } from "./geometryHelpers";
 import { RestrictionZones } from "./RestrictionZones";
 import { Buildings } from "./Buildings";
 import { PlacedObjects, type TransformMode } from "./PlacedObjects";
@@ -113,6 +114,8 @@ export function SceneView({
       <gridHelper
         args={[gridSize, gridDivisions, "#8fa6b3", "#b9cdd6"]}
         position={[(bounds.minX + bounds.maxX) / 2, GRID_Y, (bounds.minZ + bounds.maxZ) / 2]}
+        renderOrder={FLAT_LAYER_ORDER.grid}
+        material-depthWrite={false}
       />
       <AreaSelectionDraw active={selectionMode} onComplete={onAreaSelected} />
       {/* В режиме выделения drag должен обводить участок, а не крутить

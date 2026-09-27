@@ -46,7 +46,7 @@ const RENDER_ORDER_BY_SEVERITY: Record<string, number> = {
 // специфичная forbidden/warning-зона поверх неё. Три уровня высоты достаточно —
 // forbidden физически выше warning выше allowed, поэтому луч сначала попадает
 // в самую важную зону.
-// Высоты плоских слоев -- см. комментарий в Ground.tsx.
+// Порядок и высоты плоских слоёв -- см. FLAT_LAYER_ORDER в geometryHelpers.ts.
 const Y_BY_SEVERITY: Record<string, number> = {
   allowed: 0.04,
   warning: 0.07,
