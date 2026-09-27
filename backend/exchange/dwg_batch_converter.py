@@ -31,6 +31,7 @@ layer_is_parsed, плюс тексты -- подписи зданий), в ко�
 
 from __future__ import annotations
 
+import hashlib
 import shutil
 import subprocess
 from concurrent.futures import ProcessPoolExecutor
@@ -146,6 +147,23 @@ def _extract_compact(dwg_path: str, work_dir: str) -> tuple[str, str | None, str
     return dwg.name, str(compact_path), None
 
 
+def _skip_identical_files(dwg_paths: list[Path], result: BatchConversionResult) -> list[Path]:
+    """Побайтно одинаковые файлы -- один раз. Реальная пачка их содержит (на
+    Харьковской "АПОТ" и "улица ГП" -- один и тот же файл под двумя именами), и
+    всё их содержимое попадало в сцену дважды. Пропущенный -- в failed с
+    понятной причиной, он уйдёт пользователю в dwgConversionWarnings."""
+    seen: dict[str, str] = {}
+    unique = []
+    for path in dwg_paths:
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        if digest in seen:
+            result.failed[path.name] = f"совпадает с {seen[digest]} -- пропущен как дубль"
+            continue
+        seen[digest] = path.name
+        unique.append(path)
+    return unique
+
+
 def merge_dwg_files(dwg_paths: list[Path], intermediate_dir: Path, workers: int = 1) -> BatchConversionResult:
     """Конвертирует каждый файл из `dwg_paths` и сливает в один ezdxf-документ
     (только то, что читает парсер). workers > 1 -- файлы обрабатываются
@@ -155,6 +173,7 @@ def merge_dwg_files(dwg_paths: list[Path], intermediate_dir: Path, workers: int 
     tool = dwg2dxf_path()
     target_doc = ezdxf.new(dxfversion=DXF_VERSION)
     result = BatchConversionResult(doc=target_doc)
+    dwg_paths = _skip_identical_files(dwg_paths, result)
 
     if workers > 1 and len(dwg_paths) > 1:
         with ProcessPoolExecutor(max_workers=min(workers, len(dwg_paths))) as pool:

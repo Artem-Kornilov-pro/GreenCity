@@ -34,6 +34,7 @@ from dxf_parsing.boundary_estimate import (
 from dxf_parsing.geometry import Transform, buffer_segment, centroid, polygon_points
 from dxf_parsing.objects import (
     clean_label,
+    dedupe_point_objects,
     extract_buildings,
     extract_curb_polylines,
     extract_facade_quads,
@@ -128,7 +129,7 @@ def parse_dxf_doc(doc, scale=None, center=True):
     boundary = extract_boundary(msp, tf)
     restrictions = extract_restrictions(msp, tf, boundary)
     buildings = extract_buildings(msp, tf, restrictions)
-    points = extract_point_objects(msp, tf)
+    points = dedupe_point_objects(extract_point_objects(msp, tf))
     objects = buildings + points
     facade = extract_facade_quads(msp, tf)
     curbs = extract_curb_polylines(msp, tf)

@@ -13,7 +13,7 @@ from ezdxf import path as ezpath
 from shapely.geometry import LineString, MultiPoint, Polygon
 from shapely.ops import linemerge
 
-from dxf_parsing.geometry import buffer_segment, polygon_points
+from dxf_parsing.geometry import buffer_segment, polygon_points, split_holes
 from dxf_parsing.rules import (
     BOUNDARY_LAYER_KEYWORDS,
     HATCH_FLATTENING_DISTANCE,
@@ -33,7 +33,21 @@ def extract_boundary(msp, tf):
     return None
 
 
+# Здание меньше этого -- обрывок контура или деталь ("Части зданий": крыльца,
+# приямки, осколки штриховки), а не здание: на Олимпийской деревне таких было
+# 3939 из 6395, и каждое получало отступ под дерево 5 м и коробку в 3D.
+_MIN_BUILDING_AREA_SQM = 3.0
+
+
+def _area(pts_xyz, scale):
+    xy = [(p[0], p[1]) for p in pts_xyz]
+    doubled = sum(x1 * y2 - x2 * y1 for (x1, y1), (x2, y2) in zip(xy, xy[1:] + xy[:1]))
+    return abs(doubled) / 2 * scale * scale
+
+
 def _add_zone(zones, idx_by_type, cfg, layer, pts_xyz, tf):
+    if cfg["type"] == "building" and _area(pts_xyz, tf.scale) < _MIN_BUILDING_AREA_SQM:
+        return
     idx_by_type[cfg["type"]] += 1
     zone = {
         "id": f"{cfg['type']}_{idx_by_type[cfg['type']]:03d}",
@@ -140,11 +154,10 @@ def _merge_corridors(zones, idx_by_type, corridors, tf):
         )
         if merged.is_empty:
             continue
-        polys = merged.geoms if merged.geom_type == "MultiPolygon" else [merged]
-        for poly in polys:
-            # Дырки теряются: схема зоны -- плоский список точек без внутренних
-            # контуров. Для запрета посадки это безопасная сторона ошибки
-            # (закрытая дырка = чуть строже, чем есть на самом деле).
+        # Схема зоны -- плоский список точек без внутренних контуров, поэтому
+        # полигоны с дырками режутся на куски без дыр (split_holes). Раньше
+        # дырки выбрасывались, и кольцо трассы заливалось запретом целиком.
+        for poly in split_holes(merged):
             # [:-1] -- shapely замыкает кольцо повтором первой точки, а в схеме
             # зоны полигон хранится незамкнутым (так же, как его отдаёт
             # polygon_points для обычных контуров).
@@ -207,10 +220,8 @@ def _merge_polygon_zones(zones, idx_by_type, polygon_zones, tf):
         )
         if merged.is_empty:
             continue
-        result_polys = merged.geoms if merged.geom_type == "MultiPolygon" else [merged]
-        for poly in result_polys:
-            # Дырки теряются -- тот же компромисс, что в _merge_corridors, и по
-            # той же причине (схема зоны не хранит внутренние контуры).
+        # Дырки сохраняются нарезкой на куски -- см. _merge_corridors.
+        for poly in split_holes(merged):
             pts = list(poly.exterior.coords)[:-1]
             if len(pts) >= 3:
                 _add_zone(zones, idx_by_type, cfg, layer, pts, tf)
@@ -265,12 +276,14 @@ def _compute_ground_zone(boundary, restrictions):
     if remaining.is_empty:
         return []
 
-    parts = remaining.geoms if remaining.geom_type == "MultiPolygon" else [remaining]
     existing_count = sum(1 for z in restrictions if z["type"] == "protected_zone")
 
     result = []
-    for part in parts:
-        if part.geom_type != "Polygon" or part.area < _GROUND_ZONE_MIN_AREA_SQM:
+    # Без нарезки (split_holes) у кусков земли терялись дырки -- здания и сети
+    # внутри них, и "открытая земля" суммарно выходила больше самого участка
+    # (до 125% на Олимпийской деревне).
+    for part in split_holes(remaining):
+        if part.area < _GROUND_ZONE_MIN_AREA_SQM:
             continue
         pts = list(part.exterior.coords)[:-1]
         if len(pts) < 3:
@@ -331,8 +344,7 @@ def _clip_offsite_zones(zones, boundary):
         clipped = poly.intersection(region)
         if clipped.is_empty:
             continue
-        parts = clipped.geoms if clipped.geom_type == "MultiPolygon" else [clipped]
-        for part in parts:
+        for part in split_holes(clipped):
             pts = list(part.exterior.coords)[:-1]
             if len(pts) < 3:
                 continue
