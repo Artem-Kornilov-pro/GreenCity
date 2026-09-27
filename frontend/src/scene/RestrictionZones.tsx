@@ -46,10 +46,11 @@ const RENDER_ORDER_BY_SEVERITY: Record<string, number> = {
 // специфичная forbidden/warning-зона поверх неё. Три уровня высоты достаточно —
 // forbidden физически выше warning выше allowed, поэтому луч сначала попадает
 // в самую важную зону.
+// Высоты плоских слоев -- см. комментарий в Ground.tsx.
 const Y_BY_SEVERITY: Record<string, number> = {
-  allowed: 0.01,
-  warning: 0.02,
-  forbidden: 0.03,
+  allowed: 0.04,
+  warning: 0.07,
+  forbidden: 0.1,
 };
 
 const SEVERITIES = ["allowed", "warning", "forbidden"] as const;
@@ -172,7 +173,7 @@ export function RestrictionZones({
         const color = COLOR_BY_SEVERITY[group.severity] ?? "#999999";
         const offset = OFFSET_BY_SEVERITY[group.severity] ?? 0;
         const order = RENDER_ORDER_BY_SEVERITY[group.severity] ?? 0;
-        const y = Y_BY_SEVERITY[group.severity] ?? 0.01;
+        const y = Y_BY_SEVERITY[group.severity] ?? 0.04;
         return (
           <group key={group.severity} position={[0, y, 0]}>
             <mesh

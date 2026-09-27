@@ -7,7 +7,8 @@ import type { LawnArea } from "../types";
 // ограничений (RestrictionZones.tsx, Y от 0.01): зоны остаются читаемыми и
 // наводимыми мышью. Клумбы кустарника -- дырками в шейпе. Все участки газона
 // одного статуса слиты в одну геометрию: на крупных сценах их сотни.
-const LAWN_Y = 0.005;
+// Высоты плоских слоев -- см. комментарий в Ground.tsx.
+const LAWN_Y = 0.02;
 const COLOR_BY_STATUS: Record<LawnArea["status"], string> = {
   new: "#7cc35a",
   existing: "#5f9a48",

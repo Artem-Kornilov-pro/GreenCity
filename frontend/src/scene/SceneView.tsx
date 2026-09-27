@@ -14,7 +14,7 @@ import { Curbs } from "./CurbStrips";
 import { Lawns } from "./Lawns";
 import { AreaSelectionDraw } from "./AreaSelectionDraw";
 
-// Высота сетки-ориентира: под землёй (Ground, -0.02), см. комментарий у gridHelper.
+// Высота сетки-ориентира: под землёй (Ground, -0.10), см. комментарий у gridHelper.
 const GRID_Y = -0.3;
 
 export function SceneView({
@@ -103,7 +103,7 @@ export function SceneView({
         onMove={onMove}
         onRotate={onRotate}
       />
-      {/* Сетка -- заметно ниже земли (Ground, -0.02), а не в сантиметре над
+      {/* Сетка -- заметно ниже земли (Ground, -0.10), а не в сантиметре над
           ней: у земли, газона и зон вершины лежат в буфере мировыми
           координатами, и у сцен из DWG вдали от начала координат во float32
           они "дрожат" на миллиметры-сантиметры при каждом движении камеры.
