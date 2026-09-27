@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import threading
 from typing import Optional
@@ -20,6 +21,7 @@ from core.schemas import Scene
 from greenplan.assortment_report import AssortmentRow, improvements_assortment, lawn_assortment, summarize_assortment
 from greenplan.decision_report import DecisionReportUnavailable, generate_report
 from greenplan.document import build_document
+from greenplan.explanations import RejectionStats, explain_plants, explanations_csv, explanations_json
 from greenplan.options import GreenPlanOptions
 from greenplan.pattern_assignment import ZoneAssignment
 from greenplan.pipeline import run_greenplan
@@ -61,6 +63,9 @@ class GreenPlanGenerateResult(BaseModel):
     # Для пользователя: что из параметров не удалось выполнить и почему
     # (предпочтительный вид не по нормам, нет двора под дорожки и т.п.).
     notes: list[str] = []
+    # Точки, отклонённые по нормам при расстановке, -- для файла объяснений
+    # (/api/greenplan/explanations): фронтенд возвращает их туда как есть.
+    rejections: RejectionStats = RejectionStats()
 
 
 # Синхронный def -- расстановка, нарушения и ведомость -- чистая
@@ -97,6 +102,7 @@ def greenplan_generate(
             assortment=summarize_assortment(run.new_plants, catalog_by_id()) + lawn_assortment(run.scene.lawns),
             improvements=improvements_assortment(run.scene),
             notes=run.notes,
+            rejections=run.rejections,
         )
 
 
@@ -168,4 +174,37 @@ def greenplan_document(request: GreenPlanDocumentRequest):
         content=content,
         media_type=DOCX_MEDIA_TYPE,
         headers={"Content-Disposition": f"attachment; filename=\"greenplan_note.docx\"; filename*=UTF-8''{name}"},
+    )
+
+
+class GreenPlanExplanationsRequest(BaseModel):
+    scene: Scene
+    assignments: list[ZoneAssignment] = []
+    rejections: RejectionStats = RejectionStats()
+
+
+@router.post("/api/greenplan/explanations")
+def greenplan_explanations(
+    request: GreenPlanExplanationsRequest,
+    format: str = Query(default="json", pattern="^(json|csv)$", description="json или csv (разделитель ;)"),
+):
+    """Объяснение КАЖДОЙ новой посадки со ссылкой на НПА и пункт (ТЗ, п. 8
+    и 7.2.6): вид, место и приём, проект-аналог, основание подбора вида,
+    ближайшие ограничения с фактическим расстоянием, нормой и пунктом;
+    отклонённые по нормам точки и зоны запрета посадки. id посадки -- тот
+    же, что в XDATA сущности выгруженного DXF (слои NEW_* / USER_*)."""
+    with _greenplan_generate_lock:
+        plants = explain_plants(request.scene, request.assignments)
+        if format == "csv":
+            # BOM -- чтобы Excel сразу открыл кириллицу в UTF-8.
+            content = ("\ufeff" + explanations_csv(request.scene, plants, request.rejections)).encode("utf-8")
+            media, ext = "text/csv; charset=utf-8", "csv"
+        else:
+            content = json.dumps(explanations_json(request.scene, plants, request.rejections), ensure_ascii=False, indent=1).encode("utf-8")
+            media, ext = "application/json", "json"
+    logging.getLogger("greencity.greenplan").info("выгружены объяснения посадок (%s): %d посадок", format, len(plants))
+    return Response(
+        content=content,
+        media_type=media,
+        headers={"Content-Disposition": f'attachment; filename="greenplan_explanations.{ext}"'},
     )

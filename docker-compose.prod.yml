@@ -33,7 +33,10 @@ x-logging: &logging
 
 services:
   backend:
-    volumes: !reset []
+    # Код -- из образа (без смонтированных каталогов); остаётся только том
+    # исходных чертежей для экспорта поверх них (backend/exchange/source_store.py).
+    volumes: !override
+      - sources_data:/app/var/sources
     ports: !reset []
     environment:
       - UVICORN_WORKERS=${UVICORN_WORKERS:-3}

@@ -57,6 +57,7 @@ from core.placement_geometry import (
 )
 from core.plant_catalog import CatalogItem
 from core.schemas import Point3, Scene, SceneObject
+from greenplan.explanations import record_rejection
 from greenplan.pattern_assignment import ZoneAssignment, assign_patterns
 from greenplan.pattern_library import PATTERN_LIBRARY, PatternSpec
 from greenplan.site_characterization import characterize_site, usable_planting_area
@@ -179,6 +180,7 @@ def _place_row(
         px, pz = x - tz * row_offset, z + tx * row_offset
         item = items[counter[0] % len(items)]
         if not placer.is_free(px, pz, kind, obj_type=item.object_type, species=item.label):
+            record_rejection(placer, px, pz, item.object_type, item.label, zone.kind, assignment.pattern_id)
             continue
         counter[0] += 1
         key = f"{item.object_type}_{zone.id}_{counter[0]:03d}"
@@ -326,6 +328,7 @@ def _place_area_fill(
         for x, z in chosen:
             item = items[counter[0] % len(items)]
             if not placer.is_free(x, z, kind, obj_type=item.object_type, species=item.label):
+                record_rejection(placer, x, z, item.object_type, item.label, zone.kind, assignment.pattern_id)
                 continue
             counter[0] += 1
             key = f"{item.object_type}_{zone.id}_{counter[0]:03d}"
@@ -365,6 +368,7 @@ def _place_clustered(
         members = pick_near(pool, target_size, CLUSTER_MEMBER_SPACING_M, center)
         for x, z in members:
             if not placer.is_free(x, z, kind, obj_type=item.object_type, species=item.label):
+                record_rejection(placer, x, z, item.object_type, item.label, zone.kind, assignment.pattern_id)
                 continue
             counter[0] += 1
             key = f"{item.object_type}_{zone.id}_{counter[0]:03d}"

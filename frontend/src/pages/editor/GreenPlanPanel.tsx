@@ -19,6 +19,7 @@ export function GreenPlanPanel({
   reportLoading,
   documentBusy,
   onDownloadDocument,
+  onDownloadExplanations,
 }: {
   open: boolean;
   onToggle: () => void;
@@ -27,6 +28,7 @@ export function GreenPlanPanel({
   reportLoading: boolean;
   documentBusy: boolean;
   onDownloadDocument: () => void;
+  onDownloadExplanations: (format: "json" | "csv") => void;
 }) {
   const existingLawnSqm = (result?.scene.lawns ?? []).filter((l) => l.status === "existing").reduce((sum, l) => sum + l.area_sqm, 0);
   const [showExisting, setShowExisting] = useState(false);
@@ -67,6 +69,17 @@ export function GreenPlanPanel({
               {documentBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
               Пояснительная записка (DOCX)
             </Button>
+            {/* Объяснение каждой посадки со ссылкой на НПА и пункт (ТЗ, п. 8):
+                машиночитаемый файл, id -- как в XDATA выгруженного DXF. */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-ink-600">Объяснения посадок:</span>
+              <Button size="sm" variant="outline" onClick={() => onDownloadExplanations("json")} disabled={documentBusy}>
+                JSON
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => onDownloadExplanations("csv")} disabled={documentBusy}>
+                CSV
+              </Button>
+            </div>
 
             {/* Общее решение на участок -- до решений по зонам: сначала стиль,
                 потом приёмы в этом стиле (greenplan/pattern_assignment.py). */}

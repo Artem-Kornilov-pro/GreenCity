@@ -26,3 +26,6 @@ convert_dtset_v2/
 # идёт только сам итоговый locations/<NN>_<name>/<NN>_<name>.dxf.
 locations/*/generator/
 tools/ai_editor_eval/last_run.json
+
+# Исходные чертежи для экспорта поверх них (exchange/source_store.py)
+var/

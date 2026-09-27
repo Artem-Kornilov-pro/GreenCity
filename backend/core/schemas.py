@@ -53,6 +53,9 @@ class SceneMeta(BaseModel):
     origin: dict
     buildingCount: int
     pointObjectCount: int
+    # id исходного чертежа в exchange/source_store.py: экспорт дописывает
+    # слои результата в него, а не собирает DXF из сцены заново.
+    sourceId: Optional[str] = None
 
 
 class LawnArea(BaseModel):

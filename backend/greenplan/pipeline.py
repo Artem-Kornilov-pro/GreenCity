@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from core.plant_catalog import CatalogItem, catalog_by_id, load_catalog
 from core.schemas import Scene, SceneObject
 from greenplan.deterministic_placement import plan_site
+from greenplan.explanations import RejectionStats, start_rejection_log, stop_rejection_log
 from greenplan.improvements import SOURCE, Improvements, is_greenplan_zone, plan_improvements
 from greenplan.lawn import plan_lawns
 from greenplan.options import GreenPlanOptions
@@ -32,6 +33,9 @@ class GreenPlanRun:
     improvements: Improvements
     assignments: list[ZoneAssignment]
     notes: list[str] = field(default_factory=list)
+    # Точки, которые расстановка рассматривала, но отклонила по нормам, --
+    # с причиной и ссылкой на НПА (greenplan/explanations.py).
+    rejections: RejectionStats = field(default_factory=RejectionStats)
 
 
 def is_greenplan_object(obj: SceneObject) -> bool:
@@ -67,7 +71,11 @@ def run_greenplan(scene: Scene, options: GreenPlanOptions | None = None, k: int 
     trees = [c for c in catalog if c.category == "tree"] if options.trees else []
     bushes = [c for c in catalog if c.category == "bush" and c.object_type == "bush"] if options.bushes else []
     preferred, notes = _preferred(options, by_id)
-    plan = plan_site(working, trees, bushes, k, style=options.style, preferred=preferred)
+    log, token = start_rejection_log()
+    try:
+        plan = plan_site(working, trees, bushes, k, style=options.style, preferred=preferred)
+    finally:
+        stop_rejection_log(token)
 
     final = working.model_copy(update={"objects": [*working.objects, *plan.objects]})
     final.lawns = plan_lawns(final, by_id) if options.lawn else []
@@ -77,6 +85,7 @@ def run_greenplan(scene: Scene, options: GreenPlanOptions | None = None, k: int 
         improvements=improvements,
         assignments=plan.assignments,
         notes=[*improvements.notes, *notes, *plan.notes],
+        rejections=log.stats(),
     )
 
 

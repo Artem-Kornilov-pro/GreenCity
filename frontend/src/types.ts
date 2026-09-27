@@ -46,6 +46,9 @@ export interface SceneMeta {
   origin: { x: number; y: number };
   buildingCount: number;
   pointObjectCount: number;
+  // id исходного чертежа на сервере (backend/exchange/source_store.py):
+  // экспорт DXF дописывает слои результата в него.
+  sourceId?: string | null;
 }
 
 // Грань фасадного элемента (окно, козырёк) — 4 вершины в 3D, уже поднятые на

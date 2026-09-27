@@ -77,7 +77,7 @@ class DwgJobError(Exception):
         self.failed = failed
 
 
-def build_scene(dwg_paths: list[Path], work_dir: Path) -> tuple[dict, dict]:
+def build_scene(dwg_paths: list[Path], work_dir: Path, source_id: Optional[str] = None) -> tuple[dict, dict]:
     """(сцена, сводка для метрик и логов). Бросает DwgJobError."""
     from core.building_setbacks import compute_building_setbacks
     from exchange import dwg_batch_converter
@@ -107,6 +107,8 @@ def build_scene(dwg_paths: list[Path], work_dir: Path) -> tuple[dict, dict]:
     gc.collect()
 
     scene["buildingSetbacks"] = compute_building_setbacks(scene.get("objects", []))
+    if source_id:
+        scene["meta"]["sourceId"] = source_id
     if result.failed:
         scene["dwgConversionWarnings"] = [{"file": name, "error": err} for name, err in result.failed.items()]
     summary = {
@@ -118,19 +120,21 @@ def build_scene(dwg_paths: list[Path], work_dir: Path) -> tuple[dict, dict]:
     return scene, summary
 
 
-def run(dwg_paths: list[Path], work_dir: Path, request_id: str = "-", isolated: Optional[bool] = None) -> tuple[bytes, dict]:
+def run(
+    dwg_paths: list[Path], work_dir: Path, request_id: str = "-", isolated: Optional[bool] = None, source_id: Optional[str] = None
+) -> tuple[bytes, dict]:
     """(JSON сцены, сводка). isolated=None -- по DWG_JOB_ISOLATED (по
     умолчанию да). В самом процессе -- для тестов, которые подменяют
     merge_dwg_files: подмена в дочерний процесс не переходит."""
     if isolated is None:
         isolated = os.environ.get("DWG_JOB_ISOLATED", "1") != "0"
     if not isolated:
-        scene, summary = build_scene(dwg_paths, work_dir)
+        scene, summary = build_scene(dwg_paths, work_dir, source_id)
         return json.dumps(scene, ensure_ascii=False).encode("utf-8"), summary
 
     scene_path = work_dir / "scene.json"
     meta_path = work_dir / "meta.json"
-    env = {**os.environ, "GREENCITY_REQUEST_ID": request_id}
+    env = {**os.environ, "GREENCITY_REQUEST_ID": request_id, "GREENCITY_SOURCE_ID": source_id or ""}
     try:
         completed = subprocess.run(
             [sys.executable, "-m", "exchange.dwg_job", str(work_dir), str(scene_path), str(meta_path), *map(str, dwg_paths)],
@@ -149,6 +153,66 @@ def run(dwg_paths: list[Path], work_dir: Path, request_id: str = "-", isolated: 
     if not meta["ok"]:
         raise DwgJobError(meta["status"], meta["detail"], meta["outcome"], meta["failed"])
     return scene_path.read_bytes(), meta["summary"]
+
+
+def build_export(dwg_paths: list[Path], work_dir: Path, scene_json: bytes) -> bytes:
+    """DXF: пачка DWG, собранная так же, как при загрузке, и поверх неё --
+    слои результата сцены (exchange/dxf_overlay.py)."""
+    import io
+
+    from core.schemas import Scene
+    from exchange import dwg_batch_converter
+    from exchange.dxf_overlay import overlay_scene
+
+    workers = max(1, int(os.environ.get("DWG_WORKERS", DEFAULT_WORKERS)))
+    result = dwg_batch_converter.merge_dwg_files(dwg_paths, work_dir, workers=workers)
+    if not result.converted:
+        raise DwgJobError(400, "Исходные DWG не сконвертировались при экспорте", "all_failed", len(result.failed))
+    overlay_scene(Scene.model_validate_json(scene_json), result.doc)
+    buf = io.StringIO()
+    result.doc.write(buf)
+    return buf.getvalue().encode("utf-8")
+
+
+def run_export(
+    dwg_paths: list[Path], work_dir: Path, scene, request_id: str = "-", isolated: Optional[bool] = None
+) -> bytes:
+    """DXF поверх исходной пачки DWG -- в отдельном процессе, как и разбор
+    (та же память и те же причины, см. докстринг модуля)."""
+    scene_json = scene.model_dump_json().encode("utf-8")
+    if isolated is None:
+        isolated = os.environ.get("DWG_JOB_ISOLATED", "1") != "0"
+    if not isolated:
+        return build_export(dwg_paths, work_dir, scene_json)
+    scene_path, out_path, meta_path = work_dir / "scene.json", work_dir / "out.dxf", work_dir / "meta.json"
+    scene_path.write_bytes(scene_json)
+    env = {**os.environ, "GREENCITY_REQUEST_ID": request_id}
+    try:
+        completed = subprocess.run(
+            [sys.executable, "-m", "exchange.dwg_job", "--export", str(work_dir), str(scene_path), str(out_path), str(meta_path),
+             *map(str, dwg_paths)],
+            cwd=BACKEND_DIR,
+            env=env,
+            timeout=JOB_TIMEOUT_S,
+        )
+    except subprocess.TimeoutExpired as e:
+        raise DwgJobError(504, f"Экспорт DWG не уложился в {JOB_TIMEOUT_S // 60} минут", "timeout") from e
+    meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else None
+    if meta is None or completed.returncode != 0 or not meta["ok"]:
+        raise DwgJobError(500, (meta or {}).get("detail") or f"Экспорт DWG прервался (код {completed.returncode})", "crashed")
+    return out_path.read_bytes()
+
+
+def _export_main(argv: list[str]) -> int:
+    work_dir, scene_path, out_path, meta_path = (Path(a) for a in argv[:4])
+    dwg_paths = [Path(a) for a in argv[4:]]
+    try:
+        out_path.write_bytes(build_export(dwg_paths, work_dir, scene_path.read_bytes()))
+    except Exception as e:  # noqa: BLE001 -- причина уходит родителю в meta.json
+        meta_path.write_text(json.dumps({"ok": False, "detail": str(e)}, ensure_ascii=False), encoding="utf-8")
+        return 0
+    meta_path.write_text(json.dumps({"ok": True}), encoding="utf-8")
+    return 0
 
 
 @contextmanager
@@ -188,10 +252,12 @@ def _main(argv: list[str]) -> int:
 
     configure_logging()
     bind_request_id(os.environ.get("GREENCITY_REQUEST_ID", "-"))
+    if argv and argv[0] == "--export":
+        return _export_main(argv[1:])
     work_dir, scene_path, meta_path = (Path(a) for a in argv[:3])
     dwg_paths = [Path(a) for a in argv[3:]]
     try:
-        scene, summary = build_scene(dwg_paths, work_dir)
+        scene, summary = build_scene(dwg_paths, work_dir, os.environ.get("GREENCITY_SOURCE_ID") or None)
     except DwgJobError as e:
         error = {"ok": False, "status": e.status, "detail": e.detail, "outcome": e.outcome, "failed": e.failed}
         meta_path.write_text(json.dumps(error, ensure_ascii=False), encoding="utf-8")
