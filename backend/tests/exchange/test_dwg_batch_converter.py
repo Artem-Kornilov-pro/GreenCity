@@ -209,3 +209,29 @@ def test_merge_dwg_files_skips_byte_identical_files(fake_dwg2dxf, tmp_path):
     assert sorted(result.converted) == ["АПОТ.dwg", "посадочный.dwg"]
     assert "АПОТ.dwg" in result.failed["улица ГП.dwg"]
     assert len(list(result.doc.modelspace().query("LINE"))) == 2
+
+
+def test_read_converted_dxf_repairs_multiline_values_and_broken_unicode_escapes(tmp_path):
+    # dwg2dxf пишет XML спецификации многострочным значением и с битым
+    # экранированием "\U+" без hex-цифр: ни ezdxf.readfile, ни recover такой
+    # файл не читали (3 из 4 файлов пачки улицы Берзарина).
+    from exchange.dwg_batch_converter import _read_converted_dxf
+
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    msp.add_line((0, 0), (10, 0), dxfattribs={"layer": "ROAD_EDGE"})
+    msp.add_text("SPEC", dxfattribs={"layer": "NOTES"})
+    good = tmp_path / "good.dxf"
+    doc.saveas(good)
+    text = good.read_text(encoding="utf-8")
+    backslash = chr(92)
+    broken_value = f'SPEC\n    <Item name="ПНД{backslash}U+041F{backslash}U+ 63 мм" count="2" />\n    <Item name="x" />'
+    assert "\nSPEC\n" in text
+    broken = tmp_path / "broken.dxf"
+    broken.write_text(text.replace("\nSPEC\n", "\n" + broken_value + "\n", 1), encoding="utf-8")
+
+    repaired = _read_converted_dxf(broken)
+
+    assert [e.dxf.layer for e in repaired.modelspace().query("LINE")] == ["ROAD_EDGE"]
+    assert len(repaired.modelspace().query("TEXT")) == 1
+    assert not list(tmp_path.glob("*.clean.dxf"))  # временный файл убран

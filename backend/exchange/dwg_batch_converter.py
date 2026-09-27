@@ -32,6 +32,7 @@ layer_is_parsed, плюс тексты -- подписи зданий), в ко�
 from __future__ import annotations
 
 import hashlib
+import re
 import shutil
 import subprocess
 from concurrent.futures import ProcessPoolExecutor
@@ -103,8 +104,58 @@ def _read_converted_dxf(dxf_path: Path) -> ezdxf.document.Drawing:
     try:
         return ezdxf.readfile(dxf_path)
     except (UnicodeDecodeError, ezdxf.DXFStructureError):
+        pass
+    try:
         doc, _auditor = ezdxf.recover.readfile(dxf_path)
         return doc
+    except Exception:
+        # Третья ступень -- см. _repair_dxf_text.
+        cleaned = dxf_path.with_suffix(".clean.dxf")
+        try:
+            if _repair_dxf_text(dxf_path, cleaned) == 0:
+                raise
+            doc, _auditor = ezdxf.recover.readfile(cleaned)
+            return doc
+        finally:
+            cleaned.unlink(missing_ok=True)
+
+
+# Юникод-экранирование DXF -- обратная косая, "U+" и ровно четыре hex-цифры.
+# Без цифр ezdxf раскодирует его как int("", 16) и падает.
+_BROKEN_UNICODE_ESCAPE = re.compile(rb"\x5cU\+(?![0-9A-Fa-f]{4})")
+
+
+def _repair_dxf_text(src: Path, dst: Path) -> int:
+    """Чинит два дефекта, которые dwg2dxf пишет в многострочные значения
+    (XML спецификации в объектах чертежа: `<Item name="ПНД…"
+    sendInSpecification="True" />`). Реальный случай -- 3 из 4 файлов пачки
+    улицы Берзарина: ни строгий ezdxf.readfile, ни recover их не читали.
+
+    1. Значение с переводами строк: DXF -- строгие пары "код группы /
+       значение", и каждая лишняя строка сдвигает пары ("Invalid group
+       code"). Строка на месте кода группы, которая не число, -- продолжение
+       предыдущего значения; выбрасываем её, пары восстанавливаются.
+    2. Битое юникод-экранирование без четырёх hex-цифр ("invalid literal for
+       int() with base 16: ''") -- убираем его.
+
+    Геометрию это не трогает: страдает только текст служебных строк.
+    Возвращает число исправлений (0 -- чинить было нечего)."""
+    fixes = 0
+    expect_code = True
+    with src.open("rb") as fin, dst.open("wb") as fout:
+        for line in fin:
+            if expect_code:
+                if line.strip().lstrip(b"-").isdigit():
+                    fout.write(line)
+                    expect_code = False
+                else:
+                    fixes += 1
+            else:
+                line, n = _BROKEN_UNICODE_ESCAPE.subn(b"", line)
+                fixes += n
+                fout.write(line)
+                expect_code = True
+    return fixes
 
 
 def _parsed_entities(layout) -> list:
