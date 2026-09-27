@@ -3,12 +3,16 @@ import { Loader2, X } from "lucide-react";
 // Полоса под топбаром: ошибка важнее всего, затем ход конвертации DWG,
 // затем предупреждение о несконвертированных файлах папки.
 export function StatusBanners({
+  notice,
+  onDismissNotice,
   error,
   dwgUploading,
   totalDwgFiles,
   dwgWarnings,
   onDismissDwgWarnings,
 }: {
+  notice: string | null;
+  onDismissNotice: () => void;
   error: string | null;
   dwgUploading: boolean;
   totalDwgFiles: number;
@@ -30,6 +34,16 @@ export function StatusBanners({
           Конвертация {totalDwgFiles} DWG-файлов в DXF на сервере -- на крупных реальных файлах это может занять до минуты, не
           закрывайте страницу.
         </span>
+      </div>
+    );
+  }
+  if (notice) {
+    return (
+      <div className="absolute inset-x-0 top-14 z-30 flex items-start justify-between gap-3 border-b border-warning-500/30 bg-warning-500/90 px-4 py-2 text-sm text-ink-900 backdrop-blur-sm">
+        <span>{notice}</span>
+        <button onClick={onDismissNotice} className="shrink-0 opacity-70 hover:opacity-100">
+          <X className="h-4 w-4" />
+        </button>
       </div>
     );
   }

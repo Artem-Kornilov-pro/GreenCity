@@ -44,16 +44,24 @@ def test_object_layer_prefers_source_layer_when_present():
     assert ed._object_layer(obj) == "MY_TREES"
 
 
-def test_object_layer_falls_back_to_uppercased_type():
+def test_object_layer_puts_user_objects_on_user_layers():
+    # Объект не из чертежа и не от GreenPlan -- правка пользователя (ИИ-
+    # ассистент, ручное добавление): ТЗ требует отдельный слой, а не тот же,
+    # что у исходных объектов этого типа.
     obj = make_object("b1", "bench", 0, 0)
-    assert ed._object_layer(obj) == "BENCH"
+    assert ed._object_layer(obj) == "USER_BENCH"
+
+
+def test_object_layer_keeps_source_objects_on_their_layer():
+    obj = make_object("t1", "tree", 0, 0, metadata={"sourceLayer": "Деревья_сохраняемые"})
+    assert ed._object_layer(obj) == "Деревья_сохраняемые"
 
 
 def test_object_layer_remaps_colliding_type_names():
     path_obj = make_object("p1", "path_segment", 0, 0)
     lawn_obj = make_object("l1", "lawn_patch", 0, 0)
-    assert ed._object_layer(path_obj) == "PAVING"
-    assert ed._object_layer(lawn_obj) == "TURF"
+    assert ed._object_layer(path_obj) == "USER_PAVING"
+    assert ed._object_layer(lawn_obj) == "USER_TURF"
     assert "PATH" not in ed._object_layer(path_obj)
     assert "LAWN" not in ed._object_layer(lawn_obj)
 
@@ -297,14 +305,14 @@ def test_write_point_object_color_by_type_falls_back_to_default_green():
     doc, msp = _doc_and_msp()
     tree = make_object("t1", "tree", 0, 0)
     ed._write_point_object(doc, msp, tree, catalog_by_id())
-    assert doc.layers.get("TREE").color == ed._ACI_DEFAULT_OBJECT
+    assert doc.layers.get("USER_TREE").color == ed._ACI_DEFAULT_OBJECT
 
 
 def test_write_point_object_lamp_uses_its_own_aci_color():
     doc, msp = _doc_and_msp()
     lamp = make_object("l1", "lamp", 0, 0)
     ed._write_point_object(doc, msp, lamp, catalog_by_id())
-    assert doc.layers.get("LAMP").color == ed._ACI_BY_OBJECT_TYPE["lamp"]
+    assert doc.layers.get("USER_LAMP").color == ed._ACI_BY_OBJECT_TYPE["lamp"]
 
 
 # --- scene_to_dxf: сборка целиком ------------------------------------------

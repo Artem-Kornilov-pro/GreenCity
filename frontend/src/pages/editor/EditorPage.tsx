@@ -9,6 +9,7 @@ import {
   uploadDwgFolder,
   editWithText,
   exportDxf,
+  downloadGreenPlanExplanations,
   createProject,
   loadProject,
   saveProject,
@@ -75,6 +76,7 @@ export default function EditorPage() {
   const [loading, setLoading] = useState(false); // сохранённый проект с сервера
   const [dxfUploading, setDxfUploading] = useState(false);
   const [exportingDxf, setExportingDxf] = useState(false);
+  const [exportNotice, setExportNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Файлы .dwg, которые backend не смог сконвертировать при загрузке папки
   // (issue #50) -- не ошибка (сцена уже загружена и отображена), просто
@@ -213,7 +215,8 @@ export default function EditorPage() {
         scale: 1,
         // species -- для правил отступа по породе (setbackNorms.ts: липе
         // 10 м от здания и т.п.); у МАФ и мощения нормы по породе нет.
-        metadata: { catalogId: item.id, label: item.label, ...(item.setback_kind ? { species: item.label } : {}) },
+        // source: "manual" -- правка пользователя: при экспорте -- слой USER_*.
+        metadata: { catalogId: item.id, label: item.label, source: "manual", ...(item.setback_kind ? { species: item.label } : {}) },
       };
       setSelectedId(newObject.id);
       setTransformMode("translate");
@@ -383,19 +386,46 @@ export default function EditorPage() {
     setExportingDxf(true);
     setError(null);
     try {
-      const blob = await exportDxf(scene);
+      const { blob, mode } = await exportDxf(scene);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = "greencity_plan.dxf";
       a.click();
       URL.revokeObjectURL(url);
+      // Исходника на сервере нет (проект сохранён до этой версии или
+      // хранилище очищено): файл собран из сцены -- координаты в метрах от
+      // центра участка, слои подосновы только распознанные. Сказать об этом.
+      setExportNotice(
+        mode === "rebuilt"
+          ? "Исходный чертёж на сервере не найден — DXF собран из сцены (метры от центра участка). Чтобы получить результат поверх исходника, загрузите чертёж заново."
+          : null,
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setExportingDxf(false);
     }
   }, [scene]);
+
+  const handleDownloadExplanations = useCallback(async (format: "json" | "csv") => {
+    if (!scene || !greenPlanResult) return;
+    setGreenPlanDocBusy(true);
+    setError(null);
+    try {
+      const blob = await downloadGreenPlanExplanations(scene, greenPlanResult.assignments, greenPlanResult.rejections, format);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Объяснения посадок — ${projectName ?? "участок"}.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setGreenPlanDocBusy(false);
+    }
+  }, [scene, greenPlanResult, projectName]);
 
   const handleDownloadGreenPlanDocument = useCallback(async () => {
     if (!scene || !greenPlanResult) return;
@@ -535,6 +565,8 @@ export default function EditorPage() {
         />
 
         <StatusBanners
+          notice={exportNotice}
+          onDismissNotice={() => setExportNotice(null)}
           error={error ?? projectError}
           dwgUploading={dwgUploading}
           totalDwgFiles={totalDwgFiles}
@@ -616,6 +648,7 @@ export default function EditorPage() {
             reportLoading={greenPlanReportLoading}
             documentBusy={greenPlanDocBusy}
             onDownloadDocument={handleDownloadGreenPlanDocument}
+            onDownloadExplanations={handleDownloadExplanations}
           />
         </main>
       </div>

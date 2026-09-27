@@ -17,12 +17,17 @@ services:
       # бэкенд эти пути только читает, никогда не пишет.
       - ./locations:/app/locations:ro
       - ./data:/app/data:ro
+      # Исходные чертежи загрузок (backend/exchange/source_store.py): экспорт
+      # дописывает слои результата в них -- том, чтобы они переживали
+      # перезапуск и пересборку контейнера.
+      - sources_data:/app/var/sources
     environment:
       # Имена сервисов ниже ("mongo", "redis") резолвятся только внутри сети
       # compose -- в контейнере backend это правильные адреса, снаружи они
       # были бы недоступны.
       - MONGO_URI=mongodb://mongo:27017
       - REDIS_URL=redis://redis:6379/0
+      - GREENCITY_SOURCES_DIR=/app/var/sources
       # 1 -- дев-режим: один процесс с --reload, правки подхватываются на лету
       # (см. развилку в backend/Dockerfile). Поднимать имеет смысл под реальную
       # нагрузку: геометрия на shapely упирается в GIL, и несколько запросов к
@@ -255,6 +260,7 @@ services:
 
 volumes:
   mongo_data:
+  sources_data:
   prometheus_data:
   loki_data:
   grafana_data:

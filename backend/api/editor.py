@@ -11,6 +11,7 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
+import ezdxf
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 from pydantic import TypeAdapter
@@ -19,7 +20,8 @@ from core.building_setbacks import compute_building_setbacks
 from core.plant_catalog import CatalogItem, load_catalog
 from core.schemas import Scene
 from core.setback_norms import DEFAULT_TREE_SPECIES
-from exchange import dwg_job
+from exchange import dwg_job, source_store
+from exchange.dxf_overlay import overlay_scene
 from exchange.dxf_parser import parse_dxf_file
 from exchange.export_dxf import scene_to_dxf
 from generation.greenery_generator import (
@@ -118,6 +120,10 @@ def parse_dxf_endpoint(file: UploadFile = File(...)):
         Path(tmp.name).unlink(missing_ok=True)
 
     scene["buildingSetbacks"] = compute_building_setbacks(scene.get("objects", []))
+    # Исходник -- для экспорта поверх него (exchange/dxf_overlay.py).
+    source_id = source_store.save_dxf(data)
+    if source_id:
+        scene["meta"]["sourceId"] = source_id
 
     metrics.dxf_parses_total.inc()
     logging.getLogger("greencity.parse").info(
@@ -160,9 +166,12 @@ def parse_dwg_folder_endpoint(files: list[UploadFile] = File(...)):
         # пачек одновременно на весь backend: пачка держит до ~1,8 ГБ, и
         # одновременные загрузки прямо в процессах uvicorn убивали их по
         # памяти (502). См. docstring exchange/dwg_job.py.
+        # Сами DWG -- в хранилище исходников: экспорт соберёт из них тот же
+        # чертёж и допишет слои результата (копия файлов -- доли секунды).
+        source_id = source_store.save_dwg_batch(dwg_paths)
         try:
             with dwg_job.slot():
-                payload, summary = dwg_job.run(dwg_paths, tmp_path, request_id=current_request_id())
+                payload, summary = dwg_job.run(dwg_paths, tmp_path, request_id=current_request_id(), source_id=source_id)
         except dwg_job.DwgJobError as e:
             metrics.dwg_batch_conversions_total.labels(outcome=e.outcome).inc()
             if e.failed:
@@ -353,22 +362,49 @@ def edit_with_text(request: TextEditRequest):
 # памяти, ни одного await, как и у /api/parse/generate-greenery выше.
 @router.post("/api/export-dxf")
 def export_dxf_endpoint(scene: Scene):
-    """Итоговый план -> файл .dxf для скачивания (ТЗ: "итоговый план должен
-    экспортироваться обратно в формат DXF"). Тело запроса -- та же Scene, что
-    фронтенд и так держит в состоянии редактора (после парсинга/генерации/
-    правок текстом/вручную) -- ничего дополнительно спрашивать не нужно.
+    """Итоговый план -> файл .dxf для скачивания.
 
-    Слои и геометрия -- зеркало parser/parse_dxf.py, см. докстринг
-    export_dxf.py: файл открывается в любом CAD и, если нужно, читается
-    обратно тем же parse_dxf.py.
+    Если исходный чертёж сцены есть в хранилище (meta.sourceId), результат
+    дописывается ПОВЕРХ него (exchange/dxf_overlay.py): исходные слои и
+    сущности не меняются, координаты -- исходные, новое -- на слоях NEW_*
+    (GreenPlan) и USER_* (правки пользователя). ТЗ: "исходные слои ... не
+    изменяются и не перезаписываются". Без исходника (старый проект,
+    хранилище очищено) -- DXF собирается из сцены (export_dxf.py), тоже со
+    слоями NEW_*/USER_*, но в метрах от центра участка; заголовок ответа
+    X-GreenCity-Export говорит, какой путь сработал: overlay или rebuilt.
     """
-    doc = scene_to_dxf(scene)
-    buf = io.StringIO()
-    doc.write(buf)
+    log = logging.getLogger("greencity.export")
+    mode = "rebuilt"
+    content: Optional[bytes] = None
+    found = source_store.find(scene.meta.sourceId)
+    try:
+        if found and found[0] == "dxf":
+            doc = ezdxf.readfile(found[1])
+            summary = overlay_scene(scene, doc)
+            buf = io.StringIO()
+            doc.write(buf)
+            content, mode = buf.getvalue().encode("utf-8"), "overlay"
+            log.info("экспорт поверх исходного DXF: %s", summary.layers)
+        elif found and found[0] == "dwg":
+            with tempfile.TemporaryDirectory() as tmp_dir, dwg_job.slot():
+                content = dwg_job.run_export(found[1], Path(tmp_dir), scene, request_id=current_request_id())
+            mode = "overlay"
+            log.info("экспорт поверх исходной пачки DWG (%d файлов)", len(found[1]))
+    except Exception as e:  # noqa: BLE001 -- любой сбой наложения -> сборка из сцены, а не 500
+        log.warning("экспорт поверх исходника не удался, DXF собран из сцены: %s", e)
+        content, mode = None, "rebuilt"
+    if content is None:
+        buf = io.StringIO()
+        scene_to_dxf(scene).write(buf)
+        content = buf.getvalue().encode("utf-8")
     metrics.dxf_exports_total.inc()
-    logging.getLogger("greencity.export").info("экспортирована сцена: %d объектов", len(scene.objects))
+    log.info("экспортирована сцена (%s): %d объектов", mode, len(scene.objects))
     return Response(
-        content=buf.getvalue(),
+        content=content,
         media_type="application/dxf",
-        headers={"Content-Disposition": 'attachment; filename="greencity_plan.dxf"'},
+        headers={
+            "Content-Disposition": 'attachment; filename="greencity_plan.dxf"',
+            "X-GreenCity-Export": mode,
+            "Access-Control-Expose-Headers": "X-GreenCity-Export",
+        },
     )

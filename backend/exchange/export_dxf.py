@@ -85,20 +85,38 @@ _SAFE_TYPE_LAYER = {
 }
 
 
-def _object_layer(obj: SceneObject) -> str:
-    # Сгенерированные GreenPlan-объекты (deterministic_placement.py) не несут
-    # sourceLayer -- без этой ветки они бы попали на тот же слой, что и
-    # существующие объекты того же типа (часто буквально "TREE"/"BUSH"),
-    # хотя issue #23 (Этап 6) явно требует разделить "сохранённое" и "новую
-    # посадку" по разным слоям.
-    if obj.metadata.get("generated"):
-        layer_name = _SAFE_TYPE_LAYER.get(obj.type, obj.type.upper())
-        return _safe_layer_name(f"NEW_{layer_name}", "NEW_OBJECT")
+# Слои результата (ТЗ: всё, что добавлено, -- только на отдельных слоях,
+# исходные не трогаются): посадка и благоустройство GreenPlan -- NEW_*,
+# правки пользователя (ИИ-ассистент, ручное добавление и перенос) -- USER_*,
+# места исходных объектов, которые пользователь убрал или сдвинул, --
+# USER_REMOVED (исходный слой при этом не меняется).
+NEW_PREFIX = "NEW_"
+USER_PREFIX = "USER_"
+USER_REMOVED_LAYER = "USER_REMOVED"
+USER_ZONES_LAYER = "USER_ZONES"
+
+
+def is_source_object(obj: SceneObject) -> bool:
+    """Объект пришёл из исходного чертежа (у таких парсер хранит слой)."""
     source = obj.metadata.get("sourceLayer")
-    if isinstance(source, str) and source:
-        return _safe_layer_name(source, obj.type.upper())
+    return isinstance(source, str) and bool(source) and not obj.metadata.get("generated")
+
+
+def result_layer(obj: SceneObject) -> str:
+    """Слой результата для объекта, которого нет в исходном чертеже."""
     layer_name = _SAFE_TYPE_LAYER.get(obj.type, obj.type.upper())
-    return _safe_layer_name(layer_name, "OBJECT")
+    prefix = NEW_PREFIX if obj.metadata.get("generated") else USER_PREFIX
+    return _safe_layer_name(f"{prefix}{layer_name}", f"{prefix}OBJECT")
+
+
+def _object_layer(obj: SceneObject) -> str:
+    # Исходный объект -- на свой слой из чертежа; всё остальное -- на слои
+    # результата: GreenPlan (metadata.generated) -- NEW_*, правки
+    # пользователя -- USER_*. Раньше посадки ИИ-ассистента и ручные ложились
+    # на слой по типу ("TREE") -- тот же, что у исходных деревьев.
+    if is_source_object(obj):
+        return _safe_layer_name(obj.metadata["sourceLayer"], obj.type.upper())
+    return result_layer(obj)
 
 
 def _zone_layer(zone_type: str, zone_name: str) -> str:
@@ -147,24 +165,28 @@ def _write_boundary(doc, msp, scene: Scene) -> None:
 
 def _write_zones(doc, msp, scene: Scene) -> None:
     for zone in scene.restrictions:
-        if len(zone.polygon) < 3:
-            continue
-        layer = _zone_layer(zone.type, zone.name)
-        _ensure_layer(doc, layer, _ACI_BY_SEVERITY.get(zone.severity, 7))
-        points = [(p.x, p.z) for p in zone.polygon]
-        pl = msp.add_lwpolyline(points, close=True, dxfattribs={"layer": layer})
-        # message/severity/minDistance -- не геометрия, но терять их при
-        # экспорте незачем: XDATA переживает открытие в любом CAD и наш же
-        # повторный импорт (который их всё равно заново вычислит по слою,
-        # а не читает XDATA) не портит.
-        pl.set_xdata(
-            "GREENCITY",
-            [
-                (1000, zone.severity),
-                (1000, zone.message[:255]),
-                (1040, float(zone.minDistance)),
-            ],
-        )
+        _write_zone(doc, msp, zone)
+
+
+def _write_zone(doc, msp, zone, layer: Optional[str] = None) -> None:
+    if len(zone.polygon) < 3:
+        return
+    layer = layer or _zone_layer(zone.type, zone.name)
+    _ensure_layer(doc, layer, _ACI_BY_SEVERITY.get(zone.severity, 7))
+    points = [(p.x, p.z) for p in zone.polygon]
+    pl = msp.add_lwpolyline(points, close=True, dxfattribs={"layer": layer})
+    # message/severity/minDistance -- не геометрия, но терять их при
+    # экспорте незачем: XDATA переживает открытие в любом CAD и наш же
+    # повторный импорт (который их всё равно заново вычислит по слою,
+    # а не читает XDATA) не портит.
+    pl.set_xdata(
+        "GREENCITY",
+        [
+            (1000, zone.severity),
+            (1000, zone.message[:255]),
+            (1040, float(zone.minDistance)),
+        ],
+    )
 
 
 def _write_buildings(doc, msp, scene: Scene) -> None:
@@ -190,8 +212,10 @@ def _write_buildings(doc, msp, scene: Scene) -> None:
         text.dxf.insert = (cx, cz)
 
 
-def _write_point_object(doc, msp, obj: SceneObject, catalog: dict[str, CatalogItem]) -> None:
-    layer = _object_layer(obj)
+def _write_point_object(doc, msp, obj: SceneObject, catalog: dict[str, CatalogItem], layer: Optional[str] = None) -> list:
+    """Сущности объекта (контур или точка с кружком). Возвращает их -- чтобы
+    вызывающий мог повесить на них XDATA с объяснением посадки."""
+    layer = layer or _object_layer(obj)
     color = _ACI_BY_OBJECT_TYPE.get(obj.type, _ACI_DEFAULT_OBJECT)
     _ensure_layer(doc, layer, color)
 
@@ -202,16 +226,15 @@ def _write_point_object(doc, msp, obj: SceneObject, catalog: dict[str, CatalogIt
         # Мощение/изгородь/газон/клумба -- реальный габарит, а не точка:
         # ландшафтному архитектору, открывшему план в CAD, нужна ширина
         # дорожки, а не просто метка "здесь дорожка".
-        msp.add_lwpolyline(footprint, close=True, dxfattribs={"layer": layer})
-        return
+        return [msp.add_lwpolyline(footprint, close=True, dxfattribs={"layer": layer})]
 
     # Обычная точечная посадка/МАФ. Отдельный маленький CIRCLE поверх POINT --
     # многие CAD-просмотрщики по умолчанию не показывают "голые" точки
     # никаким видимым маркером (размер точки -- настройка вьюпорта, а не
     # свойство файла), а без видимого маркера план выглядел бы пустым.
-    msp.add_point((x, z, 0.0), dxfattribs={"layer": layer})
+    point = msp.add_point((x, z, 0.0), dxfattribs={"layer": layer})
     radius = (item.dimensions.radius if item and item.dimensions.radius else None) or POINT_MARKER_RADIUS_M
-    msp.add_circle((x, z), radius=min(radius, 1.5), dxfattribs={"layer": layer})
+    return [point, msp.add_circle((x, z), radius=min(radius, 1.5), dxfattribs={"layer": layer})]
 
 
 def _write_entrances(doc, msp, scene: Scene) -> None:

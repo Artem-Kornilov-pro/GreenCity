@@ -55,6 +55,13 @@ def _location_path(number: int) -> str:
 
 
 @pytest.fixture(autouse=True)
+def _sources_in_tmp(monkeypatch, tmp_path_factory):
+    """Исходники загрузок (exchange/source_store.py) -- во временный каталог,
+    а не в var/sources репозитория."""
+    monkeypatch.setenv("GREENCITY_SOURCES_DIR", str(tmp_path_factory.getbasetemp() / "sources"))
+
+
+@pytest.fixture(autouse=True)
 def _clean_llm_env(monkeypatch):
     """text_editor/llm_client.py грузит настоящий .env этой машины при импорте (load_dotenv)
     -- если он настроен на реального провайдера (например LLM_PROVIDER=gemini

@@ -53,7 +53,10 @@ export async function generateGreenery(scene: Scene): Promise<Scene | null> {
 // должен экспортироваться обратно в формат DXF"). Возвращаем Blob, а не сами
 // триггерим скачивание -- так функцию можно переиспользовать (например для
 // предпросмотра), а вызывающий код (App.tsx) сам решает, что делать дальше.
-export async function exportDxf(scene: Scene): Promise<Blob> {
+// mode: "overlay" -- слои результата дописаны в исходный чертёж (исходные
+// слои и координаты не тронуты), "rebuilt" -- исходника на сервере нет, DXF
+// собран из сцены (backend/api/editor.py::export_dxf_endpoint).
+export async function exportDxf(scene: Scene): Promise<{ blob: Blob; mode: "overlay" | "rebuilt" }> {
   const res = await fetch(`${API_BASE}/api/export-dxf`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -62,6 +65,25 @@ export async function exportDxf(scene: Scene): Promise<Blob> {
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`Не удалось экспортировать DXF (${res.status}): ${text || res.statusText}`);
+  }
+  const mode = res.headers.get("X-GreenCity-Export") === "overlay" ? "overlay" : "rebuilt";
+  return { blob: await res.blob(), mode };
+}
+
+// Объяснение каждой посадки со ссылкой на НПА и пункт (backend/greenplan/explanations.py).
+export async function downloadGreenPlanExplanations(
+  scene: Scene,
+  assignments: GreenPlanZoneAssignment[],
+  rejections: GreenPlanRejections | undefined,
+  format: "json" | "csv",
+): Promise<Blob> {
+  const res = await fetch(`${API_BASE}/api/greenplan/explanations?format=${format}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scene, assignments, rejections: rejections ?? { detailed: [], total: 0, by_rule: {} } }),
+  });
+  if (!res.ok) {
+    throw new Error(`Не удалось сформировать объяснения посадок (${res.status}): ${await readErrorDetail(res)}`);
   }
   return res.blob();
 }
@@ -145,6 +167,14 @@ export interface GreenPlanGenerateResult {
   improvements: GreenPlanAssortmentRow[];
   // Что из параметров не удалось выполнить и почему.
   notes: string[];
+  // Точки, отклонённые по нормам, -- уходят обратно в файл объяснений.
+  rejections?: GreenPlanRejections;
+}
+
+export interface GreenPlanRejections {
+  detailed: Record<string, unknown>[];
+  total: number;
+  by_rule: Record<string, number>;
 }
 
 // Параметры GreenPlan (backend/greenplan/options.py) -- диалог перед запуском.

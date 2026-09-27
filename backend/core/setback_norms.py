@@ -184,6 +184,31 @@ def setback_for(
     return distance
 
 
+# Откуда табличная норма SETBACK_NORMS (см. докстринг модуля).
+TABLE_SOURCE = "СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1"
+
+
+def setback_basis(
+    zone_type: str,
+    plant_kind: PlantKind,
+    zone_min_distance: float,
+    species: SpeciesArg = None,
+) -> tuple[float, str]:
+    """(отступ, откуда он) -- то же число, что setback_for(), плюс ссылка на
+    акт и пункт, который его задаёт: правило по породе, если оно строже
+    таблицы, иначе сама таблица; для типа зоны вне таблицы -- охранная зона
+    из чертежа (своё minDistance), без выдуманной ссылки."""
+    rule = SETBACK_NORMS.get(zone_type)
+    if rule:
+        distance, source = rule[plant_kind], TABLE_SOURCE
+    else:
+        distance, source = zone_min_distance, "охранная зона по чертежу (отступ зоны)"
+    for species_rule in species_rules(species):
+        if species_rule.zone_type == zone_type and plant_kind in species_rule.kinds and species_rule.distance_m > distance:
+            distance, source = species_rule.distance_m, species_rule.source
+    return distance, source
+
+
 def plant_kind_of_object_type(object_type: str) -> Optional[PlantKind]:
     if object_type in ("tree", "bush"):
         return object_type  # type: ignore[return-value]
