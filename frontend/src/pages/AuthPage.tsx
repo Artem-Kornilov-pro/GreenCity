@@ -43,7 +43,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
 
   return (
     <PageTransition>
-      <div className="flex min-h-full flex-col bg-ink-50">
+      <div className="flex min-h-screen flex-col bg-ink-50">
         <div className="p-6">
           <Link to="/" className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-500 transition-colors hover:text-ink-800">
             <ArrowLeft className="h-4 w-4" />
@@ -63,7 +63,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
                 <Leaf className="h-5 w-5" />
               </span>
               <h1 className="mt-1 text-xl font-semibold text-ink-900">{isLogin ? "С возвращением" : "Создать аккаунт"}</h1>
-              <p className="text-sm text-ink-500">
+              <p className="text-balance text-sm text-ink-500">
                 {isLogin ? "Войдите, чтобы открыть сохранённые проекты" : "Только имя пользователя и пароль — почта не нужна"}
               </p>
             </div>

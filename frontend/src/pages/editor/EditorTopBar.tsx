@@ -16,7 +16,9 @@ import { useAuth } from "../../context/useAuth";
 // эффект "жидкого стекла" на однотонном фоне почти не заметен.
 export function EditorTopBar({
   title,
-  loading,
+  dxfLoading,
+  dwgLoading,
+  projectLoading,
   onDxfFile,
   onDwgFolder,
   sceneLoaded,
@@ -34,7 +36,11 @@ export function EditorTopBar({
   onSave,
 }: {
   title: string;
-  loading: boolean;
+  // Раздельно: раньше один общий флаг крутил загрузку на обеих кнопках,
+  // хотя грузилась одна. Пока идёт любая загрузка, обе кнопки выключены.
+  dxfLoading: boolean;
+  dwgLoading: boolean;
+  projectLoading: boolean;
   onDxfFile: (file: File) => void;
   onDwgFolder: (files: FileList) => void;
   sceneLoaded: boolean;
@@ -53,9 +59,10 @@ export function EditorTopBar({
 }) {
   const navigate = useNavigate();
   const { session, logout } = useAuth();
+  const busy = dxfLoading || dwgLoading || projectLoading;
 
   return (
-    <header className="absolute inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-white/20 bg-white/10 px-4 shadow-sm backdrop-blur-2xl backdrop-saturate-150">
+    <header className="absolute inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-ink-200/60 bg-white/85 px-4 shadow-sm backdrop-blur-xl backdrop-saturate-150">
       <Link to="/" className="flex shrink-0 items-center gap-2 font-semibold text-ink-900">
         <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600 text-white">
           <Leaf className="h-4 w-4" />
@@ -69,19 +76,28 @@ export function EditorTopBar({
 
       <div className="ml-auto flex items-center gap-1.5">
         <label>
-          <Button asChild variant="outline" size="sm">
-            <span className="cursor-pointer">
-              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
+          <Button asChild variant="outline" size="sm" disabled={busy}>
+            <span className={busy ? "pointer-events-none opacity-50" : "cursor-pointer"}>
+              {dxfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
               Загрузить DXF
             </span>
           </Button>
-          <input type="file" accept=".dxf" hidden onChange={(e) => e.target.files?.[0] && onDxfFile(e.target.files[0])} />
+          <input
+            type="file"
+            accept=".dxf"
+            hidden
+            disabled={busy}
+            onChange={(e) => {
+              if (e.target.files?.[0]) onDxfFile(e.target.files[0]);
+              e.target.value = ""; // тот же файл ещё раз -- тоже событие change
+            }}
+          />
         </label>
 
         <label title="Выбрать папку проекта с исходными .dwg -- каждый файл конвертируется в DXF на сервере и сливается в одну сцену (issue #50)">
-          <Button asChild variant="outline" size="sm">
-            <span className="cursor-pointer">
-              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FolderUp className="h-3.5 w-3.5" />}
+          <Button asChild variant="outline" size="sm" disabled={busy}>
+            <span className={busy ? "pointer-events-none opacity-50" : "cursor-pointer"}>
+              {dwgLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FolderUp className="h-3.5 w-3.5" />}
               Загрузить DWG (папка)
             </span>
           </Button>
@@ -94,7 +110,11 @@ export function EditorTopBar({
             webkitdirectory=""
             multiple
             hidden
-            onChange={(e) => e.target.files && e.target.files.length > 0 && onDwgFolder(e.target.files)}
+            disabled={busy}
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) onDwgFolder(e.target.files);
+              e.target.value = "";
+            }}
           />
         </label>
 
@@ -109,11 +129,18 @@ export function EditorTopBar({
               <LassoSelect className="h-3.5 w-3.5" />
               {selectionMode ? "Обводите на плане…" : "Выделить зону"}
             </Button>
-            <Button size="sm" variant={assistantOpen ? "outline" : "primary"} onClick={onToggleAssistant}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onToggleAssistant}
+              aria-pressed={assistantOpen}
+              className={assistantOpen ? "border-brand-300 bg-brand-50" : undefined}
+            >
               <Sparkles className="h-3.5 w-3.5" />
               Ассистент
             </Button>
-            <Button size="sm" variant="outline" onClick={onGreenPlan} disabled={greenPlanBusy} title="Автоозеленение по прошлым проектам (GreenPlan)">
+            {/* Главное действие редактора -- зелёная кнопка. */}
+            <Button size="sm" variant="primary" onClick={onGreenPlan} disabled={greenPlanBusy} title="Автоозеленение по прошлым проектам (GreenPlan)">
               {greenPlanBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trees className="h-3.5 w-3.5" />}
               GreenPlan
             </Button>

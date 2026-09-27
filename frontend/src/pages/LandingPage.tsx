@@ -16,6 +16,7 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { PageTransition } from "../components/PageTransition";
 import { useAuth } from "../context/useAuth";
+import { typograph } from "../lib/typograph";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 28 },
@@ -36,25 +37,25 @@ const STEPS = [
   {
     icon: UploadCloud,
     title: "Загрузите чертёж",
-    text: "DXF-план участка с границами, зданиями, коммуникациями и парковками разбирается автоматически, слой за слоем.",
+    text: "DXF-файл или папка DWG: границы, здания, сети и парковки разбираются автоматически, слой за слоем.",
   },
   {
     icon: Sparkles,
-    title: "Опишите словами или сгенерируйте",
-    text: "«Посади деревья вдоль дорожек» — и планировщик сам расставит объекты, соблюдая нормативные отступы. Или нажмите одну кнопку для полного дизайна двора.",
+    title: "Озелените участок",
+    text: "Кнопка GreenPlan подберёт посадки по похожим проектам, а ассистент выполнит просьбу вроде «посади липы вдоль дорожек».",
   },
   {
     icon: Download,
     title: "Заберите готовый план",
-    text: "Итоговая раскладка экспортируется обратно в DXF — тот же формат, с которого всё начиналось, готовый к дальнейшей работе в CAD.",
+    text: "Чертёж со слоями — обратно в DXF, а к нему пояснительная записка с ведомостью посадок в DOCX.",
   },
 ];
 
 const FEATURES = [
   {
     icon: Trees,
-    title: "Деревья, кусты, газон",
-    text: "Автогенерация озеленения по сетке — с группировкой кустов и сплошным газоном на свободной площади.",
+    title: "GreenPlan",
+    text: "Автоозеленение по 34 похожим проектам: единый стиль участка, виды из ассортимента Москвы, газон на свободной земле.",
   },
   {
     icon: ShieldCheck,
@@ -63,8 +64,8 @@ const FEATURES = [
   },
   {
     icon: Sparkles,
-    title: "Правка текстом на русском",
-    text: "Больше 20 операций — от «убери лавки у парковки» до полного дизайна двора одной фразой.",
+    title: "ИИ-ассистент на русском",
+    text: "Больше 20 операций — от «убери лавки у парковки» до озеленения всего участка одной фразой. Последнюю правку можно отменить.",
   },
   {
     icon: Ruler,
@@ -78,8 +79,8 @@ const FEATURES = [
   },
   {
     icon: Download,
-    title: "Экспорт обратно в DXF",
-    text: "Итоговый план — не картинка, а полноценный чертёж со слоями, готовый к печати и дальнейшей работе.",
+    title: "Экспорт в DXF и DOCX",
+    text: "Итоговый план — не картинка, а чертёж со слоями и пояснительная записка с ведомостью по ГОСТ 21.508.",
   },
 ];
 
@@ -159,28 +160,28 @@ export default function LandingPage() {
             >
               <Sparkles className="h-4 w-4" />
             </motion.span>
-            Генеративное озеленение из чертежа DXF
+            Генеративное озеленение из чертежа DXF и DWG
           </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.05 }}
-            className="max-w-6xl text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl md:text-5xl"
+            className="max-w-5xl text-balance text-3xl font-bold leading-tight tracking-tight text-ink-900 sm:text-4xl md:text-5xl"
           >
-            От сырого чертежа двора до полностью готового, проверенного по всем нормативам плана озеленения —{" "}
-            <span className="text-brand-600">за считанные минуты, а не за недели ручной работы в CAD-редакторе</span>
+            {typograph("От чертежа двора до плана озеленения, проверенного по нормативам, —")}{" "}
+            <span className="text-brand-600">{typograph("за минуты, а не за недели работы в CAD")}</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="max-w-4xl text-lg text-ink-500 md:text-xl"
+            className="max-w-3xl text-pretty text-lg text-ink-500 md:text-xl"
           >
-            Загрузите DXF своего участка, опишите словами, что нужно посадить, и получите
-            проверенный по нормативам план — с деревьями, кустами, дорожками и МАФ — обратно
-            в формате DXF.
+            {typograph(
+              "Загрузите чертёж участка, нажмите GreenPlan или опишите словами, что посадить, — и получите план с деревьями, кустами, газоном, дорожками и МАФ, готовый к экспорту в DXF.",
+            )}
           </motion.p>
 
           <motion.div
@@ -244,8 +245,8 @@ export default function LandingPage() {
                 </motion.div>
               </div>
               <div className="mt-3 text-sm font-semibold text-brand-600">Шаг {i + 1}</div>
-              <h3 className="mt-1 text-xl font-semibold text-ink-900">{step.title}</h3>
-              <p className="mt-2 text-base text-ink-500">{step.text}</p>
+              <h3 className="mt-1 text-balance text-xl font-semibold text-ink-900">{typograph(step.title)}</h3>
+              <p className="mt-2 max-w-sm text-pretty text-base text-ink-500">{typograph(step.text)}</p>
             </motion.div>
           ))}
         </motion.div>
@@ -255,7 +256,7 @@ export default function LandingPage() {
       <section className="flex min-h-screen scroll-mt-20 snap-start flex-col justify-start border-y border-ink-200/60 bg-white py-24">
         <div className="mx-auto max-w-6xl px-6">
           <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }} className="text-center">
-            <motion.h2 variants={fadeUp} className="text-4xl font-bold text-ink-900 md:text-5xl">
+            <motion.h2 variants={fadeUp} className="text-balance text-4xl font-bold text-ink-900 md:text-5xl">
               Всё для полноценного проекта озеленения
             </motion.h2>
           </motion.div>
@@ -279,7 +280,7 @@ export default function LandingPage() {
                       <f.icon className="h-6 w-6" />
                     </motion.div>
                     <h3 className="text-lg font-semibold text-ink-900">{f.title}</h3>
-                    <p className="text-base text-ink-500">{f.text}</p>
+                    <p className="text-pretty text-base text-ink-500">{typograph(f.text)}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -288,11 +289,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* CTA -- заголовок на той же высоте, что и у остальных секций (py-24),
+          а не посередине экрана: там он стоял заметно ниже них. */}
       <section className="relative flex min-h-screen scroll-mt-20 snap-start flex-col">
-        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center px-6 text-center">
+        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-start px-6 pt-24 text-center">
           <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.4 }} variants={fadeUp}>
-            <h2 className="text-4xl font-bold text-ink-900 md:text-5xl">Готовы озеленить свой двор?</h2>
+            <h2 className="text-balance text-4xl font-bold text-ink-900 md:text-5xl">Готовы озеленить свой двор?</h2>
             {/* text-balance -- строки примерно равной длины вместо длинной первой
                 и одинокого "пароль." на второй; неразрывный пробел не даёт тире
                 начать строку. */}
