@@ -189,3 +189,31 @@ def test_estimated_boundary_follows_data_not_a_hull_over_empty_land(empty_doc):
     assert boundary.covers(Point(200, 10)) and boundary.covers(Point(10, 250))
     assert not boundary.covers(Point(250, 150))  # угол между улицами -- не участок
     assert boundary.area < 400 * 60 + 300 * 60
+
+
+def test_scene_with_estimated_boundary_is_centered_near_origin(empty_doc):
+    # Без слоя границы сцена оставалась в координатах чертежа -- у реальных
+    # DWG-пачек 10-15 км от начала, где float32 видеокарты даёт миллиметры
+    # точности, и тонкие линии (контуры зон, бордюры, сетка) мерцали.
+    msp = empty_doc.modelspace()
+    ox, oy = 15000.0, -9000.0
+    _square(msp, ox + 40, oy + 40, 20, "Здания")
+    for i in range(30):
+        msp.add_point((ox + i * 5, oy), dxfattribs={"layer": "! ПР ДЕРЕВЬЯ"})
+        msp.add_point((ox + i * 5, oy + 100), dxfattribs={"layer": "! ПР ДЕРЕВЬЯ"})
+    msp.add_lwpolyline([(ox, oy + 50), (ox + 150, oy + 50)], dxfattribs={"layer": "Бортовой камень"})
+    scene = parse_dxf_doc(empty_doc)
+    assert scene["boundary"]["sourceLayer"] == "__estimated_from_content__"
+    xs = [o["position"]["x"] for o in scene["objects"]] + [p["x"] for c in scene["curbs"] for p in c]
+    zs = [o["position"]["z"] for o in scene["objects"]] + [p["z"] for c in scene["curbs"] for p in c]
+    assert max(map(abs, xs)) < 200 and max(map(abs, zs)) < 200
+    # По meta.origin восстанавливаются исходные координаты чертежа.
+    origin = scene["meta"]["origin"]
+    tree = next(o for o in scene["objects"] if o["type"] == "tree")
+    assert tree["position"]["x"] + origin["x"] == pytest.approx(ox, abs=0.01)
+    assert tree["position"]["z"] + origin["y"] == pytest.approx(oy, abs=0.01)
+    # Контур здания и его footprint сдвинуты одинаково (ровно один раз).
+    building = next(o for o in scene["objects"] if o["type"] == "building")
+    zone = next(z for z in scene["restrictions"] if z["type"] == "building")
+    assert building["metadata"]["footprint"] == zone["polygon"]
+    assert min(p["x"] for p in zone["polygon"]) + origin["x"] == pytest.approx(ox + 40, abs=0.01)

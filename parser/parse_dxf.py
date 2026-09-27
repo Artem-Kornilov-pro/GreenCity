@@ -173,7 +173,7 @@ def parse_dxf_doc(doc, scale=None, center=True):
     # сама граница найдена по слою -- см. docstring _compute_ground_zone.
     restrictions = restrictions + _compute_ground_zone(boundary, restrictions)
 
-    return {
+    result = {
         "boundary": boundary,
         "restrictions": restrictions,
         "objects": objects,
@@ -187,6 +187,53 @@ def parse_dxf_doc(doc, scale=None, center=True):
             "buildingCount": len(buildings),
             "pointObjectCount": len(points),
         },
+    }
+    # Граница без своего слоя оценивается только сейчас, по уже разобранной
+    # сцене, -- центрировать по ней до разбора нечем, и сцена оставалась в
+    # координатах чертежа: у реальных DWG-пачек это 10-15 км от начала
+    # (Академика Понтрягина -- до 15 км). Видеокарта считает во float32, и на
+    # таком удалении точность падает до миллиметров: тонкие линии -- контуры
+    # зон, бордюры, сетка -- дрожали и мерцали при каждом движении камеры.
+    # Сдвигаем всю готовую сцену так, чтобы центр оценённой границы был в нуле.
+    if center and boundary is not None and boundary.get("sourceLayer") == ESTIMATED_BOUNDARY_SOURCE_LAYER:
+        _recenter(result, boundary)
+    return result
+
+
+def _recenter(scene, boundary):
+    pts = boundary["polygon"]
+    dx = sum(p["x"] for p in pts) / len(pts)
+    dz = sum(p["z"] for p in pts) / len(pts)
+    seen = set()
+
+    def shift(point):
+        # footprint здания -- те же словари точек, что и контур его зоны:
+        # каждую точку сдвигаем ровно один раз.
+        if id(point) in seen:
+            return
+        seen.add(id(point))
+        point["x"] = round(point["x"] - dx, 3)
+        point["z"] = round(point["z"] - dz, 3)
+
+    for p in pts:
+        shift(p)
+    for zone in scene["restrictions"]:
+        for p in zone["polygon"]:
+            shift(p)
+    for obj in scene["objects"]:
+        shift(obj["position"])
+        for p in obj.get("metadata", {}).get("footprint") or []:
+            shift(p)
+    for curb in scene["curbs"]:
+        for p in curb:
+            shift(p)
+    for quad in (*scene["windows"], *scene["canopies"]):
+        for p in quad:
+            shift(p)
+    meta = scene["meta"]
+    meta["origin"] = {
+        "x": meta["origin"]["x"] + dx / meta["scale"],
+        "y": meta["origin"]["y"] + dz / meta["scale"],
     }
 
 
