@@ -17,6 +17,7 @@ import { Card, CardContent } from "../components/ui/card";
 import { PageTransition } from "../components/PageTransition";
 import { useAuth } from "../context/useAuth";
 import { typograph } from "../lib/typograph";
+import ctaLandscape from "../assets/cta-landscape.webp";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 28 },
@@ -289,10 +290,29 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA -- заголовок на той же высоте, что и у остальных секций (py-24),
-          а не посередине экрана: там он стоял заметно ниже них. */}
-      <section className="relative flex min-h-screen scroll-mt-20 snap-start flex-col">
-        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-start px-6 pt-24 text-center">
+      {/* CTA -- заголовок в верхней части экрана (pt-32), над пейзажем, а не
+          посередине: там он стоял заметно ниже заголовков других секций. */}
+      {/* Фон -- пейзаж по нижнему краю. Небо картинки вычищено до чистого
+          белого, как и фон секции, поэтому верх картинки сливается со
+          страницей без шва, а заголовок и кнопки стоят на белом небе. */}
+      {/* Высота -- экран минус шапка (h-20): секция последняя, и при полной
+          высоте экрана её низ с подвалом уходил под край окна. */}
+      <section className="relative isolate flex min-h-[calc(100vh-5rem)] scroll-mt-20 snap-start flex-col overflow-hidden bg-white">
+        <motion.img
+          src={ctaLandscape}
+          alt=""
+          aria-hidden
+          draggable={false}
+          initial={{ opacity: 0, y: 60 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 1.1, ease: "easeOut" }}
+          // На узком экране картинка по ширине вышла бы полоской в пару
+          // сантиметров -- там она занимает нижние 45% высоты и обрезается
+          // по бокам, баобаб слева остаётся в кадре.
+          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 w-full select-none max-sm:h-[45vh] max-sm:object-cover max-sm:object-[25%_bottom]"
+        />
+        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-start px-6 pt-32 text-center">
           <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.4 }} variants={fadeUp}>
             <h2 className="text-balance text-4xl font-bold text-ink-900 md:text-5xl">Готовы озеленить свой двор?</h2>
             {/* text-balance -- строки примерно равной длины вместо длинной первой
@@ -326,8 +346,10 @@ export default function LandingPage() {
           </motion.div>
         </div>
 
-        <footer className="border-t border-ink-200/60 py-8 text-center text-base text-ink-400">
-          GreenCity — инструмент генеративного озеленения дворов.
+        {/* Подвал лежит на холмах картинки -- белый текст на лёгком
+            тёмно-зелёном затемнении снизу: местами под ним светлая река. */}
+        <footer className="bg-gradient-to-t from-brand-950/55 to-transparent px-6 pb-6 pt-12 text-center text-base font-medium text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.3)]">
+          {typograph("GreenCity — инструмент генеративного озеленения дворов.")}
         </footer>
       </section>
     </div>
