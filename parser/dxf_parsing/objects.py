@@ -101,6 +101,39 @@ def _metadata(cfg, **fields):
     return fields
 
 
+# Точечные объекты ближе этого друг к другу -- одна и та же посадка/опора,
+# попавшая в сцену несколько раз.
+_DUPLICATE_POINT_TOLERANCE_M = 0.1
+# Дерево и куст в одной точке -- одно растение: слой-привязка вроде
+# "(ГП) Привязка дер и куст" ставит метку прямо на дерево.
+_PLANT_TYPES = ("tree", "bush")
+
+
+def dedupe_point_objects(objects):
+    """Один объект на место. Пачка DWG сливается по слоям, и слой с тем же
+    именем из разных файлов пачки складывается в одно: проектная посадка есть
+    и в посадочном плане, и в АПОТ, и в генплане (Харьковская: 274 дубля на
+    415 деревьев), деревья топосъёмки -- и в tp, и в сборных файлах (Старый
+    Гай: 279). Из дублей остаётся первый, но дерево важнее куста, а объект с
+    названием вида -- безымянного."""
+    kept = {}
+    order = []
+    for obj in objects:
+        pos = obj["position"]
+        family = "plant" if obj["type"] in _PLANT_TYPES else obj["type"]
+        key = (family, round(pos["x"] / _DUPLICATE_POINT_TOLERANCE_M), round(pos["z"] / _DUPLICATE_POINT_TOLERANCE_M))
+        current = kept.get(key)
+        if current is None:
+            kept[key] = obj
+            order.append(key)
+            continue
+        better_type = obj["type"] == "tree" and current["type"] == "bush"
+        better_name = obj["type"] == current["type"] and obj["metadata"].get("species") and not current["metadata"].get("species")
+        if better_type or better_name:
+            kept[key] = obj
+    return [kept[key] for key in order]
+
+
 def extract_point_objects(msp, tf):
     """INSERT/POINT — по одному объекту на сущность. LINE+CIRCLE в одном слое (столб+плафон,
     как в типовых DXF для фонарей) группируются по совпадающей (x, y) в один объект."""

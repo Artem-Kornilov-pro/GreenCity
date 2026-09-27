@@ -38,7 +38,7 @@ def fake_dwg2dxf(monkeypatch, tmp_path):
     def fake_run(args, capture_output):
         out_path = Path(args[2])
         in_path = Path(args[3])
-        if in_path.read_bytes() == b"bad":
+        if in_path.read_bytes().startswith(b"bad"):
             # Байты, не валидные как UTF-8 (\xbd), -- ровно то, что реальный
             # dwg2dxf пишет в stderr на кириллических именах слоёв, и ровно
             # то, из-за чего text=True раньше падал внутри subprocess.run
@@ -55,7 +55,7 @@ def fake_dwg2dxf(monkeypatch, tmp_path):
 def test_merge_dwg_files_raises_when_tool_missing(monkeypatch, tmp_path):
     monkeypatch.setattr("exchange.dwg_batch_converter.shutil.which", lambda name: None)
     dwg = tmp_path / "a.dwg"
-    dwg.write_bytes(b"good")
+    dwg.write_bytes(b"good " + dwg.name.encode())
     with pytest.raises(Dwg2DxfNotFound):
         merge_dwg_files([dwg], tmp_path)
 
@@ -63,8 +63,8 @@ def test_merge_dwg_files_raises_when_tool_missing(monkeypatch, tmp_path):
 def test_merge_dwg_files_combines_entities_from_all_files(fake_dwg2dxf, tmp_path):
     a = tmp_path / "a.dwg"
     b = tmp_path / "b.dwg"
-    a.write_bytes(b"good")
-    b.write_bytes(b"good")
+    a.write_bytes(b"good " + a.name.encode())
+    b.write_bytes(b"good " + b.name.encode())
 
     result = merge_dwg_files([a, b], tmp_path)
 
@@ -77,8 +77,8 @@ def test_merge_dwg_files_combines_entities_from_all_files(fake_dwg2dxf, tmp_path
 def test_merge_dwg_files_reports_partial_failure_without_stopping_the_batch(fake_dwg2dxf, tmp_path):
     good = tmp_path / "good.dwg"
     bad = tmp_path / "bad.dwg"
-    good.write_bytes(b"good")
-    bad.write_bytes(b"bad")
+    good.write_bytes(b"good " + good.name.encode())
+    bad.write_bytes(b"bad " + bad.name.encode())
 
     result = merge_dwg_files([good, bad], tmp_path)
 
@@ -104,7 +104,7 @@ def test_merge_dwg_files_falls_back_to_recover_on_unicode_decode_error(fake_dwg2
     monkeypatch.setattr("exchange.dwg_batch_converter.ezdxf.readfile", _flaky_readfile)
 
     dwg = tmp_path / "flaky.dwg"
-    dwg.write_bytes(b"good")
+    dwg.write_bytes(b"good " + dwg.name.encode())
 
     result = merge_dwg_files([dwg], tmp_path)
 
@@ -115,7 +115,7 @@ def test_merge_dwg_files_falls_back_to_recover_on_unicode_decode_error(fake_dwg2
 
 def test_merge_dwg_files_all_failed_returns_empty_converted(fake_dwg2dxf, tmp_path):
     bad = tmp_path / "bad.dwg"
-    bad.write_bytes(b"bad")
+    bad.write_bytes(b"bad " + bad.name.encode())
 
     result = merge_dwg_files([bad], tmp_path)
 
@@ -132,7 +132,7 @@ def test_merge_dwg_files_processes_in_original_order_regardless_of_size(fake_dwg
     # быть строго в порядке dwg_paths -- регрессия на случайную перестановку.
     paths = [tmp_path / f"{name}.dwg" for name in ("c", "a", "b")]
     for p in paths:
-        p.write_bytes(b"good")
+        p.write_bytes(b"good " + p.name.encode())
 
     result = merge_dwg_files(paths, tmp_path)
 
@@ -184,7 +184,7 @@ def test_parallel_merge_gives_the_same_document_in_the_original_order(fake_dwg2d
     paths = []
     for name, body in (("c", b"good"), ("a", b"good"), ("bad", b"bad"), ("b", b"good")):
         path = tmp_path / f"{name}.dwg"
-        path.write_bytes(body)
+        path.write_bytes(body + b" " + name.encode())  # разное содержимое -- одинаковые файлы пропускаются
         paths.append(path)
     result = merge_dwg_files(paths, tmp_path, workers=3)
     assert result.converted == ["c.dwg", "a.dwg", "b.dwg"]
@@ -192,3 +192,46 @@ def test_parallel_merge_gives_the_same_document_in_the_original_order(fake_dwg2d
     assert [e.dxf.layer for e in result.doc.modelspace().query("LINE")] == ["PATH_c", "PATH_a", "PATH_b"]
     # Полный промежуточный DXF удаляется, остаётся компактный.
     assert not list(tmp_path.glob("c.dxf")) and list(tmp_path.glob("c.compact.dxf"))
+
+
+def test_merge_dwg_files_skips_byte_identical_files(fake_dwg2dxf, tmp_path):
+    # Реальная пачка (Харьковская): "АПОТ" и "улица ГП" -- один и тот же файл
+    # под двумя именами, и всё его содержимое попадало в сцену дважды.
+    a = tmp_path / "АПОТ.dwg"
+    b = tmp_path / "улица ГП.dwg"
+    c = tmp_path / "посадочный.dwg"
+    a.write_bytes(b"good same")
+    b.write_bytes(b"good same")
+    c.write_bytes(b"good other")
+
+    result = merge_dwg_files([a, b, c], tmp_path)
+
+    assert sorted(result.converted) == ["АПОТ.dwg", "посадочный.dwg"]
+    assert "АПОТ.dwg" in result.failed["улица ГП.dwg"]
+    assert len(list(result.doc.modelspace().query("LINE"))) == 2
+
+
+def test_read_converted_dxf_repairs_multiline_values_and_broken_unicode_escapes(tmp_path):
+    # dwg2dxf пишет XML спецификации многострочным значением и с битым
+    # экранированием "\U+" без hex-цифр: ни ezdxf.readfile, ни recover такой
+    # файл не читали (3 из 4 файлов пачки улицы Берзарина).
+    from exchange.dwg_batch_converter import _read_converted_dxf
+
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    msp.add_line((0, 0), (10, 0), dxfattribs={"layer": "ROAD_EDGE"})
+    msp.add_text("SPEC", dxfattribs={"layer": "NOTES"})
+    good = tmp_path / "good.dxf"
+    doc.saveas(good)
+    text = good.read_text(encoding="utf-8")
+    backslash = chr(92)
+    broken_value = f'SPEC\n    <Item name="ПНД{backslash}U+041F{backslash}U+ 63 мм" count="2" />\n    <Item name="x" />'
+    assert "\nSPEC\n" in text
+    broken = tmp_path / "broken.dxf"
+    broken.write_text(text.replace("\nSPEC\n", "\n" + broken_value + "\n", 1), encoding="utf-8")
+
+    repaired = _read_converted_dxf(broken)
+
+    assert [e.dxf.layer for e in repaired.modelspace().query("LINE")] == ["ROAD_EDGE"]
+    assert len(repaired.modelspace().query("TEXT")) == 1
+    assert not list(tmp_path.glob("*.clean.dxf"))  # временный файл убран

@@ -13,27 +13,109 @@ from ezdxf import path as ezpath
 from shapely.geometry import LineString, MultiPoint, Polygon
 from shapely.ops import linemerge
 
-from dxf_parsing.geometry import buffer_segment, polygon_points
+from dxf_parsing.geometry import buffer_segment, polygon_points, split_holes
 from dxf_parsing.rules import (
     BOUNDARY_LAYER_KEYWORDS,
     HATCH_FLATTENING_DISTANCE,
     POLYGON_RULES,
+    PROJECT_BOUNDARY_LAYER_KEYWORDS,
     SKIP_LAYER_KEYWORDS,
     layer_matches,
     match_rule,
 )
 
+# Граница со слоя проекта (PROJECT_BOUNDARY_LAYER_KEYWORDS) меньше этого --
+# не граница участка, а обрывок или деталь (на Академика Понтрягина на слое
+# "Граница работ" генплана лежит кусок в 322 м²): лучше честно оценить границу
+# по содержимому. Слои BOUNDARY/TERRITORY/SITE (рукописные DXF, корпус) --
+# как раньше, без проверки размера.
+_MIN_BOUNDARY_AREA_SQM = 2000.0
+# Куски границы работ ближе этого друг к другу -- один участок (улица,
+# разрезанная перекрёстками на отрезки): склеиваются в один контур.
+_BOUNDARY_PIECE_CLOSING_M = 20.0
+# Участки границы дальше этого от крупнейшего -- не часть того же участка.
+_BOUNDARY_NEIGHBOUR_M = 200.0
+
+
+def boundary_outline(msp, scale=1.0):
+    """(вершины контура границы в координатах чертежа, имя слоя) или None.
+
+    Одна полилиния на слое границы (рукописные тестовые DXF) -- её вершины
+    как есть. В реальных проектах граница работ -- несколько контуров
+    (Кустанайская -- 15, Харьковская -- 4) или вовсе россыпь отрезков
+    (Куликовская -- 1120 LINE): контуры объединяются, отрезки собираются в
+    полигоны (polygonize), близкие куски склеиваются. Если участков всё же
+    несколько -- крупнейший и соседние с ним (вогнутая оболочка, схема сцены
+    хранит одну границу), далёкие отбрасываются."""
+    pieces, lines, first_layer = [], [], None
+    single_pts = None
+    for e in msp.query("LWPOLYLINE POLYLINE LINE"):
+        layer = e.dxf.layer
+        if not layer_matches(layer, BOUNDARY_LAYER_KEYWORDS):
+            continue
+        first_layer = first_layer or layer
+        if e.dxftype() == "LINE":
+            s, en = e.dxf.start, e.dxf.end
+            if (s.x, s.y) != (en.x, en.y):
+                lines.append(LineString([(s.x, s.y), (en.x, en.y)]))
+            continue
+        pts = polygon_points(e)
+        if len(pts) >= 3:
+            single_pts = pts if not pieces else None
+            poly = Polygon([(x, y) for x, y, *_ in pts])
+            pieces.append(poly if poly.is_valid else poly.buffer(0))
+        elif len(pts) == 2:
+            lines.append(LineString([(x, y) for x, y, *_ in pts]))
+    min_area = _MIN_BOUNDARY_AREA_SQM if first_layer and layer_matches(first_layer, PROJECT_BOUNDARY_LAYER_KEYWORDS) else 0.0
+    if single_pts is not None and len(pieces) == 1 and not lines:
+        # Прежнее поведение для одной полилинии -- вершины без изменений.
+        return (single_pts, first_layer) if pieces[0].area * scale * scale >= min_area else None
+    if lines:
+        pieces += list(shapely.polygonize(lines).geoms)
+    pieces = [p for p in pieces if not p.is_empty and p.area > 0]
+    if not pieces:
+        return None
+    closing = _BOUNDARY_PIECE_CLOSING_M / scale
+    merged = shapely.union_all(pieces).buffer(closing, quad_segs=4).buffer(-closing, quad_segs=4)
+    if merged.geom_type != "Polygon":
+        # Несколько участков: крупнейший и соседние с ним. Далёкий кусок на том
+        # же слое -- врезка-схема или соседний лист (на Харьковской -- за 4,5
+        # км), и оболочка тянула к нему полосу через весь город.
+        parts = sorted((p for p in merged.geoms if p.geom_type == "Polygon"), key=lambda p: -p.area)
+        near = _BOUNDARY_NEIGHBOUR_M / scale
+        kept = [p for p in parts if p.distance(parts[0]) <= near]
+        if len(kept) == 1:
+            merged = kept[0]
+        else:
+            merged = shapely.concave_hull(MultiPoint([c for p in kept for c in p.exterior.coords]), ratio=0.2)
+    if merged.is_empty or merged.geom_type != "Polygon" or merged.area <= 0 or merged.area * scale * scale < min_area:
+        return None
+    return [(x, y, 0.0) for x, y in merged.exterior.coords[:-1]], first_layer
+
 
 def extract_boundary(msp, tf):
-    for e in msp.query("LWPOLYLINE POLYLINE"):
-        if layer_matches(e.dxf.layer, BOUNDARY_LAYER_KEYWORDS):
-            pts = polygon_points(e)
-            if len(pts) >= 3:
-                return {"polygon": tf.polygon(pts), "sourceLayer": e.dxf.layer}
-    return None
+    found = boundary_outline(msp, tf.scale)
+    if found is None:
+        return None
+    pts, layer = found
+    return {"polygon": tf.polygon(pts), "sourceLayer": layer}
+
+
+# Здание меньше этого -- обрывок контура или деталь ("Части зданий": крыльца,
+# приямки, осколки штриховки), а не здание: на Олимпийской деревне таких было
+# 3939 из 6395, и каждое получало отступ под дерево 5 м и коробку в 3D.
+_MIN_BUILDING_AREA_SQM = 3.0
+
+
+def _area(pts_xyz, scale):
+    xy = [(p[0], p[1]) for p in pts_xyz]
+    doubled = sum(x1 * y2 - x2 * y1 for (x1, y1), (x2, y2) in zip(xy, xy[1:] + xy[:1]))
+    return abs(doubled) / 2 * scale * scale
 
 
 def _add_zone(zones, idx_by_type, cfg, layer, pts_xyz, tf):
+    if cfg["type"] == "building" and _area(pts_xyz, tf.scale) < _MIN_BUILDING_AREA_SQM:
+        return
     idx_by_type[cfg["type"]] += 1
     zone = {
         "id": f"{cfg['type']}_{idx_by_type[cfg['type']]:03d}",
@@ -140,11 +222,10 @@ def _merge_corridors(zones, idx_by_type, corridors, tf):
         )
         if merged.is_empty:
             continue
-        polys = merged.geoms if merged.geom_type == "MultiPolygon" else [merged]
-        for poly in polys:
-            # Дырки теряются: схема зоны -- плоский список точек без внутренних
-            # контуров. Для запрета посадки это безопасная сторона ошибки
-            # (закрытая дырка = чуть строже, чем есть на самом деле).
+        # Схема зоны -- плоский список точек без внутренних контуров, поэтому
+        # полигоны с дырками режутся на куски без дыр (split_holes). Раньше
+        # дырки выбрасывались, и кольцо трассы заливалось запретом целиком.
+        for poly in split_holes(merged):
             # [:-1] -- shapely замыкает кольцо повтором первой точки, а в схеме
             # зоны полигон хранится незамкнутым (так же, как его отдаёт
             # polygon_points для обычных контуров).
@@ -207,10 +288,8 @@ def _merge_polygon_zones(zones, idx_by_type, polygon_zones, tf):
         )
         if merged.is_empty:
             continue
-        result_polys = merged.geoms if merged.geom_type == "MultiPolygon" else [merged]
-        for poly in result_polys:
-            # Дырки теряются -- тот же компромисс, что в _merge_corridors, и по
-            # той же причине (схема зоны не хранит внутренние контуры).
+        # Дырки сохраняются нарезкой на куски -- см. _merge_corridors.
+        for poly in split_holes(merged):
             pts = list(poly.exterior.coords)[:-1]
             if len(pts) >= 3:
                 _add_zone(zones, idx_by_type, cfg, layer, pts, tf)
@@ -265,12 +344,14 @@ def _compute_ground_zone(boundary, restrictions):
     if remaining.is_empty:
         return []
 
-    parts = remaining.geoms if remaining.geom_type == "MultiPolygon" else [remaining]
     existing_count = sum(1 for z in restrictions if z["type"] == "protected_zone")
 
     result = []
-    for part in parts:
-        if part.geom_type != "Polygon" or part.area < _GROUND_ZONE_MIN_AREA_SQM:
+    # Без нарезки (split_holes) у кусков земли терялись дырки -- здания и сети
+    # внутри них, и "открытая земля" суммарно выходила больше самого участка
+    # (до 125% на Олимпийской деревне).
+    for part in split_holes(remaining):
+        if part.area < _GROUND_ZONE_MIN_AREA_SQM:
             continue
         pts = list(part.exterior.coords)[:-1]
         if len(pts) < 3:
@@ -331,8 +412,7 @@ def _clip_offsite_zones(zones, boundary):
         clipped = poly.intersection(region)
         if clipped.is_empty:
             continue
-        parts = clipped.geoms if clipped.geom_type == "MultiPolygon" else [clipped]
-        for part in parts:
+        for part in split_holes(clipped):
             pts = list(part.exterior.coords)[:-1]
             if len(pts) < 3:
                 continue
