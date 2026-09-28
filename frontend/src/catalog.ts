@@ -2,9 +2,8 @@
 // и там же является единым источником правды -- фронтенд его только читает:
 // строит по нему панель "Добавить объект" и решает, чем рисовать объект.
 
+import { request } from "./lib/http";
 import type { SceneObject } from "./types";
-
-const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "http://localhost:8000";
 
 export type CatalogCategory = "tree" | "bush" | "groundcover" | "paving" | "furniture";
 
@@ -80,10 +79,8 @@ export function objectDisplayName(obj: SceneObject, byId: Map<string, CatalogIte
   return objectTypeLabel(obj.type);
 }
 
-export async function fetchCatalog(): Promise<CatalogItem[]> {
-  const res = await fetch(`${API_BASE}/api/catalog`);
-  if (!res.ok) throw new Error(`Не удалось загрузить каталог (${res.status})`);
-  return res.json() as Promise<CatalogItem[]>;
+export function fetchCatalog(): Promise<CatalogItem[]> {
+  return request<CatalogItem[]>("/api/catalog", { errorMessage: "Не удалось загрузить каталог" });
 }
 
 // Манифест имеющихся .glb (пишет tools/convert_models.mjs). Нет манифеста --
