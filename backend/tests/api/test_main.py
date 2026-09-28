@@ -265,7 +265,10 @@ def test_greenplan_report_success(client, monkeypatch):
     scene = _parsed_scene(client)
     assignments = client.post("/api/greenplan/generate", json={"scene": scene}).json()["assignments"]
 
-    monkeypatch.setattr(greenplan_api, "generate_report", lambda assignments: "связный текст отчёта")
+    async def _report(assignments):
+        return "связный текст отчёта"
+
+    monkeypatch.setattr(greenplan_api, "generate_report", _report)
     r = client.post("/api/greenplan/report", json=assignments)
     assert r.status_code == 200
     body = r.json()
@@ -279,7 +282,7 @@ def test_greenplan_report_survives_llm_unavailable(client, monkeypatch):
     scene = _parsed_scene(client)
     assignments = client.post("/api/greenplan/generate", json={"scene": scene}).json()["assignments"]
 
-    def _raise(assignments):
+    async def _raise(assignments):
         raise DecisionReportUnavailable("YandexGPT недоступна")
 
     monkeypatch.setattr(greenplan_api, "generate_report", _raise)
@@ -300,7 +303,10 @@ def test_edit_with_text_success(client, monkeypatch):
     fake_result = TextEditResult(
         scene=SceneModel.model_validate(scene), explanation="готово", applied=["удалён lamp_001"], rejected=[], warnings=[]
     )
-    monkeypatch.setattr(editor_api, "edit_scene_with_text", lambda scene, instruction, history=(): fake_result)
+    async def _edit(scene, instruction, history=()):
+        return fake_result
+
+    monkeypatch.setattr(editor_api, "edit_scene_with_text", _edit)
     r = client.post("/api/edit-with-text", json={"scene": scene, "instruction": "убери фонарь"})
     assert r.status_code == 200
     assert r.json()["applied"] == ["удалён lamp_001"]
@@ -309,7 +315,7 @@ def test_edit_with_text_success(client, monkeypatch):
 def test_edit_with_text_not_configured_returns_503(client, monkeypatch):
     scene = _parsed_scene(client)
 
-    def _raise(scene, instruction, history=()):
+    async def _raise(scene, instruction, history=()):
         raise LlmNotConfiguredError("не настроено")
 
     monkeypatch.setattr(editor_api, "edit_scene_with_text", _raise)
@@ -320,7 +326,7 @@ def test_edit_with_text_not_configured_returns_503(client, monkeypatch):
 def test_edit_with_text_llm_error_returns_502(client, monkeypatch):
     scene = _parsed_scene(client)
 
-    def _raise(scene, instruction, history=()):
+    async def _raise(scene, instruction, history=()):
         raise LlmError("недоступна")
 
     monkeypatch.setattr(editor_api, "edit_scene_with_text", _raise)

@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import glob
 import json
 import logging
@@ -129,7 +130,7 @@ def run_case(case: Case, scenes: dict[str, Scene], counter: TokenCounter) -> dic
     try:
         for instruction in case.turns:
             before = scene
-            result = edit_scene_with_text(scene, instruction, history)
+            result = asyncio.run(edit_scene_with_text(scene, instruction, history))
             outcomes.append(Outcome(before, result))
             history.append(ChatTurn(instruction=instruction, explanation=result.explanation, applied=result.applied[:4], added_ids=result.added_ids))
             scene = result.scene

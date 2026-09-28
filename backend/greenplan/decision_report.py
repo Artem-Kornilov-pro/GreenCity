@@ -93,7 +93,7 @@ def _model() -> str:
     return yandex_ai.model_uri(folder, "YANDEX_CLOUD_REPORT_MODEL", yandex_ai.DEFAULT_REPORT_MODEL)
 
 
-def _client() -> openai.OpenAI:
+def _client() -> openai.AsyncOpenAI:
     creds = yandex_ai.credentials()
     if creds is None:
         raise DecisionReportUnavailable(
@@ -174,7 +174,7 @@ def _format_facts(rows: list[SummaryRow]) -> str:
     return "\n".join(lines)
 
 
-def generate_report(assignments: list[ZoneAssignment]) -> Optional[str]:
+async def generate_report(assignments: list[ZoneAssignment]) -> Optional[str]:
     """Связный текст-объяснение по списку решений или None, если описывать
     нечего (пустой список зон -- легитимный случай). Если LLM недоступна --
     DecisionReportUnavailable, а не пустой результат (см. докстринг модуля)."""
@@ -182,9 +182,11 @@ def generate_report(assignments: list[ZoneAssignment]) -> Optional[str]:
         return None
 
     facts = _site_fact(assignments[0]) + "\n" + _format_facts(_summarize(assignments))
+    client = None
     try:
         # Без ключа _client() сам поднимает DecisionReportUnavailable.
-        response = _client().responses.create(
+        client = _client()
+        response = await client.responses.create(
             model=_model(),
             temperature=TEMPERATURE,
             instructions=INSTRUCTIONS,
@@ -193,6 +195,9 @@ def generate_report(assignments: list[ZoneAssignment]) -> Optional[str]:
         )
     except openai.OpenAIError as e:
         raise DecisionReportUnavailable(f"Не удалось получить отчёт от LLM: {e}") from e
+    finally:
+        if client is not None:
+            await yandex_ai.close_client(client)
 
     if response.status == "incomplete":
         # Оборванный на полуслове текст в записку заказчику не годится.

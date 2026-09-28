@@ -1,20 +1,21 @@
+# Наружу опубликованы только фронтенд (5173) и Grafana (3001). Бэкенд,
+# MongoDB, Redis, Prometheus и Loki доступны лишь внутри сети compose: браузер
+# обращается к API через dev-сервер фронтенда (он проксирует /api и Swagger на
+# backend:8000), поэтому CORS на бэкенде выключен.
+
 services:
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    ports:
-      - "8000:8000"
+    # Порт не публикуется: бэкенд доступен только из сети compose.
+    expose:
+      - "8000"
     volumes:
       - ./backend:/app/backend
       - ./parser:/app/parser
-      # GreenPlan (issue #23, Этапы 3-6): retrieval-корпус (backend/greenplan/pattern_corpus.py)
-      # читает locations/<slug>/<slug>.dxf и data/pattern_corpus.yaml по
-      # относительному от backend/ пути -- без этих двух каталогов
-      # /api/greenplan/generate падает с FileNotFoundError внутри контейнера,
-      # хотя локально (без Docker) работает: там backend/ запускается прямо
-      # из чекаута репозитория, где locations/ и data/ и так на месте. :ro --
-      # бэкенд эти пути только читает, никогда не пишет.
+      # Корпус GreenPlan (locations/, data/pattern_corpus.yaml) и нормы --
+      # только чтение.
       - ./locations:/app/locations:ro
       - ./data:/app/data:ro
       # Исходные чертежи загрузок (backend/exchange/source_store.py): экспорт
@@ -39,6 +40,9 @@ services:
       # Дев-режим: --reload (при UVICORN_WORKERS=1). Продакшен --
       # docker-compose.prod.yml, там 0.
       - UVICORN_RELOAD=${UVICORN_RELOAD:-1}
+      # Swagger (/docs) -- в дев-режиме открыт через фронтенд:
+      # http://localhost:5173/docs. В продакшене выключен.
+      - API_DOCS=${API_DOCS:-1}
     # Ключ и каталог Yandex AI Studio (правка текстом, текст-обоснование GreenPlan) и
     # (опционально) свой JWT_SECRET -- см. .env.example.
     # required: false -- без .env сервис всё равно поднимется: текстовое
@@ -115,9 +119,10 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      # Резолвится в браузере пользователя, а не внутри контейнера -- поэтому
-      # localhost:8000 работает, пока backend публикует порт на хост (см. выше).
-      - VITE_API_BASE=http://localhost:8000
+      # Браузер обращается к API по относительным путям /api/..., dev-сервер
+      # vite проксирует их на бэкенд внутри сети compose (frontend/vite.config.ts).
+      - VITE_API_BASE=
+      - API_PROXY_TARGET=http://backend:8000
     depends_on:
       - backend
     healthcheck:
@@ -167,8 +172,7 @@ services:
     volumes:
       - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
-    ports:
-      - "9090:9090"
+    # Порт не публикуется: Prometheus читает Grafana внутри сети compose.
     depends_on:
       backend:
         condition: service_healthy
@@ -188,8 +192,7 @@ services:
     volumes:
       - ./observability/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
       - loki_data:/loki
-    ports:
-      - "3100:3100"
+    # Порт не публикуется: логи пишет Promtail и читает Grafana внутри сети compose.
     healthcheck:
       # /ready отвечает 503, пока однобинарный instance не присоединится к
       # своему (in-memory) ring'у -- на практике занимает ~15-20 с, отсюда

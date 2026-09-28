@@ -77,7 +77,7 @@ def isolated_env(monkeypatch, tmp_path):
 
 
 @posix_only
-def test_run_isolated_returns_scene_json_from_child_process(isolated_env, tmp_path):
+async def test_run_isolated_returns_scene_json_from_child_process(isolated_env, tmp_path):
     _fake_dwg2dxf(
         isolated_env,
         "import ezdxf\n"
@@ -89,7 +89,7 @@ def test_run_isolated_returns_scene_json_from_child_process(isolated_env, tmp_pa
     work = tmp_path / "work"
     work.mkdir()
     (work / "a.dwg").write_bytes(b"dwg")
-    payload, summary = dwg_job.run([work / "a.dwg"], work, isolated=True)
+    payload, summary = await dwg_job.run([work / "a.dwg"], work, isolated=True)
     scene = json.loads(payload)
     assert scene["boundary"] is not None
     assert "buildingSetbacks" in scene
@@ -97,18 +97,18 @@ def test_run_isolated_returns_scene_json_from_child_process(isolated_env, tmp_pa
 
 
 @posix_only
-def test_run_isolated_reports_job_error_from_child(isolated_env, tmp_path):
+async def test_run_isolated_reports_job_error_from_child(isolated_env, tmp_path):
     _fake_dwg2dxf(isolated_env, "sys.stderr.write('unsupported object'); sys.exit(1)")
     work = tmp_path / "work"
     work.mkdir()
     (work / "a.dwg").write_bytes(b"dwg")
     with pytest.raises(dwg_job.DwgJobError) as err:
-        dwg_job.run([work / "a.dwg"], work, isolated=True)
+        await dwg_job.run([work / "a.dwg"], work, isolated=True)
     assert (err.value.status, err.value.outcome, err.value.failed) == (400, "all_failed", 1)
 
 
 @posix_only
-def test_run_isolated_turns_killed_child_into_clear_error(isolated_env, tmp_path):
+async def test_run_isolated_turns_killed_child_into_clear_error(isolated_env, tmp_path):
     # Дочерний процесс убит системой (как при нехватке памяти) -- раньше это
     # убивало процесс uvicorn и давало 502, теперь -- понятная ошибка.
     _fake_dwg2dxf(isolated_env, "import signal\nos.kill(os.getppid(), signal.SIGKILL)")
@@ -116,29 +116,32 @@ def test_run_isolated_turns_killed_child_into_clear_error(isolated_env, tmp_path
     work.mkdir()
     (work / "a.dwg").write_bytes(b"dwg")
     with pytest.raises(dwg_job.DwgJobError) as err:
-        dwg_job.run([work / "a.dwg"], work, isolated=True)
+        await dwg_job.run([work / "a.dwg"], work, isolated=True)
     assert (err.value.status, err.value.outcome) == (500, "crashed")
     assert "памяти" in err.value.detail
 
 
 @posix_only
-def test_slot_limits_parallel_batches_and_reports_busy(monkeypatch, tmp_path):
+async def test_slot_limits_parallel_batches_and_reports_busy(monkeypatch, tmp_path):
     monkeypatch.setenv("DWG_SLOT_DIR", str(tmp_path))
     monkeypatch.setenv("DWG_MAX_PARALLEL", "1")
-    with dwg_job.slot():
-        with pytest.raises(dwg_job.DwgJobError) as err, dwg_job.slot(wait_s=0):
-            pass
+    async with dwg_job.slot():
+        with pytest.raises(dwg_job.DwgJobError) as err:
+            async with dwg_job.slot(wait_s=0):
+                pass
         assert (err.value.status, err.value.outcome) == (503, "busy")
-    with dwg_job.slot(wait_s=0):  # освобождён -- снова свободен
+    async with dwg_job.slot(wait_s=0):  # освобождён -- снова свободен
         pass
 
 
 @posix_only
-def test_slot_allows_as_many_batches_as_configured(monkeypatch, tmp_path):
+async def test_slot_allows_as_many_batches_as_configured(monkeypatch, tmp_path):
     monkeypatch.setenv("DWG_SLOT_DIR", str(tmp_path))
     monkeypatch.setenv("DWG_MAX_PARALLEL", "2")
-    with dwg_job.slot(wait_s=0), dwg_job.slot(wait_s=0), pytest.raises(dwg_job.DwgJobError), dwg_job.slot(wait_s=0):
-        pass
+    async with dwg_job.slot(wait_s=0), dwg_job.slot(wait_s=0):
+        with pytest.raises(dwg_job.DwgJobError):
+            async with dwg_job.slot(wait_s=0):
+                pass
 
 
 def test_scene_in_memory_equals_parse_of_saved_file_for_empty_doc(tmp_path):

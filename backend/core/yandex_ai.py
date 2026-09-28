@@ -39,8 +39,16 @@ def credentials() -> Optional[tuple[str, str]]:
     return (api_key, folder) if api_key and folder else None
 
 
-def make_client(api_key: str, folder: str, **kwargs) -> openai.OpenAI:
-    return openai.OpenAI(api_key=api_key, base_url=YANDEX_BASE_URL, project=folder, **kwargs)
+def make_client(api_key: str, folder: str, **kwargs) -> openai.AsyncOpenAI:
+    """Асинхронный клиент: запрос к модели не занимает поток, пока ждёт ответа."""
+    return openai.AsyncOpenAI(api_key=api_key, base_url=YANDEX_BASE_URL, project=folder, **kwargs)
+
+
+async def close_client(client) -> None:
+    """Закрыть HTTP-соединения клиента после запроса."""
+    close = getattr(client, "close", None)
+    if close is not None:
+        await close()
 
 
 def model_uri(folder: str, env_var: str, default: str) -> str:

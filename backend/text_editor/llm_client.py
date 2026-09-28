@@ -4,6 +4,10 @@
 235B; или «gemini»), запрос и разбор ответа в LlmPlan. Оба через
 OpenAI-совместимый API: yandex -- Responses API, gemini -- Chat Completions.
 Без ключей -- LlmNotConfiguredError (ответ 503).
+
+Клиент асинхронный: пока модель думает, поток сервера свободен. Контекст для
+модели строится синхронно (build_user_input) -- это геометрия, её вызывающий
+код выполняет в пуле потоков.
 """
 
 from __future__ import annotations
@@ -31,6 +35,10 @@ logger = logging.getLogger("greencity.llm")
 
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 TEMPERATURE = 0.3
+# Ответ модели занимает секунды; без явного таймаута openai-SDK ждёт до 10 минут
+# и повторяет запрос дважды.
+REQUEST_TIMEOUT_S = 120.0
+MAX_RETRIES = 1
 # С запасом под рассуждающие модели: у них рассуждение и ответ идут в один
 # лимит, и при 2000 ответ обрывался пустым.
 MAX_OUTPUT_TOKENS = 8000
@@ -60,28 +68,33 @@ def _llm_provider() -> str:
     return os.environ.get("LLM_PROVIDER", "yandex").strip().lower()
 
 
-def _client_and_model() -> tuple[openai.OpenAI, str]:
+def check_configured() -> None:
+    """LlmNotConfiguredError, если ключей выбранного провайдера нет. Проверка
+    до сборки контекста: без ключа считать геометрию незачем."""
     if _llm_provider() == "gemini":
-        api_key = os.environ.get("GEMINI_API_KEY")
-        model = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
-        if not api_key:
+        if not os.environ.get("GEMINI_API_KEY"):
             logger.warning("не задан GEMINI_API_KEY")
             raise LlmNotConfiguredError(
                 "Текстовое редактирование не настроено: задайте GEMINI_API_KEY (см. .env.example)."
             )
-        client = openai.OpenAI(api_key=api_key, base_url=GEMINI_BASE_URL)
-        return client, model
-
-    creds = yandex_ai.credentials()
-    if creds is None:
+    elif yandex_ai.credentials() is None:
         logger.warning("не заданы YANDEX_CLOUD_API_KEY / YANDEX_CLOUD_FOLDER")
         raise LlmNotConfiguredError(
             "Текстовое редактирование не настроено: задайте YANDEX_CLOUD_API_KEY и "
             "YANDEX_CLOUD_FOLDER (см. .env.example)."
         )
-    api_key, folder = creds
+
+
+def _client_and_model() -> tuple[openai.AsyncOpenAI, str]:
+    check_configured()
+    if _llm_provider() == "gemini":
+        client = openai.AsyncOpenAI(
+            api_key=os.environ["GEMINI_API_KEY"], base_url=GEMINI_BASE_URL, timeout=REQUEST_TIMEOUT_S, max_retries=MAX_RETRIES
+        )
+        return client, os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+    api_key, folder = yandex_ai.credentials()
     model = yandex_ai.model_uri(folder, "YANDEX_CLOUD_MODEL", yandex_ai.DEFAULT_EDITOR_MODEL)
-    return yandex_ai.make_client(api_key, folder), model
+    return yandex_ai.make_client(api_key, folder, timeout=REQUEST_TIMEOUT_S, max_retries=MAX_RETRIES), model
 
 
 def _extract_json(text: str) -> dict:
@@ -99,9 +112,9 @@ def _extract_json(text: str) -> dict:
         raise LlmError(f"Модель вернула некорректный JSON: {e}") from e
 
 
-def _call_responses(client: openai.OpenAI, model: str, user_input: str) -> tuple[str, object, object]:
+async def _call_responses(client: openai.AsyncOpenAI, model: str, user_input: str) -> tuple[str, object, object]:
     """Yandex Cloud -- OpenAI Responses API (client.responses.create)."""
-    response = client.responses.create(
+    response = await client.responses.create(
         model=model,
         temperature=TEMPERATURE,
         instructions=INSTRUCTIONS,
@@ -121,10 +134,10 @@ def _call_responses(client: openai.OpenAI, model: str, user_input: str) -> tuple
     return response.output_text or "", getattr(usage, "input_tokens", "?"), getattr(usage, "output_tokens", "?")
 
 
-def _call_chat_completions(client: openai.OpenAI, model: str, user_input: str) -> tuple[str, object, object]:
+async def _call_chat_completions(client: openai.AsyncOpenAI, model: str, user_input: str) -> tuple[str, object, object]:
     """Gemini -- поддерживает только Chat Completions, не Responses API
     (см. https://ai.google.dev/gemini-api/docs/openai)."""
-    response = client.chat.completions.create(
+    response = await client.chat.completions.create(
         model=model,
         temperature=TEMPERATURE,
         max_tokens=MAX_OUTPUT_TOKENS,
@@ -169,34 +182,43 @@ def _history_block(history: list[ChatTurn]) -> str:
     return "\n".join(lines)
 
 
-def request_plan(
+def build_user_input(
     scene: Scene,
     instruction: str,
     catalog: list[CatalogItem],
     placer: Placer,
     history: list[ChatTurn] = (),
-) -> LlmPlan:
-    client, model = _client_and_model()
-    provider = _llm_provider()
+) -> str:
+    """Запрос к модели: контекст участка, прошлые правки и просьба. Считает
+    геометрию -- вызывать из пула потоков."""
     context = _build_context(scene, catalog, placer, instruction)
     user_input = f"Контекст:\n{context}\n\n"
     if history:
         user_input += f"Прошлые правки в этом чате (уже применены):\n{_history_block(list(history))}\n\n"
     user_input += f"Просьба пользователя:\n{instruction}"
-    logger.info("запрос (%s): %r | контекст %d симв.", provider, instruction[:200], len(context))
+    logger.info("запрос: %r | контекст %d симв.", instruction[:200], len(context))
+    return user_input
 
+
+async def ask_model(user_input: str) -> LlmPlan:
+    """План операций от модели по готовому запросу."""
+    client, model = _client_and_model()
+    provider = _llm_provider()
     started = time.monotonic()
     try:
         if provider == "gemini":
-            text, input_tokens, output_tokens = _call_chat_completions(client, model, user_input)
+            text, input_tokens, output_tokens = await _call_chat_completions(client, model, user_input)
         else:
-            text, input_tokens, output_tokens = _call_responses(client, model, user_input)
+            text, input_tokens, output_tokens = await _call_responses(client, model, user_input)
     except openai.OpenAIError as e:
         logger.warning("LLM недоступна через %.1f с: %s", time.monotonic() - started, e)
         raise LlmError(f"LLM недоступна: {e}") from e
+    finally:
+        await yandex_ai.close_client(client)
 
     logger.info(
-        "ответ за %.1f с | токены: вход %s, выход %s (лимит %d)",
+        "ответ (%s) за %.1f с | токены: вход %s, выход %s (лимит %d)",
+        provider,
         time.monotonic() - started,
         input_tokens,
         output_tokens,
@@ -211,3 +233,14 @@ def request_plan(
     except ValidationError as e:
         logger.warning("план в неожиданном формате (%d ошибок), начало: %r", e.error_count(), text[:300])
         raise LlmError(f"Модель вернула план в неожиданном формате: {e.error_count()} ошибок") from e
+
+
+async def request_plan(
+    scene: Scene,
+    instruction: str,
+    catalog: list[CatalogItem],
+    placer: Placer,
+    history: list[ChatTurn] = (),
+) -> LlmPlan:
+    """build_user_input и ask_model одним вызовом -- для тестов и инструментов."""
+    return await ask_model(build_user_input(scene, instruction, catalog, placer, history))

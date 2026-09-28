@@ -10,10 +10,15 @@
 
 | Сервис | Порт (хост) | Что делает |
 |---|---|---|
-| `prometheus` | `9090` | Каждые 15с забирает `GET http://backend:8000/metrics` (`observability/prometheus/prometheus.yml`) |
-| `loki` | `3100` | Хранилище логов (файловая система, без S3/кластера -- см. `observability/loki/loki-config.yml`) |
+| `prometheus` | -- (только сеть compose) | Каждые 15с забирает `GET http://backend:8000/metrics` (`observability/prometheus/prometheus.yml`) |
+| `loki` | -- (только сеть compose) | Хранилище логов (файловая система, без S3/кластера -- см. `observability/loki/loki-config.yml`) |
 | `promtail` | -- | Читает логи ВСЕХ контейнеров compose через Docker API (сокет докера, только для чтения) и отправляет в `loki` (`observability/promtail/promtail-config.yml`) |
 | `grafana` | `3001` | UI поверх Prometheus и Loki, дашборды подключаются автоматически при старте |
+
+Наружу опубликована только Grafana. Prometheus, Loki и сам `GET /metrics`
+бэкенда доступны лишь внутри сети compose: Grafana ходит к ним по именам
+сервисов (`http://prometheus:9090`, `http://loki:3100`), а прокси фронтенда
+пропускает к бэкенду только `/api/…` (и Swagger в дев-режиме).
 
 Все четыре добавлены в `docker-compose.yml` в корне репозитория и
 поднимаются вместе со всем остальным одной и той же командой
@@ -77,7 +82,9 @@ healthcheck, promtail -- раньше loki. У всех `restart: unless-stopped
 | `greencity_greenplan_generate_total` | Counter | `report_outcome` (success/unavailable) | `/api/greenplan/report` (GreenPlan) |
 | `greencity_auth_registrations_total` | Counter | `outcome` (success/rejected/rate_limited) | `/api/auth/register` |
 | `greencity_auth_logins_total` | Counter | `outcome` (success/rejected/rate_limited) | `/api/auth/login` |
-| `greencity_rate_limit_blocks_total` | Counter | `endpoint` (register/login) | Запрос отклонён `cache.check_rate_limit` |
+| `greencity_rate_limit_blocks_total` | Counter | `endpoint` (register/login и группы тяжёлых эндпоинтов: parse/parse_dwg/greenplan/llm/export/generate) | Запрос отклонён лимитом частоты (429) |
+| `greencity_busy_rejections_total` | Counter | `path` (тяжёлый эндпоинт или `other`) | Очередь расчётов переполнена или ожидание истекло (503) |
+| `greencity_body_too_large_total` | Counter | `path` (тяжёлый эндпоинт или `other`) | Тело запроса больше лимита (413) |
 
 ## Логи (`backend/monitoring/logging_config.py`)
 
@@ -111,10 +118,16 @@ healthcheck, promtail -- раньше loki. У всех `restart: unless-stopped
 
 ## Проверить, что всё работает
 
+Порты бэкенда, Prometheus и Loki наружу не опубликованы, поэтому проверка --
+изнутри контейнеров:
+
 ```bash
-curl -s http://localhost:8000/metrics | grep greencity_   # бизнес-метрики backend
-curl -s http://localhost:9090/api/v1/targets              # backend должен быть "up" в Prometheus
-curl -s http://localhost:3100/ready                        # Loki
+# бизнес-метрики backend
+docker compose exec backend python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/metrics').read().decode())" | grep greencity_
+# backend должен быть "up" в Prometheus
+docker compose exec prometheus wget -qO- http://127.0.0.1:9090/api/v1/targets
+# Loki
+docker compose exec loki wget -qO- http://127.0.0.1:3100/ready
 ```
 
 В Grafana (`http://localhost:3001`) дашборды -- в папке **GreenCity** в

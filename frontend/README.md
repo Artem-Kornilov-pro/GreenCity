@@ -10,7 +10,7 @@ React 19 + TypeScript + Vite, 3D-сцена на react-three-fiber. Общая
 
 ```bash
 npm install
-npm run dev              # dev-сервер на http://localhost:5173 (бэкенд -- http://localhost:8000)
+npm run dev              # dev-сервер на http://localhost:5173; /api и /docs проксируются на бэкенд (API_PROXY_TARGET, по умолчанию http://localhost:8000)
 npx tsc -b --noEmit      # проверка типов (есть в CI)
 npx oxlint --deny-warnings
 npm run build            # production-сборка в dist/

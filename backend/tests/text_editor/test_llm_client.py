@@ -1,5 +1,5 @@
 """text_editor/service.py -- слой вызова LLM (_client_and_model/request_plan/
-edit_scene_with_text). НИ ОДИН тест здесь не должен коснуться настоящей сети:
+edit_scene_with_text), асинхронный. НИ ОДИН тест здесь не должен коснуться настоящей сети:
 живой вызов Yandex Cloud или Gemini стоит пользователю реальных денег (см.
 memory feedback-llm-api-cost) -- клиент openai подменяется фальшивым объектом
 с тем же интерфейсом (.responses.create(...) для yandex, .chat.completions.
@@ -124,7 +124,7 @@ class _FakeResponses:
     def __init__(self, response):
         self._response = response
 
-    def create(self, **kwargs):
+    async def create(self, **kwargs):
         self.last_kwargs = kwargs
         return self._response
 
@@ -143,22 +143,22 @@ def _ok_response(output_text: str, input_tokens=100, output_tokens=50):
     )
 
 
-def test_request_plan_parses_a_valid_response(monkeypatch, scene1):
+async def test_request_plan_parses_a_valid_response(monkeypatch, scene1):
     monkeypatch.setenv("LLM_PROVIDER", "yandex")
     response = _ok_response('{"operations": [{"op": "remove", "id": "lamp_001"}], "explanation": "убрал фонарь"}')
     monkeypatch.setattr(llm_client, "_client_and_model", lambda: (_FakeClient(response), "fake-model"))
     placer = Placer(scene1)
-    plan = request_plan(scene1, "убери фонарь", CATALOG, placer)
+    plan = await request_plan(scene1, "убери фонарь", CATALOG, placer)
     assert plan.explanation == "убрал фонарь"
     assert plan.operations == [{"op": "remove", "id": "lamp_001"}]
 
 
-def test_request_plan_raises_llm_error_when_client_raises_openai_error(monkeypatch, scene1):
+async def test_request_plan_raises_llm_error_when_client_raises_openai_error(monkeypatch, scene1):
     monkeypatch.setenv("LLM_PROVIDER", "yandex")
     import openai
 
     class _RaisingResponses:
-        def create(self, **kwargs):
+        async def create(self, **kwargs):
             raise openai.APIConnectionError(request=SimpleNamespace())
 
     class _RaisingClient:
@@ -167,10 +167,10 @@ def test_request_plan_raises_llm_error_when_client_raises_openai_error(monkeypat
     monkeypatch.setattr(llm_client, "_client_and_model", lambda: (_RaisingClient(), "fake-model"))
     placer = Placer(scene1)
     with pytest.raises(LlmError, match="LLM недоступна"):
-        request_plan(scene1, "что угодно", CATALOG, placer)
+        await request_plan(scene1, "что угодно", CATALOG, placer)
 
 
-def test_request_plan_raises_when_response_incomplete_due_to_token_limit(monkeypatch, scene1):
+async def test_request_plan_raises_when_response_incomplete_due_to_token_limit(monkeypatch, scene1):
     monkeypatch.setenv("LLM_PROVIDER", "yandex")
     response = SimpleNamespace(
         status="incomplete",
@@ -181,10 +181,10 @@ def test_request_plan_raises_when_response_incomplete_due_to_token_limit(monkeyp
     monkeypatch.setattr(llm_client, "_client_and_model", lambda: (_FakeClient(response), "fake-model"))
     placer = Placer(scene1)
     with pytest.raises(LlmError, match="не уложилась в лимит"):
-        request_plan(scene1, "что угодно", CATALOG, placer)
+        await request_plan(scene1, "что угодно", CATALOG, placer)
 
 
-def test_request_plan_raises_when_response_incomplete_for_other_reason(monkeypatch, scene1):
+async def test_request_plan_raises_when_response_incomplete_for_other_reason(monkeypatch, scene1):
     monkeypatch.setenv("LLM_PROVIDER", "yandex")
     response = SimpleNamespace(
         status="incomplete",
@@ -195,33 +195,33 @@ def test_request_plan_raises_when_response_incomplete_for_other_reason(monkeypat
     monkeypatch.setattr(llm_client, "_client_and_model", lambda: (_FakeClient(response), "fake-model"))
     placer = Placer(scene1)
     with pytest.raises(LlmError, match="content_filter"):
-        request_plan(scene1, "что угодно", CATALOG, placer)
+        await request_plan(scene1, "что угодно", CATALOG, placer)
 
 
-def test_request_plan_raises_when_output_is_not_json(monkeypatch, scene1):
+async def test_request_plan_raises_when_output_is_not_json(monkeypatch, scene1):
     monkeypatch.setenv("LLM_PROVIDER", "yandex")
     response = _ok_response("извините, не могу помочь")
     monkeypatch.setattr(llm_client, "_client_and_model", lambda: (_FakeClient(response), "fake-model"))
     placer = Placer(scene1)
     with pytest.raises(LlmError, match="не вернула JSON"):
-        request_plan(scene1, "что угодно", CATALOG, placer)
+        await request_plan(scene1, "что угодно", CATALOG, placer)
 
 
-def test_request_plan_raises_when_json_does_not_match_plan_schema(monkeypatch, scene1):
+async def test_request_plan_raises_when_json_does_not_match_plan_schema(monkeypatch, scene1):
     monkeypatch.setenv("LLM_PROVIDER", "yandex")
     # Валидный JSON, но "operations" -- не список (не подходит под LlmPlan).
     response = _ok_response('{"operations": "not-a-list"}')
     monkeypatch.setattr(llm_client, "_client_and_model", lambda: (_FakeClient(response), "fake-model"))
     placer = Placer(scene1)
     with pytest.raises(LlmError, match="неожиданном формате"):
-        request_plan(scene1, "что угодно", CATALOG, placer)
+        await request_plan(scene1, "что угодно", CATALOG, placer)
 
 
 class _FakeChatCompletions:
     def __init__(self, response):
         self._response = response
 
-    def create(self, **kwargs):
+    async def create(self, **kwargs):
         self.last_kwargs = kwargs
         return self._response
 
@@ -238,89 +238,97 @@ def _ok_chat_response(content: str, prompt_tokens=100, completion_tokens=50, fin
     )
 
 
-def test_request_plan_parses_a_valid_response_from_gemini(monkeypatch, scene1):
+async def test_request_plan_parses_a_valid_response_from_gemini(monkeypatch, scene1):
     monkeypatch.setenv("LLM_PROVIDER", "gemini")
     response = _ok_chat_response('{"operations": [{"op": "remove", "id": "lamp_001"}], "explanation": "убрал фонарь"}')
     monkeypatch.setattr(llm_client, "_client_and_model", lambda: (_FakeChatClient(response), "gemini-3.6-flash"))
     placer = Placer(scene1)
-    plan = request_plan(scene1, "убери фонарь", CATALOG, placer)
+    plan = await request_plan(scene1, "убери фонарь", CATALOG, placer)
     assert plan.explanation == "убрал фонарь"
     assert plan.operations == [{"op": "remove", "id": "lamp_001"}]
 
 
-def test_request_plan_raises_when_gemini_response_hits_token_limit(monkeypatch, scene1):
+async def test_request_plan_raises_when_gemini_response_hits_token_limit(monkeypatch, scene1):
     monkeypatch.setenv("LLM_PROVIDER", "gemini")
     response = _ok_chat_response("", finish_reason="length")
     monkeypatch.setattr(llm_client, "_client_and_model", lambda: (_FakeChatClient(response), "gemini-3.6-flash"))
     placer = Placer(scene1)
     with pytest.raises(LlmError, match="не уложилась в лимит"):
-        request_plan(scene1, "что угодно", CATALOG, placer)
+        await request_plan(scene1, "что угодно", CATALOG, placer)
 
 
-def test_request_plan_propagates_not_configured_error(monkeypatch, scene1):
+async def test_request_plan_propagates_not_configured_error(monkeypatch, scene1):
     monkeypatch.delenv("YANDEX_CLOUD_API_KEY", raising=False)
     monkeypatch.delenv("YANDEX_CLOUD_FOLDER", raising=False)
     placer = Placer(scene1)
     with pytest.raises(LlmNotConfiguredError):
-        request_plan(scene1, "что угодно", CATALOG, placer)
+        await request_plan(scene1, "что угодно", CATALOG, placer)
 
 
-# --- edit_scene_with_text: полный путь, request_plan подменяется целиком ----
+# --- edit_scene_with_text: полный путь, запрос к модели подменяется целиком ----
 
 
-def test_edit_scene_with_text_applies_the_returned_plan(monkeypatch, scene1):
+async def test_edit_scene_with_text_applies_the_returned_plan(monkeypatch, scene1):
     fake_plan = LlmPlan(operations=[{"op": "remove", "id": "lamp_001"}], explanation="убрал фонарь")
-    monkeypatch.setattr(llm_editor, "request_plan", lambda scene, instruction, catalog, placer, history=(): fake_plan)
-    result = edit_scene_with_text(scene1, "убери фонарь")
+
+    async def _ask(user_input):
+        assert "убери фонарь" in user_input
+        return fake_plan
+
+    monkeypatch.setattr(llm_editor, "check_configured", lambda: None)
+    monkeypatch.setattr(llm_editor, "ask_model", _ask)
+    result = await edit_scene_with_text(scene1, "убери фонарь")
     assert "lamp_001" not in {o.id for o in result.scene.objects}
     assert result.explanation == "убрал фонарь"
 
 
-def test_edit_scene_with_text_propagates_llm_not_configured(monkeypatch, scene1):
-    def _raise(*a, **kw):
-        raise LlmNotConfiguredError("не настроено")
+async def test_edit_scene_with_text_checks_configuration_before_building_context(monkeypatch, scene1):
+    # Без ключа геометрию не считаем: ошибка -- до сборки контекста.
+    def _prepare(*a, **kw):
+        raise AssertionError("контекст не должен строиться без ключа")
 
-    monkeypatch.setattr(llm_editor, "request_plan", _raise)
+    monkeypatch.setattr(llm_editor, "_prepare", _prepare)
     with pytest.raises(LlmNotConfiguredError):
-        edit_scene_with_text(scene1, "что угодно")
+        await edit_scene_with_text(scene1, "что угодно")
 
 
-def test_edit_scene_with_text_propagates_llm_error(monkeypatch, scene1):
-    def _raise(*a, **kw):
+async def test_edit_scene_with_text_propagates_llm_error(monkeypatch, scene1):
+    async def _raise(user_input):
         raise LlmError("недоступна")
 
-    monkeypatch.setattr(llm_editor, "request_plan", _raise)
+    monkeypatch.setattr(llm_editor, "check_configured", lambda: None)
+    monkeypatch.setattr(llm_editor, "ask_model", _raise)
     with pytest.raises(LlmError):
-        edit_scene_with_text(scene1, "что угодно")
+        await edit_scene_with_text(scene1, "что угодно")
 
 
 # --- История чата: отсылки вроде "убери их" --------------------------------
 
 
-def _captured_input(monkeypatch, scene, history):
+async def _captured_input(monkeypatch, scene, history):
     monkeypatch.setenv("LLM_PROVIDER", "yandex")
     client = _FakeClient(_ok_response('{"operations": [], "explanation": "ок"}'))
     monkeypatch.setattr(llm_client, "_client_and_model", lambda: (client, "fake-model"))
-    request_plan(scene, "убери их", CATALOG, Placer(scene), history)
+    await request_plan(scene, "убери их", CATALOG, Placer(scene), history)
     return client.responses.last_kwargs["input"]
 
 
-def test_request_plan_sends_only_recent_history_before_the_request(monkeypatch, scene1):
+async def test_request_plan_sends_only_recent_history_before_the_request(monkeypatch, scene1):
     history = [ChatTurn(instruction=f"просьба {i}", explanation=f"ответ {i}", applied=[f"сделано {i}"]) for i in range(6)]
-    user_input = _captured_input(monkeypatch, scene1, history)
+    user_input = await _captured_input(monkeypatch, scene1, history)
     block = user_input[user_input.index("Прошлые правки") : user_input.index("Просьба пользователя")]
     assert "просьба 1" not in block and "просьба 2" in block and "просьба 5" in block
     assert "ответ 5" in block and "сделано 5" in block
     assert user_input.rstrip().endswith("убери их")
 
 
-def test_request_plan_without_history_has_no_history_block(monkeypatch, scene1):
-    assert "Прошлые правки" not in _captured_input(monkeypatch, scene1, [])
+async def test_request_plan_without_history_has_no_history_block(monkeypatch, scene1):
+    assert "Прошлые правки" not in await _captured_input(monkeypatch, scene1, [])
 
 
-def test_history_is_clipped(monkeypatch, scene1):
+async def test_history_is_clipped(monkeypatch, scene1):
     from text_editor.llm_client import MAX_HISTORY_TEXT
 
-    user_input = _captured_input(monkeypatch, scene1, [ChatTurn(instruction="я" * 2000)])
+    user_input = await _captured_input(monkeypatch, scene1, [ChatTurn(instruction="я" * 2000)])
     assert "я" * MAX_HISTORY_TEXT not in user_input
     assert "я" * (MAX_HISTORY_TEXT - 1) + "…" in user_input

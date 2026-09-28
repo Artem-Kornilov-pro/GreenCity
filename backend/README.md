@@ -13,7 +13,8 @@ FastAPI-сервис (`main.py`), эндпоинты разложены по т�
 
 Запуск: `make backend` из корня репозитория (или вручную, см. корневой
 `README.md`, раздел "Быстрый старт"). Интерактивная документация Swagger --
-`http://localhost:8000/docs`, там же можно повызывать `/api/generate-greenery`
+`http://localhost:8000/docs` при локальном запуске и `http://localhost:5173/docs`
+в Docker (бэкенд наружу не опубликован, к нему ведёт прокси фронтенда); там же можно повызывать `/api/generate-greenery`
 руками с разными параметрами без фронтенда.
 
 ## POST /api/generate-greenery
