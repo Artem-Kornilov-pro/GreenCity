@@ -82,6 +82,18 @@ def test_features_file_is_up_to_date():
     assert stored == pattern_corpus.compute_features()
 
 
+def test_dxf_hash_ignores_line_endings(tmp_path, monkeypatch):
+    # Windows-checkout (core.autocrlf) отдаёт те же DXF с CRLF -- признаки
+    # корпуса из-за этого не должны считаться устаревшими.
+    monkeypatch.setattr(pattern_corpus, "LOCATIONS_DIR", tmp_path)
+    (tmp_path / "p").mkdir()
+    dxf = tmp_path / "p" / "p.dxf"
+    dxf.write_bytes(b"0\nSECTION\n2\nENTITIES\n0\nENDSEC\n0\nEOF\n")
+    lf = pattern_corpus._dxf_sha256("p")
+    dxf.write_bytes(dxf.read_bytes().replace(b"\n", b"\r\n"))
+    assert pattern_corpus._dxf_sha256("p") == lf
+
+
 def test_stale_project_is_recomputed_from_dxf(tmp_path, monkeypatch, caplog):
     stored = json.loads(pattern_corpus.FEATURES_JSON.read_text(encoding="utf-8"))
     slug = "25_classical_building_ring_primer"
