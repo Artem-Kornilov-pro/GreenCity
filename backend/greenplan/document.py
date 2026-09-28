@@ -45,7 +45,7 @@ from greenplan.pattern_assignment import ZoneAssignment
 from greenplan.pattern_library import PATTERN_LIBRARY, STYLE_LABELS
 from greenplan.site_characterization import SiteCharacteristics, characterize_site
 from greenplan.species_selection import in_base_515
-from greenplan.violation_report import Violation, find_violations
+from greenplan.violation_report import ZONE_TYPE_LABELS, Violation, find_violations
 
 _SP82_YAML = NORMS_DIR / "sp-82-13330-2016" / "planting.yaml"
 _LOCATIONS = LOCATIONS_DIR
@@ -53,23 +53,6 @@ _LOCATIONS = LOCATIONS_DIR
 # Сколько строк нарушений выводить таблицей -- на реальных участках у
 # СУЩЕСТВУЮЩИХ объектов их бывают сотни; остаток -- одной строкой-итогом.
 MAX_VIOLATION_ROWS = 100
-
-ZONE_TYPE_LABELS: dict[str, str] = {
-    "building": "здания",
-    "road": "проезжая часть",
-    "pedestrian_path": "пешеходные дорожки и тротуары",
-    "gas_pipeline": "газопровод",
-    "sewer": "канализация, водосток, дренаж",
-    "water_pipeline": "водопровод",
-    "electrical": "силовой кабель",
-    "signal_cable": "кабель связи",
-    "heat_network": "теплосеть",
-    "playground_zone": "детские площадки",
-    "overhead_power_line": "воздушная ЛЭП",
-    "transformer": "трансформаторная подстанция",
-    "protected_zone": "охраняемая зона",
-    "custom": "прочие зоны (парковки, неуточнённые сети)",
-}
 
 TERRITORY_LABELS: dict[str, str] = {
     "двор": "дворовая территория",

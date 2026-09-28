@@ -23,6 +23,25 @@ from core.schemas import Scene
 from core.setback_norms import SPECIES_SETBACK_RULES, plant_kind_of_object_type, setback_for
 from core.shapes import polygon_from_points
 
+# Названия типов зон для людей -- в пояснительной записке (document.py) и в
+# заметке об удалённых насаждениях (pipeline.py).
+ZONE_TYPE_LABELS: dict[str, str] = {
+    "building": "здания",
+    "road": "проезжая часть",
+    "pedestrian_path": "пешеходные дорожки и тротуары",
+    "gas_pipeline": "газопровод",
+    "sewer": "канализация, водосток, дренаж",
+    "water_pipeline": "водопровод",
+    "electrical": "силовой кабель",
+    "signal_cable": "кабель связи",
+    "heat_network": "теплосеть",
+    "playground_zone": "детские площадки",
+    "overhead_power_line": "воздушная ЛЭП",
+    "transformer": "трансформаторная подстанция",
+    "protected_zone": "охраняемая зона",
+    "custom": "прочие зоны (парковки, неуточнённые сети)",
+}
+
 
 class Violation(BaseModel):
     object_id: str

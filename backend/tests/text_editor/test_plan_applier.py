@@ -170,6 +170,12 @@ def test_run_greenplan_returns_options_and_leaves_the_scene_alone(scene1):
     assert result.applied and "регулярный" in result.applied[0] and "Липа мелколистная" in result.applied[0]
 
 
+def test_run_greenplan_passes_remove_violating_plants(scene1):
+    result = run(scene1, {"op": "run_greenplan", "remove_violating_plants": True})
+    assert result.greenplan.remove_violating_plants is True
+    assert "с нарушением норм: удалены" in result.applied[0]
+
+
 def test_run_greenplan_drops_preferred_ids_of_the_wrong_kind(scene1):
     bush = next(c for c in CATALOG if c.id.startswith("species_") and c.category == "bush" and c.object_type == "bush")
     result = run(scene1, {"op": "run_greenplan", "preferred_trees": [bush.id, "bench", "no_such_id"]})

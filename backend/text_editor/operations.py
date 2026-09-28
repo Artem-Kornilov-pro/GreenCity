@@ -333,6 +333,7 @@ class RunGreenPlanOp(BaseModel):
     trees: Optional[bool] = None
     bushes: Optional[bool] = None
     lawn: Optional[bool] = None
+    remove_violating_plants: Optional[bool] = None
     paths: Optional[bool] = None
     lighting: Optional[bool] = None
     benches: Optional[bool] = None
