@@ -20,9 +20,12 @@ npm run build            # production-сборка в dist/
 
 | Папка / файл | Что внутри |
 |---|---|
-| `pages/` | Лендинг, вход/регистрация, список проектов |
-| `pages/editor/` | Редактор: `EditorPage.tsx` (состояние и обработчики) и его части — `EditorTopBar`, `EditorSidebar` (каталог, выбранный объект, легенда), `AssistantPanel` (правка текстом), `GreenPlanPanel`, диалог параметров `GreenPlanOptionsDialog`, общая выезжающая панель `SlidePanel`, `SaveAsDialog`, `StatusBanners` |
-| `scene/` | 3D-сцена: здания, зоны ограничений, газон GreenPlan (`Lawns.tsx`), объекты (с GPU-инстансингом повторяющихся моделей), выделение области мышкой, камера |
+| `pages/` | Лендинг, вход/регистрация, список проектов (`useProjects.ts`) |
+| `pages/editor/` | Редактор: `EditorPage.tsx` собирает страницу из частей — `EditorTopBar`, `UploadButtons`, `EditorSidebar` (каталог, выбранный объект, легенда), `AssistantPanel` (правка текстом), `GreenPlanPanel`, диалог параметров `GreenPlanOptionsDialog`, общая выезжающая панель `SlidePanel`, `SaveAsDialog`, `StatusBanners` |
+| `pages/editor/hooks/` | Логика редактора: загрузка DXF/DWG и перетаскивание файлов в окно (`useSceneImport`, `useFileDrop`), правка объектов (`useSceneEditing`), GreenPlan, ассистент, экспорт, проект, каталог |
+| `scene/` | 3D-сцена: здания, зоны ограничений, газон GreenPlan (`Lawns.tsx`), объекты (с GPU-инстансингом повторяющихся моделей), выделение области мышкой, камера (`OrbitControls`: левая кнопка — вращать, правая или два пальца — двигать центр, колесо — масштаб) |
+| `store/` | Redux Toolkit: сессия (`authSlice`), последние параметры GreenPlan (`greenPlanSlice`) |
+| `lib/` | `http.ts` — общий клиент API (разбор ошибок, обновление токена, повтор GET), `authSchema.ts` — проверка форм входа (zod), `download.ts`, `typograph.ts` |
 | `api.ts`, `auth.ts`, `catalog.ts` | Запросы к бэкенду, токены, каталог видов |
 | `geometry.ts`, `setbackNorms.ts` | Проверка нарушений отступов при перетаскивании; `setbackNorms.ts` — копия `backend/core/setback_norms.py` (синхронизируется вручную) |
 | `types.ts` | Формат сцены — тот же, что `backend/core/schemas.py` |

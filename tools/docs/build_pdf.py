@@ -1,6 +1,7 @@
 """
-PDF-версия документации для сдачи: документация решения, алгоритм GreenPlan,
-запуск и технический обзор в одном файле docs/pdf/GreenCity_documentation.pdf.
+PDF-версия документации для сдачи: документация решения, руководства для
+проверяющего и пользователя, алгоритм GreenPlan, запуск и технический обзор в
+одном файле docs/pdf/GreenCity_documentation.pdf.
 
 Нужны пакет markdown (pip install markdown) и Chromium или Google Chrome:
 путь берётся из переменной CHROME, иначе ищется среди установленных.
@@ -29,6 +30,8 @@ REPO_URL = "https://github.com/Artem-Kornilov-pro/GreenCity/blob/main"
 # (файл, заголовок в оглавлении)
 PARTS = [
     (DOCS / "SOLUTION.md", "Документация решения"),
+    (DOCS / "REVIEWER_GUIDE.md", "Руководство для проверяющего"),
+    (DOCS / "USER_GUIDE.md", "Руководство пользователя"),
     (DOCS / "GREENPLAN_ALGORITHM.md", "Алгоритм GreenPlan"),
     (ROOT / "README.md", "Запуск и разработка"),
     (DOCS / "TECHNICAL_OVERVIEW.md", "Технический обзор"),
@@ -109,6 +112,7 @@ def build_html() -> str:
         "<p>Автоматическое проектирование озеленения с учётом подземных коммуникаций и городской среды</p>",
         "<p>Хакатон «Лидеры цифровой трансформации 2026», команда «Вороны»</p>",
         "<p>Артемий Корнилов, Константин Жадько</p>",
+        "<p>Версия 1.0.0</p>",
         '<h2>Содержание</h2><ol class="toc">',
         *(f'<li><a href="#part-{i}">{escape(title)}</a></li>' for i, (_, title) in enumerate(PARTS)),
         "</ol></section>",
