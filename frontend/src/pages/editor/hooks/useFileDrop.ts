@@ -16,21 +16,23 @@ async function filesFromEntry(entry: FileSystemEntry): Promise<File[]> {
   }
 }
 
-async function droppedFiles(dataTransfer: DataTransfer): Promise<File[]> {
+// folder -- среди брошенного была папка (проект DWG целиком).
+async function droppedFiles(dataTransfer: DataTransfer): Promise<{ files: File[]; folder: boolean }> {
   // Записи надо взять синхронно, до первого await: после него браузер
   // очищает dataTransfer.
   const entries = Array.from(dataTransfer.items)
     .map((item) => item.webkitGetAsEntry())
     .filter((e): e is FileSystemEntry => e !== null);
-  if (entries.length === 0) return Array.from(dataTransfer.files);
-  return (await Promise.all(entries.map(filesFromEntry))).flat();
+  if (entries.length === 0) return { files: Array.from(dataTransfer.files), folder: false };
+  const files = (await Promise.all(entries.map(filesFromEntry))).flat();
+  return { files, folder: entries.some((e) => e.isDirectory) };
 }
 
 const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer.types).includes("Files");
 
 // Перетаскивание файлов и папок в окно редактора. dragging -- для подложки
 // «Отпустите, чтобы загрузить».
-export function useFileDrop(onFiles: (files: File[]) => void, enabled = true) {
+export function useFileDrop(onFiles: (files: File[], fromFolder: boolean) => void, enabled = true) {
   const [dragging, setDragging] = useState(false);
   // dragenter/dragleave приходят и от дочерних элементов -- считаем глубину,
   // иначе подложка мигает при движении курсора над панелями.
@@ -69,8 +71,8 @@ export function useFileDrop(onFiles: (files: File[]) => void, enabled = true) {
       depth.current = 0;
       setDragging(false);
       if (!enabled) return;
-      void droppedFiles(e.dataTransfer).then((files) => {
-        if (files.length > 0) onFiles(files);
+      void droppedFiles(e.dataTransfer).then(({ files, folder }) => {
+        if (files.length > 0) onFiles(files, folder);
       });
     },
     [enabled, onFiles],

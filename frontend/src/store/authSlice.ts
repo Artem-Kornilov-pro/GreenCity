@@ -19,18 +19,21 @@ export interface Credentials {
   password: string;
 }
 
-// Сессия из localStorage, если сервер её ещё принимает.
+// Сессия из localStorage, если сервер её ещё принимает. Страница входа не
+// ждёт проверки: если пользователь успел войти заново, её результат
+// применять нельзя (см. reducer ниже), а стирать -- только старую сессию.
 export const restoreSession = createAsyncThunk("auth/restore", async (): Promise<Session | null> => {
   const saved = authApi.loadSession();
   if (!saved) return null;
   try {
     if (await authApi.whoAmI(saved)) return saved;
-    authApi.clearSession();
+    if (authApi.loadSession()?.refreshToken === saved.refreshToken) authApi.clearSession();
     return null;
   } catch {
     // Сервер недоступен -- сессию не сбрасываем: токен проверится при
-    // первом запросе к проектам.
-    return saved;
+    // первом запросе к проектам. Если за это время вошли или вышли, в
+    // хранилище уже другое -- старую не возвращаем.
+    return authApi.loadSession()?.refreshToken === saved.refreshToken ? saved : null;
   }
 });
 
@@ -71,7 +74,8 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(restoreSession.fulfilled, (state, action) => {
-        state.session = action.payload;
+        // Пока шла проверка, вошли заново -- новая сессия главнее.
+        if (state.session === null) state.session = action.payload;
         state.initializing = false;
       })
       .addCase(login.fulfilled, (state, action) => {

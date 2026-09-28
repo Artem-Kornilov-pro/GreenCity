@@ -70,6 +70,11 @@ export function useGreenPlan({
     void loadReport(generated.assignments);
     return generated.scene;
   });
+  // «Повторить» -- на текущей сцене, а не на сцене из ответа ассистента:
+  // её могли уже отменить или поправить руками. Параметры -- последнего
+  // запуска (он записал их в стор до запроса).
+  const { run: runGenerate } = generate;
+  const retryGenerate = useCallback(() => void runGenerate(options), [runGenerate, options]);
 
   const clearResult = useCallback(() => setResult(null), []);
 
@@ -95,7 +100,7 @@ export function useGreenPlan({
     options,
     dialogOpen,
     setDialogOpen,
-    generate,
+    generate: { ...generate, retry: retryGenerate },
     result,
     clearResult,
     reportLoading,

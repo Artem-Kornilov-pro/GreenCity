@@ -32,13 +32,15 @@ export function useSceneImport(loadScene: (scene: Scene) => void) {
     setDwgWarnings(parsed.dwgConversionWarnings ?? null);
   });
 
-  // Перетащенные файлы: .dxf -- открыть его, иначе -- все .dwg пачкой.
+  // Перетащенное: папка -- проект DWG целиком (случайный .dxf рядом с
+  // .dwg не должен подменить конвертацию); отдельный .dxf -- открыть его;
+  // иначе -- все .dwg пачкой.
   const { run: runDxf } = dxf;
   const { run: runDwg } = dwg;
   const importFiles = useCallback(
-    (files: File[]) => {
+    (files: File[], fromFolder: boolean) => {
       const dxfFile = files.find(isDxf);
-      if (dxfFile) void runDxf(dxfFile);
+      if (dxfFile && !(fromFolder && files.some(isDwg))) void runDxf(dxfFile);
       else void runDwg(files);
     },
     [runDxf, runDwg],
