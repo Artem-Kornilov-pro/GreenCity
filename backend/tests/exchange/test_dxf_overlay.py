@@ -145,7 +145,7 @@ def test_source_store_keeps_dwg_batch_order(tmp_path):
     assert kind == "dwg" and [p.name for p in paths] == ["000_b.dwg", "001_a.dwg"]
 
 
-def test_dwg_export_overlays_the_rebuilt_batch(monkeypatch, tmp_path):
+async def test_dwg_export_overlays_the_rebuilt_batch(monkeypatch, tmp_path):
     # Экспорт пачки DWG собирает её тем же merge_dwg_files, что и загрузка,
     # и дописывает слои результата (в тесте -- без дочернего процесса).
     def _merged(dwg_paths, work_dir, workers=1):
@@ -156,7 +156,7 @@ def test_dwg_export_overlays_the_rebuilt_batch(monkeypatch, tmp_path):
     monkeypatch.setattr(dwg_batch_converter, "merge_dwg_files", _merged)
     scene = Scene.model_validate(parse_dxf_doc(_site_doc()))
     tree = _new_tree_at(scene, 1.0, 1.0, "tree_gp_1", generated=True)
-    content = dwg_job.run_export([tmp_path / "a.dwg"], tmp_path, scene.model_copy(update={"objects": [*scene.objects, tree]}), isolated=False)
+    content = await dwg_job.run_export([tmp_path / "a.dwg"], tmp_path, scene.model_copy(update={"objects": [*scene.objects, tree]}), isolated=False)
     (tmp_path / "out.dxf").write_bytes(content)
     layers = Counter(e.dxf.layer for e in ezdxf.readfile(tmp_path / "out.dxf").modelspace())
     assert layers["NEW_TREE"] == 2 and layers["ПОДПИСИ"] == 1 and layers["НЕРАСПОЗНАННЫЙ_СЛОЙ"] == 1

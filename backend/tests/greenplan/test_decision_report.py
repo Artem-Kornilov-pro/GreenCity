@@ -84,7 +84,7 @@ class _FakeResponses:
         self._response = response
         self._error = error
 
-    def create(self, **kwargs):
+    async def create(self, **kwargs):
         self.last_kwargs = kwargs
         if self._error is not None:
             raise self._error
@@ -104,75 +104,75 @@ def _ok_response(content: str, status: str = "completed", reason: str | None = N
     )
 
 
-def test_generate_report_returns_none_for_empty_assignments_without_calling_client(monkeypatch):
+async def test_generate_report_returns_none_for_empty_assignments_without_calling_client(monkeypatch):
     def _fail():
         raise AssertionError("клиент не должен вызываться, когда описывать нечего")
 
     monkeypatch.setattr(decision_report, "_client", _fail)
-    assert generate_report([]) is None
+    assert await generate_report([]) is None
 
 
-def test_generate_report_returns_llm_text_on_success(monkeypatch):
+async def test_generate_report_returns_llm_text_on_success(monkeypatch):
     text = "Вдоль дорожек участка использована живая изгородь по аналогии с похожим проектом."
     monkeypatch.setattr(decision_report, "_client", lambda: _FakeClient(response=_ok_response(text)))
-    assert generate_report([_assignment("z1")]) == text
+    assert await generate_report([_assignment("z1")]) == text
 
 
-def test_generate_report_strips_whitespace_from_response(monkeypatch):
+async def test_generate_report_strips_whitespace_from_response(monkeypatch):
     monkeypatch.setattr(decision_report, "_client", lambda: _FakeClient(response=_ok_response("  текст с пробелами  \n")))
-    assert generate_report([_assignment("z1")]) == "текст с пробелами"
+    assert await generate_report([_assignment("z1")]) == "текст с пробелами"
 
 
-def test_generate_report_raises_when_client_errors(monkeypatch):
+async def test_generate_report_raises_when_client_errors(monkeypatch):
     error = openai.APIConnectionError(request=SimpleNamespace())
     monkeypatch.setattr(decision_report, "_client", lambda: _FakeClient(error=error))
     with pytest.raises(DecisionReportUnavailable):
-        generate_report([_assignment("z1")])
+        await generate_report([_assignment("z1")])
 
 
-def test_generate_report_raises_when_response_is_empty(monkeypatch):
+async def test_generate_report_raises_when_response_is_empty(monkeypatch):
     monkeypatch.setattr(decision_report, "_client", lambda: _FakeClient(response=_ok_response("")))
     with pytest.raises(DecisionReportUnavailable):
-        generate_report([_assignment("z1")])
+        await generate_report([_assignment("z1")])
 
 
-def test_generate_report_passes_model_and_temperature_to_client(monkeypatch):
+async def test_generate_report_passes_model_and_temperature_to_client(monkeypatch):
     fake = _FakeClient(response=_ok_response("текст"))
     monkeypatch.setattr(decision_report, "_client", lambda: fake)
     monkeypatch.setenv("YANDEX_CLOUD_FOLDER", "folder123")
-    generate_report([_assignment("z1")])
+    await generate_report([_assignment("z1")])
     kwargs = fake.responses.last_kwargs
     assert kwargs["model"] == "gpt://folder123/yandexgpt-5.1/latest"
     assert kwargs["temperature"] == decision_report.TEMPERATURE
     assert kwargs["instructions"] == decision_report.INSTRUCTIONS
 
 
-def test_model_comes_from_env(monkeypatch):
+async def test_model_comes_from_env(monkeypatch):
     fake = _FakeClient(response=_ok_response("текст"))
     monkeypatch.setattr(decision_report, "_client", lambda: fake)
     monkeypatch.setenv("YANDEX_CLOUD_FOLDER", "folder123")
     monkeypatch.setenv("YANDEX_CLOUD_REPORT_MODEL", "yandexgpt-5-lite/latest")
-    generate_report([_assignment("z1")])
+    await generate_report([_assignment("z1")])
     assert fake.responses.last_kwargs["model"] == "gpt://folder123/yandexgpt-5-lite/latest"
 
 
-def test_generate_report_raises_when_answer_is_cut_off(monkeypatch):
+async def test_generate_report_raises_when_answer_is_cut_off(monkeypatch):
     response = _ok_response("Текст, оборванный на полу", status="incomplete", reason="max_output_tokens")
     monkeypatch.setattr(decision_report, "_client", lambda: _FakeClient(response=response))
     with pytest.raises(DecisionReportUnavailable, match="max_output_tokens"):
-        generate_report([_assignment("z1")])
+        await generate_report([_assignment("z1")])
 
 
 # --- Настройки Yandex AI Studio: ключ и каталог ------------------------------
 
 
-def test_report_is_unavailable_without_key_or_folder(monkeypatch):
+async def test_report_is_unavailable_without_key_or_folder(monkeypatch):
     # _clean_llm_env (conftest.py) уже убрал ключи настоящего .env.
     with pytest.raises(DecisionReportUnavailable, match="YANDEX_CLOUD_API_KEY"):
-        generate_report([_assignment("z1")])
+        await generate_report([_assignment("z1")])
     monkeypatch.setenv("YANDEX_CLOUD_API_KEY", "fake-key")
     with pytest.raises(DecisionReportUnavailable, match="YANDEX_CLOUD_FOLDER"):
-        generate_report([_assignment("z1")])
+        await generate_report([_assignment("z1")])
 
 
 def test_client_points_at_yandex_ai_studio(monkeypatch):
@@ -184,11 +184,11 @@ def test_client_points_at_yandex_ai_studio(monkeypatch):
     assert client.max_retries == decision_report.MAX_RETRIES
 
 
-def test_prompt_starts_with_the_site_decision(monkeypatch):
+async def test_prompt_starts_with_the_site_decision(monkeypatch):
     client = _FakeClient(response=_ok_response("текст"))
     monkeypatch.setattr(decision_report, "_client", lambda: client)
     assignment = _assignment("z1").model_copy(update={"site_style": "landscape", "lead_project": "12_natashinsky_proezd"})
-    generate_report([assignment])
+    await generate_report([assignment])
     user = client.responses.last_kwargs["input"]
     first_fact = user.splitlines()[1]
     assert first_fact.startswith("Общее решение: стиль участка -- пейзажный")

@@ -2,15 +2,17 @@
 Эндпоинты редактора: загрузка DXF и папки DWG, каталог видов и малых форм,
 генерация по сетке, правка плана текстом, экспорт в DXF.
 
-Обработчики с тяжёлой синхронной работой (ezdxf, shapely, dwg2dxf, клиент
-LLM) объявлены обычным def: FastAPI выполняет их в пуле потоков и не
-блокирует event loop.
+Все обработчики асинхронные. Тяжёлая синхронная работа (ezdxf, shapely)
+идёт в пуле потоков с ограничением очереди (core/concurrency.py), разбор и
+экспорт DWG -- в отдельном процессе, запрос к LLM -- асинхронным клиентом.
+Тяжёлые эндпоинты защищены лимитами частоты и размера (api/protection.py).
 """
 
 from __future__ import annotations
 
 import io
 import logging
+import shutil
 import tempfile
 from pathlib import Path
 from typing import Optional
@@ -20,7 +22,9 @@ from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 from pydantic import TypeAdapter
 
+from api.protection import HEAVY_RESPONSES, MAX_DWG_FILES, rate_limit
 from core.building_setbacks import compute_building_setbacks
+from core.concurrency import ServerBusy, run_heavy, run_light
 from core.plant_catalog import CatalogItem, load_catalog
 from core.schemas import Scene
 from core.setback_norms import DEFAULT_TREE_SPECIES
@@ -82,21 +86,12 @@ async def get_catalog():
     cached = await cache.get_cached(CATALOG_CACHE_KEY)
     if cached is not None:
         return _CATALOG_ADAPTER.validate_json(cached)
-    catalog = load_catalog()
+    catalog = await run_light(load_catalog)
     await cache.set_cached(CATALOG_CACHE_KEY, _CATALOG_ADAPTER.dump_json(catalog).decode("utf-8"), CATALOG_CACHE_TTL_S)
     return catalog
 
 
-@router.post("/api/parse", tags=["Чертежи"], summary="Загрузить чертёж DXF", responses=SCENE_RESPONSE)
-def parse_dxf_endpoint(file: UploadFile = File(..., description="Чертёж участка в формате DXF.")):
-    """Разбирает DXF по слоям: граница участка, здания, дороги, дорожки,
-    подземные сети и охранные зоны, существующие посадки и малые формы.
-    Координаты сцены -- метры от центра участка. Исходный файл сохраняется
-    на сервере (`meta.sourceId`): экспорт допишет результат поверх него."""
-    if not file.filename.lower().endswith(".dxf"):
-        raise HTTPException(400, "Ожидается файл .dxf")
-
-    data = file.file.read()
+def _parse_dxf(data: bytes, filename: str) -> dict:
     # delete=False: на Windows открытый временный файл нельзя открыть повторно по имени.
     tmp = tempfile.NamedTemporaryFile(suffix=".dxf", delete=False)  # noqa: SIM115
     try:
@@ -106,7 +101,7 @@ def parse_dxf_endpoint(file: UploadFile = File(..., description="Чертёж у
             scene = parse_dxf_file(tmp.name)
         except Exception as e:
             metrics.dxf_parse_errors_total.inc()
-            log.warning("не удалось разобрать %r: %s", file.filename, e)
+            log.warning("не удалось разобрать %r: %s", filename, e)
             raise HTTPException(400, f"Не удалось разобрать DXF: {e}") from e
     finally:
         Path(tmp.name).unlink(missing_ok=True)
@@ -115,35 +110,64 @@ def parse_dxf_endpoint(file: UploadFile = File(..., description="Чертёж у
     source_id = source_store.save_dxf(data)
     if source_id:
         scene["meta"]["sourceId"] = source_id
+    return scene
 
+
+@router.post(
+    "/api/parse",
+    tags=["Чертежи"],
+    summary="Загрузить чертёж DXF",
+    responses={**SCENE_RESPONSE, **HEAVY_RESPONSES},
+    dependencies=[rate_limit("parse")],
+)
+async def parse_dxf_endpoint(file: UploadFile = File(..., description="Чертёж участка в формате DXF.")):
+    """Разбирает DXF по слоям: граница участка, здания, дороги, дорожки,
+    подземные сети и охранные зоны, существующие посадки и малые формы.
+    Координаты сцены -- метры от центра участка. Исходный файл сохраняется
+    на сервере (`meta.sourceId`): экспорт допишет результат поверх него."""
+    if not (file.filename or "").lower().endswith(".dxf"):
+        raise HTTPException(400, "Ожидается файл .dxf")
+
+    data = await file.read()
+    scene = await run_heavy(_parse_dxf, data, file.filename)
     metrics.dxf_parses_total.inc()
     log.info("разобран %r: %d объектов, %d зон", file.filename, len(scene.get("objects", [])), len(scene.get("restrictions", [])))
     return scene
 
 
-@router.post("/api/parse-dwg", tags=["Чертежи"], summary="Загрузить папку DWG", responses=SCENE_RESPONSE)
-def parse_dwg_folder_endpoint(files: list[UploadFile] = File(..., description="Файлы .dwg проекта; остальные файлы папки игнорируются.")):
+@router.post(
+    "/api/parse-dwg",
+    tags=["Чертежи"],
+    summary="Загрузить папку DWG",
+    responses={**SCENE_RESPONSE, **HEAVY_RESPONSES},
+    dependencies=[rate_limit("parse_dwg")],
+)
+async def parse_dwg_folder_endpoint(
+    files: list[UploadFile] = File(..., description="Файлы .dwg проекта; остальные файлы папки игнорируются."),
+):
     """Конвертирует каждый DWG в DXF (LibreDWG), сливает в один чертёж и
     разбирает так же, как `/api/parse`. Файлы, которые не удалось прочитать,
     не прерывают загрузку: они перечислены в `dwgConversionWarnings`.
     Разбор идёт в отдельном процессе; одновременно -- не больше
     `DWG_MAX_PARALLEL` пачек, остальные ждут очереди."""
-    dwg_files = [f for f in files if f.filename.lower().endswith(".dwg")]
+    dwg_files = [f for f in files if (f.filename or "").lower().endswith(".dwg")]
     if not dwg_files:
         raise HTTPException(400, "Среди загруженных файлов нет ни одного .dwg")
+    if len(dwg_files) > MAX_DWG_FILES:
+        raise HTTPException(400, f"Не больше {MAX_DWG_FILES} файлов .dwg за одну загрузку")
 
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        tmp_path = Path(tmp_dir)
+    tmp_path = Path(await run_light(tempfile.mkdtemp))
+    try:
         dwg_paths = []
         for f in dwg_files:
             dest = tmp_path / Path(f.filename).name  # .name отрезает "../" из имени файла
-            dest.write_bytes(f.file.read())
+            await run_light(dest.write_bytes, await f.read())
             dwg_paths.append(dest)
 
-        source_id = source_store.save_dwg_batch(dwg_paths)
+        source_id = await run_light(source_store.save_dwg_batch, dwg_paths)
         try:
-            with dwg_job.slot():
-                payload, summary = dwg_job.run(dwg_paths, tmp_path, request_id=current_request_id(), source_id=source_id)
+            async with dwg_job.slot():
+                payload, summary = await dwg_job.run(dwg_paths, tmp_path, request_id=current_request_id(), source_id=source_id)
         except dwg_job.DwgJobError as e:
             metrics.dwg_batch_conversions_total.labels(outcome=e.outcome).inc()
             if e.failed:
@@ -151,6 +175,8 @@ def parse_dwg_folder_endpoint(files: list[UploadFile] = File(..., description="�
             if e.outcome == "parse_error":
                 metrics.dxf_parse_errors_total.inc()
             raise HTTPException(e.status, e.detail) from e
+    finally:
+        await run_light(shutil.rmtree, tmp_path, True)
 
     metrics.dwg_batch_conversions_total.labels(outcome="success").inc()
     metrics.dwg_files_processed_total.labels(outcome="converted").inc(summary["converted"])
@@ -169,8 +195,10 @@ def parse_dwg_folder_endpoint(files: list[UploadFile] = File(..., description="�
     response_model=Optional[Scene],
     tags=["Редактор"],
     summary="Простая генерация по сетке",
+    responses=HEAVY_RESPONSES,
+    dependencies=[rate_limit("generate")],
 )
-def generate_greenery(
+async def generate_greenery(
     scene: Scene,
     species: Optional[str] = Query(
         default=None,
@@ -210,6 +238,34 @@ def generate_greenery(
     """Упрощённая генерация без аналогов: деревья по сетке, группы
     кустарников и газон в разрешённых зонах с соблюдением отступов.
     Основной способ озеленения -- `/api/greenplan/generate`."""
+    return await run_heavy(
+        _generate_greenery,
+        scene,
+        species=species,
+        grid_spacing_m=grid_spacing_m,
+        min_tree_spacing_m=min_tree_spacing_m,
+        include_trees=include_trees,
+        include_bushes=include_bushes,
+        bush_grid_spacing_m=bush_grid_spacing_m,
+        min_bush_spacing_m=min_bush_spacing_m,
+        include_lawn=include_lawn,
+        lawn_patch_size_m=lawn_patch_size_m,
+    )
+
+
+def _generate_greenery(
+    scene: Scene,
+    *,
+    species: Optional[str],
+    grid_spacing_m: Optional[float],
+    min_tree_spacing_m: Optional[float],
+    include_trees: bool,
+    include_bushes: bool,
+    bush_grid_spacing_m: Optional[float],
+    min_bush_spacing_m: Optional[float],
+    include_lawn: bool,
+    lawn_patch_size_m: Optional[float],
+) -> Scene:
     generated = 0
     if include_trees:
         new_trees = generate_trees(scene, species=species, grid_spacing_m=grid_spacing_m, min_tree_spacing_m=min_tree_spacing_m)
@@ -235,16 +291,21 @@ def generate_greenery(
     response_model=TextEditResult,
     tags=["Редактор"],
     summary="Правка плана текстом (ИИ-ассистент)",
-    responses={502: {"description": "Модель недоступна или ответила неразборчиво."}, 503: {"description": "Ключ LLM не настроен."}},
+    responses={
+        **HEAVY_RESPONSES,
+        502: {"description": "Модель недоступна или ответила неразборчиво."},
+        503: {"description": "Ключ LLM не настроен или сервер занят расчётами."},
+    },
+    dependencies=[rate_limit("llm")],
 )
-def edit_with_text(request: TextEditRequest):
+async def edit_with_text(request: TextEditRequest):
     """Просьба на русском («посади липы вдоль дорожек», «убери лавки у
     парковки») превращается моделью в операции, а координаты и проверку норм
     выполняет планировщик. В ответе -- новая сцена и что применено,
     отклонено и почему. Если модель выбрала озеленение всего участка, в поле
     `greenplan` -- параметры для `/api/greenplan/generate`."""
     try:
-        result = edit_scene_with_text(request.scene, request.instruction, request.history)
+        result = await edit_scene_with_text(request.scene, request.instruction, request.history)
     except LlmNotConfiguredError as e:
         metrics.llm_edit_requests_total.labels(outcome="not_configured").inc()
         raise HTTPException(503, str(e)) from e
@@ -255,8 +316,38 @@ def edit_with_text(request: TextEditRequest):
     return result
 
 
-@router.post("/api/export-dxf", tags=["Чертежи"], summary="Экспорт плана в DXF", responses=DXF_RESPONSE)
-def export_dxf_endpoint(scene: Scene):
+def _overlay_dxf(path: Path, scene: Scene) -> bytes:
+    doc = ezdxf.readfile(path)
+    summary = overlay_scene(scene, doc)
+    buf = io.StringIO()
+    doc.write(buf)
+    logging.getLogger("greencity.export").info("экспорт поверх исходного DXF: %s", summary.layers)
+    return buf.getvalue().encode("utf-8")
+
+
+def _rebuilt_dxf(scene: Scene) -> bytes:
+    buf = io.StringIO()
+    scene_to_dxf(scene).write(buf)
+    return buf.getvalue().encode("utf-8")
+
+
+async def _overlay_dwg(paths: list[Path], scene: Scene) -> bytes:
+    tmp_path = Path(await run_light(tempfile.mkdtemp))
+    try:
+        async with dwg_job.slot():
+            return await dwg_job.run_export(paths, tmp_path, scene, request_id=current_request_id())
+    finally:
+        await run_light(shutil.rmtree, tmp_path, True)
+
+
+@router.post(
+    "/api/export-dxf",
+    tags=["Чертежи"],
+    summary="Экспорт плана в DXF",
+    responses={**DXF_RESPONSE, **HEAVY_RESPONSES},
+    dependencies=[rate_limit("export")],
+)
+async def export_dxf_endpoint(scene: Scene):
     """Исходный чертёж без изменений плюс слои результата в его координатах:
     `NEW_*` -- посадка и благоустройство GreenPlan, `USER_*` -- правки
     пользователя, `USER_REMOVED` -- места удалённых и перенесённых исходных
@@ -266,35 +357,24 @@ def export_dxf_endpoint(scene: Scene):
     export_log = logging.getLogger("greencity.export")
     mode = "rebuilt"
     content: Optional[bytes] = None
-    found = source_store.find(scene.meta.sourceId)
+    found = await run_light(source_store.find, scene.meta.sourceId)
     try:
         if found and found[0] == "dxf":
-            doc = ezdxf.readfile(found[1])
-            summary = overlay_scene(scene, doc)
-            buf = io.StringIO()
-            doc.write(buf)
-            content, mode = buf.getvalue().encode("utf-8"), "overlay"
-            export_log.info("экспорт поверх исходного DXF: %s", summary.layers)
+            content, mode = await run_heavy(_overlay_dxf, found[1], scene), "overlay"
         elif found and found[0] == "dwg":
-            with tempfile.TemporaryDirectory() as tmp_dir, dwg_job.slot():
-                content = dwg_job.run_export(found[1], Path(tmp_dir), scene, request_id=current_request_id())
-            mode = "overlay"
+            content, mode = await _overlay_dwg(found[1], scene), "overlay"
             export_log.info("экспорт поверх исходной пачки DWG (%d файлов)", len(found[1]))
+    except ServerBusy:
+        raise
     except Exception as e:  # noqa: BLE001 -- при любом сбое наложения отдаём сборку из сцены, а не 500
         export_log.warning("экспорт поверх исходника не удался, DXF собран из сцены: %s", e)
         content, mode = None, "rebuilt"
     if content is None:
-        buf = io.StringIO()
-        scene_to_dxf(scene).write(buf)
-        content = buf.getvalue().encode("utf-8")
+        content = await run_heavy(_rebuilt_dxf, scene)
     metrics.dxf_exports_total.inc()
     export_log.info("экспортирована сцена (%s): %d объектов", mode, len(scene.objects))
     return Response(
         content=content,
         media_type="application/dxf",
-        headers={
-            "Content-Disposition": 'attachment; filename="greencity_plan.dxf"',
-            "X-GreenCity-Export": mode,
-            "Access-Control-Expose-Headers": "X-GreenCity-Export",
-        },
+        headers={"Content-Disposition": 'attachment; filename="greencity_plan.dxf"', "X-GreenCity-Export": mode},
     )

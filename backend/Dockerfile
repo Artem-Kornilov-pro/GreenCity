@@ -72,8 +72,13 @@ EXPOSE 8000
 ENV UVICORN_WORKERS=2
 ENV UVICORN_RELOAD=0
 
+# --proxy-headers: IP клиента для лимитов частоты берётся из X-Forwarded-For,
+# который выставляет прокси фронтенда (nginx или vite). Доверять заголовку от
+# любого адреса (FORWARDED_ALLOW_IPS=*) можно, пока бэкенд доступен только из
+# сети контейнеров. Если бэкенд опубликован напрямую, задайте адрес своего
+# прокси или 127.0.0.1 -- иначе клиент подделает заголовок и обойдёт лимиты.
 CMD if [ "${UVICORN_RELOAD:-0}" = "1" ] && [ "${UVICORN_WORKERS:-1}" -le 1 ]; then \
-      exec uvicorn main:app --host 0.0.0.0 --port 8000 --reload; \
+      exec uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips="${FORWARDED_ALLOW_IPS:-*}" --reload; \
     else \
-      exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers "${UVICORN_WORKERS:-2}"; \
+      exec uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips="${FORWARDED_ALLOW_IPS:-*}" --workers "${UVICORN_WORKERS:-2}"; \
     fi

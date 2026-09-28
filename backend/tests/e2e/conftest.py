@@ -66,7 +66,7 @@ class FakeLLM:
         self.requests: list[dict] = []
         self.responses = SimpleNamespace(create=self.create)
 
-    def create(self, **kwargs):
+    async def create(self, **kwargs):
         self.requests.append(kwargs)
         return SimpleNamespace(
             status="completed",
@@ -84,6 +84,9 @@ def fake_text_editor_llm(monkeypatch):
     """Подменить облачную LLM правки текстом; план задаёт тест через
     fake.content = json.dumps({...})."""
     monkeypatch.setenv("LLM_PROVIDER", "yandex")
+    # Ключ-заглушка -- чтобы пройти проверку настройки; сам клиент подменён ниже.
+    monkeypatch.setenv("YANDEX_CLOUD_API_KEY", "fake-key")
+    monkeypatch.setenv("YANDEX_CLOUD_FOLDER", "fake-folder")
     fake = FakeLLM(json.dumps({"operations": [], "explanation": ""}))
     monkeypatch.setattr(llm_client, "_client_and_model", lambda: (fake, "fake-model"))
     return fake

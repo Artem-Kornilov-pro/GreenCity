@@ -13,25 +13,28 @@
 uvicorn сразу, лишние загрузки ждут очереди.
 
 Сцена пишется прямо в JSON-файл, и обработчик отдаёт эти байты как есть.
+Запуск процесса и ожидание слота асинхронные: пока пачка разбирается, поток
+сервера свободен.
 
     python -m exchange.dwg_job <каталог с .dwg> <scene.json> <meta.json> <файл.dwg>...
 """
 
 from __future__ import annotations
 
+import asyncio
 import gc
 import json
 import logging
 import os
-import subprocess
 import sys
 import tempfile
 import time
-from collections.abc import Iterator
-from contextlib import contextmanager
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
+from core.concurrency import run_light
 from core.paths import BACKEND_DIR
 
 log = logging.getLogger("greencity.parse")
@@ -103,39 +106,46 @@ def build_scene(dwg_paths: list[Path], work_dir: Path, source_id: Optional[str] 
     return scene, summary
 
 
-def run(
+async def _run_child(args: list[str], env: dict, timeout_s: float, what: str) -> int:
+    """Код возврата дочернего процесса; по таймауту процесс убивается и
+    поднимается DwgJobError 504."""
+    process = await asyncio.create_subprocess_exec(sys.executable, "-m", "exchange.dwg_job", *args, cwd=BACKEND_DIR, env=env)
+    try:
+        return await asyncio.wait_for(process.wait(), timeout=timeout_s)
+    except TimeoutError as e:
+        process.kill()
+        await process.wait()
+        raise DwgJobError(504, f"{what} не уложился в {int(timeout_s) // 60} минут", "timeout") from e
+
+
+def _isolated(isolated: Optional[bool]) -> bool:
+    return os.environ.get("DWG_JOB_ISOLATED", "1") != "0" if isolated is None else isolated
+
+
+async def run(
     dwg_paths: list[Path], work_dir: Path, request_id: str = "-", isolated: Optional[bool] = None, source_id: Optional[str] = None
 ) -> tuple[bytes, dict]:
     """(JSON сцены, сводка). isolated=None -- по DWG_JOB_ISOLATED (по
-    умолчанию да). В самом процессе -- для тестов, которые подменяют
-    merge_dwg_files: подмена в дочерний процесс не переходит."""
-    if isolated is None:
-        isolated = os.environ.get("DWG_JOB_ISOLATED", "1") != "0"
-    if not isolated:
-        scene, summary = build_scene(dwg_paths, work_dir, source_id)
+    умолчанию да). В самом процессе (в пуле потоков) -- для тестов, которые
+    подменяют merge_dwg_files: подмена в дочерний процесс не переходит."""
+    if not _isolated(isolated):
+        scene, summary = await run_light(build_scene, dwg_paths, work_dir, source_id)
         return json.dumps(scene, ensure_ascii=False).encode("utf-8"), summary
 
     scene_path = work_dir / "scene.json"
     meta_path = work_dir / "meta.json"
     env = {**os.environ, "GREENCITY_REQUEST_ID": request_id, "GREENCITY_SOURCE_ID": source_id or ""}
-    try:
-        completed = subprocess.run(
-            [sys.executable, "-m", "exchange.dwg_job", str(work_dir), str(scene_path), str(meta_path), *map(str, dwg_paths)],
-            cwd=BACKEND_DIR,
-            env=env,
-            timeout=JOB_TIMEOUT_S,
-        )
-    except subprocess.TimeoutExpired as e:
-        raise DwgJobError(504, f"Разбор DWG не уложился в {JOB_TIMEOUT_S // 60} минут", "timeout") from e
+    returncode = await _run_child(
+        [str(work_dir), str(scene_path), str(meta_path), *map(str, dwg_paths)], env, JOB_TIMEOUT_S, "Разбор DWG"
+    )
 
     meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else None
-    if meta is None or completed.returncode != 0:
-        # -9 -- процесс убит системой, почти всегда из-за нехватки памяти.
-        reason = "не хватило памяти" if completed.returncode in (-9, 137) else f"код {completed.returncode}"
+    if meta is None or returncode != 0:
+        reason = "не хватило памяти" if returncode in (-9, 137) else f"код {returncode}"
         raise DwgJobError(500, f"Разбор DWG прервался ({reason}). Попробуйте загрузить меньше файлов за раз.", "crashed")
     if not meta["ok"]:
         raise DwgJobError(meta["status"], meta["detail"], meta["outcome"], meta["failed"])
-    return scene_path.read_bytes(), meta["summary"]
+    return await run_light(scene_path.read_bytes), meta["summary"]
 
 
 def build_export(dwg_paths: list[Path], work_dir: Path, scene_json: bytes) -> bytes:
@@ -157,33 +167,27 @@ def build_export(dwg_paths: list[Path], work_dir: Path, scene_json: bytes) -> by
     return buf.getvalue().encode("utf-8")
 
 
-def run_export(
+async def run_export(
     dwg_paths: list[Path], work_dir: Path, scene, request_id: str = "-", isolated: Optional[bool] = None
 ) -> bytes:
     """DXF поверх исходной пачки DWG -- в отдельном процессе, как и разбор
     (та же память и те же причины, см. докстринг модуля)."""
     scene_json = scene.model_dump_json().encode("utf-8")
-    if isolated is None:
-        isolated = os.environ.get("DWG_JOB_ISOLATED", "1") != "0"
-    if not isolated:
-        return build_export(dwg_paths, work_dir, scene_json)
+    if not _isolated(isolated):
+        return await run_light(build_export, dwg_paths, work_dir, scene_json)
     scene_path, out_path, meta_path = work_dir / "scene.json", work_dir / "out.dxf", work_dir / "meta.json"
-    scene_path.write_bytes(scene_json)
+    await run_light(scene_path.write_bytes, scene_json)
     env = {**os.environ, "GREENCITY_REQUEST_ID": request_id}
-    try:
-        completed = subprocess.run(
-            [sys.executable, "-m", "exchange.dwg_job", "--export", str(work_dir), str(scene_path), str(out_path), str(meta_path),
-             *map(str, dwg_paths)],
-            cwd=BACKEND_DIR,
-            env=env,
-            timeout=JOB_TIMEOUT_S,
-        )
-    except subprocess.TimeoutExpired as e:
-        raise DwgJobError(504, f"Экспорт DWG не уложился в {JOB_TIMEOUT_S // 60} минут", "timeout") from e
+    returncode = await _run_child(
+        ["--export", str(work_dir), str(scene_path), str(out_path), str(meta_path), *map(str, dwg_paths)],
+        env,
+        JOB_TIMEOUT_S,
+        "Экспорт DWG",
+    )
     meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else None
-    if meta is None or completed.returncode != 0 or not meta["ok"]:
-        raise DwgJobError(500, (meta or {}).get("detail") or f"Экспорт DWG прервался (код {completed.returncode})", "crashed")
-    return out_path.read_bytes()
+    if meta is None or returncode != 0 or not meta["ok"]:
+        raise DwgJobError(500, (meta or {}).get("detail") or f"Экспорт DWG прервался (код {returncode})", "crashed")
+    return await run_light(out_path.read_bytes)
 
 
 def _export_main(argv: list[str]) -> int:
@@ -198,11 +202,11 @@ def _export_main(argv: list[str]) -> int:
     return 0
 
 
-@contextmanager
-def slot(wait_s: float = SLOT_WAIT_S) -> Iterator[None]:
+@asynccontextmanager
+async def slot(wait_s: float = SLOT_WAIT_S) -> AsyncIterator[None]:
     """Один из DWG_MAX_PARALLEL слотов на весь backend (все процессы uvicorn
-    одного контейнера). Ждёт свободного до wait_s секунд, иначе DwgJobError
-    503. Без fcntl (Windows, локальные тесты) ограничения нет."""
+    одного контейнера). Ждёт свободного до wait_s секунд, не занимая поток,
+    иначе DwgJobError 503. Без fcntl (Windows) ограничения нет."""
     try:
         import fcntl
     except ImportError:
@@ -215,19 +219,21 @@ def slot(wait_s: float = SLOT_WAIT_S) -> Iterator[None]:
     deadline = time.monotonic() + wait_s
     while True:
         for index in range(slots):
-            with open(slot_dir / f"slot{index}.lock", "w") as handle:
-                try:
-                    fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                except BlockingIOError:
-                    continue
-                try:
-                    yield
-                finally:
-                    fcntl.flock(handle, fcntl.LOCK_UN)
-                return
+            handle = open(slot_dir / f"slot{index}.lock", "w")  # noqa: SIM115 -- держится до конца слота
+            try:
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                handle.close()
+                continue
+            try:
+                yield
+            finally:
+                fcntl.flock(handle, fcntl.LOCK_UN)
+                handle.close()
+            return
         if time.monotonic() >= deadline:
             raise DwgJobError(503, "Сервер занят разбором других DWG. Попробуйте через пару минут.", "busy")
-        time.sleep(1.0)
+        await asyncio.sleep(1.0)
 
 
 def _main(argv: list[str]) -> int:

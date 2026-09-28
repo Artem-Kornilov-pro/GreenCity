@@ -78,3 +78,15 @@ rate_limit_blocks_total = Counter(
     "Запросы, отклонённые ограничением частоты (cache.check_rate_limit), по эндпоинту",
     ["endpoint"],
 )
+
+busy_rejections_total = Counter(
+    "greencity_busy_rejections_total",
+    "Тяжёлые запросы, отклонённые с 503: очередь расчётов переполнена или ожидание истекло",
+    ["path"],
+)
+
+body_too_large_total = Counter(
+    "greencity_body_too_large_total",
+    "Запросы, отклонённые с 413: тело больше лимита",
+    ["path"],
+)
