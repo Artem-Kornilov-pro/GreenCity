@@ -1,45 +1,64 @@
-import { useState, type FormEvent } from "react";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Leaf, ArrowLeft } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { PasswordInput } from "../components/ui/password-input";
 import { PageTransition } from "../components/PageTransition";
-import { useAuth } from "../context/useAuth";
+import { loginSchema, registerSchema, type AuthFormValues } from "../lib/authSchema";
+import { login, register as registerAccount, selectSession } from "../store/authSlice";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+
+function FieldHint({ id, error, hint }: { id: string; error?: string; hint?: string }) {
+  if (error) {
+    return (
+      <p id={id} className="text-xs text-danger-500">
+        {error}
+      </p>
+    );
+  }
+  return hint ? (
+    <p id={id} className="text-xs text-ink-400">
+      {hint}
+    </p>
+  ) : null;
+}
 
 export default function AuthPage({ mode }: { mode: "login" | "register" }) {
-  const { session, login, register } = useAuth();
-  const navigate = useNavigate();
+  const isLogin = mode === "login";
+  const dispatch = useAppDispatch();
+  const session = useAppSelector(selectSession);
   const location = useLocation();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Проверка -- при уходе с поля, дальше -- на каждый ввод; при отправке --
+  // все поля сразу. Правила -- lib/authSchema.ts.
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<AuthFormValues>({
+    resolver: zodResolver(isLogin ? loginSchema : registerSchema),
+    mode: "onTouched",
+    defaultValues: { username: "", password: "" },
+  });
 
   if (session) {
-    // Уже вошли -- этой странице тут делать нечего, отправляем туда, откуда
-    // пришли (например по прямой ссылке на /login), а по умолчанию в проекты.
+    // Уже вошли (или только что вошли) -- туда, откуда пришли (например по
+    // прямой ссылке на /login), а по умолчанию в проекты.
     const from = (location.state as { from?: string } | null)?.from;
     return <Navigate to={from ?? "/projects"} replace />;
   }
 
-  const isLogin = mode === "login";
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!username.trim() || !password) return;
-    setBusy(true);
-    setError(null);
-    try {
-      if (isLogin) await login(username.trim(), password);
-      else await register(username.trim(), password);
-      navigate("/projects");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(false);
+  // Ответ сервера («неверный пароль», «имя занято») -- не ошибка поля, а
+  // ошибка формы целиком.
+  const onSubmit = handleSubmit(async (values) => {
+    const result = isLogin ? await dispatch(login(values)) : await dispatch(registerAccount(values));
+    if (result.meta.requestStatus === "rejected") {
+      setError("root.server", { message: (result.payload as string | undefined) ?? "Не удалось связаться с сервером" });
     }
-  }
+  });
 
   return (
     <PageTransition>
@@ -68,26 +87,51 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
-              <Input
-                placeholder="Имя пользователя"
-                value={username}
-                disabled={busy}
-                onChange={(e) => setUsername(e.target.value)}
-                autoFocus
-                autoComplete="username"
-              />
-              <Input
-                type="password"
-                placeholder="Пароль"
-                value={password}
-                disabled={busy}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete={isLogin ? "current-password" : "new-password"}
-              />
-              {error && <p className="rounded-lg bg-danger-500/10 px-3 py-2 text-sm text-danger-500">{error}</p>}
-              <Button type="submit" size="lg" disabled={busy || !username.trim() || !password} className="mt-1">
-                {busy ? "Секунду…" : isLogin ? "Войти" : "Создать аккаунт"}
+            <form onSubmit={onSubmit} noValidate className="mt-6 flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="username" className="text-sm font-medium text-ink-700">
+                  Имя пользователя
+                </label>
+                <Input
+                  id="username"
+                  disabled={isSubmitting}
+                  autoFocus
+                  autoComplete="username"
+                  aria-invalid={Boolean(errors.username)}
+                  aria-describedby="username-hint"
+                  className={errors.username ? "border-danger-500 focus:ring-danger-500/40" : undefined}
+                  {...register("username")}
+                />
+                <FieldHint
+                  id="username-hint"
+                  error={errors.username?.message}
+                  hint={isLogin ? undefined : "3–32 символа: латинские буквы, цифры, «_» и «.»"}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="password" className="text-sm font-medium text-ink-700">
+                  Пароль
+                </label>
+                <PasswordInput
+                  id="password"
+                  disabled={isSubmitting}
+                  autoComplete={isLogin ? "current-password" : "new-password"}
+                  aria-invalid={Boolean(errors.password)}
+                  aria-describedby="password-hint"
+                  className={errors.password ? "border-danger-500 focus:ring-danger-500/40" : undefined}
+                  {...register("password")}
+                />
+                <FieldHint id="password-hint" error={errors.password?.message} hint={isLogin ? undefined : "Не короче 6 символов"} />
+              </div>
+
+              {errors.root?.server && (
+                <p role="alert" className="rounded-lg bg-danger-500/10 px-3 py-2 text-sm text-danger-500">
+                  {errors.root.server.message}
+                </p>
+              )}
+              <Button type="submit" size="lg" disabled={isSubmitting} className="mt-1">
+                {isSubmitting ? "Секунду…" : isLogin ? "Войти" : "Создать аккаунт"}
               </Button>
             </form>
 

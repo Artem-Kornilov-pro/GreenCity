@@ -1,4 +1,4 @@
-import { Download, Loader2, Trees } from "lucide-react";
+import { Download, Loader2, RotateCw, Trees } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
@@ -20,6 +20,7 @@ export function GreenPlanPanel({
   documentBusy,
   onDownloadDocument,
   onDownloadExplanations,
+  onRetryReport,
 }: {
   open: boolean;
   onToggle: () => void;
@@ -29,6 +30,7 @@ export function GreenPlanPanel({
   documentBusy: boolean;
   onDownloadDocument: () => void;
   onDownloadExplanations: (format: "json" | "csv") => void;
+  onRetryReport: () => void;
 }) {
   const existingLawnSqm = (result?.scene.lawns ?? []).filter((l) => l.status === "existing").reduce((sum, l) => sum + l.area_sqm, 0);
   const [showExisting, setShowExisting] = useState(false);
@@ -119,9 +121,13 @@ export function GreenPlanPanel({
               ) : result.report ? (
                 <p className="whitespace-pre-line rounded-2xl bg-ink-100 px-3.5 py-2.5 text-sm text-ink-800">{result.report}</p>
               ) : (
-                <p className="rounded-2xl bg-warning-500/15 px-3.5 py-2.5 text-sm text-ink-700">
-                  ⚠ Текст-объяснение недоступен: {result.report_error ?? "неизвестная причина"}
-                </p>
+                <div className="rounded-2xl bg-warning-500/15 px-3.5 py-2.5 text-sm text-ink-700">
+                  <p>⚠ Текст-объяснение недоступен: {result.report_error ?? "неизвестная причина"}</p>
+                  <Button size="sm" variant="outline" className="mt-2" onClick={onRetryReport}>
+                    <RotateCw className="h-3.5 w-3.5" />
+                    Повторить
+                  </Button>
+                </div>
               )}
             </section>
 

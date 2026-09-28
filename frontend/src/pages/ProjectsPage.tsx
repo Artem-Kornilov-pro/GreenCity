@@ -1,15 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { FolderKanban, Leaf, Pencil, Plus, Trash2, ArrowRight, LogOut } from "lucide-react";
-import { deleteProject, listProjects, renameProject, type ProjectSummary } from "../api";
+import { FolderKanban, Leaf, Pencil, Plus, Trash2, ArrowRight, LogOut, RotateCw, X } from "lucide-react";
+import type { ProjectSummary } from "../api";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { PageTransition } from "../components/PageTransition";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../components/ui/dialog";
-import { useAuth } from "../context/useAuth";
 import { typograph } from "../lib/typograph";
+import { logout, selectAuthInitializing, selectSession } from "../store/authSlice";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { useProjects } from "./useProjects";
 
 const MAX_PROJECTS = 3; // держим в паре с backend/accounts/projects.py::MAX_PROJECTS_PER_USER — лимит проверяет бэкенд, тут только для подсказки
 
@@ -18,67 +20,27 @@ function formatDate(iso: string): string {
 }
 
 export default function ProjectsPage() {
-  const { session, initializing, logout } = useAuth();
+  const dispatch = useAppDispatch();
+  const session = useAppSelector(selectSession);
+  const initializing = useAppSelector(selectAuthInitializing);
   const navigate = useNavigate();
-  const [projects, setProjects] = useState<ProjectSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const { projects, loading, rename, remove, mutating, error } = useProjects(session);
   const [renaming, setRenaming] = useState<ProjectSummary | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [deleting, setDeleting] = useState<ProjectSummary | null>(null);
-
-  const refresh = useCallback(() => {
-    if (!session) return;
-    setLoading(true);
-    listProjects(session)
-      .then(setProjects)
-      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
-      .finally(() => setLoading(false));
-  }, [session]);
-
-  useEffect(() => {
-    const run = () => {
-      if (!session) return;
-      setLoading(true);
-      listProjects(session)
-        .then(setProjects)
-        .catch((e) => setError(e instanceof Error ? e.message : String(e)))
-        .finally(() => setLoading(false));
-    };
-    run();
-  }, [session]);
 
   if (!initializing && !session) {
     return <Navigate to="/login" replace state={{ from: "/projects" }} />;
   }
 
   async function handleRename() {
-    if (!session || !renaming || !renameValue.trim()) return;
-    setBusyId(renaming.id);
-    try {
-      await renameProject(session, renaming.id, renameValue.trim());
-      setRenaming(null);
-      refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusyId(null);
-    }
+    if (!renaming || !renameValue.trim()) return;
+    if (await rename.run(renaming.id, renameValue.trim())) setRenaming(null);
   }
 
   async function handleDelete() {
-    if (!session || !deleting) return;
-    setBusyId(deleting.id);
-    try {
-      await deleteProject(session, deleting.id);
-      setDeleting(null);
-      refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusyId(null);
-    }
+    if (!deleting) return;
+    if (await remove.run(deleting.id)) setDeleting(null);
   }
 
   return (
@@ -94,7 +56,7 @@ export default function ProjectsPage() {
             </Link>
             <div className="flex items-center gap-3">
               <span className="text-sm text-ink-500">{session?.username}</span>
-              <Button variant="ghost" size="sm" onClick={logout}>
+              <Button variant="ghost" size="sm" onClick={() => void dispatch(logout())}>
                 <LogOut className="h-4 w-4" />
                 Выйти
               </Button>
@@ -116,7 +78,20 @@ export default function ProjectsPage() {
             </Button>
           </div>
 
-          {error && <p className="mt-4 rounded-xl bg-danger-500/10 px-4 py-3 text-sm text-danger-500">{error}</p>}
+          {error && (
+            <div className="mt-4 flex items-start justify-between gap-3 rounded-xl bg-danger-500/10 px-4 py-3 text-sm text-danger-500">
+              <span>{error.message}</span>
+              <span className="flex shrink-0 items-center gap-2">
+                <Button size="sm" variant="outline" onClick={error.retry}>
+                  <RotateCw className="h-3.5 w-3.5" />
+                  Повторить
+                </Button>
+                <button onClick={error.dismiss} className="opacity-70 hover:opacity-100" aria-label="Закрыть">
+                  <X className="h-4 w-4" />
+                </button>
+              </span>
+            </div>
+          )}
 
           {loading ? (
             <div className="mt-10 grid gap-6 sm:grid-cols-2">
@@ -166,7 +141,7 @@ export default function ProjectsPage() {
                           size="icon"
                           variant="outline"
                           title="Переименовать"
-                          disabled={busyId === p.id}
+                          disabled={mutating}
                           onClick={() => {
                             setRenaming(p);
                             setRenameValue(p.name);
@@ -174,7 +149,7 @@ export default function ProjectsPage() {
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button size="icon" variant="danger" title="Удалить" disabled={busyId === p.id} onClick={() => setDeleting(p)}>
+                        <Button size="icon" variant="danger" title="Удалить" disabled={mutating} onClick={() => setDeleting(p)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -204,7 +179,7 @@ export default function ProjectsPage() {
               <Button type="button" variant="ghost" onClick={() => setRenaming(null)}>
                 Отмена
               </Button>
-              <Button type="submit" disabled={!renameValue.trim() || busyId === renaming?.id}>
+              <Button type="submit" disabled={!renameValue.trim() || rename.busy}>
                 Сохранить
               </Button>
             </div>
@@ -222,7 +197,7 @@ export default function ProjectsPage() {
             <Button variant="ghost" onClick={() => setDeleting(null)}>
               Отмена
             </Button>
-            <Button variant="danger" disabled={busyId === deleting?.id} onClick={handleDelete}>
+            <Button variant="danger" disabled={remove.busy} onClick={handleDelete}>
               Удалить
             </Button>
           </div>

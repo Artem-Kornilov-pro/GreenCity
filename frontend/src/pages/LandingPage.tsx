@@ -15,7 +15,8 @@ import {
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { PageTransition } from "../components/PageTransition";
-import { useAuth } from "../context/useAuth";
+import { selectSession } from "../store/authSlice";
+import { useAppSelector } from "../store/hooks";
 import { typograph } from "../lib/typograph";
 import ctaLandscape from "../assets/cta-landscape.webp";
 
@@ -121,7 +122,7 @@ function Header() {
 }
 
 export default function LandingPage() {
-  const { session } = useAuth();
+  const session = useAppSelector(selectSession);
 
   return (
     <PageTransition>
