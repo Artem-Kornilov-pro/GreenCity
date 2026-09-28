@@ -7,6 +7,7 @@ from shapely.geometry import Point
 from shapely.ops import unary_union
 
 from core.plant_catalog import catalog_by_id, load_catalog
+from core.schemas import Point3, SceneObject
 from core.shapes import polygon_from_points
 from greenplan import pattern_assignment
 from greenplan.assortment_report import improvements_assortment
@@ -16,7 +17,7 @@ from greenplan.pattern_assignment import assign_patterns
 from greenplan.pattern_corpus import PatternRecord
 from greenplan.pattern_library import PATTERN_LIBRARY
 from greenplan.pattern_retrieval import NeighborMatch
-from greenplan.pipeline import run_greenplan
+from greenplan.pipeline import remove_violating_plants, run_greenplan
 from greenplan.site_characterization import SiteCharacteristics
 from greenplan.species_selection import (
     PATTERN_ROLES,
@@ -169,6 +170,66 @@ def test_planting_toggles(scene_02):
 def test_preferred_species_of_a_disabled_category_is_reported(scene_02):
     run = run_greenplan(scene_02, GreenPlanOptions(trees=False, preferred_trees=["species_lipa_melkolistnaya"]))
     assert any("деревья выключены" in note for note in run.notes)
+
+
+# --- Существующие насаждения с нарушением норм --------------------------------
+
+
+def _tree(obj_id, x, z, species="Липа мелколистная"):
+    return SceneObject(
+        id=obj_id, type="tree", model="/models/tree.glb", position=Point3(x=x, y=0.0, z=z),
+        rotation=0.0, scale=1.0, metadata={"species": species},
+    )
+
+
+def _with_violating_and_clean_tree(scene):
+    """Сцена + дерево внутри здания (нарушение) + дерево на свободной земле без нарушений."""
+    inside = polygon_from_points(next(z.polygon for z in scene.restrictions if z.type == "building")).representative_point()
+    site = polygon_from_points(scene.boundary.polygon)
+    minx, minz, maxx, maxz = site.bounds
+    probes = [
+        _tree(f"probe_{x}_{z}", x, z)
+        for x in range(int(minx), int(maxx), 3)
+        for z in range(int(minz), int(maxz), 3)
+        if site.contains(Point(x, z))
+    ]
+    violating = {v.object_id for v in find_violations(scene.model_copy(update={"objects": probes}))}
+    clean = next(p for p in probes if p.id not in violating)
+    extra = [_tree("tree_bad", inside.x, inside.y), _tree("tree_ok", clean.position.x, clean.position.z)]
+    return scene.model_copy(update={"objects": [*scene.objects, *extra]})
+
+
+def test_remove_violating_plants_removes_only_violators(scene_02):
+    scene = _with_violating_and_clean_tree(scene_02)
+    kept, removed, notes = remove_violating_plants(scene)
+    assert [o.id for o in removed] == ["tree_bad"]
+    assert {o.id for o in kept.objects} == {o.id for o in scene.objects} - {"tree_bad"}
+    assert "деревьев — 1" in notes[0] and "здания — 1" in notes[0]
+
+
+def test_remove_violating_plants_reports_when_nothing_to_remove(scene_02):
+    kept, removed, notes = remove_violating_plants(scene_02)
+    assert kept is scene_02 and removed == []
+    assert "удалять нечего" in notes[0]
+
+
+def test_run_greenplan_removes_violating_plants_only_when_asked(scene_02):
+    scene = _with_violating_and_clean_tree(scene_02)
+    default = run_greenplan(scene, GreenPlanOptions(lawn=False))
+    assert {"tree_bad", "tree_ok"} <= {o.id for o in default.scene.objects} and default.removed_plants == []
+
+    run = run_greenplan(scene, GreenPlanOptions(lawn=False, remove_violating_plants=True))
+    ids = {o.id for o in run.scene.objects}
+    assert "tree_bad" not in ids and "tree_ok" in ids
+    assert [o.id for o in run.removed_plants] == ["tree_bad"]
+    assert run.notes[0].startswith("Удалены существующие насаждения с нарушением норм")
+    source_ids = {o.id for o in scene.objects}
+    assert not [v for v in find_violations(run.scene) if v.object_id in source_ids]
+
+
+def test_options_summary_mentions_removed_plants():
+    rows = GreenPlanOptions(remove_violating_plants=True).summary({})
+    assert "существующие деревья и кусты с нарушением норм: удалены" in rows
 
 
 def test_options_summary_for_the_note():

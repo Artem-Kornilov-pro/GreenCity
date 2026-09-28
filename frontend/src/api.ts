@@ -152,6 +152,8 @@ export interface GreenPlanOptions {
   trees: boolean;
   bushes: boolean;
   lawn: boolean;
+  // Убрать существующие деревья и кусты с нарушением норм до расстановки.
+  remove_violating_plants: boolean;
   preferred_trees: string[];
   preferred_bushes: string[];
   paths: boolean;
@@ -164,6 +166,7 @@ export const DEFAULT_GREENPLAN_OPTIONS: GreenPlanOptions = {
   trees: true,
   bushes: true,
   lawn: true,
+  remove_violating_plants: false,
   preferred_trees: [],
   preferred_bushes: [],
   paths: false,

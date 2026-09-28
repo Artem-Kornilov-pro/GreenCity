@@ -23,6 +23,10 @@ class GreenPlanOptions(BaseModel):
     trees: bool = Field(default=True, description="Сажать деревья.")
     bushes: bool = Field(default=True, description="Сажать кустарники.")
     lawn: bool = Field(default=True, description="Устраивать газон на свободной земле.")
+    remove_violating_plants: bool = Field(
+        default=False,
+        description="Убрать существующие деревья и кусты с нарушением норм отступов до расстановки; их место засаживается заново.",
+    )
     preferred_trees: list[str] = Field(
         default=[], description="Предпочтительные виды деревьев (id каталога species_*). Ставятся первыми, если проходят нормы."
     )
@@ -42,6 +46,8 @@ class GreenPlanOptions(BaseModel):
             f"стиль участка: {STYLE_CHOICE_LABELS[self.style]}",
             f"посадки: {', '.join(planting) if planting else 'не заданы'}",
         ]
+        if self.remove_violating_plants:
+            rows.append("существующие деревья и кусты с нарушением норм: удалены")
         for title, ids in (("предпочтительные деревья", self.preferred_trees), ("предпочтительные кустарники", self.preferred_bushes)):
             if ids:
                 rows.append(f"{title}: {', '.join(labels.get(i, i) for i in ids)}")
