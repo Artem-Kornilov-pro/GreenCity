@@ -4,9 +4,11 @@ name: Publish Docker images
 # промежуточными образами из веток, которые никто разворачивать не будет).
 # CI (ci.yml) на самом PR уже проверяет, что оба образа вообще собираются --
 # здесь их же собираем заново и публикуем, раз проверка была зелёной.
+# Тег релиза (v1.0.0) публикует образы ещё и с номером версии (:1.0.0).
 on:
   push:
     branches: [main]
+    tags: ["v*"]
 
 # packages: write -- без этого GITHUB_TOKEN не может публиковать в
 # ghcr.io этого репозитория (contents: read достаточно для checkout).
@@ -40,6 +42,17 @@ jobs:
       - name: Имя репозитория в нижнем регистре
         run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
 
+      # Теги образа: для main -- latest и sha коммита, для тега релиза --
+      # номер версии без «v» и sha.
+      - name: Теги образа
+        run: |
+          IMAGE="ghcr.io/${REPO_LC}-${{ matrix.image }}"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            echo "IMAGE_TAGS=${IMAGE}:${GITHUB_REF_NAME#v},${IMAGE}:${GITHUB_SHA}" >> "$GITHUB_ENV"
+          else
+            echo "IMAGE_TAGS=${IMAGE}:latest,${IMAGE}:${GITHUB_SHA}" >> "$GITHUB_ENV"
+          fi
+
       - uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -51,6 +64,4 @@ jobs:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: true
-          tags: |
-            ghcr.io/${{ env.REPO_LC }}-${{ matrix.image }}:latest
-            ghcr.io/${{ env.REPO_LC }}-${{ matrix.image }}:${{ github.sha }}
+          tags: ${{ env.IMAGE_TAGS }}
