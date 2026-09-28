@@ -100,9 +100,10 @@ async def greenplan_generate(
 def _generate(request: GreenPlanGenerateRequest, k: int) -> GreenPlanGenerateResult:
     run = run_greenplan(request.scene, request.options, k)
     log.info(
-        "GreenPlan: %d посадок, %d объектов и %d дорожек благоустройства, %d зон, газон %d участков",
+        "GreenPlan: %d посадок, %d объектов и %d дорожек благоустройства, %d зон, газон %d участков, "
+        "удалено %d насаждений с нарушением норм",
         len(run.new_plants), len(run.improvements.objects), len(run.improvements.zones),
-        len(run.assignments), len(run.scene.lawns),
+        len(run.assignments), len(run.scene.lawns), len(run.removed_plants),
     )
     return GreenPlanGenerateResult(
         scene=run.scene,

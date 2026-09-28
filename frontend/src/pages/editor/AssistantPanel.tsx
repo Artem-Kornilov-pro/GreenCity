@@ -1,4 +1,4 @@
-import { Loader2, Send, Sparkles, Undo2 } from "lucide-react";
+import { Loader2, RotateCw, Send, Sparkles, Undo2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Textarea } from "../../components/ui/input";
 import type { ChatMessage } from "./editorTypes";
@@ -31,6 +31,7 @@ export function AssistantPanel({
   sceneLoaded,
   undoableMessageId,
   onUndo,
+  onRetry,
 }: {
   open: boolean;
   onToggle: () => void;
@@ -43,6 +44,8 @@ export function AssistantPanel({
   sceneLoaded: boolean;
   undoableMessageId: string | null;
   onUndo: () => void;
+  // Отправить ещё раз просьбу, на которой запрос упал.
+  onRetry: (messageId: string) => void;
 }) {
   return (
     <SlidePanel open={open} onToggle={onToggle} onClose={onClose} icon={<Sparkles className="h-4.5 w-4.5 text-brand-600" />} title="Ассистент">
@@ -79,6 +82,17 @@ export function AssistantPanel({
           >
             <p className={m.undone ? "line-through opacity-60" : undefined}>{m.text}</p>
             {m.undone && <p className="mt-1 text-xs text-ink-500">Правка отменена</p>}
+            {m.role === "error" && m.instruction && (
+              <button
+                type="button"
+                onClick={() => onRetry(m.id)}
+                disabled={editing}
+                className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium underline-offset-2 hover:underline disabled:opacity-50"
+              >
+                <RotateCw className="h-3 w-3" />
+                Повторить
+              </button>
+            )}
             {((m.applied && m.applied.length > 0) || (m.rejected && m.rejected.length > 0) || (m.warnings && m.warnings.length > 0)) && (
               <div className="mt-1.5 flex flex-col gap-1 border-t border-ink-900/10 pt-1.5 text-xs opacity-80">
                 {/* Что реально сделал планировщик: ответ модели пишется до

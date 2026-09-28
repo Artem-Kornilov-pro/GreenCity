@@ -1,74 +1,49 @@
-import { authHeader, type Session } from "./auth";
+import { sessionAuth, type Session } from "./auth";
+import { request, requestBlob, send } from "./lib/http";
 import type { Scene } from "./types";
 
-const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "http://localhost:8000";
-
-async function readErrorDetail(res: Response): Promise<string> {
-  const body = await res.json().catch(() => null);
-  return typeof body?.detail === "string" ? body.detail : res.statusText;
-}
-
-export async function uploadDxf(file: File): Promise<Scene> {
+export function uploadDxf(file: File): Promise<Scene> {
   const form = new FormData();
   form.append("file", file);
-  const res = await fetch(`${API_BASE}/api/parse`, { method: "POST", body: form });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Ошибка парсинга (${res.status}): ${text || res.statusText}`);
-  }
-  return res.json() as Promise<Scene>;
+  return request<Scene>("/api/parse", { form, errorMessage: "Ошибка парсинга" });
 }
 
 // Папка .dwg: бэкенд конвертирует файлы, склеивает в один документ и
 // разбирает тем же парсером. Файлы, которые не удалось сконвертировать,
 // перечислены в Scene.dwgConversionWarnings.
-export async function uploadDwgFolder(files: File[]): Promise<Scene> {
+export function uploadDwgFolder(files: File[]): Promise<Scene> {
   const form = new FormData();
   for (const file of files) form.append("files", file);
-  const res = await fetch(`${API_BASE}/api/parse-dwg`, { method: "POST", body: form });
-  if (!res.ok) throw new Error(`Ошибка конвертации DWG (${res.status}): ${await readErrorDetail(res)}`);
-  return res.json() as Promise<Scene>;
+  return request<Scene>("/api/parse-dwg", { form, errorMessage: "Ошибка конвертации DWG" });
 }
 
 // Итоговый план -> .dxf. mode: "overlay" -- слои результата дописаны в
 // исходный чертёж (исходные слои и координаты не тронуты), "rebuilt" --
 // исходника на сервере нет, DXF собран из сцены.
 export async function exportDxf(scene: Scene): Promise<{ blob: Blob; mode: "overlay" | "rebuilt" }> {
-  const res = await fetch(`${API_BASE}/api/export-dxf`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(scene),
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Не удалось экспортировать DXF (${res.status}): ${text || res.statusText}`);
-  }
+  const res = await send("/api/export-dxf", { json: scene, errorMessage: "Не удалось экспортировать DXF" });
   const mode = res.headers.get("X-GreenCity-Export") === "overlay" ? "overlay" : "rebuilt";
   return { blob: await res.blob(), mode };
 }
 
 // Объяснение каждой посадки со ссылкой на НПА и пункт (backend/greenplan/explanations.py).
-export async function downloadGreenPlanExplanations(
+export function downloadGreenPlanExplanations(
   scene: Scene,
   assignments: GreenPlanZoneAssignment[],
   rejections: GreenPlanRejections | undefined,
   format: "json" | "csv",
 ): Promise<Blob> {
-  const res = await fetch(`${API_BASE}/api/greenplan/explanations?format=${format}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ scene, assignments, rejections: rejections ?? { detailed: [], total: 0, by_rule: {} } }),
+  return requestBlob("/api/greenplan/explanations", {
+    query: { format },
+    json: { scene, assignments, rejections: rejections ?? { detailed: [], total: 0, by_rule: {} } },
+    errorMessage: "Не удалось сформировать объяснения посадок",
   });
-  if (!res.ok) {
-    throw new Error(`Не удалось сформировать объяснения посадок (${res.status}): ${await readErrorDetail(res)}`);
-  }
-  return res.blob();
 }
 
 // Пояснительная записка GreenPlan (DOCX). scene -- текущая сцена с правками:
 // нарушения и ведомость бэкенд пересчитывает по ней; report -- уже полученный
 // текст, LLM заново не вызывается.
-export async function downloadGreenPlanDocument(
+export function downloadGreenPlanDocument(
   scene: Scene,
   assignments: GreenPlanZoneAssignment[],
   report: string | null,
@@ -76,16 +51,10 @@ export async function downloadGreenPlanDocument(
   options: GreenPlanOptions | null = null,
   notes: string[] = []
 ): Promise<Blob> {
-  const res = await fetch(`${API_BASE}/api/greenplan/document`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ scene, assignments, report, title, options, notes }),
+  return requestBlob("/api/greenplan/document", {
+    json: { scene, assignments, report, title, options, notes },
+    errorMessage: "Не удалось сформировать пояснительную записку",
   });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Не удалось сформировать пояснительную записку (${res.status}): ${text || res.statusText}`);
-  }
-  return res.blob();
 }
 
 // GreenPlan: расстановка -- детерминированно, без LLM, за секунды. Текст-
@@ -152,6 +121,8 @@ export interface GreenPlanOptions {
   trees: boolean;
   bushes: boolean;
   lawn: boolean;
+  // Убрать существующие деревья и кусты с нарушением норм до расстановки.
+  remove_violating_plants: boolean;
   preferred_trees: string[];
   preferred_bushes: string[];
   paths: boolean;
@@ -164,6 +135,7 @@ export const DEFAULT_GREENPLAN_OPTIONS: GreenPlanOptions = {
   trees: true,
   bushes: true,
   lawn: true,
+  remove_violating_plants: false,
   preferred_trees: [],
   preferred_bushes: [],
   paths: false,
@@ -171,16 +143,8 @@ export const DEFAULT_GREENPLAN_OPTIONS: GreenPlanOptions = {
   benches: false,
 };
 
-export async function generateGreenPlan(scene: Scene, options: GreenPlanOptions = DEFAULT_GREENPLAN_OPTIONS): Promise<GreenPlanGenerateResult> {
-  const res = await fetch(`${API_BASE}/api/greenplan/generate`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ scene, options }),
-  });
-  if (!res.ok) {
-    throw new Error(`Не удалось построить GreenPlan (${res.status}): ${await readErrorDetail(res)}`);
-  }
-  return res.json() as Promise<GreenPlanGenerateResult>;
+export function generateGreenPlan(scene: Scene, options: GreenPlanOptions = DEFAULT_GREENPLAN_OPTIONS): Promise<GreenPlanGenerateResult> {
+  return request<GreenPlanGenerateResult>("/api/greenplan/generate", { json: { scene, options }, errorMessage: "Не удалось построить GreenPlan" });
 }
 
 export interface GreenPlanReportResult {
@@ -190,16 +154,8 @@ export interface GreenPlanReportResult {
 
 // Отдельный запрос к LLM (YandexGPT) -- вызывающий код (EditorPage)
 // не ждёт его перед тем, как показать уже готовый результат generateGreenPlan.
-export async function fetchGreenPlanReport(assignments: GreenPlanZoneAssignment[]): Promise<GreenPlanReportResult> {
-  const res = await fetch(`${API_BASE}/api/greenplan/report`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(assignments),
-  });
-  if (!res.ok) {
-    throw new Error(`Не удалось получить отчёт GreenPlan (${res.status}): ${await readErrorDetail(res)}`);
-  }
-  return res.json() as Promise<GreenPlanReportResult>;
+export function fetchGreenPlanReport(assignments: GreenPlanZoneAssignment[]): Promise<GreenPlanReportResult> {
+  return request<GreenPlanReportResult>("/api/greenplan/report", { json: assignments, errorMessage: "Не удалось получить отчёт GreenPlan" });
 }
 
 export interface TextEditResult {
@@ -225,21 +181,11 @@ export interface ChatTurn {
 
 // Правка плана текстом через LLM (backend/text_editor/service.py). Модель отвечает
 // несколько секунд -- вызывающему коду нужен индикатор ожидания.
-export async function editWithText(scene: Scene, instruction: string, history: ChatTurn[] = []): Promise<TextEditResult> {
-  const res = await fetch(`${API_BASE}/api/edit-with-text`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ scene, instruction, history }),
-  });
-  if (!res.ok) {
-    // FastAPI кладёт текст ошибки в {"detail": "..."} -- показываем его, а не
-    // сырое тело ответа.
-    throw new Error(`Не удалось применить правку (${res.status}): ${await readErrorDetail(res)}`);
-  }
-  return res.json() as Promise<TextEditResult>;
+export function editWithText(scene: Scene, instruction: string, history: ChatTurn[] = []): Promise<TextEditResult> {
+  return request<TextEditResult>("/api/edit-with-text", { json: { scene, instruction, history }, errorMessage: "Не удалось применить правку" });
 }
 
-// Проекты -- только с входом в аккаунт. authHeader (auth.ts) сам обновляет
+// Проекты -- только с входом в аккаунт. sessionAuth (auth.ts) сам обновляет
 // истёкший access-токен. Лимит проектов проверяет бэкенд.
 
 export interface ProjectSummary {
@@ -253,49 +199,40 @@ export interface Project extends ProjectSummary {
   scene: Scene;
 }
 
-export async function listProjects(session: Session): Promise<ProjectSummary[]> {
-  const res = await fetch(`${API_BASE}/api/projects`, { headers: await authHeader(session) });
-  if (!res.ok) throw new Error(`Не удалось получить список проектов (${res.status}): ${await readErrorDetail(res)}`);
-  return res.json() as Promise<ProjectSummary[]>;
+export function listProjects(session: Session): Promise<ProjectSummary[]> {
+  return request<ProjectSummary[]>("/api/projects", { authorize: sessionAuth(session), errorMessage: "Не удалось получить список проектов" });
 }
 
-export async function createProject(session: Session, name: string, scene: Scene): Promise<Project> {
-  const res = await fetch(`${API_BASE}/api/projects`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...(await authHeader(session)) },
-    body: JSON.stringify({ name, scene }),
-  });
-  if (!res.ok) throw new Error(await readErrorDetail(res));
-  return res.json() as Promise<Project>;
+// Без повторов: второй POST создал бы второй проект.
+export function createProject(session: Session, name: string, scene: Scene): Promise<Project> {
+  return request<Project>("/api/projects", { json: { name, scene }, authorize: sessionAuth(session) });
 }
 
-export async function loadProject(session: Session, id: string): Promise<Project> {
-  const res = await fetch(`${API_BASE}/api/projects/${id}`, { headers: await authHeader(session) });
-  if (!res.ok) throw new Error(`Не удалось открыть проект (${res.status}): ${await readErrorDetail(res)}`);
-  return res.json() as Promise<Project>;
+export function loadProject(session: Session, id: string): Promise<Project> {
+  return request<Project>(`/api/projects/${id}`, { authorize: sessionAuth(session), errorMessage: "Не удалось открыть проект" });
 }
 
-export async function saveProject(session: Session, id: string, scene: Scene): Promise<Project> {
-  const res = await fetch(`${API_BASE}/api/projects/${id}`, {
+// PUT идемпотентен -- при сбое сети повторяем сами.
+export function saveProject(session: Session, id: string, scene: Scene): Promise<Project> {
+  return request<Project>(`/api/projects/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json", ...(await authHeader(session)) },
-    body: JSON.stringify({ scene }),
+    json: { scene },
+    retries: 2,
+    authorize: sessionAuth(session),
+    errorMessage: "Не удалось сохранить проект",
   });
-  if (!res.ok) throw new Error(`Не удалось сохранить проект (${res.status}): ${await readErrorDetail(res)}`);
-  return res.json() as Promise<Project>;
 }
 
-export async function renameProject(session: Session, id: string, name: string): Promise<Project> {
-  const res = await fetch(`${API_BASE}/api/projects/${id}`, {
+export function renameProject(session: Session, id: string, name: string): Promise<Project> {
+  return request<Project>(`/api/projects/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json", ...(await authHeader(session)) },
-    body: JSON.stringify({ name }),
+    json: { name },
+    retries: 2,
+    authorize: sessionAuth(session),
+    errorMessage: "Не удалось переименовать проект",
   });
-  if (!res.ok) throw new Error(`Не удалось переименовать проект (${res.status}): ${await readErrorDetail(res)}`);
-  return res.json() as Promise<Project>;
 }
 
 export async function deleteProject(session: Session, id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/projects/${id}`, { method: "DELETE", headers: await authHeader(session) });
-  if (!res.ok) throw new Error(`Не удалось удалить проект (${res.status}): ${await readErrorDetail(res)}`);
+  await send(`/api/projects/${id}`, { method: "DELETE", authorize: sessionAuth(session), errorMessage: "Не удалось удалить проект" });
 }

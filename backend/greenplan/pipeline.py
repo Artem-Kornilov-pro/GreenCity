@@ -4,7 +4,8 @@
 
 1. убрать результат прошлого запуска GreenPlan (посадки, благоустройство,
    газон) -- повторный запуск с другими параметрами заменяет его, а не
-   сажает второй слой поверх;
+   сажает второй слой поверх; если задано -- и существующие деревья и кусты
+   с нарушением норм (их место засаживается заново);
 2. благоустройство (дорожки, фонари, скамейки) -- до посадок, чтобы посадки
    соблюдали отступы от него;
 3. посадки (deterministic_placement.plan_site) -- стиль и предпочтительные
@@ -14,6 +15,7 @@
 
 from __future__ import annotations
 
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 
 from core.plant_catalog import CatalogItem, catalog_by_id, load_catalog
@@ -24,6 +26,7 @@ from greenplan.improvements import SOURCE, Improvements, is_greenplan_zone, plan
 from greenplan.lawn import plan_lawns
 from greenplan.options import GreenPlanOptions
 from greenplan.pattern_assignment import ZoneAssignment
+from greenplan.violation_report import ZONE_TYPE_LABELS, find_violations
 
 
 @dataclass
@@ -36,6 +39,9 @@ class GreenPlanRun:
     # Точки, которые расстановка рассматривала, но отклонила по нормам, --
     # с причиной и ссылкой на НПА (greenplan/explanations.py).
     rejections: RejectionStats = field(default_factory=RejectionStats)
+    # Существующие деревья и кусты, убранные из-за нарушения норм
+    # (options.remove_violating_plants).
+    removed_plants: list[SceneObject] = field(default_factory=list)
 
 
 def is_greenplan_object(obj: SceneObject) -> bool:
@@ -59,6 +65,10 @@ def run_greenplan(scene: Scene, options: GreenPlanOptions | None = None, k: int 
     catalog = load_catalog()
     by_id = catalog_by_id()
     base = without_greenplan(scene)
+    removed: list[SceneObject] = []
+    removal_notes: list[str] = []
+    if options.remove_violating_plants:
+        base, removed, removal_notes = remove_violating_plants(base)
 
     improvements = plan_improvements(base, by_id, options)
     working = base.model_copy(
@@ -84,9 +94,36 @@ def run_greenplan(scene: Scene, options: GreenPlanOptions | None = None, k: int 
         new_plants=plan.objects,
         improvements=improvements,
         assignments=plan.assignments,
-        notes=[*improvements.notes, *notes, *plan.notes],
+        notes=[*removal_notes, *improvements.notes, *notes, *plan.notes],
         rejections=log.stats(),
+        removed_plants=removed,
     )
+
+
+_PLANT_NAMES = {"tree": "деревьев", "bush": "кустарников"}
+
+
+def remove_violating_plants(scene: Scene) -> tuple[Scene, list[SceneObject], list[str]]:
+    """(сцена без существующих деревьев и кустов с нарушением норм, убранные,
+    заметка: что убрано и почему). Нарушения -- те же, что в отчёте
+    violation_report и в подсветке редактора; сюда приходит сцена уже без
+    результата прошлого запуска GreenPlan, так что убираются только исходные."""
+    reasons: dict[str, set[str]] = defaultdict(set)
+    for v in find_violations(scene):
+        if v.object_type in _PLANT_NAMES:
+            reasons[v.object_id].add(ZONE_TYPE_LABELS.get(v.zone_type, v.zone_type))
+    if not reasons:
+        return scene, [], ["Существующих деревьев и кустов с нарушением норм нет — удалять нечего"]
+
+    removed = [o for o in scene.objects if o.id in reasons]
+    kept = scene.model_copy(update={"objects": [o for o in scene.objects if o.id not in reasons]})
+    counts = Counter(o.type for o in removed)
+    # По типу зоны, а не по каждой посадке: на реальном участке их сотни
+    # (Харьковская -- 520 из 1223), а типов зон -- около десятка.
+    by_zone = Counter(label for o in removed for label in reasons[o.id])
+    totals = ", ".join(f"{_PLANT_NAMES[kind]} — {counts[kind]}" for kind in _PLANT_NAMES if counts[kind])
+    why = "; ".join(f"{label} — {n}" for label, n in by_zone.most_common())
+    return kept, removed, [f"Удалены существующие насаждения с нарушением норм ({totals}). Нарушены отступы: {why}"]
 
 
 def _preferred(options: GreenPlanOptions, by_id: dict[str, CatalogItem]) -> tuple[list[CatalogItem], list[str]]:

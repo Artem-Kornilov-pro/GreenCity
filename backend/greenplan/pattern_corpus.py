@@ -103,7 +103,11 @@ def _dxf_path(slug: str):
 
 
 def _dxf_sha256(slug: str) -> str:
-    return hashlib.sha256(_dxf_path(slug).read_bytes()).hexdigest()
+    # Без учёта перевода строк: на Windows git (core.autocrlf) отдаёт те же DXF
+    # с CRLF, хеш не сходился с посчитанным по LF, и признаки всех 34 проектов
+    # пересчитывались при каждом старте бэкенда -- первый запуск GreenPlan в
+    # локальном Docker шёл 6 минут вместо секунды.
+    return hashlib.sha256(_dxf_path(slug).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
 def compute_features() -> dict[str, dict]:

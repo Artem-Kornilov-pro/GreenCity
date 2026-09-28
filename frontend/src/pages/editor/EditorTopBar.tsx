@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Download, FolderKanban, FolderUp, LassoSelect, Leaf, Loader2, LogOut, Save, Sparkles, Trees, UploadCloud, User } from "lucide-react";
+import { Download, FolderKanban, LassoSelect, Leaf, Loader2, LogOut, Save, Sparkles, Trees, User } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import {
   DropdownMenu,
@@ -9,7 +9,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
-import { useAuth } from "../../context/useAuth";
+import { logout, selectSession } from "../../store/authSlice";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { UploadDwgFolderButton, UploadDxfButton } from "./UploadButtons";
 
 // Топбар плавает поверх сцены, чтобы сквозь стекло была видна сама сцена.
 export function EditorTopBar({
@@ -40,7 +42,7 @@ export function EditorTopBar({
   dwgLoading: boolean;
   projectLoading: boolean;
   onDxfFile: (file: File) => void;
-  onDwgFolder: (files: FileList) => void;
+  onDwgFolder: (files: File[]) => void;
   sceneLoaded: boolean;
   selectionMode: boolean;
   onToggleSelection: () => void;
@@ -56,7 +58,8 @@ export function EditorTopBar({
   onSave: () => void;
 }) {
   const navigate = useNavigate();
-  const { session, logout } = useAuth();
+  const dispatch = useAppDispatch();
+  const session = useAppSelector(selectSession);
   const busy = dxfLoading || dwgLoading || projectLoading;
 
   return (
@@ -73,46 +76,8 @@ export function EditorTopBar({
       <span className="truncate text-sm font-medium text-ink-700">{title}</span>
 
       <div className="ml-auto flex items-center gap-1.5">
-        <label>
-          <Button asChild variant="outline" size="sm" disabled={busy}>
-            <span className={busy ? "pointer-events-none opacity-50" : "cursor-pointer"}>
-              {dxfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
-              Загрузить DXF
-            </span>
-          </Button>
-          <input
-            type="file"
-            accept=".dxf"
-            hidden
-            disabled={busy}
-            onChange={(e) => {
-              if (e.target.files?.[0]) onDxfFile(e.target.files[0]);
-              e.target.value = ""; // тот же файл ещё раз -- тоже событие change
-            }}
-          />
-        </label>
-
-        <label title="Выбрать папку проекта с исходными .dwg -- каждый файл конвертируется в DXF на сервере и сливается в одну сцену">
-          <Button asChild variant="outline" size="sm" disabled={busy}>
-            <span className={busy ? "pointer-events-none opacity-50" : "cursor-pointer"}>
-              {dwgLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FolderUp className="h-3.5 w-3.5" />}
-              Загрузить DWG (папка)
-            </span>
-          </Button>
-          <input
-            type="file"
-            // webkitdirectory -- выбор папки целиком.
-            // @ts-expect-error -- webkitdirectory отсутствует в типах React для input
-            webkitdirectory=""
-            multiple
-            hidden
-            disabled={busy}
-            onChange={(e) => {
-              if (e.target.files && e.target.files.length > 0) onDwgFolder(e.target.files);
-              e.target.value = "";
-            }}
-          />
-        </label>
+        <UploadDxfButton size="sm" loading={dxfLoading} disabled={busy} onFile={onDxfFile} />
+        <UploadDwgFolderButton size="sm" loading={dwgLoading} disabled={busy} onFiles={onDwgFolder} />
 
         {sceneLoaded && (
           <>
@@ -181,7 +146,7 @@ export function EditorTopBar({
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
-                  logout();
+                  void dispatch(logout());
                   navigate("/");
                 }}
               >

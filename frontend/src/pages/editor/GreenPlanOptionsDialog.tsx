@@ -187,6 +187,16 @@ export function GreenPlanOptionsDialog({
             </div>
           </section>
 
+          <section>
+            <h3 className={SECTION_TITLE}>Существующие насаждения</h3>
+            <Toggle
+              checked={options.remove_violating_plants}
+              onChange={(v) => set("remove_violating_plants", v)}
+              label="Убрать деревья и кусты с нарушением норм"
+              hint="из исходного чертежа — те, что ближе нормативного отступа к зданиям, сетям и дорогам; их место засаживается заново"
+            />
+          </section>
+
           <section className="flex flex-col gap-3">
             <h3 className={SECTION_TITLE}>Предпочтительные виды</h3>
             <p className="-mt-2 text-xs text-ink-500">
@@ -239,7 +249,13 @@ export function GreenPlanOptionsDialog({
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
                 Отмена
               </Button>
-              <Button type="submit" disabled={busy || (!options.trees && !options.bushes && !options.lawn && !options.paths && !options.lighting)}>
+              <Button
+                type="submit"
+                disabled={
+                  busy ||
+                  (!options.trees && !options.bushes && !options.lawn && !options.remove_violating_plants && !options.paths && !options.lighting)
+                }
+              >
                 <Play className="h-4 w-4" />
                 Запустить
               </Button>

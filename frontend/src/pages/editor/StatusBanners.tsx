@@ -1,4 +1,11 @@
-import { Loader2, X } from "lucide-react";
+import { Loader2, RotateCw, X } from "lucide-react";
+
+// Ошибка действия; onRetry -- повторить его с теми же данными.
+export interface BannerError {
+  message: string;
+  onRetry?: () => void;
+  onDismiss?: () => void;
+}
 
 // Полоса под топбаром: ошибка важнее всего, затем ход конвертации DWG,
 // затем предупреждение о несконвертированных файлах папки.
@@ -13,7 +20,7 @@ export function StatusBanners({
 }: {
   notice: string | null;
   onDismissNotice: () => void;
-  error: string | null;
+  error: BannerError | null;
   dwgUploading: boolean;
   totalDwgFiles: number;
   dwgWarnings: { file: string; error: string }[] | null;
@@ -21,8 +28,24 @@ export function StatusBanners({
 }) {
   if (error) {
     return (
-      <div className="absolute inset-x-0 top-14 z-30 border-b border-danger-500/20 bg-danger-500/90 px-4 py-2 text-sm text-white backdrop-blur-sm">
-        {error}
+      <div className="absolute inset-x-0 top-14 z-30 flex items-start justify-between gap-3 border-b border-danger-500/20 bg-danger-500/90 px-4 py-2 text-sm text-white backdrop-blur-sm">
+        <span>{error.message}</span>
+        <span className="flex shrink-0 items-center gap-2">
+          {error.onRetry && (
+            <button
+              onClick={error.onRetry}
+              className="inline-flex items-center gap-1 rounded-lg bg-white/20 px-2.5 py-1 text-xs font-medium hover:bg-white/30"
+            >
+              <RotateCw className="h-3.5 w-3.5" />
+              Повторить
+            </button>
+          )}
+          {error.onDismiss && (
+            <button onClick={error.onDismiss} className="opacity-70 hover:opacity-100" aria-label="Закрыть">
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </span>
       </div>
     );
   }
