@@ -89,5 +89,8 @@ class Scene(BaseModel):
     curbs: list[list[Point2]] = Field(default=[], description="Бордюры (для 3D).")
     # Отдельно от restrictions: иначе каждое нарушение у дома считалось бы дважды.
     buildingSetbacks: list[RestrictionZone] = Field(default=[], description="Кольца нормативных отступов вокруг зданий, только для отображения.")
-    lawns: list[LawnArea] = Field(default=[], description="Газон, предложенный GreenPlan.")
+    lawns: list[LawnArea] = Field(
+        default=[],
+        description="Газон: сохраняемый газон чертежа приходит сразу при загрузке, новый добавляет GreenPlan.",
+    )
     meta: SceneMeta

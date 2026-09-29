@@ -44,6 +44,7 @@ def test_build_scene_parses_merged_doc_in_memory_same_as_through_a_file(monkeypa
     for key in expected:
         assert scene[key] == expected[key]
     assert scene["dwgConversionWarnings"] == [{"file": "b.dwg", "error": "unsupported"}]
+    assert "lawns" in scene and "buildingSetbacks" in scene
     assert summary == {"converted": 1, "failed": 1, "objects": len(expected["objects"]), "zones": len(expected["restrictions"])}
 
 

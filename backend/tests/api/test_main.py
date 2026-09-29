@@ -88,6 +88,28 @@ def test_parse_valid_dxf_returns_scene(client):
     assert len(body["objects"]) > 0
 
 
+def test_parse_returns_existing_lawn_from_the_drawing(client):
+    # Газон со слоёв газона виден сразу после загрузки, до GreenPlan.
+    path = LOCATIONS_DIR / "location_test" / "03_courtyard_renovation" / "03_courtyard_renovation.dxf"
+    r = client.post("/api/parse", files={"file": (path.name, path.read_bytes(), "application/dxf")})
+    assert r.status_code == 200
+    lawns = r.json()["lawns"]
+    assert lawns and {lawn["status"] for lawn in lawns} == {"existing"}
+    assert sum(lawn["area_sqm"] for lawn in lawns) > 1000
+
+
+def test_export_does_not_write_existing_lawn_as_new(client):
+    # Сохраняемый газон уже есть в исходном чертеже: слой NEW_LAWN -- только
+    # для нового газона GreenPlan.
+    path = LOCATIONS_DIR / "location_test" / "03_courtyard_renovation" / "03_courtyard_renovation.dxf"
+    scene = client.post("/api/parse", files={"file": (path.name, path.read_bytes(), "application/dxf")}).json()
+    assert scene["lawns"]
+    r = client.post("/api/export-dxf", json=scene)
+    assert r.status_code == 200
+    doc = ezdxf.read(io.StringIO(r.content.decode("utf-8")))
+    assert not any(e.dxf.layer == "NEW_LAWN" for e in doc.modelspace())
+
+
 def test_parse_rejects_non_dxf_extension(client):
     r = client.post("/api/parse", files={"file": ("test.txt", b"hello", "text/plain")})
     assert r.status_code == 400

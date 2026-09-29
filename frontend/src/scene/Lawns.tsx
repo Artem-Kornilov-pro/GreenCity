@@ -4,15 +4,16 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import type { LawnArea } from "../types";
 import { FLAT_LAYER_ORDER } from "./geometryHelpers";
 
-// Газон GreenPlan -- заливка поверх земли участка (Ground.tsx), ниже зон
+// Газон -- сохраняемый из чертежа и новый от GreenPlan -- заливка поверх
+// земли участка (Ground.tsx), ярче неё, ниже зон
 // ограничений (RestrictionZones.tsx, Y от 0.01): зоны остаются читаемыми и
 // наводимыми мышью. Клумбы кустарника -- дырками в шейпе. Все участки газона
 // одного статуса слиты в одну геометрию: на крупных сценах их сотни.
 // Порядок и высоты плоских слоёв -- см. FLAT_LAYER_ORDER в geometryHelpers.ts.
 const LAWN_Y = 0.02;
 const COLOR_BY_STATUS: Record<LawnArea["status"], string> = {
-  new: "#7cc35a",
-  existing: "#5f9a48",
+  new: "#8fd460",
+  existing: "#4fae3c",
 };
 
 function mergeLawns(lawns: LawnArea[]): THREE.BufferGeometry | null {

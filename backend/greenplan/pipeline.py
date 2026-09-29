@@ -23,7 +23,7 @@ from core.schemas import Scene, SceneObject
 from greenplan.deterministic_placement import plan_site
 from greenplan.explanations import RejectionStats, start_rejection_log, stop_rejection_log
 from greenplan.improvements import SOURCE, Improvements, is_greenplan_zone, plan_improvements
-from greenplan.lawn import plan_lawns
+from greenplan.lawn import existing_lawns, plan_lawns
 from greenplan.options import GreenPlanOptions
 from greenplan.pattern_assignment import ZoneAssignment
 from greenplan.violation_report import ZONE_TYPE_LABELS, find_violations
@@ -88,7 +88,8 @@ def run_greenplan(scene: Scene, options: GreenPlanOptions | None = None, k: int 
         stop_rejection_log(token)
 
     final = working.model_copy(update={"objects": [*working.objects, *plan.objects]})
-    final.lawns = plan_lawns(final, by_id) if options.lawn else []
+    # Газон выключен в параметрах -- нового нет, но газон из чертежа остаётся.
+    final.lawns = plan_lawns(final, by_id) if options.lawn else existing_lawns(final, by_id)
     return GreenPlanRun(
         scene=final,
         new_plants=plan.objects,

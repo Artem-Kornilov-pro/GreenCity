@@ -151,8 +151,11 @@ def parse_dxf_doc(doc, scale=None, center=True):
     else:
         # С настоящей границей зоны уже обрезаны по ней; то же -- для
         # посадок, фонарей и бордюров: топосъёмка тянет объекты с соседних
-        # листов за километры. Здания не трогаем.
+        # листов за километры. И для зданий: топоплан пачки DWG приносит
+        # квартал вокруг участка, а на сцене такие дома висели бы без земли.
         objects, curbs = _clip_offsite_points(objects, curbs, boundary)
+        objects, restrictions, facade = _clip_offsite_buildings(objects, restrictions, facade, boundary)
+        buildings = [o for o in objects if o["type"] == "building"]
 
     # Открытая земля -- участок минус всё известное: план покрытий часто не
     # покрывает весь участок, даже когда граница найдена по слою.
@@ -219,12 +222,48 @@ def _recenter(scene, boundary):
     }
 
 
-def _clip_offsite_points(objects, curbs, boundary):
+def _relevance_region(boundary):
+    """Граница участка с полосой _RESTRICTION_RELEVANCE_MARGIN_M: дальше этого
+    ничто не даёт отступа посадкам на участке."""
     region = Polygon([(p["x"], p["z"]) for p in boundary["polygon"]])
     if not region.is_valid:
         region = region.buffer(0)
     region = region.buffer(_RESTRICTION_RELEVANCE_MARGIN_M)
     shapely.prepare(region)
+    return region
+
+
+def _touches(region, points) -> bool:
+    if len(points) < 3:
+        return any(shapely.contains_xy(region, p["x"], p["z"]) for p in points)
+    poly = Polygon([(p["x"], p["z"]) for p in points])
+    if not poly.is_valid:
+        poly = poly.buffer(0)
+    return region.intersects(poly)
+
+
+def _clip_offsite_buildings(objects, restrictions, facade, boundary):
+    """Здания, не заходящие в полосу влияния участка, отбрасываются вместе с
+    зонами, окнами и козырьками: отступа посадкам они не дают. Здание,
+    которое хоть краем заходит в полосу, остаётся целиком."""
+    region = _relevance_region(boundary)
+    kept_objects = [
+        o for o in objects
+        if o["type"] != "building" or _touches(region, o["metadata"].get("footprint") or [o["position"]])
+    ]
+    kept_zones = [z for z in restrictions if z["type"] != "building" or _touches(region, z["polygon"])]
+    # Окна и козырьки лежат на фасадах: в пределах пары метров от полосы.
+    near = region.buffer(2.0)
+    shapely.prepare(near)
+    kept_facade = {
+        key: [quad for quad in quads if any(shapely.contains_xy(near, p["x"], p["z"]) for p in quad)]
+        for key, quads in facade.items()
+    }
+    return kept_objects, kept_zones, kept_facade
+
+
+def _clip_offsite_points(objects, curbs, boundary):
+    region = _relevance_region(boundary)
     kept_objects = [
         o for o in objects
         if o["type"] == "building" or shapely.contains_xy(region, o["position"]["x"], o["position"]["z"])

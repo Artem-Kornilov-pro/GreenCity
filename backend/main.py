@@ -83,7 +83,7 @@ CORS_ALLOW_ORIGINS = [o.strip() for o in os.environ.get("CORS_ALLOW_ORIGINS", ""
 
 app = FastAPI(
     title="GreenCity API",
-    version="1.0.0",
+    version="1.0.1",
     description=API_DESCRIPTION,
     openapi_tags=TAGS,
     license_info={"name": "Только просмотр исходного кода", "url": "https://github.com/Artem-Kornilov-pro/GreenCity/blob/main/LICENSE"},

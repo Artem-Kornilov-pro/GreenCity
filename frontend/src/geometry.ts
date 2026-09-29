@@ -187,6 +187,49 @@ export function checkViolationsAt(
   return result;
 }
 
+// Земля окрестностей (scene/Ground.tsx) -- только под тем, что есть в чертеже,
+// без заливки пустого места: площадка вокруг каждого дома (оболочка контура с
+// запасом pad) и полотна улиц и дорожек. Дома у границы и улицы между ними и
+// участком не висят в пустоте, а сцена не расширяется.
+const STREET_ZONE_TYPES = new Set(["road", "pedestrian_path"]);
+
+export function computeSurroundings(scene: Scene, pad: number): { yards: Point2[][]; streets: Point2[][] } {
+  const yards: Point2[][] = [];
+  for (const o of scene.objects) {
+    if (o.type !== "building") continue;
+    const footprint = (o.metadata.footprint as Point2[] | undefined) ?? [];
+    const pts: Point2[] = [];
+    // Запас -- восемь точек вокруг вершины: оболочка отстоит от неё на ~pad.
+    for (const p of footprint) {
+      for (let i = 0; i < 8; i++) {
+        const a = (i * Math.PI) / 4;
+        pts.push({ x: p.x + pad * Math.cos(a), z: p.z + pad * Math.sin(a) });
+      }
+    }
+    const hull = convexHull(pts);
+    if (hull.length >= 3) yards.push(hull);
+  }
+  const streets = scene.restrictions.filter((r) => STREET_ZONE_TYPES.has(r.type)).map((r) => r.polygon);
+  return { yards, streets };
+}
+
+// Выпуклая оболочка (монотонная цепочка Эндрю).
+function convexHull(points: Point2[]): Point2[] {
+  if (points.length < 3) return [];
+  const sorted = [...points].sort((a, b) => a.x - b.x || a.z - b.z);
+  const cross = (o: Point2, a: Point2, b: Point2) => (a.x - o.x) * (b.z - o.z) - (a.z - o.z) * (b.x - o.x);
+  const half = (pts: Point2[]) => {
+    const out: Point2[] = [];
+    for (const p of pts) {
+      while (out.length >= 2 && cross(out[out.length - 2], out[out.length - 1], p) <= 0) out.pop();
+      out.push(p);
+    }
+    out.pop();
+    return out;
+  };
+  return [...half(sorted), ...half(sorted.reverse())];
+}
+
 export interface SceneBounds {
   minX: number;
   maxX: number;

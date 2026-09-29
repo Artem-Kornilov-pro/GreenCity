@@ -24,6 +24,15 @@ export type InstancePlacement = {
   height?: number;
 };
 
+// Ёмкость группы. drei.Instances выделяет буфер матриц один раз, при первом
+// показе, и не расширяет его: объект сверх ёмкости не рисуется (перенесённое
+// или добавленное дерево пропадало, а с ним и вся группа). Ёмкость -- с
+// запасом до степени двойки; когда её не хватает, группа пересоздаётся
+// (key), а не при каждом изменении числа объектов.
+function capacityFor(count: number): number {
+  return Math.max(16, 2 ** Math.ceil(Math.log2(Math.max(count, 1))));
+}
+
 // memo: placements пересобирается в useMemo вызывающего кода только при
 // изменении объектов или выделения.
 export const InstancedVegetationGroup = memo(function InstancedVegetationGroup({
@@ -36,9 +45,10 @@ export const InstancedVegetationGroup = memo(function InstancedVegetationGroup({
   onSelect: (id: string) => void;
 }) {
   const { nodes, scene } = useGLTF(url);
+  const capacity = capacityFor(placements.length);
 
   return (
-    <Merged meshes={nodes} limit={Math.max(placements.length, 1)} frustumCulled={false}>
+    <Merged key={capacity} meshes={nodes} limit={capacity} frustumCulled={false}>
       {(Model: Record<string, React.ComponentType<{ position?: [number, number, number]; rotation?: [number, number, number]; scale?: number; onClick?: (e: ThreeEvent<MouseEvent>) => void }>>) => {
         const parts = Object.values(Model);
         // Без группы-обёртки на размещение: каждая часть модели обрабатывает

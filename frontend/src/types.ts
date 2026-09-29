@@ -59,9 +59,10 @@ export type FacadeQuad = Point3[];
 // FacadeQuad: не самостоятельный объект, схематичная ribbon-геометрия.
 export type CurbPolyline = Point2[];
 
-// Газон GreenPlan (backend/greenplan/lawn.py) -- площадь, а не объекты:
-// полигон с дырками (клумбы кустарника), в м². new -- устройство газона на
-// открытой земле (идёт в ведомость), existing -- сохраняемый газон исходного плана.
+// Газон (backend/greenplan/lawn.py) -- площадь, а не объекты: полигон с
+// дырками (клумбы кустарника), в м². existing -- сохраняемый газон исходного
+// чертежа, приходит сразу при загрузке; new -- устройство газона на открытой
+// земле от GreenPlan (идёт в ведомость).
 export interface LawnArea {
   id: string;
   polygon: Point2[];

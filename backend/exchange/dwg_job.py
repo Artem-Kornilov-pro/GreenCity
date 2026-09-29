@@ -68,9 +68,8 @@ class DwgJobError(Exception):
 
 def build_scene(dwg_paths: list[Path], work_dir: Path, source_id: Optional[str] = None) -> tuple[dict, dict]:
     """(сцена, сводка для метрик и логов). Бросает DwgJobError."""
-    from core.building_setbacks import compute_building_setbacks
     from exchange import dwg_batch_converter
-    from exchange.dxf_parser import parse_dxf_doc
+    from exchange.dxf_parser import complete_scene, parse_dxf_doc
 
     try:
         workers = max(1, int(os.environ.get("DWG_WORKERS", DEFAULT_WORKERS)))
@@ -92,7 +91,7 @@ def build_scene(dwg_paths: list[Path], work_dir: Path, source_id: Optional[str] 
     del result.doc
     gc.collect()
 
-    scene["buildingSetbacks"] = compute_building_setbacks(scene.get("objects", []))
+    complete_scene(scene)
     if source_id:
         scene["meta"]["sourceId"] = source_id
     if result.failed:
