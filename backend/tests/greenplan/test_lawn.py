@@ -2,7 +2,7 @@
 
 import pytest
 
-from greenplan.lawn import DEFAULT_SHRUB_RADIUS_M, LAWN_KIND, MIN_LAWN_AREA_SQM, lawn_totals, plan_lawns
+from greenplan.lawn import DEFAULT_SHRUB_RADIUS_M, LAWN_KIND, MIN_LAWN_AREA_SQM, existing_lawns, lawn_totals, plan_lawns
 from helpers import make_boundary, make_object, make_scene, make_zone, rect_points
 
 SITE_AREA = 100 * 100  # make_boundary() по умолчанию: [-50,50]x[-50,50]
@@ -97,3 +97,17 @@ def test_lawn_is_clipped_to_boundary():
     big = make_zone(id="o", type="lawn", name="GROUND", severity="allowed", polygon=rect_points(-100, -100, 100, 100))
     scene = make_scene(boundary=make_boundary(0, 0, 30, 30), restrictions=[big])
     assert _new_area(scene) == pytest.approx(900)
+
+
+def test_existing_lawns_are_only_the_drawing_lawn_cover():
+    # Сразу после загрузки чертежа: газон со слоёв газона -- сохраняемый,
+    # открытая земля рядом газоном не считается (его предлагает GreenPlan).
+    grass = make_zone(id="g", type="lawn", name="ДВ_ГП_П_Газон", severity="allowed", polygon=rect_points(-50, -50, 0, 50))
+    ground = make_zone(id="o", type="lawn", name="__computed_ground__", severity="allowed", polygon=rect_points(0, -50, 50, 50))
+    lawns = existing_lawns(make_scene(restrictions=[grass, ground]), {})
+    assert [a.status for a in lawns] == ["existing"]
+    assert lawns[0].area_sqm == pytest.approx(SITE_AREA / 2)
+
+
+def test_no_lawn_cover_in_drawing_no_existing_lawn():
+    assert existing_lawns(make_scene(), {}) == []

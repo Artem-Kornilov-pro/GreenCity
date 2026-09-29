@@ -134,7 +134,8 @@ def test_greenplan_with_user_options(client, e2e):
     result = client.post("/api/greenplan/generate", json={"scene": scene, "options": options}).json()
     planned = result["scene"]
     assert {a["site_style"] for a in result["assignments"]} == {"landscape"}
-    assert planned["lawns"] == []
+    # Газон выключен: нового нет, газон из чертежа остаётся на сцене.
+    assert all(lawn["status"] == "existing" for lawn in planned["lawns"])
     trees = [o for o in planned["objects"] if o["type"] == "tree" and o["metadata"].get("source") == "greenplan"]
     assert any(t["metadata"]["species"] == "Липа мелколистная" for t in trees)
     rows = {row["species"]: row for row in result["improvements"]}

@@ -175,6 +175,14 @@ def plan_lawns(scene: Scene, catalog: dict[str, CatalogItem]) -> list[LawnArea]:
     return areas
 
 
+def existing_lawns(scene: Scene, catalog: dict[str, CatalogItem]) -> list[LawnArea]:
+    """Сохраняемый газон исходного чертежа: газон со слоёв плана покрытий за
+    вычетом покрытий, сооружений и клумб кустарника. Отдаётся сразу при
+    загрузке чертежа, чтобы газон был виден до GreenPlan; новый газон на
+    открытой земле предлагает только GreenPlan."""
+    return [area for area in plan_lawns(scene, catalog) if area.status == "existing"]
+
+
 def lawn_totals(lawns: list[LawnArea]) -> tuple[float, float]:
     """(новый газон, м²; сохраняемый существующий, м²)."""
     new = sum(a.area_sqm for a in lawns if a.status == "new")

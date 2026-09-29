@@ -30,6 +30,7 @@ from greenplan.species_selection import (
 )
 from greenplan.violation_report import find_violations
 from greenplan.zone_partitioning import GeometricZone
+from helpers import make_scene, make_zone, rect_points
 
 CATALOG = load_catalog()
 BY_ID = catalog_by_id()
@@ -164,7 +165,15 @@ def test_rerun_replaces_the_previous_result(scene_02):
 def test_planting_toggles(scene_02):
     run = run_greenplan(scene_02, GreenPlanOptions(trees=False, lawn=False))
     assert run.new_plants and all(o.type != "tree" for o in run.new_plants)
-    assert run.scene.lawns == []
+    assert all(lawn.status == "existing" for lawn in run.scene.lawns)
+
+
+def test_lawn_off_keeps_the_drawing_lawn():
+    # Газон выключен в параметрах: нового нет, но газон из чертежа остаётся
+    # на сцене -- иначе он пропадал бы с экрана после запуска GreenPlan.
+    grass = make_zone(id="g", type="lawn", name="GRASS", severity="allowed", polygon=rect_points(-50, -50, 0, 50))
+    run = run_greenplan(make_scene(restrictions=[grass]), GreenPlanOptions(lawn=False, trees=False, bushes=False))
+    assert run.scene.lawns and {lawn.status for lawn in run.scene.lawns} == {"existing"}
 
 
 def test_preferred_species_of_a_disabled_category_is_reported(scene_02):

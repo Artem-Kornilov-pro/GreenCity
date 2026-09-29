@@ -23,14 +23,13 @@ from fastapi.responses import Response
 from pydantic import TypeAdapter
 
 from api.protection import HEAVY_RESPONSES, MAX_DWG_FILES, rate_limit
-from core.building_setbacks import compute_building_setbacks
 from core.concurrency import ServerBusy, run_heavy, run_light
 from core.plant_catalog import CatalogItem, load_catalog
 from core.schemas import Scene
 from core.setback_norms import DEFAULT_TREE_SPECIES
 from exchange import dwg_job, source_store
 from exchange.dxf_overlay import overlay_scene
-from exchange.dxf_parser import parse_dxf_file
+from exchange.dxf_parser import complete_scene, parse_dxf_file
 from exchange.export_dxf import scene_to_dxf
 from generation.greenery_generator import (
     DEFAULT_BUSH_GRID_SPACING_M,
@@ -106,7 +105,7 @@ def _parse_dxf(data: bytes, filename: str) -> dict:
     finally:
         Path(tmp.name).unlink(missing_ok=True)
 
-    scene["buildingSetbacks"] = compute_building_setbacks(scene.get("objects", []))
+    complete_scene(scene)
     source_id = source_store.save_dxf(data)
     if source_id:
         scene["meta"]["sourceId"] = source_id
