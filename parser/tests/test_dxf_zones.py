@@ -190,9 +190,9 @@ def test_extract_restrictions_keeps_zone_fully_inside_relevance_margin(empty_doc
 
 
 def test_extract_restrictions_relevance_margin_does_not_drop_far_building(empty_doc):
-    # Здания -- исключение из обрезки (см. докстринг _clip_offsite_zones):
-    # обрезка касается инженерных сетей/газона с общегородской подложки, а не
-    # зданий, которые extract_buildings превращает в объекты сцены поштучно.
+    # Зоны зданий extract_restrictions не режет: из них extract_buildings
+    # строит объекты сцены. Дальние здания отбрасываются целиком при сборке
+    # сцены (parse_dxf._clip_offsite_buildings, test_parse_dxf.py).
     msp, boundary = _boundary10(empty_doc)
     msp.add_lwpolyline([(1000, 1000), (1010, 1000), (1010, 1010), (1000, 1010)], close=True, dxfattribs={"layer": "BUILDING_FAR"})
     zones = extract_restrictions(msp, Transform(), boundary)

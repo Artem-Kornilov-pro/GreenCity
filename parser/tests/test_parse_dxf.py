@@ -126,3 +126,22 @@ def test_match_rule_heat_network_has_its_own_type():
         assert match_rule(layer.upper(), POLYGON_RULES)["type"] == "heat_network", layer
     # Специфичность не сломана: водопровод остаётся водопроводом.
     assert match_rule("ВОДОПРОВОД", POLYGON_RULES)["type"] == "water_pipeline"
+
+
+def test_far_buildings_are_dropped_with_their_windows_near_ones_stay(empty_doc):
+    # Топоплан пачки DWG приносит квартал вокруг участка: здания за полосой
+    # влияния отбрасываются вместе с окнами, здание у границы остаётся.
+    msp = empty_doc.modelspace()
+    msp.add_lwpolyline([(0, 0), (100, 0), (100, 100), (0, 100)], close=True, dxfattribs={"layer": "TERRITORY_BOUNDARY"})
+    msp.add_lwpolyline([(10, 10), (20, 10), (20, 20), (10, 20)], close=True, dxfattribs={"layer": "BUILDING"})
+    msp.add_lwpolyline([(110, 10), (120, 10), (120, 20), (110, 20)], close=True, dxfattribs={"layer": "BUILDING"})
+    msp.add_lwpolyline([(1000, 1000), (1010, 1000), (1010, 1010), (1000, 1010)], close=True, dxfattribs={"layer": "BUILDING"})
+    msp.add_3dface([(10, 10, 3), (15, 10, 3), (15, 10, 5), (10, 10, 5)], dxfattribs={"layer": "WINDOWS"})
+    msp.add_3dface([(1000, 1000, 3), (1005, 1000, 3), (1005, 1000, 5), (1000, 1000, 5)], dxfattribs={"layer": "WINDOWS"})
+
+    result = parse_dxf_doc(empty_doc)
+
+    assert sum(o["type"] == "building" for o in result["objects"]) == 2
+    assert sum(z["type"] == "building" for z in result["restrictions"]) == 2
+    assert result["meta"]["buildingCount"] == 2
+    assert len(result["windows"]) == 1

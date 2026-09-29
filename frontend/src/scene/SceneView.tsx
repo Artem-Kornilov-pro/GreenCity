@@ -3,7 +3,7 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import type { Point2, RestrictionZone, Scene } from "../types";
 import type { CatalogItem } from "../catalog";
-import { computeSceneBounds } from "../geometry";
+import { computeSceneBounds, computeSurroundings } from "../geometry";
 import { Ground } from "./Ground";
 import { FLAT_LAYER_ORDER } from "./geometryHelpers";
 import { RestrictionZones } from "./RestrictionZones";
@@ -18,6 +18,8 @@ import { AreaSelectionDraw } from "./AreaSelectionDraw";
 // Высота сетки-ориентира: над газоном (0.02), под зонами (0.04). Видимость
 // решает порядок отрисовки, не высота -- см. комментарий у gridHelper.
 const GRID_Y = 0.03;
+// Ширина площадки вокруг дома (отмостка, тротуар), м.
+const YARD_PAD_M = 4;
 
 export function SceneView({
   scene,
@@ -51,6 +53,8 @@ export function SceneView({
   const depth = bounds.maxZ - bounds.minZ;
   const gridSize = Math.max(width, depth, 20) * 1.3;
   const gridDivisions = Math.min(120, Math.max(10, Math.round(gridSize / 15)));
+  // Земля окрестностей -- под соседними домами и улицами.
+  const surroundings = useMemo(() => computeSurroundings(scene, YARD_PAD_M), [scene]);
 
   // Кольца отступов приходят с бэкенда (building_setbacks.py).
   const displayZones = useMemo(
@@ -72,7 +76,7 @@ export function SceneView({
       <ambientLight intensity={0.7} />
       <directionalLight position={[30, 50, 20]} intensity={1.1} castShadow />
       <FitCamera bounds={bounds} sceneLoadToken={sceneLoadToken} />
-      <Ground boundary={scene.boundary} />
+      <Ground boundary={scene.boundary} surroundings={surroundings} />
       <Lawns lawns={scene.lawns ?? []} />
       <RestrictionZones zones={displayZones} onHover={onHoverZone} />
       <Buildings objects={scene.objects} />
