@@ -4,11 +4,13 @@
 ezdxf-документ на путь вывода -- это ровно то, что делает настоящий dwg2dxf,
 просто без реального бинарного формата DWG на входе."""
 
+import io
 from pathlib import Path
 
 import ezdxf
 import pytest
 
+from dxf_parsing.encoding import repair_mojibake
 from exchange.dwg_batch_converter import Dwg2DxfNotFound, merge_dwg_files
 
 
@@ -235,3 +237,60 @@ def test_read_converted_dxf_repairs_multiline_values_and_broken_unicode_escapes(
     assert [e.dxf.layer for e in repaired.modelspace().query("LINE")] == ["ROAD_EDGE"]
     assert len(repaired.modelspace().query("TEXT")) == 1
     assert not list(tmp_path.glob("*.clean.dxf"))  # временный файл убран
+
+
+# --- Отбор с синонимами, блоками и назначениями пользователя -----------------
+
+
+def _fake_dwg2dxf_writing(monkeypatch, build, encode_utf8_under_cp1252=False):
+    def fake_run(args, capture_output):
+        doc = ezdxf.new("R2000")
+        build(doc)
+        out = Path(args[2])
+        if encode_utf8_under_cp1252:
+            # Как настоящий dwg2dxf: в заголовке ANSI_1252, имена -- в UTF-8.
+            text = io.StringIO()
+            doc.write(text)
+            out.write_bytes(text.getvalue().encode("utf-8"))
+        else:
+            doc.saveas(out)
+        return type("Done", (), {"returncode": 0, "stdout": b"", "stderr": b""})()
+
+    monkeypatch.setattr("exchange.dwg_batch_converter.shutil.which", lambda name: "/usr/bin/dwg2dxf")
+    monkeypatch.setattr("exchange.dwg_batch_converter.subprocess.run", fake_run)
+
+
+def test_merge_keeps_synonym_layers_blocks_with_content_and_assigned_layers(monkeypatch, tmp_path):
+    def build(doc):
+        msp = doc.modelspace()
+        msp.add_line((0, 0), (1, 0), dxfattribs={"layer": "Тепловые сети"})
+        msp.add_line((0, 0), (1, 0), dxfattribs={"layer": "Слой 7"})
+        msp.add_line((0, 0), (1, 0), dxfattribs={"layer": "Рельеф"})
+        plan = doc.blocks.new("ПЛАН")
+        plan.add_lwpolyline([(0, 0), (10, 0), (10, 10)], close=True, dxfattribs={"layer": "Здания"})
+        msp.add_blockref("ПЛАН", (0, 0), dxfattribs={"layer": "0"})
+
+    _fake_dwg2dxf_writing(monkeypatch, build)
+    dwg = tmp_path / "a.dwg"
+    dwg.write_bytes(b"x")
+    # Имена слоёв DXF R2000 с кириллицей ezdxf пишет как \U+XXXX и так их
+    # и читает -- как и в чертежах заказчиков; layer_map задан по такому
+    # имени, как оно приходит в сводке слоёв.
+    layer_7 = "\\U+0421\\U+043b\\U+043e\\U+0439 7"
+    result = merge_dwg_files([dwg], tmp_path, layer_map={layer_7: "path"})
+    msp = result.doc.modelspace()
+    assert sorted(repair_mojibake(e.dxf.layer) for e in msp.query("LINE")) == ["Слой 7", "Тепловые сети"]
+    assert [repair_mojibake(e.dxf.name) for e in msp.query("INSERT")] == ["ПЛАН"]
+    # Отброшенный слой виден в сводке -- его можно назначить.
+    assert {repair_mojibake(name): n for name, n in result.layer_counts.items()} == {"Тепловые сети": 1, "Слой 7": 1, "Рельеф": 1, "0": 1}
+
+
+def test_merge_reads_names_written_in_utf8_under_a_cp1252_header(monkeypatch, tmp_path):
+    def build(doc):
+        doc.modelspace().add_lwpolyline([(0, 0), (10, 0), (10, 10)], close=True, dxfattribs={"layer": "Здания"})
+
+    _fake_dwg2dxf_writing(monkeypatch, build, encode_utf8_under_cp1252=True)
+    dwg = tmp_path / "a.dwg"
+    dwg.write_bytes(b"x")
+    result = merge_dwg_files([dwg], tmp_path)
+    assert [e.dxf.layer for e in result.doc.modelspace()] == ["Здания"]

@@ -1,6 +1,6 @@
 import { sessionAuth, type Session } from "./auth";
 import { request, requestBlob, send } from "./lib/http";
-import type { Scene } from "./types";
+import type { LayerKind, Scene } from "./types";
 
 export function uploadDxf(file: File): Promise<Scene> {
   const form = new FormData();
@@ -15,6 +15,17 @@ export function uploadDwgFolder(files: File[]): Promise<Scene> {
   const form = new FormData();
   for (const file of files) form.append("files", file);
   return request<Scene>("/api/parse-dwg", { form, errorMessage: "Ошибка конвертации DWG" });
+}
+
+// Классы слоёв, которые можно назначить вручную в окне «Слои чертежа».
+export function getLayerKinds(): Promise<LayerKind[]> {
+  return request<LayerKind[]>("/api/layer-kinds", { errorMessage: "Не удалось получить список типов слоёв" });
+}
+
+// Загруженный чертёж (DXF или пачка DWG) разбирается заново на сервере с
+// назначениями слоёв: файлы второй раз не отправляются.
+export function reparseScene(sourceId: string, layerMap: Record<string, string>): Promise<Scene> {
+  return request<Scene>("/api/reparse", { json: { sourceId, layerMap }, errorMessage: "Не удалось разобрать чертёж заново" });
 }
 
 // Итоговый план -> .dxf. mode: "overlay" -- слои результата дописаны в

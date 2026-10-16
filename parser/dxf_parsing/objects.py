@@ -12,6 +12,7 @@ from shapely.geometry import LineString
 from shapely.strtree import STRtree
 
 from dxf_parsing.geometry import polygon_points
+from dxf_parsing.layer_names import layer_key_of
 from dxf_parsing.rules import (
     BUILDING_MESH_LAYER_KEYWORDS,
     CURB_LAYER_KEYWORDS,
@@ -40,6 +41,11 @@ def clean_label(text):
     return _LABEL_HEIGHT_SUFFIX.sub("", text).strip()
 
 
+# Отметка дальше этого от нуля -- абсолютная высота над уровнем моря
+# (Москва -- 120-250 м), а не высота над землёй участка.
+_ABSOLUTE_ELEVATION_M = 5.0
+
+
 def extract_buildings(msp, tf, restriction_zones):
     """Здания как SceneObject (для 3D-модели), высота — из MESH, имя — из ближайшего TEXT."""
     texts = []
@@ -52,14 +58,17 @@ def extract_buildings(msp, tf, restriction_zones):
 
     meshes = []
     for e in msp.query("MESH"):
-        if not layer_matches(e.dxf.layer, BUILDING_MESH_LAYER_KEYWORDS):
+        if not layer_matches(layer_key_of(msp, e), BUILDING_MESH_LAYER_KEYWORDS):
             continue
         verts = list(e.vertices)
         if not verts:
             continue
         cx = sum(v[0] for v in verts) / len(verts)
         cy = sum(v[1] for v in verts) / len(verts)
-        height = max(v[2] for v in verts)
+        top, base = max(v[2] for v in verts), min(v[2] for v in verts)
+        # Топосъёмка в абсолютных отметках: дом стоит на высоте 150 м, и его
+        # высота -- разница отметок, а не отметка крыши.
+        height = top - base if abs(base * tf.scale) > _ABSOLUTE_ELEVATION_M else top
         meshes.append({"x": cx, "y": cy, "height": height})
 
     objects = []
@@ -141,10 +150,12 @@ def extract_point_objects(msp, tf):
     counters = Counter()
 
     # Правил сотни (по одному на вид), поэтому ключевые слова сопоставляются
-    # с именами слоёв один раз, а сущности берутся из индекса по слою.
+    # с ключами слоёв один раз, а сущности берутся из индекса по ключу. Ключ --
+    # имя слоя, у вида чертежа -- с учётом синонимов и имени блока
+    # (layer_names.layer_key_of).
     entities_by_layer: dict[str, list] = {}
     for e in msp:
-        entities_by_layer.setdefault(e.dxf.layer, []).append(e)
+        entities_by_layer.setdefault(layer_key_of(msp, e), []).append(e)
 
     for layer_keyword, cfg in POINT_LAYER_RULES:
         entities = [
@@ -157,7 +168,10 @@ def extract_point_objects(msp, tf):
             continue
 
         inserts_or_points = [e for e in entities if e.dxftype() in ("INSERT", "POINT")]
-        lines = [e for e in entities if e.dxftype() == "LINE"]
+        # Столб -- вертикальный отрезок. Отрезки в плане -- штрихи условного
+        # знака (крест в круге дерева) или кабель на слое освещения: столбами
+        # они не считаются, иначе каждый штрих стал бы объектом.
+        lines = [e for e in entities if e.dxftype() == "LINE" and _is_vertical(e)]
         circles = [e for e in entities if e.dxftype() == "CIRCLE"]
 
         for e in inserts_or_points:
@@ -224,14 +238,20 @@ def extract_point_objects(msp, tf):
     return objects
 
 
+def _is_vertical(line) -> bool:
+    s, en = line.dxf.start, line.dxf.end
+    return math.hypot(en.x - s.x, en.y - s.y) < 1e-6 and abs(en.z - s.z) > 1e-6
+
+
 def extract_facade_quads(msp, tf):
     """3DFACE-элементы окон/козырьков -- не самостоятельные объекты сцены (их
     сотни-тысячи и они не переставляются), а геометрия для отрисовки прямо на
     фасаде здания. Каждая грань -- 4 вершины в 3D (уже с учётом высоты)."""
     result = {name: [] for name in FACADE_LAYER_KEYWORDS}
     for e in msp.query("3DFACE"):
+        key = layer_key_of(msp, e)
         for name, keywords in FACADE_LAYER_KEYWORDS.items():
-            if layer_matches(e.dxf.layer, keywords):
+            if layer_matches(key, keywords):
                 quad = [e.dxf.vtx0, e.dxf.vtx1, e.dxf.vtx2, e.dxf.vtx3]
                 result[name].append([tf.point(v.x, v.y, v.z) for v in quad])
                 break
@@ -245,13 +265,13 @@ def extract_curb_polylines(msp, tf):
     (в отличие от фасадных квадов: бордюр лежит на земле, высота не нужна)."""
     result = []
     for e in msp.query("LWPOLYLINE POLYLINE"):
-        if not layer_matches(e.dxf.layer, CURB_LAYER_KEYWORDS):
+        if not layer_matches(layer_key_of(msp, e), CURB_LAYER_KEYWORDS):
             continue
         pts = polygon_points(e)
         if len(pts) >= 2:
             result.append(tf.polygon(pts))
     for e in msp.query("LINE"):
-        if not layer_matches(e.dxf.layer, CURB_LAYER_KEYWORDS):
+        if not layer_matches(layer_key_of(msp, e), CURB_LAYER_KEYWORDS):
             continue
         s, en = e.dxf.start, e.dxf.end
         if math.hypot(en.x - s.x, en.y - s.y) < 1e-6:

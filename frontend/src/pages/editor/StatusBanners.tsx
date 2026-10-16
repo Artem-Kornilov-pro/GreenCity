@@ -1,4 +1,5 @@
-import { Loader2, RotateCw, X } from "lucide-react";
+import { Layers, Loader2, RotateCw, X } from "lucide-react";
+import type { LayerSummary } from "./hooks/useLayerMapping";
 
 // Ошибка действия; onRetry -- повторить его с теми же данными.
 export interface BannerError {
@@ -8,7 +9,8 @@ export interface BannerError {
 }
 
 // Полоса под топбаром: ошибка важнее всего, затем ход конвертации DWG,
-// затем предупреждение о несконвертированных файлах папки.
+// затем предупреждение о несконвертированных файлах папки, затем сводка
+// распознавания слоёв.
 export function StatusBanners({
   notice,
   onDismissNotice,
@@ -17,6 +19,9 @@ export function StatusBanners({
   totalDwgFiles,
   dwgWarnings,
   onDismissDwgWarnings,
+  layerSummary,
+  onOpenLayers,
+  onDismissLayerSummary,
 }: {
   notice: string | null;
   onDismissNotice: () => void;
@@ -25,6 +30,9 @@ export function StatusBanners({
   totalDwgFiles: number;
   dwgWarnings: { file: string; error: string }[] | null;
   onDismissDwgWarnings: () => void;
+  layerSummary: LayerSummary | null;
+  onOpenLayers: () => void;
+  onDismissLayerSummary: () => void;
 }) {
   if (error) {
     return (
@@ -94,6 +102,37 @@ export function StatusBanners({
         <button onClick={onDismissDwgWarnings} className="shrink-0 opacity-70 hover:opacity-100">
           <X className="h-4 w-4" />
         </button>
+      </div>
+    );
+  }
+  if (layerSummary) {
+    const { total, unrecognized, warnings } = layerSummary;
+    const shown = unrecognized.slice(0, 4).map((name) => `«${name}»`).join(", ");
+    return (
+      <div className="absolute inset-x-0 top-14 z-30 flex items-start justify-between gap-3 border-b border-warning-500/30 bg-warning-500/90 px-4 py-2 text-sm text-ink-900 backdrop-blur-sm">
+        <span className="flex flex-col gap-0.5">
+          <span>
+            Слои чертежа: распознано {total - unrecognized.length} из {total}
+            {unrecognized.length > 0 &&
+              `. Не учтены: ${shown}${unrecognized.length > 4 ? ` и ещё ${unrecognized.length - 4}` : ""} — назначьте им тип, если на них нужное`}
+            .
+          </span>
+          {warnings.map((w) => (
+            <span key={w}>{w}</span>
+          ))}
+        </span>
+        <span className="flex shrink-0 items-center gap-2">
+          <button
+            onClick={onOpenLayers}
+            className="inline-flex items-center gap-1 rounded-lg bg-white/40 px-2.5 py-1 text-xs font-medium hover:bg-white/60"
+          >
+            <Layers className="h-3.5 w-3.5" />
+            Проверить слои
+          </button>
+          <button onClick={onDismissLayerSummary} className="opacity-70 hover:opacity-100" aria-label="Закрыть">
+            <X className="h-4 w-4" />
+          </button>
+        </span>
       </div>
     );
   }

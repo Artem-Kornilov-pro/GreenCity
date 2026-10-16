@@ -36,6 +36,13 @@ TARGET_LABELS = {
 }
 _FIXED_TARGETS = frozenset(TARGET_LABELS)
 
+
+def is_parking(zone: RestrictionZone) -> bool:
+    """Парковка. У неё в парсере тип "custom", поэтому она различается по
+    классу слоя (layerKind: «Автостоянка», «Машиноместа») или, как раньше, по
+    имени слоя (PARKING)."""
+    return zone.layerKind == "parking" or "PARK" in zone.name.upper()
+
 SITE_CLEARANCE_M = 0.5  # не ставим вплотную к границе участка
 # Запас от границы допустимой области: без него точка ложится ровно на границу
 # и не проходит проверку из-за погрешности float.
@@ -348,8 +355,7 @@ class Placer:
 
     def _target_zones(self, target: str) -> list:
         if target == "parking":
-            # У парковки в парсере тип "custom" -- различаем по слою.
-            return [(zone, geom) for zone, geom in self.zones if "PARK" in zone.name.upper()]
+            return [(zone, geom) for zone, geom in self.zones if is_parking(zone)]
         zone_type = "playground_zone" if target == "playground" else target
         matches = [(zone, geom) for zone, geom in self.zones if zone.type == zone_type]
         if matches or target in _FIXED_TARGETS:

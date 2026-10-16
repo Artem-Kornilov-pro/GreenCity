@@ -97,7 +97,10 @@ def _plant_notes(obj: SceneObject) -> tuple[str, ...]:
 def overlay_scene(scene: Scene, doc) -> OverlaySummary:
     """Дописать в doc (исходный чертёж) слои результата по сцене scene.
     doc меняется на месте; исходные сущности не трогаются."""
-    baseline = Scene.model_validate(parse_dxf_doc(doc))
+    # База разбирается с теми же назначениями слоёв, что и сцена: иначе объект
+    # с назначенного слоя считался бы добавленным пользователем.
+    layer_kwargs = {"layer_map": scene.meta.layerMap} if scene.meta.layerMap else {}
+    baseline = Scene.model_validate(parse_dxf_doc(doc, **layer_kwargs))
     scale = baseline.meta.scale or 1.0
     ox, oy = float(baseline.meta.origin.get("x", 0.0)), float(baseline.meta.origin.get("y", 0.0))
     to_source = Matrix44.chain(Matrix44.scale(1 / scale, 1 / scale, 1 / scale), Matrix44.translate(ox, oy, 0))

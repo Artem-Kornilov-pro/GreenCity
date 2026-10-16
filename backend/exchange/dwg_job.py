@@ -66,14 +66,18 @@ class DwgJobError(Exception):
         self.failed = failed
 
 
-def build_scene(dwg_paths: list[Path], work_dir: Path, source_id: Optional[str] = None) -> tuple[dict, dict]:
-    """(сцена, сводка для метрик и логов). Бросает DwgJobError."""
+def build_scene(
+    dwg_paths: list[Path], work_dir: Path, source_id: Optional[str] = None, layer_map: Optional[dict[str, str]] = None
+) -> tuple[dict, dict]:
+    """(сцена, сводка для метрик и логов). layer_map -- назначения слоёв
+    пользователем. Бросает DwgJobError."""
     from exchange import dwg_batch_converter
     from exchange.dxf_parser import complete_scene, parse_dxf_doc
 
     try:
         workers = max(1, int(os.environ.get("DWG_WORKERS", DEFAULT_WORKERS)))
-        result = dwg_batch_converter.merge_dwg_files(dwg_paths, work_dir, workers=workers)
+        merge_kwargs = {"layer_map": layer_map} if layer_map else {}
+        result = dwg_batch_converter.merge_dwg_files(dwg_paths, work_dir, workers=workers, **merge_kwargs)
     except dwg_batch_converter.Dwg2DxfNotFound as e:
         raise DwgJobError(503, str(e), "tool_missing") from e
 
@@ -83,8 +87,13 @@ def build_scene(dwg_paths: list[Path], work_dir: Path, source_id: Optional[str] 
 
     # Собранный документ разбирается прямо из памяти, без записи в файл и
     # повторного чтения.
+    parse_kwargs = {}
+    if layer_map:
+        parse_kwargs["layer_map"] = layer_map
+    if result.layer_counts:
+        parse_kwargs["dropped_layers"] = result.layer_counts
     try:
-        scene = parse_dxf_doc(result.doc)
+        scene = parse_dxf_doc(result.doc, **parse_kwargs)
     except Exception as e:
         log.warning("не удалось разобрать смёрженный DWG-батч: %s", e)
         raise DwgJobError(400, f"Не удалось разобрать результат конвертации: {e}", "parse_error") from e
@@ -122,18 +131,28 @@ def _isolated(isolated: Optional[bool]) -> bool:
 
 
 async def run(
-    dwg_paths: list[Path], work_dir: Path, request_id: str = "-", isolated: Optional[bool] = None, source_id: Optional[str] = None
+    dwg_paths: list[Path],
+    work_dir: Path,
+    request_id: str = "-",
+    isolated: Optional[bool] = None,
+    source_id: Optional[str] = None,
+    layer_map: Optional[dict[str, str]] = None,
 ) -> tuple[bytes, dict]:
     """(JSON сцены, сводка). isolated=None -- по DWG_JOB_ISOLATED (по
     умолчанию да). В самом процессе (в пуле потоков) -- для тестов, которые
     подменяют merge_dwg_files: подмена в дочерний процесс не переходит."""
     if not _isolated(isolated):
-        scene, summary = await run_light(build_scene, dwg_paths, work_dir, source_id)
+        scene, summary = await run_light(build_scene, dwg_paths, work_dir, source_id, layer_map)
         return json.dumps(scene, ensure_ascii=False).encode("utf-8"), summary
 
     scene_path = work_dir / "scene.json"
     meta_path = work_dir / "meta.json"
-    env = {**os.environ, "GREENCITY_REQUEST_ID": request_id, "GREENCITY_SOURCE_ID": source_id or ""}
+    env = {
+        **os.environ,
+        "GREENCITY_REQUEST_ID": request_id,
+        "GREENCITY_SOURCE_ID": source_id or "",
+        "GREENCITY_LAYER_MAP": json.dumps(layer_map or {}, ensure_ascii=False),
+    }
     returncode = await _run_child(
         [str(work_dir), str(scene_path), str(meta_path), *map(str, dwg_paths)], env, JOB_TIMEOUT_S, "Разбор DWG"
     )
@@ -157,10 +176,14 @@ def build_export(dwg_paths: list[Path], work_dir: Path, scene_json: bytes) -> by
     from exchange.dxf_overlay import overlay_scene
 
     workers = max(1, int(os.environ.get("DWG_WORKERS", DEFAULT_WORKERS)))
-    result = dwg_batch_converter.merge_dwg_files(dwg_paths, work_dir, workers=workers)
+    scene = Scene.model_validate_json(scene_json)
+    # Слои, которые пользователь назначил при загрузке, должны попасть и в
+    # чертёж под результатом.
+    merge_kwargs = {"layer_map": scene.meta.layerMap} if scene.meta.layerMap else {}
+    result = dwg_batch_converter.merge_dwg_files(dwg_paths, work_dir, workers=workers, **merge_kwargs)
     if not result.converted:
         raise DwgJobError(400, "Исходные DWG не сконвертировались при экспорте", "all_failed", len(result.failed))
-    overlay_scene(Scene.model_validate_json(scene_json), result.doc)
+    overlay_scene(scene, result.doc)
     buf = io.StringIO()
     result.doc.write(buf)
     return buf.getvalue().encode("utf-8")
@@ -244,8 +267,9 @@ def _main(argv: list[str]) -> int:
         return _export_main(argv[1:])
     work_dir, scene_path, meta_path = (Path(a) for a in argv[:3])
     dwg_paths = [Path(a) for a in argv[3:]]
+    layer_map = json.loads(os.environ.get("GREENCITY_LAYER_MAP") or "{}") or None
     try:
-        scene, summary = build_scene(dwg_paths, work_dir, os.environ.get("GREENCITY_SOURCE_ID") or None)
+        scene, summary = build_scene(dwg_paths, work_dir, os.environ.get("GREENCITY_SOURCE_ID") or None, layer_map)
     except DwgJobError as e:
         error = {"ok": False, "status": e.status, "detail": e.detail, "outcome": e.outcome, "failed": e.failed}
         meta_path.write_text(json.dumps(error, ensure_ascii=False), encoding="utf-8")

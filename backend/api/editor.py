@@ -11,16 +11,16 @@
 from __future__ import annotations
 
 import io
+import json
 import logging
 import shutil
 import tempfile
 from pathlib import Path
 from typing import Optional
 
-import ezdxf
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response
-from pydantic import TypeAdapter
+from pydantic import BaseModel, Field, TypeAdapter
 
 from api.protection import HEAVY_RESPONSES, MAX_DWG_FILES, rate_limit
 from core.concurrency import ServerBusy, run_heavy, run_light
@@ -29,7 +29,7 @@ from core.schemas import Scene
 from core.setback_norms import DEFAULT_TREE_SPECIES
 from exchange import dwg_job, source_store
 from exchange.dxf_overlay import overlay_scene
-from exchange.dxf_parser import complete_scene, parse_dxf_file
+from exchange.dxf_parser import LAYER_KINDS, complete_scene, parse_dxf_file, read_dxf
 from exchange.export_dxf import scene_to_dxf
 from generation.greenery_generator import (
     DEFAULT_BUSH_GRID_SPACING_M,
@@ -90,14 +90,14 @@ async def get_catalog():
     return catalog
 
 
-def _parse_dxf(data: bytes, filename: str) -> dict:
+def _parse_dxf(data: bytes, filename: str, layer_map: Optional[dict[str, str]] = None) -> dict:
     # delete=False: на Windows открытый временный файл нельзя открыть повторно по имени.
     tmp = tempfile.NamedTemporaryFile(suffix=".dxf", delete=False)  # noqa: SIM115
     try:
         tmp.write(data)
         tmp.close()
         try:
-            scene = parse_dxf_file(tmp.name)
+            scene = parse_dxf_file(tmp.name, layer_map=layer_map) if layer_map else parse_dxf_file(tmp.name)
         except Exception as e:
             metrics.dxf_parse_errors_total.inc()
             log.warning("не удалось разобрать %r: %s", filename, e)
@@ -112,6 +112,50 @@ def _parse_dxf(data: bytes, filename: str) -> dict:
     return scene
 
 
+LAYER_MAP_DESCRIPTION = (
+    "Назначения слоёв, главнее автоматического распознавания: JSON {имя слоя: класс}, "
+    "классы -- GET /api/layer-kinds. Например {\"Слой 5\": \"building\", \"0\": \"ignore\"}."
+)
+
+
+def _layer_map(raw: Optional[str]) -> Optional[dict[str, str]]:
+    """Назначения слоёв из поля формы; неизвестный класс -- 400, а не тихий
+    пропуск: пользователь должен узнать, что его назначение не применилось."""
+    if not raw:
+        return None
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise HTTPException(400, f"layerMap: ожидается JSON-объект {{имя слоя: класс}} ({e})") from e
+    return _checked_layer_map(value)
+
+
+def _checked_layer_map(value) -> Optional[dict[str, str]]:
+    if not isinstance(value, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in value.items()):
+        raise HTTPException(400, "layerMap: ожидается JSON-объект {имя слоя: класс}")
+    unknown = sorted({v for v in value.values() if v not in LAYER_KINDS})
+    if unknown:
+        raise HTTPException(400, f"layerMap: неизвестные классы {unknown}; список -- GET /api/layer-kinds")
+    return value or None
+
+
+class LayerKind(BaseModel):
+    id: str
+    label: str
+
+
+@router.get(
+    "/api/layer-kinds",
+    response_model=list[LayerKind],
+    tags=["Чертежи"],
+    summary="Классы слоёв для назначения вручную",
+)
+async def get_layer_kinds():
+    """Что можно назначить слою чертежа, если автоматическое распознавание
+    ошиблось или не узнало слой: поле `layerMap` загрузки и `/api/reparse`."""
+    return [LayerKind(id=kind, label=label) for kind, (_key, label) in LAYER_KINDS.items()]
+
+
 @router.post(
     "/api/parse",
     tags=["Чертежи"],
@@ -119,16 +163,23 @@ def _parse_dxf(data: bytes, filename: str) -> dict:
     responses={**SCENE_RESPONSE, **HEAVY_RESPONSES},
     dependencies=[rate_limit("parse")],
 )
-async def parse_dxf_endpoint(file: UploadFile = File(..., description="Чертёж участка в формате DXF.")):
+async def parse_dxf_endpoint(
+    file: UploadFile = File(..., description="Чертёж участка в формате DXF."),
+    layerMap: Optional[str] = Form(default=None, description=LAYER_MAP_DESCRIPTION),  # noqa: N803 -- имя поля API
+):
     """Разбирает DXF по слоям: граница участка, здания, дороги, дорожки,
     подземные сети и охранные зоны, существующие посадки и малые формы.
+    Слои распознаются по имени (с синонимами), по содержимому (имя блока,
+    образец штриховки, тип линии); вставки блоков раскрываются. Что взято из
+    каждого слоя -- в `meta.layers`, замечания разбора -- в `meta.warnings`.
     Координаты сцены -- метры от центра участка. Исходный файл сохраняется
     на сервере (`meta.sourceId`): экспорт допишет результат поверх него."""
     if not (file.filename or "").lower().endswith(".dxf"):
         raise HTTPException(400, "Ожидается файл .dxf")
 
+    layer_map = _layer_map(layerMap)
     data = await file.read()
-    scene = await run_heavy(_parse_dxf, data, file.filename)
+    scene = await run_heavy(_parse_dxf, data, file.filename, layer_map)
     metrics.dxf_parses_total.inc()
     log.info("разобран %r: %d объектов, %d зон", file.filename, len(scene.get("objects", [])), len(scene.get("restrictions", [])))
     return scene
@@ -143,12 +194,14 @@ async def parse_dxf_endpoint(file: UploadFile = File(..., description="Черт�
 )
 async def parse_dwg_folder_endpoint(
     files: list[UploadFile] = File(..., description="Файлы .dwg проекта; остальные файлы папки игнорируются."),
+    layerMap: Optional[str] = Form(default=None, description=LAYER_MAP_DESCRIPTION),  # noqa: N803 -- имя поля API
 ):
     """Конвертирует каждый DWG в DXF (LibreDWG), сливает в один чертёж и
     разбирает так же, как `/api/parse`. Файлы, которые не удалось прочитать,
     не прерывают загрузку: они перечислены в `dwgConversionWarnings`.
     Разбор идёт в отдельном процессе; одновременно -- не больше
     `DWG_MAX_PARALLEL` пачек, остальные ждут очереди."""
+    layer_map = _layer_map(layerMap)
     dwg_files = [f for f in files if (f.filename or "").lower().endswith(".dwg")]
     if not dwg_files:
         raise HTTPException(400, "Среди загруженных файлов нет ни одного .dwg")
@@ -164,16 +217,7 @@ async def parse_dwg_folder_endpoint(
             dwg_paths.append(dest)
 
         source_id = await run_light(source_store.save_dwg_batch, dwg_paths)
-        try:
-            async with dwg_job.slot():
-                payload, summary = await dwg_job.run(dwg_paths, tmp_path, request_id=current_request_id(), source_id=source_id)
-        except dwg_job.DwgJobError as e:
-            metrics.dwg_batch_conversions_total.labels(outcome=e.outcome).inc()
-            if e.failed:
-                metrics.dwg_files_processed_total.labels(outcome="failed").inc(e.failed)
-            if e.outcome == "parse_error":
-                metrics.dxf_parse_errors_total.inc()
-            raise HTTPException(e.status, e.detail) from e
+        payload, summary = await _run_dwg_job(dwg_paths, tmp_path, source_id, layer_map)
     finally:
         await run_light(shutil.rmtree, tmp_path, True)
 
@@ -186,6 +230,57 @@ async def parse_dwg_folder_endpoint(
         summary["converted"], len(dwg_files), summary["objects"], summary["zones"],
     )
     # JSON из дочернего процесса отдаётся как есть, без повторного разбора.
+    return Response(content=payload, media_type="application/json")
+
+
+async def _run_dwg_job(
+    dwg_paths: list[Path], work_dir: Path, source_id: Optional[str], layer_map: Optional[dict[str, str]]
+) -> tuple[bytes, dict]:
+    job_kwargs = {"layer_map": layer_map} if layer_map else {}
+    try:
+        async with dwg_job.slot():
+            return await dwg_job.run(dwg_paths, work_dir, request_id=current_request_id(), source_id=source_id, **job_kwargs)
+    except dwg_job.DwgJobError as e:
+        metrics.dwg_batch_conversions_total.labels(outcome=e.outcome).inc()
+        if e.failed:
+            metrics.dwg_files_processed_total.labels(outcome="failed").inc(e.failed)
+        if e.outcome == "parse_error":
+            metrics.dxf_parse_errors_total.inc()
+        raise HTTPException(e.status, e.detail) from e
+
+
+class ReparseRequest(BaseModel):
+    sourceId: str = Field(description="meta.sourceId загруженной сцены.")
+    layerMap: dict[str, str] = Field(default={}, description="Назначения слоёв {имя слоя: класс}; пустой -- только автоматическое распознавание.")
+
+
+@router.post(
+    "/api/reparse",
+    tags=["Чертежи"],
+    summary="Разобрать загруженный чертёж заново с назначениями слоёв",
+    responses={**SCENE_RESPONSE, **HEAVY_RESPONSES, 404: {"description": "Исходника на сервере нет -- загрузите чертёж заново."}},
+    dependencies=[rate_limit("parse")],
+)
+async def reparse_endpoint(request: ReparseRequest):
+    """Тот же разбор, что при загрузке (DXF или пачка DWG), исходник берётся
+    с сервера по `sourceId` -- загружать файлы второй раз не нужно. Так
+    применяются назначения слоёв из окна «Слои чертежа»."""
+    layer_map = _checked_layer_map(request.layerMap)
+    found = await run_light(source_store.find, request.sourceId)
+    if found is None:
+        raise HTTPException(404, "Исходного чертежа на сервере нет -- загрузите его заново.")
+    kind, source = found
+    if kind == "dxf":
+        data = await run_light(source.read_bytes)
+        scene = await run_heavy(_parse_dxf, data, source.name, layer_map)
+        metrics.dxf_parses_total.inc()
+        return scene
+    tmp_path = Path(await run_light(tempfile.mkdtemp))
+    try:
+        payload, _summary = await _run_dwg_job(source, tmp_path, request.sourceId, layer_map)
+    finally:
+        await run_light(shutil.rmtree, tmp_path, True)
+    metrics.dxf_parses_total.inc()
     return Response(content=payload, media_type="application/json")
 
 
@@ -316,7 +411,7 @@ async def edit_with_text(request: TextEditRequest):
 
 
 def _overlay_dxf(path: Path, scene: Scene) -> bytes:
-    doc = ezdxf.readfile(path)
+    doc = read_dxf(path)
     summary = overlay_scene(scene, doc)
     buf = io.StringIO()
     doc.write(buf)
