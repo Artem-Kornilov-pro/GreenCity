@@ -13,6 +13,7 @@ import { EditorSidebar } from "./EditorSidebar";
 import { EditorTopBar } from "./EditorTopBar";
 import { GreenPlanOptionsDialog } from "./GreenPlanOptionsDialog";
 import { GreenPlanPanel } from "./GreenPlanPanel";
+import { LayerMappingDialog } from "./LayerMappingDialog";
 import { SaveAsDialog } from "./SaveAsDialog";
 import { StatusBanners, type BannerError } from "./StatusBanners";
 import { useAssistant } from "./hooks/useAssistant";
@@ -20,6 +21,7 @@ import { useCatalog } from "./hooks/useCatalog";
 import { useExport } from "./hooks/useExport";
 import { useFileDrop } from "./hooks/useFileDrop";
 import { useGreenPlan } from "./hooks/useGreenPlan";
+import { useLayerMapping } from "./hooks/useLayerMapping";
 import { useProject } from "./hooks/useProject";
 import { useSceneEditing } from "./hooks/useSceneEditing";
 import { useSceneImport } from "./hooks/useSceneImport";
@@ -69,7 +71,16 @@ export default function EditorPage() {
     onGreenPlanUndone,
   });
 
-  const uploading = importer.dxf.busy || importer.dwg.busy || project.load.busy;
+  // Чертёж разобран заново с назначениями слоёв -- результат GreenPlan был
+  // для прежней сцены.
+  const layers = useLayerMapping({
+    scene,
+    sceneLoadToken: editor.sceneLoadToken,
+    loadScene: editor.loadScene,
+    onReparsed: onGreenPlanUndone,
+  });
+
+  const uploading = importer.dxf.busy || importer.dwg.busy || project.load.busy || layers.reparse.busy;
   const { dragging, dropHandlers } = useFileDrop(importer.importFiles, !uploading);
   const togglePanel = (panel: Exclude<RightPanel, null>) => setRightPanel((p) => (p === panel ? null : panel));
 
@@ -84,6 +95,8 @@ export default function EditorPage() {
     greenPlan.docx,
     greenPlan.explanations,
     catalog.load,
+    layers.loadKinds,
+    layers.reparse,
   ]);
 
   return (
@@ -97,6 +110,7 @@ export default function EditorPage() {
           onDxfFile={importer.uploadDxf}
           onDwgFolder={importer.uploadDwg}
           sceneLoaded={scene !== null}
+          onLayers={layers.hasLayers ? layers.open : undefined}
           selectionMode={editor.selectionMode}
           onToggleSelection={() => editor.setSelectionMode((v) => !v)}
           assistantOpen={rightPanel === "assistant"}
@@ -119,6 +133,9 @@ export default function EditorPage() {
           totalDwgFiles={importer.totalDwgFiles}
           dwgWarnings={importer.dwgWarnings}
           onDismissDwgWarnings={importer.dismissDwgWarnings}
+          layerSummary={layers.summary}
+          onOpenLayers={layers.open}
+          onDismissLayerSummary={layers.dismissSummary}
         />
 
         <main className="relative flex-1 overflow-hidden">
@@ -220,6 +237,18 @@ export default function EditorPage() {
         initial={greenPlan.options}
         busy={greenPlan.generate.busy}
         onRun={(options) => void greenPlan.generate.run(options)}
+      />
+      <LayerMappingDialog
+        open={layers.dialogOpen}
+        onOpenChange={layers.setDialogOpen}
+        layers={scene?.meta.layers ?? []}
+        warnings={scene?.meta.warnings ?? []}
+        kinds={layers.kinds}
+        kindsLoading={layers.loadKinds.busy}
+        initialMap={scene?.meta.layerMap ?? {}}
+        canReparse={Boolean(scene?.meta.sourceId)}
+        busy={layers.reparse.busy}
+        onApply={(layerMap) => void layers.reparse.run(layerMap)}
       />
       <SaveAsDialog
         open={project.saveAsOpen}

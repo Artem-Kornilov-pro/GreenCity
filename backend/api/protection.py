@@ -41,12 +41,14 @@ RATE_LIMITS = {
     "export": 30,
     "generate": 30,
 }
-# Множитель всех лимитов: 0 -- выключить (нагрузочные прогоны).
-RATE_LIMIT_MULTIPLIER = float(os.environ.get("RATE_LIMIT_MULTIPLIER", "1"))
+# Множитель всех лимитов: 0 -- выключить (нагрузочные прогоны). Пустое
+# значение -- как не заданное (docker compose передаёт «VAR=», если
+# переменной нет в .env).
+RATE_LIMIT_MULTIPLIER = float(os.environ.get("RATE_LIMIT_MULTIPLIER") or "1")
 
-MAX_UPLOAD_MB = float(os.environ.get("MAX_UPLOAD_MB", "200"))
-MAX_BODY_MB = float(os.environ.get("MAX_BODY_MB", "64"))
-MAX_DWG_FILES = int(os.environ.get("MAX_DWG_FILES", "60"))
+MAX_UPLOAD_MB = float(os.environ.get("MAX_UPLOAD_MB") or "200")
+MAX_BODY_MB = float(os.environ.get("MAX_BODY_MB") or "64")
+MAX_DWG_FILES = int(os.environ.get("MAX_DWG_FILES") or "60")
 UPLOAD_PATHS = frozenset({"/api/parse", "/api/parse-dwg"})
 HEAVY_PATHS = frozenset(
     {

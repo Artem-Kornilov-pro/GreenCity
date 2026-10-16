@@ -161,7 +161,7 @@ def plan_lawns(scene: Scene, catalog: dict[str, CatalogItem]) -> list[LawnArea]:
     existing_cover = [
         g
         for z, g in ((z, _poly(z.polygon)) for z in allowed)
-        if g is not None and any(k in z.name.upper() for k in LAWN_COVER_LAYER_KEYWORDS)
+        if g is not None and (z.layerKind == "lawn" or any(k in z.name.upper() for k in LAWN_COVER_LAYER_KEYWORDS))
     ]
     if existing_cover:
         cover = unary_union(existing_cover)

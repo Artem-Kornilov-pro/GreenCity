@@ -9,20 +9,24 @@
 
 Требуется: pip install ezdxf shapely
 
-Устройство: конфигурация слоёв -- dxf_parsing/rules.py, геометрия и
-Transform -- dxf_parsing/geometry.py, зоны ограничений и граница --
-dxf_parsing/zones.py (+ dxf_parsing/boundary_estimate.py, когда слоя границы
-нет), здания и точечные объекты -- dxf_parsing/objects.py. Здесь -- сборка
-сцены (parse_dxf_doc) и командная строка.
+Устройство: конфигурация слоёв -- dxf_parsing/rules.py, распознавание слоёв
+с любыми именами -- dxf_parsing/layer_names.py, раскрытие блоков --
+dxf_parsing/drawing.py, геометрия и Transform -- dxf_parsing/geometry.py,
+зоны ограничений и граница -- dxf_parsing/zones.py (+
+dxf_parsing/boundary_estimate.py, когда слоя границы нет), здания и точечные
+объекты -- dxf_parsing/objects.py. Здесь -- сборка сцены (parse_dxf_doc) и
+командная строка.
 """
 
 import argparse
 import json
+import statistics
 import sys
 from collections import Counter
 from pathlib import Path
 
 import ezdxf
+import ezdxf.recover
 import shapely
 from shapely.geometry import Polygon
 
@@ -33,7 +37,10 @@ from dxf_parsing.boundary_estimate import (
     _point_in_region,
     _region_to_polygon_points,
 )
+from dxf_parsing.drawing import DrawingView
+from dxf_parsing.encoding import mojibake_encoding
 from dxf_parsing.geometry import Transform, buffer_segment, centroid, polygon_points
+from dxf_parsing.layer_names import LayerResolver, is_known
 from dxf_parsing.objects import (
     clean_label,
     dedupe_point_objects,
@@ -80,6 +87,8 @@ __all__ = [
     "nearest_text",
     "parse_dxf_doc",
     "parse_dxf_file",
+    "read_dxf",
+    "reread_in_real_encoding",
     "polygon_points",
     "print_summary",
 ]
@@ -110,13 +119,25 @@ def print_summary(doc):
         print(f"BBox Y: {min(ys):.2f} .. {max(ys):.2f}")
 
 
-def parse_dxf_doc(doc, scale=None, center=True):
+def parse_dxf_doc(doc, scale=None, center=True, layer_map=None, dropped_layers=None):
     """Разобрать уже открытый ezdxf-документ в {boundary, restrictions, objects, meta}.
     Общее ядро для CLI (main()) и для backend/main.py (веб-эндпоинт /api/parse) —
-    оба должны парсить одинаково, поэтому вся логика тут, а не продублирована."""
-    msp = doc.modelspace()
+    оба должны парсить одинаково, поэтому вся логика тут, а не продублирована.
+
+    layer_map -- назначения пользователя {имя слоя: класс} (layer_names.LAYER_KINDS),
+    главнее автоматического распознавания. dropped_layers -- слои, отброшенные
+    до разбора (пачка DWG), {имя: число сущностей}: только для сводки слоёв."""
+    resolver = LayerResolver(layer_map)
+    msp = DrawingView.of_document(doc, resolver)
+    warnings = []
     insunits = doc.header.get("$INSUNITS", 0)
-    resolved_scale = scale if scale is not None else INSUNITS_TO_METERS.get(insunits, 1.0)
+    header_scale = INSUNITS_TO_METERS.get(insunits, 1.0)
+    resolved_scale = scale
+    if resolved_scale is None:
+        resolved_scale = _detect_scale(msp, header_scale)
+        if resolved_scale != header_scale:
+            declared = f"в заголовке -- {_UNIT_NAMES.get(header_scale, header_scale)}" if insunits else "в заголовке единицы не заданы"
+            warnings.append(f"Единицы чертежа определены по размеру участка: {_UNIT_NAMES.get(resolved_scale, resolved_scale)} ({declared}).")
 
     origin_x, origin_y = 0.0, 0.0
     if center:
@@ -133,6 +154,7 @@ def parse_dxf_doc(doc, scale=None, center=True):
     objects = buildings + points
     facade = extract_facade_quads(msp, tf)
     curbs = extract_curb_polylines(msp, tf)
+    _to_ground_level(points, facade, _ground_elevation(msp) * resolved_scale)
 
     # Без слоя границы ничто не отсеивает одиночные точки, дотянутые из
     # городской подложки или соседнего листа: одна такая точка растягивает
@@ -148,6 +170,11 @@ def parse_dxf_doc(doc, scale=None, center=True):
         # Без границы GreenPlan не работает. Считаем её после отсева
         # выбросов, чтобы дальняя точка не растянула контур.
         boundary = _estimate_boundary_from_content(objects, restrictions, curbs)
+        if boundary is not None:
+            warnings.append(
+                "Слой границы участка не найден: граница оценена по содержимому чертежа. "
+                "Если она неверна, укажите слой границы в «Слоях чертежа»."
+            )
     else:
         # С настоящей границей зоны уже обрезаны по ней; то же -- для
         # посадок, фонарей и бордюров: топосъёмка тянет объекты с соседних
@@ -160,6 +187,18 @@ def parse_dxf_doc(doc, scale=None, center=True):
     # Открытая земля -- участок минус всё известное: план покрытий часто не
     # покрывает весь участок, даже когда граница найдена по слою.
     restrictions = restrictions + _compute_ground_zone(boundary, restrictions)
+
+    layers = msp.layer_report(dropped_layers)
+    if msp.exploded_inserts:
+        warnings.append(f"Раскрыто вставок блоков: {msp.exploded_inserts} -- их содержимое разобрано как обычный чертёж.")
+    if msp.used_paperspace:
+        warnings.append("В пространстве модели ничего не распознано: разобраны листы чертежа.")
+    unrecognized = [layer for layer in layers if layer["label"] is None]
+    if unrecognized:
+        warnings.append(
+            f"Не распознано слоёв: {len(unrecognized)} из {len(layers)}. Их содержимое не учтено -- "
+            "проверьте список в «Слоях чертежа» и назначьте нужным слоям тип."
+        )
 
     result = {
         "boundary": boundary,
@@ -174,6 +213,9 @@ def parse_dxf_doc(doc, scale=None, center=True):
             "origin": {"x": origin_x, "y": origin_y},
             "buildingCount": len(buildings),
             "pointObjectCount": len(points),
+            "layers": layers,
+            "layerMap": dict(resolver.layer_map),
+            "warnings": warnings,
         },
     }
     # Граница без своего слоя оценивается только по разобранной сцене, и до
@@ -183,6 +225,114 @@ def parse_dxf_doc(doc, scale=None, center=True):
     if center and boundary is not None and boundary.get("sourceLayer") == ESTIMATED_BOUNDARY_SOURCE_LAYER:
         _recenter(result, boundary)
     return result
+
+
+# Размер участка, который бывает у проекта благоустройства, м: от сквера до
+# квартала. Чертёж, который при единицах из заголовка выходит за эти пределы,
+# нарисован в других единицах (частая ошибка: миллиметры с $INSUNITS = 0 или 6).
+_PLAUSIBLE_SITE_M = (15.0, 25_000.0)
+_CANDIDATE_SCALES = (1.0, 0.001, 0.01, 0.1)
+_UNIT_NAMES = {1.0: "метры", 0.001: "миллиметры", 0.01: "сантиметры", 0.1: "дециметры", 0.0254: "дюймы", 0.3048: "футы", 0.9144: "ярды"}
+
+
+def _detect_scale(msp, header_scale):
+    """Метров в единице чертежа: из заголовка ($INSUNITS), если размер участка
+    при нём правдоподобен, иначе -- первые из метров, мм, см, дм, при которых
+    правдоподобен."""
+    extent = _site_extent(msp)
+    if extent is None:
+        return header_scale
+    low, high = _PLAUSIBLE_SITE_M
+    if low <= extent * header_scale <= high:
+        return header_scale
+    for candidate in _CANDIDATE_SCALES:
+        if low <= extent * candidate <= high:
+            return candidate
+    return header_scale
+
+
+def _site_extent(msp):
+    """Размер участка в единицах чертежа: по границе, а без неё -- по
+    распознанному содержимому (2-98 процентили координат, чтобы дальняя точка
+    подложки не растянула размер). Граница ищется в единицах чертежа как в
+    метрах: порог площади границы при неверных единицах её бы отбросил."""
+    found = boundary_outline(msp, 1.0)
+    if found is not None:
+        xs, ys = [p[0] for p in found[0]], [p[1] for p in found[0]]
+        return max(max(xs) - min(xs), max(ys) - min(ys))
+    xs, ys = [], []
+    for e in msp:
+        if len(xs) >= 50_000:
+            break
+        kind = e.dxftype()
+        if kind in ("TEXT", "MTEXT") or not is_known(msp.key(e)):
+            continue
+        try:
+            if kind in ("LWPOLYLINE", "POLYLINE"):
+                pts = polygon_points(e)
+            elif kind == "LINE":
+                pts = [e.dxf.start, e.dxf.end]
+            elif kind in ("INSERT", "POINT", "CIRCLE"):
+                pts = [e.dxf.insert if kind == "INSERT" else e.dxf.location if kind == "POINT" else e.dxf.center]
+            else:
+                continue
+        except Exception:  # noqa: BLE001 -- битая сущность не влияет на размер
+            continue
+        for pt in pts:
+            xs.append(pt[0])
+            ys.append(pt[1])
+    if len(xs) < 2:
+        return None
+    xs.sort()
+    ys.sort()
+    lo, hi = int(len(xs) * 0.02), max(int(len(xs) * 0.98) - 1, 0)
+    return max(xs[hi] - xs[lo], ys[hi] - ys[lo]) or None
+
+
+def _ground_elevation(msp):
+    """Отметка земли участка в единицах чертежа: медиана высот распознанных
+    точек, вставок, окружностей, начал отрезков и полилиний."""
+    zs = []
+    for e in msp:
+        if len(zs) >= 50_000:
+            break
+        kind = e.dxftype()
+        if kind not in ("INSERT", "POINT", "CIRCLE", "LINE", "LWPOLYLINE", "POLYLINE") or not is_known(msp.key(e)):
+            continue
+        try:
+            if kind == "INSERT":
+                zs.append(e.dxf.insert.z)
+            elif kind == "POINT":
+                zs.append(e.dxf.location.z)
+            elif kind == "CIRCLE":
+                zs.append(e.dxf.center.z)
+            elif kind == "LINE":
+                zs.append(min(e.dxf.start.z, e.dxf.end.z))
+            elif kind == "LWPOLYLINE":
+                zs.append(e.dxf.elevation)
+            else:
+                zs.append(next(iter(e.vertices)).dxf.location.z)
+        except Exception:  # noqa: BLE001 -- сущность без координат не влияет на отметку
+            continue
+    return statistics.median(zs) if zs else 0.0
+
+
+def _to_ground_level(points, facade, ground):
+    """Топосъёмка в абсолютных отметках: дерево стоит на отметке 150 м и висело
+    бы в воздухе. Если земля участка дальше _ABSOLUTE_ELEVATION_M от нуля, всё
+    опускается на неё; ниже земли объект не уходит (точки и столбы и так
+    стоят на нуле)."""
+    if abs(ground) <= _ABSOLUTE_ELEVATION_M:
+        return
+    for o in points:
+        o["position"]["y"] = round(max(o["position"]["y"] - ground, 0.0), 3)
+    for quads in facade.values():
+        for quad in quads:
+            for p in quad:
+                p["y"] = round(p["y"] - ground, 3)
+
+
+_ABSOLUTE_ELEVATION_M = 5.0
 
 
 def _recenter(scene, boundary):
@@ -272,9 +422,34 @@ def _clip_offsite_points(objects, curbs, boundary):
     return kept_objects, kept_curbs
 
 
-def parse_dxf_file(path, scale=None, center=True):
-    doc = ezdxf.readfile(path)
-    return parse_dxf_doc(doc, scale=scale, center=center)
+def read_dxf(path):
+    """ezdxf-документ. Чертёж от заказчика бывает с ошибками структуры или
+    кодировки -- тогда он читается в режиме восстановления, как это делает CAD.
+    Если имена слоёв читаются кракозябрами (объявлена одна кодировка, записана
+    другая), чертёж перечитывается в настоящей кодировке."""
+    try:
+        doc = ezdxf.readfile(path)
+    except (UnicodeDecodeError, ezdxf.DXFStructureError):
+        doc, _auditor = ezdxf.recover.readfile(path)
+        return doc
+    return reread_in_real_encoding(path, doc)
+
+
+def reread_in_real_encoding(path, doc):
+    """Тот же чертёж, прочитанный в кодировке, в которой на самом деле записаны
+    имена (encoding.mojibake_encoding), или doc, если с ними всё в порядке."""
+    encoding = mojibake_encoding(doc)
+    if encoding is None:
+        return doc
+    try:
+        return ezdxf.readfile(path, encoding=encoding)
+    except Exception:  # noqa: BLE001 -- не перечитался: имена починит распознавание слоёв
+        return doc
+
+
+def parse_dxf_file(path, scale=None, center=True, layer_map=None):
+    doc = read_dxf(path)
+    return parse_dxf_doc(doc, scale=scale, center=center, layer_map=layer_map)
 
 
 def main():

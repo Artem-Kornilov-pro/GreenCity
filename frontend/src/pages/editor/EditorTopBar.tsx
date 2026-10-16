@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Download, FolderKanban, LassoSelect, Leaf, Loader2, LogOut, Save, Sparkles, Trees, User } from "lucide-react";
+import { Download, FolderKanban, LassoSelect, Layers, Leaf, Loader2, LogOut, Save, Sparkles, Trees, User } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import {
   DropdownMenu,
@@ -22,6 +22,7 @@ export function EditorTopBar({
   onDxfFile,
   onDwgFolder,
   sceneLoaded,
+  onLayers,
   selectionMode,
   onToggleSelection,
   assistantOpen,
@@ -44,6 +45,8 @@ export function EditorTopBar({
   onDxfFile: (file: File) => void;
   onDwgFolder: (files: File[]) => void;
   sceneLoaded: boolean;
+  // Окно «Слои чертежа»; нет -- у сцены нет сводки слоёв (сохранена раньше).
+  onLayers?: () => void;
   selectionMode: boolean;
   onToggleSelection: () => void;
   assistantOpen: boolean;
@@ -81,6 +84,12 @@ export function EditorTopBar({
 
         {sceneLoaded && (
           <>
+            {onLayers && (
+              <Button size="sm" variant="outline" onClick={onLayers} title="Что взято из каждого слоя чертежа; назначить тип нераспознанным слоям">
+                <Layers className="h-3.5 w-3.5" />
+                Слои
+              </Button>
+            )}
             <Button
               size="sm"
               variant={selectionMode ? "primary" : "outline"}

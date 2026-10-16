@@ -8,9 +8,12 @@ document ezdxf (ezdxf.addons.importer.Importer).
 файлы попадают в BatchConversionResult.failed, остальные собираются.
 
 Файлы разбираются параллельно в отдельных процессах (workers > 1): каждый
-конвертирует и читает свой файл и оставляет только слои, которые читает
-парсер (dxf_parsing.rules.layer_is_parsed, плюс тексты); главный процесс
-склеивает компактные документы в исходном порядке.
+конвертирует и читает свой файл и оставляет только то, что прочитает парсер
+(dxf_parsing.drawing.worth_parsing: распознанные слои с учётом синонимов и
+назначений пользователя, вставки блоков с таким содержимым, тексты); главный
+процесс склеивает компактные документы в исходном порядке. Сколько сущностей
+было на каждом слое до отбора, тоже собирается -- для сводки слоёв, чтобы
+пользователь видел и отброшенные слои и мог назначить им тип.
 """
 
 from __future__ import annotations
@@ -19,16 +22,20 @@ import hashlib
 import re
 import shutil
 import subprocess
+from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
 
 import ezdxf
 import ezdxf.recover
 from ezdxf.addons.importer import Importer
 
 import exchange.dxf_parser  # noqa: F401 -- добавляет parser/ в sys.path
-from dxf_parsing.rules import layer_is_parsed
+from dxf_parsing.drawing import ParsedContentFilter
+from dxf_parsing.layer_names import LayerResolver
+from exchange.dxf_parser import reread_in_real_encoding
 
 DXF_VERSION = "R2010"
 
@@ -52,6 +59,8 @@ class BatchConversionResult:
     doc: ezdxf.document.Drawing
     converted: list[str] = field(default_factory=list)
     failed: dict[str, str] = field(default_factory=dict)
+    # Слои исходных файлов до отбора: {имя слоя: число сущностей}.
+    layer_counts: dict[str, int] = field(default_factory=dict)
 
 
 def _convert_one(tool: str, dwg_path: Path, dxf_path: Path) -> None:
@@ -74,7 +83,10 @@ def _read_converted_dxf(dxf_path: Path) -> ezdxf.document.Drawing:
     ezdxf.readfile падает с UnicodeDecodeError. ezdxf.recover.readfile такое
     читает, но медленнее -- поэтому он запасной вариант."""
     try:
-        return ezdxf.readfile(dxf_path)
+        # dwg2dxf пишет имена в UTF-8 при объявленной ANSI_1252: такой чертёж
+        # перечитывается в настоящей кодировке, иначе ни один русский слой не
+        # распознаётся.
+        return reread_in_real_encoding(dxf_path, ezdxf.readfile(dxf_path))
     except (UnicodeDecodeError, ezdxf.DXFStructureError):
         pass
     try:
@@ -125,44 +137,51 @@ def _repair_dxf_text(src: Path, dst: Path) -> int:
     return fixes
 
 
-def _parsed_entities(layout) -> list:
-    """Сущности, которые парсер читает: со слоёв, узнаваемых его правилами,
-    и все тексты (подписи зданий парсер ищет на любом слое)."""
-    return [e for e in layout if e.dxftype() in ("TEXT", "MTEXT") or layer_is_parsed(e.dxf.layer)]
-
-
-def _import_all_layouts(source_doc: ezdxf.document.Drawing, target_doc: ezdxf.document.Drawing) -> None:
+def _import_all_layouts(
+    source_doc: ezdxf.document.Drawing,
+    target_doc: ezdxf.document.Drawing,
+    layer_map: Optional[dict[str, str]] = None,
+    layer_counts: Optional[Counter] = None,
+) -> None:
     """modelspace и все непустые paperspace-листы источника -- в modelspace
-    цели, только то, что читает парсер."""
+    цели, только то, что читает парсер (с назначениями пользователя
+    layer_map). layer_counts, если передан, получает число сущностей по слоям
+    источника до отбора."""
+    keep = ParsedContentFilter(LayerResolver(layer_map))
     importer = Importer(source_doc, target_doc)
-    importer.import_entities(_parsed_entities(source_doc.modelspace()))
-    for name in source_doc.layouts.names():
-        if name == "Model":
-            continue
-        importer.import_entities(_parsed_entities(source_doc.layouts.get(name)))
+    layouts = [source_doc.modelspace()] + [source_doc.layouts.get(name) for name in source_doc.layouts.names() if name != "Model"]
+    for layout in layouts:
+        entities = list(layout)
+        if layer_counts is not None:
+            layer_counts.update(e.dxf.layer for e in entities if e.dxftype() not in ("TEXT", "MTEXT"))
+        importer.import_entities([e for e in entities if keep(e)])
     importer.finalize()
 
 
-def _extract_compact(dwg_path: str, work_dir: str) -> tuple[str, str | None, str | None]:
+def _extract_compact(
+    dwg_path: str, work_dir: str, layer_map: Optional[dict[str, str]] = None
+) -> tuple[str, str | None, str | None, dict[str, int]]:
     """Рабочий процесс: dwg2dxf, чтение, отбор нужного парсеру -- в
-    компактный DXF. (имя файла, путь к компактному DXF или None, ошибка)."""
+    компактный DXF. (имя файла, путь к компактному DXF или None, ошибка,
+    сущностей по слоям до отбора)."""
     dwg, work = Path(dwg_path), Path(work_dir)
     dxf_tmp = work / (dwg.stem + ".dxf")
+    counts: Counter = Counter()
     try:
         _convert_one(dwg2dxf_path(), dwg, dxf_tmp)
         source_doc = _read_converted_dxf(dxf_tmp)
     except Exception as e:
-        return dwg.name, None, str(e)
+        return dwg.name, None, str(e), {}
     try:
         compact = ezdxf.new(dxfversion=DXF_VERSION)
-        _import_all_layouts(source_doc, compact)
+        _import_all_layouts(source_doc, compact, layer_map, counts)
         compact_path = work / (dwg.stem + ".compact.dxf")
         compact.saveas(compact_path)
     except Exception as e:
-        return dwg.name, None, f"ошибка импорта в общий документ: {e}"
+        return dwg.name, None, f"ошибка импорта в общий документ: {e}", {}
     finally:
         dxf_tmp.unlink(missing_ok=True)  # полный DXF больше не нужен -- место на диске
-    return dwg.name, str(compact_path), None
+    return dwg.name, str(compact_path), None, dict(counts)
 
 
 def _skip_identical_files(dwg_paths: list[Path], result: BatchConversionResult) -> list[Path]:
@@ -182,30 +201,37 @@ def _skip_identical_files(dwg_paths: list[Path], result: BatchConversionResult) 
     return unique
 
 
-def merge_dwg_files(dwg_paths: list[Path], intermediate_dir: Path, workers: int = 1) -> BatchConversionResult:
+def merge_dwg_files(
+    dwg_paths: list[Path], intermediate_dir: Path, workers: int = 1, layer_map: Optional[dict[str, str]] = None
+) -> BatchConversionResult:
     """Конвертирует каждый файл из `dwg_paths` и сливает в один ezdxf-документ
-    (только то, что читает парсер). workers > 1 -- файлы обрабатываются
-    параллельно в отдельных процессах (см. докстринг модуля). Поднимает
-    `Dwg2DxfNotFound`, если сам конвертер не установлен -- эта ошибка
-    останавливает весь батч, в отличие от ошибок на отдельных файлах."""
+    (только то, что читает парсер; layer_map -- назначения слоёв
+    пользователем). workers > 1 -- файлы обрабатываются параллельно в
+    отдельных процессах (см. докстринг модуля). Поднимает `Dwg2DxfNotFound`,
+    если сам конвертер не установлен -- эта ошибка останавливает весь батч, в
+    отличие от ошибок на отдельных файлах."""
     tool = dwg2dxf_path()
     target_doc = ezdxf.new(dxfversion=DXF_VERSION)
     result = BatchConversionResult(doc=target_doc)
     dwg_paths = _skip_identical_files(dwg_paths, result)
+    counts: Counter = Counter()
 
     if workers > 1 and len(dwg_paths) > 1:
         with ProcessPoolExecutor(max_workers=min(workers, len(dwg_paths))) as pool:
-            extracted = list(pool.map(_extract_compact, [str(p) for p in dwg_paths], [str(intermediate_dir)] * len(dwg_paths)))
-        for name, compact_path, error in extracted:
+            n = len(dwg_paths)
+            extracted = list(pool.map(_extract_compact, [str(p) for p in dwg_paths], [str(intermediate_dir)] * n, [layer_map] * n))
+        for name, compact_path, error, file_counts in extracted:
             if compact_path is None:
                 result.failed[name] = error or "неизвестная ошибка"
                 continue
             try:
-                _import_all_layouts(ezdxf.readfile(compact_path), target_doc)
+                _import_all_layouts(ezdxf.readfile(compact_path), target_doc, layer_map)
             except Exception as e:
                 result.failed[name] = f"ошибка импорта в общий документ: {e}"
                 continue
+            counts.update(file_counts)
             result.converted.append(name)
+        result.layer_counts = dict(counts)
         return result
 
     for dwg_path in dwg_paths:
@@ -217,12 +243,15 @@ def merge_dwg_files(dwg_paths: list[Path], intermediate_dir: Path, workers: int 
             result.failed[dwg_path.name] = str(e)
             continue
 
+        file_counts: Counter = Counter()
         try:
-            _import_all_layouts(source_doc, target_doc)
+            _import_all_layouts(source_doc, target_doc, layer_map, file_counts)
         except Exception as e:
             result.failed[dwg_path.name] = f"ошибка импорта в общий документ: {e}"
             continue
 
+        counts.update(file_counts)
         result.converted.append(dwg_path.name)
 
+    result.layer_counts = dict(counts)
     return result

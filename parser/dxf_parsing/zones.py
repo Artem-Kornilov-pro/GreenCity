@@ -13,7 +13,8 @@ from ezdxf import path as ezpath
 from shapely.geometry import LineString, MultiPoint, Polygon
 from shapely.ops import linemerge
 
-from dxf_parsing.geometry import buffer_segment, polygon_points, split_holes
+from dxf_parsing.geometry import buffer_segment, curve_points, polygon_points, split_holes
+from dxf_parsing.layer_names import BOUNDARY_TIER_KEYS, describe_key, layer_key_of
 from dxf_parsing.rules import (
     BOUNDARY_LAYER_KEYWORDS,
     HATCH_FLATTENING_DISTANCE,
@@ -33,6 +34,9 @@ _MIN_BOUNDARY_AREA_SQM = 2000.0
 _BOUNDARY_PIECE_CLOSING_M = 20.0
 # Участки границы дальше этого от крупнейшего -- не часть того же участка.
 _BOUNDARY_NEIGHBOUR_M = 200.0
+# Граница со слоя, найденного по синонимам («Граница участка», «Граница»),
+# меньше этого -- деталь, а не участок.
+_MIN_SYNONYM_BOUNDARY_AREA_SQM = 300.0
 
 
 def boundary_outline(msp, scale=1.0):
@@ -41,14 +45,27 @@ def boundary_outline(msp, scale=1.0):
     Граница работ в проектах -- одна полилиния, несколько контуров или россыпь
     отрезков: контуры объединяются, отрезки собираются в многоугольники,
     близкие куски склеиваются. Если участков несколько, берутся крупнейший и
-    соседние с ним (сцена хранит одну границу), далёкие отбрасываются."""
-    pieces, lines, first_layer = [], [], None
+    соседние с ним (сцена хранит одну границу), далёкие отбрасываются.
+
+    Слои с прежними именами границы главнее: слой, найденный по синонимам
+    (layer_names.BOUNDARY_TIER_KEYS), берётся, только если их нет."""
+    found = _boundary_outline(msp, scale, lambda key: layer_matches(key, BOUNDARY_LAYER_KEYWORDS), None)
+    for tier_key in BOUNDARY_TIER_KEYS:
+        if found is not None:
+            break
+        found = _boundary_outline(msp, scale, lambda key, tier_key=tier_key: key == tier_key, _MIN_SYNONYM_BOUNDARY_AREA_SQM)
+    return found
+
+
+def _boundary_outline(msp, scale, is_boundary, min_area_sqm):
+    pieces, lines, first_layer, first_key = [], [], None, None
     single_pts = None
     for e in msp.query("LWPOLYLINE POLYLINE LINE"):
-        layer = e.dxf.layer
-        if not layer_matches(layer, BOUNDARY_LAYER_KEYWORDS):
+        key = layer_key_of(msp, e)
+        if not is_boundary(key):
             continue
-        first_layer = first_layer or layer
+        if first_layer is None:
+            first_layer, first_key = e.dxf.layer, key
         if e.dxftype() == "LINE":
             s, en = e.dxf.start, e.dxf.end
             if (s.x, s.y) != (en.x, en.y):
@@ -61,7 +78,10 @@ def boundary_outline(msp, scale=1.0):
             pieces.append(poly if poly.is_valid else poly.buffer(0))
         elif len(pts) == 2:
             lines.append(LineString([(x, y) for x, y, *_ in pts]))
-    min_area = _MIN_BOUNDARY_AREA_SQM if first_layer and layer_matches(first_layer, PROJECT_BOUNDARY_LAYER_KEYWORDS) else 0.0
+    if min_area_sqm is not None:
+        min_area = min_area_sqm
+    else:
+        min_area = _MIN_BOUNDARY_AREA_SQM if first_key and layer_matches(first_key, PROJECT_BOUNDARY_LAYER_KEYWORDS) else 0.0
     if single_pts is not None and len(pieces) == 1 and not lines:
         # Прежнее поведение для одной полилинии -- вершины без изменений.
         return (single_pts, first_layer) if pieces[0].area * scale * scale >= min_area else None
@@ -106,7 +126,9 @@ def _area(pts_xyz, scale):
     return abs(doubled) / 2 * scale * scale
 
 
-def _add_zone(zones, idx_by_type, cfg, layer, pts_xyz, tf):
+def _add_zone(zones, idx_by_type, cfg, layer, pts_xyz, tf, key=None):
+    """key -- ключ слоя (layer_names): по нему зона получает класс layerKind,
+    чтобы смысл зоны (газон, парковка) не зависел от имени слоя."""
     if cfg["type"] == "building" and _area(pts_xyz, tf.scale) < _MIN_BUILDING_AREA_SQM:
         return
     idx_by_type[cfg["type"]] += 1
@@ -124,6 +146,9 @@ def _add_zone(zones, idx_by_type, cfg, layer, pts_xyz, tf):
     for k, v in cfg.items():
         if k not in zone:
             zone[k] = v
+    kind = describe_key(key)[0] if key else None
+    if kind:
+        zone["layerKind"] = kind
     zones.append(zone)
 
 
@@ -143,7 +168,8 @@ def _reconstruct_buildings_from_line_fragments(zones, idx_by_type, building_line
     Замкнутая цепочка берётся как есть. Разомкнутая (съёмка видит не все
     стены) заменяется минимальным повёрнутым прямоугольником; если его
     короткая сторона меньше _BUILDING_MIN_SHORT_SIDE_M, это шум, а не здание."""
-    for layer, (cfg, segments) in building_lines.items():
+    close_gap, min_short_side = _BUILDING_CLOSE_GAP_M / tf.scale, _BUILDING_MIN_SHORT_SIDE_M / tf.scale
+    for (layer, key), (cfg, segments) in building_lines.items():
         if not segments:
             continue
         merged = linemerge([LineString(s) for s in segments])
@@ -154,7 +180,7 @@ def _reconstruct_buildings_from_line_fragments(zones, idx_by_type, building_line
                 continue
             (x0, y0), (x1, y1) = coords[0], coords[-1]
             gap = math.hypot(x1 - x0, y1 - y0)
-            if gap < _BUILDING_CLOSE_GAP_M:
+            if gap < close_gap:
                 poly = Polygon(coords)
                 if not poly.is_valid:
                     poly = poly.buffer(0)
@@ -167,11 +193,11 @@ def _reconstruct_buildings_from_line_fragments(zones, idx_by_type, building_line
                 rect = hull.minimum_rotated_rectangle
                 rect_pts = list(rect.exterior.coords)[:-1]
                 sides = [math.hypot(rect_pts[i][0] - rect_pts[i - 1][0], rect_pts[i][1] - rect_pts[i - 1][1]) for i in range(len(rect_pts))]
-                if min(sides) < _BUILDING_MIN_SHORT_SIDE_M:
+                if min(sides) < min_short_side:
                     continue
                 poly = rect
             pts3 = [(x, y, 0.0) for x, y in poly.exterior.coords[:-1]]
-            _add_zone(zones, idx_by_type, cfg, layer, pts3, tf)
+            _add_zone(zones, idx_by_type, cfg, layer, pts3, tf, key)
 
 
 # Трассы сетей приходят раздробленными: одна линия кабеля -- сотни отдельных
@@ -179,14 +205,15 @@ def _reconstruct_buildings_from_line_fragments(zones, idx_by_type, building_line
 # трассы объединяются по слою до расширения. Заодно буфер цельной ломаной
 # накрывает клин на изломе, который отдельные прямоугольники пропускали.
 def _merge_corridors(zones, idx_by_type, corridors, tf):
-    for layer, (cfg, lines) in corridors.items():
+    for (layer, key), (cfg, lines) in corridors.items():
         if not lines:
             continue
         # Расширяем каждую линию отдельно (векторизованно) и объединяем: в
         # разы быстрее, чем буфер одной общей MultiLineString. quad_segs=2 --
         # скругление на изломе порядка сантиметров, а вершин вчетверо меньше.
+        # Полуширина -- в метрах, координаты -- в единицах чертежа.
         merged = shapely.union_all(
-            shapely.buffer([LineString(c) for c in lines], cfg["minDistance"], cap_style=2, quad_segs=2)
+            shapely.buffer([LineString(c) for c in lines], cfg["minDistance"] / tf.scale, cap_style=2, quad_segs=2)
         )
         if merged.is_empty:
             continue
@@ -197,7 +224,7 @@ def _merge_corridors(zones, idx_by_type, corridors, tf):
             # хранится незамкнутой.
             pts = list(poly.exterior.coords)[:-1]
             if len(pts) >= 3:
-                _add_zone(zones, idx_by_type, cfg, layer, pts, tf)
+                _add_zone(zones, idx_by_type, cfg, layer, pts, tf, key)
 
 
 # Объединение замкнутых контуров одного слоя (газон, плитка, дорожное
@@ -215,20 +242,19 @@ _POLYGON_CLOSING_QUAD_SEGS = 4
 
 
 def _merge_polygon_zones(zones, idx_by_type, polygon_zones, tf):
-    for layer, (cfg, polys) in polygon_zones.items():
+    gap = _POLYGON_CLOSING_GAP_M / tf.scale
+    for (layer, key), (cfg, polys) in polygon_zones.items():
         if not polys:
             continue
-        buffered = shapely.buffer(polys, _POLYGON_CLOSING_GAP_M, quad_segs=_POLYGON_CLOSING_QUAD_SEGS)
-        merged = shapely.union_all(buffered).buffer(
-            -_POLYGON_CLOSING_GAP_M, quad_segs=_POLYGON_CLOSING_QUAD_SEGS
-        )
+        buffered = shapely.buffer(polys, gap, quad_segs=_POLYGON_CLOSING_QUAD_SEGS)
+        merged = shapely.union_all(buffered).buffer(-gap, quad_segs=_POLYGON_CLOSING_QUAD_SEGS)
         if merged.is_empty:
             continue
         # Дырки сохраняются нарезкой на куски -- см. _merge_corridors.
         for poly in split_holes(merged):
             pts = list(poly.exterior.coords)[:-1]
             if len(pts) >= 3:
-                _add_zone(zones, idx_by_type, cfg, layer, pts, tf)
+                _add_zone(zones, idx_by_type, cfg, layer, pts, tf, key)
 
 
 # Куски «открытой земли» меньше этого -- погрешность на стыке зон, не место
@@ -338,6 +364,14 @@ def _clip_offsite_zones(zones, boundary):
     return result
 
 
+# CIRCLE на слое зоны -- площадь (круглое здание, клумба газона, площадка),
+# а не точка. У сетей круг -- колодец, у ЛЭП -- опора: их коридор и так даёт
+# линия.
+_CIRCLE_AREA_TYPES = ("building", "protected_zone", "playground_zone", "road", "pedestrian_path", "transformer")
+# Шаг аппроксимации дуг, сплайнов и окружностей отрезками, м.
+_CURVE_FLATTENING_M = 0.25
+
+
 def extract_restrictions(msp, tf, boundary=None):
     """Зоны ограничений по правилам слоёв.
 
@@ -345,7 +379,12 @@ def extract_restrictions(msp, tf, boundary=None):
     слою (_merge_polygon_zones). LINE и незамкнутые полилинии -- трассы сетей,
     объединённые по слою и расширенные в коридоры шириной 2*minDistance
     (_merge_corridors). Строго вертикальные участки (стояки к зданию)
-    пропускаются.
+    пропускаются. Дуги, сплайны и эллипсы -- как полилинии, окружность -- как
+    замкнутый контур у площадных зон (_CIRCLE_AREA_TYPES).
+
+    Правило сущности -- по её ключу (layer_names.layer_key_of): у вида
+    чертежа он учитывает синонимы имени слоя и содержимое, у голого
+    modelspace -- это имя слоя. Зоны называются именем слоя.
 
     boundary -- граница участка в координатах сцены. Если передана, зоны
     обрезаются по ней (_clip_offsite_zones): конвертированные файлы тянут
@@ -357,62 +396,71 @@ def extract_restrictions(msp, tf, boundary=None):
     polygon_zones = {}
     building_lines = {}
 
-    def add_line(layer, cfg, coords):
+    def rule_of(e):
+        key = layer_key_of(msp, e)
+        if layer_matches(key, BOUNDARY_LAYER_KEYWORDS) or layer_matches(key, SKIP_LAYER_KEYWORDS):
+            return None, None
+        cfg = match_rule(key, POLYGON_RULES)
+        return (cfg, (e.dxf.layer, key)) if cfg else (None, None)
+
+    def add_line(group, cfg, coords):
         if len(coords) < 2:
             return
         # Здания не сливаются: из этих зон строятся объекты сцены, и два
         # соседних дома слиплись бы в одно здание.
         if cfg["type"] == "building":
             for a, b in zip(coords, coords[1:]):
-                seg = buffer_segment(a[0], a[1], b[0], b[1], cfg["minDistance"])
+                seg = buffer_segment(a[0], a[1], b[0], b[1], cfg["minDistance"] / tf.scale)
                 if seg:
-                    _add_zone(zones, idx_by_type, cfg, layer, seg, tf)
+                    _add_zone(zones, idx_by_type, cfg, group[0], seg, tf, group[1])
             return
-        corridors.setdefault(layer, (cfg, []))[1].append(coords)
+        corridors.setdefault(group, (cfg, []))[1].append(coords)
 
-    def add_closed_polygon(layer, cfg, pts):
+    def add_closed_polygon(group, cfg, pts):
         # Здания не сливаются -- по одному объекту сцены на здание.
         if cfg["type"] == "building":
-            _add_zone(zones, idx_by_type, cfg, layer, pts, tf)
+            _add_zone(zones, idx_by_type, cfg, group[0], pts, tf, group[1])
             return
         poly = Polygon([(x, y) for x, y, *_ in pts])
         if not poly.is_valid:
             poly = poly.buffer(0)
         if poly.is_empty or poly.area <= 0:
             return
-        polygon_zones.setdefault(layer, (cfg, []))[1].append(poly)
+        polygon_zones.setdefault(group, (cfg, []))[1].append(poly)
+
+    def add_open(group, cfg, pts):
+        # Ломаная режется на вертикальном стояке: склеивать соседние
+        # участки через него нельзя -- получилась бы несуществующая трасса.
+        run = []
+        for (x1, y1, _z1), (x2, y2, _z2) in zip(pts, pts[1:]):
+            if math.hypot(x2 - x1, y2 - y1) < 1e-6:
+                add_line(group, cfg, run)
+                run = []
+                continue
+            if not run:
+                run.append((x1, y1))
+            run.append((x2, y2))
+        add_line(group, cfg, run)
 
     for e in msp.query("LWPOLYLINE POLYLINE"):
-        layer = e.dxf.layer
-        if layer_matches(layer, BOUNDARY_LAYER_KEYWORDS) or layer_matches(layer, SKIP_LAYER_KEYWORDS):
-            continue
-        cfg = match_rule(layer, POLYGON_RULES)
+        if e.dxftype() == "POLYLINE" and (e.is_poly_face_mesh or e.is_polygon_mesh):
+            continue  # 3D-сетка (объём здания), а не контур
+        cfg, group = rule_of(e)
         if not cfg:
             continue
         is_closed = e.closed if e.dxftype() == "LWPOLYLINE" else e.is_closed
         pts = polygon_points(e)
+        if is_closed and len(pts) < 3:
+            # Круг, нарисованный двумя вершинами с дугами (bulge).
+            pts, _ = curve_points(e, _CURVE_FLATTENING_M / tf.scale)
         if is_closed:
             if len(pts) >= 3:
-                add_closed_polygon(layer, cfg, pts)
+                add_closed_polygon(group, cfg, pts)
         else:
-            # Ломаная режется на вертикальном стояке: склеивать соседние
-            # участки через него нельзя -- получилась бы несуществующая трасса.
-            run = []
-            for (x1, y1, _z1), (x2, y2, _z2) in zip(pts, pts[1:]):
-                if math.hypot(x2 - x1, y2 - y1) < 1e-6:
-                    add_line(layer, cfg, run)
-                    run = []
-                    continue
-                if not run:
-                    run.append((x1, y1))
-                run.append((x2, y2))
-            add_line(layer, cfg, run)
+            add_open(group, cfg, pts)
 
     for e in msp.query("LINE"):
-        layer = e.dxf.layer
-        if layer_matches(layer, BOUNDARY_LAYER_KEYWORDS) or layer_matches(layer, SKIP_LAYER_KEYWORDS):
-            continue
-        cfg = match_rule(layer, POLYGON_RULES)
+        cfg, group = rule_of(e)
         if not cfg:
             continue
         s, en = e.dxf.start, e.dxf.end
@@ -422,30 +470,47 @@ def extract_restrictions(msp, tf, boundary=None):
         # (_reconstruct_buildings_from_line_fragments): коридор на каждый
         # отрезок превратил бы здание в тысячу полосок.
         if cfg["type"] == "building":
-            building_lines.setdefault(layer, (cfg, []))[1].append(((s.x, s.y), (en.x, en.y)))
+            building_lines.setdefault(group, (cfg, []))[1].append(((s.x, s.y), (en.x, en.y)))
             continue
-        add_line(layer, cfg, [(s.x, s.y), (en.x, en.y)])
+        add_line(group, cfg, [(s.x, s.y), (en.x, en.y)])
+
+    for e in msp.query("ARC SPLINE ELLIPSE CIRCLE"):
+        cfg, group = rule_of(e)
+        if not cfg:
+            continue
+        if e.dxftype() == "CIRCLE" and (cfg["type"] not in _CIRCLE_AREA_TYPES or _is_point_symbol(msp, e)):
+            continue
+        pts, closed = curve_points(e, _CURVE_FLATTENING_M / tf.scale)
+        if closed and len(pts) >= 3:
+            add_closed_polygon(group, cfg, pts)
+        elif not closed:
+            add_open(group, cfg, pts)
 
     # HATCH -- план покрытий часто залит штриховкой. Все контуры заливки
     # (внешние и острова вперемешку) объединяются как обычные многоугольники:
     # покрытия почти всегда без вырезов, а остров добавит лишь маленький
     # кусок той же разрешённой зоны.
     for e in msp.query("HATCH"):
-        layer = e.dxf.layer
-        if layer_matches(layer, BOUNDARY_LAYER_KEYWORDS) or layer_matches(layer, SKIP_LAYER_KEYWORDS):
-            continue
-        cfg = match_rule(layer, POLYGON_RULES)
+        cfg, group = rule_of(e)
         if not cfg:
             continue
         for p in ezpath.from_hatch(e):
             pts = [(v.x, v.y, v.z) for v in p.flattening(distance=HATCH_FLATTENING_DISTANCE)]
             if len(pts) >= 3:
-                add_closed_polygon(layer, cfg, pts)
+                add_closed_polygon(group, cfg, pts)
 
     _reconstruct_buildings_from_line_fragments(zones, idx_by_type, building_lines, tf)
     _merge_corridors(zones, idx_by_type, corridors, tf)
     _merge_polygon_zones(zones, idx_by_type, polygon_zones, tf)
     return _clip_offsite_zones(_dedupe_buildings(zones), boundary)
+
+
+def _is_point_symbol(msp, e) -> bool:
+    """Окружность со слоя, с которого берутся и точечные объекты (площадка с
+    игровым оборудованием), -- знак объекта, а не площадь."""
+    from dxf_parsing.layer_names import _point_rule
+
+    return _point_rule(layer_key_of(msp, e)) is not None
 
 
 # Здание, которое на эту долю площади лежит внутри другого (не меньшего), --

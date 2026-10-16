@@ -31,6 +31,28 @@ def polygon_points(entity):
     return cleaned
 
 
+def curve_points(entity, distance):
+    """(список (x, y, z), замкнута ли) для кривой любого вида -- дуги, сплайна,
+    эллипса, окружности, полилинии с дугами (bulge): кривая заменяется
+    отрезками с прогибом не больше distance (в единицах чертежа)."""
+    from ezdxf import path as ezpath
+
+    try:
+        path = ezpath.make_path(entity)
+        raw = [(float(v.x), float(v.y), float(v.z)) for v in path.flattening(distance)]
+    except Exception:  # noqa: BLE001 -- кривая не строится (вырожденный сплайн): нечего брать
+        return [], False
+    pts = []
+    for p in raw:
+        if pts and math.hypot(p[0] - pts[-1][0], p[1] - pts[-1][1]) < 1e-9:
+            continue
+        pts.append(p)
+    closed = len(pts) > 2 and math.hypot(pts[0][0] - pts[-1][0], pts[0][1] - pts[-1][1]) < 1e-6
+    if closed:
+        pts.pop()
+    return pts, closed
+
+
 def centroid(points):
     n = len(points)
     return (sum(p[0] for p in points) / n, sum(p[1] for p in points) / n)

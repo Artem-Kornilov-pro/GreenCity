@@ -42,6 +42,9 @@ class RestrictionZone(BaseModel):
     minDistance: float = Field(description="Ширина охранного коридора зоны, м.")
     message: str
     maxHeight: Optional[float] = Field(default=None, description="Ограничение высоты растений, м (например под ЛЭП).")
+    layerKind: Optional[str] = Field(
+        default=None, description="Класс слоя, с которого взята зона (GET /api/layer-kinds): газон, парковка… -- не зависит от имени слоя."
+    )
 
 
 class SceneObject(BaseModel):
@@ -56,6 +59,19 @@ class SceneObject(BaseModel):
     metadata: dict = Field(description="species, catalogId, sourceLayer (из чертежа), generated и source (GreenPlan, ассистент), …")
 
 
+class LayerInfo(BaseModel):
+    """Слой чертежа в сводке распознавания."""
+
+    name: str
+    displayName: Optional[str] = Field(default=None, description="Имя слоя без кракозябр, если в файле оно в другой кодировке.")
+    entities: int = Field(description="Сколько на слое сущностей (без текстов).")
+    kind: Optional[str] = Field(default=None, description="Класс слоя (GET /api/layer-kinds) или null.")
+    label: Optional[str] = Field(default=None, description="Что из слоя взято, по-русски; null -- слой не распознан и не учтён.")
+    source: Optional[str] = Field(
+        default=None, description="Как распознан: override (назначен пользователем), name, normalized, synonym, content."
+    )
+
+
 class SceneMeta(BaseModel):
     """Привязка сцены к исходному чертежу."""
 
@@ -65,6 +81,9 @@ class SceneMeta(BaseModel):
     buildingCount: int
     pointObjectCount: int
     sourceId: Optional[str] = Field(default=None, description="id исходного чертежа на сервере: экспорт DXF пишет результат поверх него.")
+    layers: list[LayerInfo] = Field(default=[], description="Слои чертежа: что из каждого взято при разборе.")
+    layerMap: dict[str, str] = Field(default={}, description="Назначения слоёв пользователем {имя слоя: класс}, с которыми разобран чертёж.")
+    warnings: list[str] = Field(default=[], description="Что разбор чертежа сделал сам и что стоит проверить.")
 
 
 class LawnArea(BaseModel):

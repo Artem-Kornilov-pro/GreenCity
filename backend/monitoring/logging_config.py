@@ -76,7 +76,7 @@ def configure_logging() -> None:
     """Настраивает логирование; вызывается один раз при импорте main.py.
     Уровень -- LOG_LEVEL (по умолчанию INFO).
     """
-    level_name = os.environ.get("LOG_LEVEL", "INFO").upper()
+    level_name = (os.environ.get("LOG_LEVEL") or "INFO").upper()
     level = getattr(logging, level_name, logging.INFO)
 
     handler = logging.StreamHandler()

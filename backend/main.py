@@ -69,7 +69,8 @@ TAGS = [
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await db.ensure_indexes()
+    if not await db.ensure_indexes():
+        app.state.indexes_task = asyncio.create_task(db.ensure_indexes_when_available())
     # Признаки проектов корпуса считаются в фоне: /api/health должен отвечать
     # сразу, иначе healthcheck пометит контейнер нездоровым.
     app.state.corpus_warmup_task = asyncio.create_task(asyncio.to_thread(pattern_corpus.corpus_characteristics))

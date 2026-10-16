@@ -28,6 +28,9 @@ export interface RestrictionZone {
   minDistance: number;
   message: string;
   maxHeight?: number;
+  // Класс слоя, с которого взята зона (газон, парковка…), -- не зависит от
+  // того, как слой назван в чертеже.
+  layerKind?: string | null;
 }
 
 export interface SceneObject {
@@ -49,6 +52,30 @@ export interface SceneMeta {
   // id исходного чертежа на сервере (backend/exchange/source_store.py):
   // экспорт DXF дописывает слои результата в него.
   sourceId?: string | null;
+  // Что разбор взял из каждого слоя чертежа (окно «Слои чертежа»).
+  layers?: LayerInfo[];
+  // Назначения слоёв пользователем, с которыми разобран чертёж.
+  layerMap?: Record<string, string>;
+  // Что разбор сделал сам и что стоит проверить: единицы, граница, блоки.
+  warnings?: string[];
+}
+
+// Слой чертежа в сводке распознавания (parser/dxf_parsing/drawing.py).
+// label = null -- слой не распознан, его содержимое не учтено.
+export interface LayerInfo {
+  name: string;
+  // Имя без кракозябр, если в файле оно записано в другой кодировке.
+  displayName?: string | null;
+  entities: number;
+  kind: string | null;
+  label: string | null;
+  source: "override" | "name" | "normalized" | "synonym" | "content" | null;
+}
+
+// Что можно назначить слою (GET /api/layer-kinds).
+export interface LayerKind {
+  id: string;
+  label: string;
 }
 
 // Грань фасадного элемента (окно, козырёк) -- 4 вершины на нужной высоте;

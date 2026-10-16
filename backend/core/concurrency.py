@@ -27,9 +27,11 @@ from core.paths import ENV_FILE
 # Настройки ниже можно задать в .env в корне репозитория (см. .env.example).
 load_dotenv(ENV_FILE)
 
-HEAVY_CONCURRENCY = max(1, int(os.environ.get("HEAVY_CONCURRENCY", "1")))
-HEAVY_QUEUE_MAX = max(0, int(os.environ.get("HEAVY_QUEUE_MAX", "8")))
-HEAVY_WAIT_S = float(os.environ.get("HEAVY_WAIT_S", "120"))
+# Пустое значение -- как не заданное: docker compose передаёт «VAR=», если
+# переменной нет в .env.
+HEAVY_CONCURRENCY = max(1, int(os.environ.get("HEAVY_CONCURRENCY") or "1"))
+HEAVY_QUEUE_MAX = max(0, int(os.environ.get("HEAVY_QUEUE_MAX") or "8"))
+HEAVY_WAIT_S = float(os.environ.get("HEAVY_WAIT_S") or "120")
 
 
 class ServerBusy(Exception):

@@ -32,7 +32,7 @@ from typing import Optional
 from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import unary_union
 
-from core.placement import Placer, clamp, polygons
+from core.placement import Placer, clamp, is_parking, polygons
 from core.placement_geometry import lines_of, pick_spread, rotation_of, sample_line
 from core.plant_catalog import CatalogItem
 from core.schemas import Scene
@@ -183,7 +183,7 @@ class CourtyardDesigner(CourtyardLayoutMixin):
         blocked = [
             geom
             for zone, geom in placer.zones
-            if zone.type in ("road", "playground_zone", "transformer") or "PARK" in zone.name.upper()
+            if zone.type in ("road", "playground_zone", "transformer") or is_parking(zone)
         ]
         # routable -- где можно провести дорожку (существующий тротуар не
         # мешает, подъезд часто стоит впритык к нему); paving -- где кладётся

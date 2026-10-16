@@ -8,7 +8,7 @@ OUT      ?= output
 CATEGORY ?= tree
 
 .PHONY: help venv backend frontend-install frontend frontend-build parse clean \
-        lint lint-py lint-web lint-fix models test test-e2e test-cov corpus-features primers examples docs \
+        lint lint-py lint-web lint-fix models test test-e2e test-cov parser-regression corpus-features primers examples docs \
         docker-build docker-up docker-down docker-logs docker-prod-up docker-prod-down docker-prune
 
 help:
@@ -21,6 +21,7 @@ help:
 	@echo "make test              - юнит-тесты backend/ и parser/ (pytest, без сети/докера)"
 	@echo "make test-e2e          - только сквозные сценарии (tests/e2e: DXF -> GreenPlan -> записка -> DXF)"
 	@echo "make test-cov          - то же самое + отчёт о покрытии (terminal + htmlcov/)"
+	@echo "make parser-regression [BASE=main] - разбор всех DXF корпуса: текущий код против ревизии BASE"
 	@echo "make corpus-features   - пересчитать data/pattern_corpus_features.json (после правки DXF корпуса)"
 	@echo "make primers           - пересобрать синтетические эталоны locations/2x_*_primer и признаки корпуса"
 	@echo "make examples          - пересобрать примеры результата examples/ (без LLM) и проверить выходные DXF"
@@ -80,6 +81,11 @@ test: $(VENV)/bin/activate
 # HTTP, от загрузки DXF до выгрузки DXF и пояснительной записки.
 test-e2e: $(VENV)/bin/activate
 	$(PYTEST) -n auto -m e2e
+
+# Деградация разбора: каждый DXF корпуса -- кодом из BASE и текущим, сцены
+# сравниваются (tools/parser_regression.py).
+parser-regression: $(VENV)/bin/activate
+	$(PYTHON) tools/parser_regression.py --base $(or $(BASE),main)
 
 corpus-features: $(VENV)/bin/activate
 	cd backend && $(PYTHON) -m greenplan.pattern_corpus

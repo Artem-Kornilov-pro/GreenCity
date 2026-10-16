@@ -10,20 +10,37 @@
 # образ переносится один файл, без .so. Сборка src/ занимает ~2 минуты --
 # отдельная стадия и Docker layer cache дают то, что она не повторяется на
 # каждую пересборку, пока ARG LIBREDWG_VERSION не меняется.
+#
+# Тарбол берётся с GitHub, а если GitHub недоступен (закрытая сеть, лимит
+# запросов) -- с зеркал GNU. Если не скачался или не собрался нигде, сборка
+# образа НЕ падает: бэкенд собирается без dwg2dxf, загрузка DXF и всё
+# остальное работает, а загрузка папки DWG отвечает понятной ошибкой 503
+# («dwg2dxf не найден»). Раньше один недоступный GitHub ронял
+# docker compose up --build целиком.
 FROM python:3.12-slim AS libredwg-builder
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl ca-certificates build-essential pkg-config \
     && rm -rf /var/lib/apt/lists/*
 ARG LIBREDWG_VERSION=0.14
-RUN curl -sL -o /tmp/libredwg.tar.gz \
+RUN mkdir -p /out \
+    && for url in \
         "https://github.com/LibreDWG/libredwg/releases/download/${LIBREDWG_VERSION}/libredwg-${LIBREDWG_VERSION}.tar.gz" \
-    && tar xzf /tmp/libredwg.tar.gz -C /tmp \
-    && cd "/tmp/libredwg-${LIBREDWG_VERSION}" \
-    && ./configure --disable-bindings --disable-shared \
-    && make -j"$(nproc)" -C src \
-    && make -j"$(nproc)" -C programs dwg2dxf \
-    && strip programs/dwg2dxf \
-    && cp programs/dwg2dxf /usr/local/bin/dwg2dxf
+        "https://ftpmirror.gnu.org/libredwg/libredwg-${LIBREDWG_VERSION}.tar.gz" \
+        "https://ftp.gnu.org/gnu/libredwg/libredwg-${LIBREDWG_VERSION}.tar.gz"; do \
+        curl -fsSL --retry 3 --retry-delay 3 --connect-timeout 20 -o /tmp/libredwg.tar.gz "$url" && break; \
+        rm -f /tmp/libredwg.tar.gz; \
+    done \
+    && if [ -s /tmp/libredwg.tar.gz ] \
+        && tar xzf /tmp/libredwg.tar.gz -C /tmp \
+        && cd "/tmp/libredwg-${LIBREDWG_VERSION}" \
+        && ./configure --disable-bindings --disable-shared \
+        && make -j"$(nproc)" -C src \
+        && make -j"$(nproc)" -C programs dwg2dxf \
+        && strip programs/dwg2dxf; then \
+        cp programs/dwg2dxf /out/dwg2dxf; \
+    else \
+        echo "ВНИМАНИЕ: LibreDWG не скачан или не собран -- образ без dwg2dxf, загрузка DWG будет недоступна (DXF работает)"; \
+    fi
 
 # Собирать из корня репозитория (build context = .), не из backend/ --
 # main.py импортирует parser/parse_dxf.py по относительному пути
@@ -33,7 +50,8 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY --from=libredwg-builder /usr/local/bin/dwg2dxf /usr/local/bin/dwg2dxf
+# Каталог, а не файл: если LibreDWG не собрался, он пуст и копировать нечего.
+COPY --from=libredwg-builder /out/ /usr/local/bin/
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

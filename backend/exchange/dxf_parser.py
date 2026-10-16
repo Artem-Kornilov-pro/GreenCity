@@ -20,10 +20,12 @@ from greenplan.lawn import existing_lawns
 if str(PARSER_DIR) not in sys.path:
     sys.path.insert(0, str(PARSER_DIR))
 
+from dxf_parsing.layer_names import LAYER_KINDS  # noqa: E402
 from parse_dxf import parse_dxf_doc as _parse_dxf_doc  # noqa: E402
 from parse_dxf import parse_dxf_file as _parse_dxf_file  # noqa: E402
+from parse_dxf import read_dxf, reread_in_real_encoding  # noqa: E402
 
-__all__ = ["complete_scene", "parse_dxf_doc", "parse_dxf_file"]
+__all__ = ["LAYER_KINDS", "complete_scene", "parse_dxf_doc", "parse_dxf_file", "read_dxf", "reread_in_real_encoding"]
 
 
 def _with_catalog_ids(scene: dict) -> dict:
