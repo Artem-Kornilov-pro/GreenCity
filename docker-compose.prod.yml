@@ -25,6 +25,9 @@
 #   - логи контейнеров ограничены (3 файла по 10 МБ на сервис) -- Docker по
 #     умолчанию хранит их без предела, на 40 ГБ диска за недели это заметно.
 # Мониторинг (Prometheus, Loki, Promtail, Grafana) -- без изменений.
+#
+# Теги !override и !reset поддерживает Docker Compose 2.24.4 и новее; дев-режим
+# (docker-compose.yml без этого файла) запускается на любом Compose v2.
 
 x-logging: &logging
   driver: json-file
@@ -65,7 +68,9 @@ services:
     volumes: !reset []
     environment: !reset []
     ports: !override
-      - "80:80"
+      # Порт на машине -- HTTP_PORT, если 80 занят (веб-сервер, IIS) или
+      # недоступен без root.
+      - "${HTTP_PORT:-80}:80"
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1/"]
       interval: 10s

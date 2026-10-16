@@ -2,6 +2,17 @@
 # MongoDB, Redis, Prometheus и Loki доступны лишь внутри сети compose: браузер
 # обращается к API через dev-сервер фронтенда (он проксирует /api и Swagger на
 # backend:8000), поэтому CORS на бэкенде выключен.
+#
+# Запуск у проверяющих -- на любой машине с Docker и Compose v2, без правки
+# этого файла:
+#   - настройки -- только из .env (необязательного): docker compose сам
+#     подставляет его значения в ${...} ниже, без .env берутся значения по
+#     умолчанию;
+#   - порты, образ MongoDB, путь к сокету Docker меняются переменными
+#     (.env.example, раздел «Запуск в Docker»);
+#   - :z у смонтированных каталогов -- метка SELinux (РЕД ОС, Fedora, CentOS),
+#     без неё контейнер не может их читать; на остальных системах ни на что
+#     не влияет.
 
 services:
   backend:
@@ -12,12 +23,12 @@ services:
     expose:
       - "8000"
     volumes:
-      - ./backend:/app/backend
-      - ./parser:/app/parser
+      - ./backend:/app/backend:z
+      - ./parser:/app/parser:z
       # Корпус GreenPlan (locations/, data/pattern_corpus.yaml) и нормы --
       # только чтение.
-      - ./locations:/app/locations:ro
-      - ./data:/app/data:ro
+      - ./locations:/app/locations:ro,z
+      - ./data:/app/data:ro,z
       # Исходные чертежи загрузок (backend/exchange/source_store.py): экспорт
       # дописывает слои результата в них -- том, чтобы они переживали
       # перезапуск и пересборку контейнера.
@@ -43,25 +54,45 @@ services:
       # Swagger (/docs) -- в дев-режиме открыт через фронтенд:
       # http://localhost:5173/docs. В продакшене выключен.
       - API_DOCS=${API_DOCS:-1}
-    # Ключ и каталог Yandex AI Studio (правка текстом, текст-обоснование GreenPlan) и
-    # (опционально) свой JWT_SECRET -- см. .env.example.
-    # required: false -- без .env сервис всё равно поднимется: текстовое
-    # редактирование ответит понятной ошибкой, а не упадёт весь compose;
-    # JWT_SECRET без .env возьмёт дев-заглушку из auth.py (не для реального
-    # многопользовательского запуска, но регистрация/вход при этом работают).
-    env_file:
-      - path: .env
-        required: false
+      # Настройки из .env (см. .env.example). Через подстановку, а не
+      # env_file: «env_file: path/required» есть только в Compose 2.24+, а на
+      # более старом файл не проходил проверку и не запускалось ничего.
+      # Незаданная переменная приходит пустой -- бэкенд считает пустое
+      # значение незаданным. Без ключа LLM текстовое редактирование отвечает
+      # понятной ошибкой, без JWT_SECRET -- дев-заглушка из auth.py.
+      # Новая настройка бэкенда добавляется и в этот список.
+      - LLM_PROVIDER=${LLM_PROVIDER:-}
+      - YANDEX_CLOUD_API_KEY=${YANDEX_CLOUD_API_KEY:-}
+      - YANDEX_CLOUD_FOLDER=${YANDEX_CLOUD_FOLDER:-}
+      - YANDEX_CLOUD_MODEL=${YANDEX_CLOUD_MODEL:-}
+      - YANDEX_CLOUD_REPORT_MODEL=${YANDEX_CLOUD_REPORT_MODEL:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-}
+      - JWT_SECRET=${JWT_SECRET:-}
+      - LOG_LEVEL=${LOG_LEVEL:-}
+      - CORS_ALLOW_ORIGINS=${CORS_ALLOW_ORIGINS:-}
+      - FORWARDED_ALLOW_IPS=${FORWARDED_ALLOW_IPS:-}
+      - RATE_LIMIT_MULTIPLIER=${RATE_LIMIT_MULTIPLIER:-}
+      - MAX_UPLOAD_MB=${MAX_UPLOAD_MB:-}
+      - MAX_BODY_MB=${MAX_BODY_MB:-}
+      - MAX_DWG_FILES=${MAX_DWG_FILES:-}
+      - HEAVY_CONCURRENCY=${HEAVY_CONCURRENCY:-}
+      - HEAVY_QUEUE_MAX=${HEAVY_QUEUE_MAX:-}
+      - HEAVY_WAIT_S=${HEAVY_WAIT_S:-}
+      - DWG_MAX_PARALLEL=${DWG_MAX_PARALLEL:-}
+      - DWG_WORKERS=${DWG_WORKERS:-}
     depends_on:
-      # service_healthy, а не просто "контейнер запущен": даёт mongo/redis
-      # реальный шанс принять первое подключение до первого запроса к
-      # backend, а не полагается сразу на fail-open деградацию (db.py/
-      # cache.py) -- та остаётся страховкой на случай, если mongo/redis
-      # упадут уже ПОСЛЕ старта, а не заменяет нормальный порядок запуска.
+      # service_started, а не service_healthy: бэкенд не ждёт базу. Редактор,
+      # GreenPlan и экспорт от MongoDB и Redis не зависят (db.py и cache.py
+      # переживают их отсутствие), а mongo:7 на процессоре без AVX (старые
+      # x86, виртуальные машины с типом процессора kvm64) не стартует вовсе --
+      # с service_healthy из-за этого не поднимался и весь сайт. Индексы
+      # базы бэкенд создаёт, когда она станет доступна (db.ensure_indexes_
+      # when_available).
       mongo:
-        condition: service_healthy
+        condition: service_started
       redis:
-        condition: service_healthy
+        condition: service_started
     healthcheck:
       # Без внешних утилит (curl/wget нет в python:3.12-slim) -- достаточно
       # самого Python из образа.
@@ -77,7 +108,10 @@ services:
   # продолжает работать, даже если этот сервис не поднят (см. db.py: ошибка
   # подключения не роняет backend, только эндпоинты /api/auth и /api/projects).
   mongo:
-    image: mongo:7
+    # mongo:7 требует AVX. На процессоре без него (mongod падает с «Illegal
+    # instruction») -- MONGO_IMAGE=mongo:4.4 в .env: это последняя версия без
+    # AVX, драйвер бэкенда её поддерживает.
+    image: ${MONGO_IMAGE:-mongo:7}
     volumes:
       - mongo_data:/data/db
     healthcheck:
@@ -85,8 +119,9 @@ services:
       # это ~17 тыс. запусков mongosh за сутки работы и заметный фоновый CPU у
       # контейнера почти без реальной нагрузки. 10s -- как у всех остальных
       # сервисов ниже (единственное реальное отличие -- вдвое медленнее
-      # обнаружение падения, для дев-стенда это не критично).
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      # обнаружение падения, для дев-стенда это не критично). В mongo:4.4
+      # клиент называется mongo, а не mongosh.
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand(\"ping\")' || mongo --quiet --eval 'db.adminCommand(\"ping\")'"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -114,15 +149,19 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "5173:5173"
+      # Порт на машине -- FRONTEND_PORT, если 5173 занят.
+      - "${FRONTEND_PORT:-5173}:5173"
     volumes:
-      - ./frontend:/app
+      - ./frontend:/app:z
       - /app/node_modules
     environment:
       # Браузер обращается к API по относительным путям /api/..., dev-сервер
       # vite проксирует их на бэкенд внутри сети compose (frontend/vite.config.ts).
       - VITE_API_BASE=
       - API_PROXY_TARGET=http://backend:8000
+      # Открывать сайт можно по любому имени машины (http://сервер:5173), а
+      # не только по localhost и IP: иначе vite отвечает «Blocked request».
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-all}
     depends_on:
       - backend
     healthcheck:
@@ -170,7 +209,7 @@ services:
   prometheus:
     image: prom/prometheus:v3.0.1
     volumes:
-      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro,z
       - prometheus_data:/prometheus
     # Порт не публикуется: Prometheus читает Grafana внутри сети compose.
     depends_on:
@@ -190,7 +229,7 @@ services:
     image: grafana/loki:3.3.2
     command: -config.file=/etc/loki/loki-config.yml
     volumes:
-      - ./observability/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - ./observability/loki/loki-config.yml:/etc/loki/loki-config.yml:ro,z
       - loki_data:/loki
     # Порт не публикуется: логи пишет Promtail и читает Grafana внутри сети compose.
     healthcheck:
@@ -209,14 +248,17 @@ services:
   # loki -- ничего не нужно менять в самих сервисах (никакого
   # logging-драйвера здесь), см. observability/promtail/promtail-config.yml.
   # Сокет докера -- только для чтения, promtail лишь читает список
-  # контейнеров и их логи, ничем не управляет.
+  # контейнеров и их логи, ничем не управляет. Логи он берёт через Docker
+  # API (docker_sd_configs), поэтому каталог /var/lib/docker/containers хоста
+  # не нужен: его нет у Docker без root, Podman, Colima. Сокет в другом
+  # месте (Docker без root: /run/user/1000/docker.sock) -- DOCKER_SOCKET в
+  # .env. Без сокета не будет только логов в Grafana, сайт работает.
   promtail:
     image: grafana/promtail:3.3.2
     command: -config.file=/etc/promtail/promtail-config.yml
     volumes:
-      - ./observability/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./observability/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro,z
+      - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock:ro
     depends_on:
       loki:
         condition: service_healthy
@@ -235,19 +277,20 @@ services:
   # Дашборды -- источники данных (Prometheus + Loki) и сами дашборды
   # подключаются автоматически при первом старте через провижининг (см.
   # observability/grafana/provisioning/), руками в UI ничего добавлять не
-  # нужно. GF_SECURITY_ADMIN_PASSWORD -- дефолт для локального стенда/демо,
-  # поменять перед любым запуском не только на своей машине.
+  # нужно. Пароль admin -- для локального стенда/демо; перед любым запуском
+  # не только на своей машине задайте GRAFANA_ADMIN_PASSWORD в .env.
   grafana:
     image: grafana/grafana:11.4.0
     ports:
-      - "3001:3000"
+      # Порт на машине -- GRAFANA_PORT, если 3001 занят.
+      - "${GRAFANA_PORT:-3001}:3000"
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./observability/grafana/dashboards:/etc/grafana/dashboards:ro
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro,z
+      - ./observability/grafana/dashboards:/etc/grafana/dashboards:ro,z
     environment:
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
     depends_on:
       prometheus:
         condition: service_healthy

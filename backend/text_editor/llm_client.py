@@ -65,7 +65,7 @@ class LlmError(RuntimeError):
 
 
 def _llm_provider() -> str:
-    return os.environ.get("LLM_PROVIDER", "yandex").strip().lower()
+    return (os.environ.get("LLM_PROVIDER") or "yandex").strip().lower()
 
 
 def check_configured() -> None:
@@ -91,7 +91,7 @@ def _client_and_model() -> tuple[openai.AsyncOpenAI, str]:
         client = openai.AsyncOpenAI(
             api_key=os.environ["GEMINI_API_KEY"], base_url=GEMINI_BASE_URL, timeout=REQUEST_TIMEOUT_S, max_retries=MAX_RETRIES
         )
-        return client, os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+        return client, os.environ.get("GEMINI_MODEL") or "gemini-3.6-flash"
     api_key, folder = yandex_ai.credentials()
     model = yandex_ai.model_uri(folder, "YANDEX_CLOUD_MODEL", yandex_ai.DEFAULT_EDITOR_MODEL)
     return yandex_ai.make_client(api_key, folder, timeout=REQUEST_TIMEOUT_S, max_retries=MAX_RETRIES), model

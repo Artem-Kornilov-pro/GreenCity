@@ -25,7 +25,25 @@ async def test_ensure_indexes_does_not_raise_when_mongo_unavailable(monkeypatch)
 
     monkeypatch.setattr(db, "users", _BrokenCollection())
     monkeypatch.setattr(db, "projects", _BrokenCollection())
-    await db.ensure_indexes()  # не должно поднять исключение -- см. докстринг db.py
+    assert await db.ensure_indexes() is False  # не должно поднять исключение -- см. докстринг db.py
+
+
+async def test_indexes_are_created_once_mongo_comes_up_later(monkeypatch):
+    # В docker compose бэкенд не ждёт MongoDB: база может подняться позже, и
+    # уникальный индекс имён всё равно должен появиться.
+    calls = []
+
+    class _LateCollection:
+        async def create_index(self, *args, **kwargs):
+            calls.append(args)
+            if len(calls) <= 2:
+                raise PyMongoError("ещё не поднялась")
+
+    monkeypatch.setattr(db, "users", _LateCollection())
+    monkeypatch.setattr(db, "projects", _LateCollection())
+    monkeypatch.setattr(db, "INDEX_RETRY_INTERVAL_S", 0)
+    await db.ensure_indexes_when_available()
+    assert calls == [("username",), ("username",), ("username",), ("owner_id",)]
 
 
 def test_mongo_uri_is_a_valid_connection_string():

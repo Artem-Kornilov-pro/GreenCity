@@ -75,7 +75,7 @@ def build_scene(
     from exchange.dxf_parser import complete_scene, parse_dxf_doc
 
     try:
-        workers = max(1, int(os.environ.get("DWG_WORKERS", DEFAULT_WORKERS)))
+        workers = max(1, int(os.environ.get("DWG_WORKERS") or DEFAULT_WORKERS))
         merge_kwargs = {"layer_map": layer_map} if layer_map else {}
         result = dwg_batch_converter.merge_dwg_files(dwg_paths, work_dir, workers=workers, **merge_kwargs)
     except dwg_batch_converter.Dwg2DxfNotFound as e:
@@ -175,7 +175,7 @@ def build_export(dwg_paths: list[Path], work_dir: Path, scene_json: bytes) -> by
     from exchange import dwg_batch_converter
     from exchange.dxf_overlay import overlay_scene
 
-    workers = max(1, int(os.environ.get("DWG_WORKERS", DEFAULT_WORKERS)))
+    workers = max(1, int(os.environ.get("DWG_WORKERS") or DEFAULT_WORKERS))
     scene = Scene.model_validate_json(scene_json)
     # Слои, которые пользователь назначил при загрузке, должны попасть и в
     # чертёж под результатом.
@@ -235,7 +235,7 @@ async def slot(wait_s: float = SLOT_WAIT_S) -> AsyncIterator[None]:
         yield
         return
 
-    slots = max(1, int(os.environ.get("DWG_MAX_PARALLEL", DEFAULT_MAX_PARALLEL)))
+    slots = max(1, int(os.environ.get("DWG_MAX_PARALLEL") or DEFAULT_MAX_PARALLEL))
     slot_dir = Path(os.environ.get("DWG_SLOT_DIR", _DEFAULT_SLOT_DIR))
     slot_dir.mkdir(parents=True, exist_ok=True)
     deadline = time.monotonic() + wait_s

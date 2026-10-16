@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 
@@ -35,9 +36,9 @@ users = db["users"]
 projects = db["projects"]
 
 
-async def ensure_indexes() -> None:
-    """Создаёт индексы; вызывается один раз при старте приложения
-    (lifespan). create_index идемпотентен."""
+async def ensure_indexes() -> bool:
+    """Создаёт индексы; вызывается при старте приложения (lifespan).
+    create_index идемпотентен. False -- база недоступна."""
     try:
         await users.create_index("username", unique=True)
         await projects.create_index("owner_id")
@@ -45,3 +46,26 @@ async def ensure_indexes() -> None:
         # База недоступна -- не работают только аккаунты и проекты, остальной
         # бэкенд с ними не связан.
         logger.warning("MongoDB недоступна при старте (%s) -- регистрация и проекты не будут работать: %s", MONGO_URI, e)
+        return False
+    return True
+
+
+# Как часто и сколько раз повторять создание индексов, если база поднялась
+# позже бэкенда: в docker compose бэкенд не ждёт MongoDB (на процессоре без
+# AVX mongo:7 не стартует вовсе, а редактор работает и без неё).
+INDEX_RETRY_INTERVAL_S = 5.0
+INDEX_RETRY_ATTEMPTS = 120
+
+
+async def ensure_indexes_when_available() -> None:
+    """Повторяет ensure_indexes(), пока база не станет доступна: без индекса
+    имя пользователя не было бы уникальным."""
+    for _ in range(INDEX_RETRY_ATTEMPTS):
+        await asyncio.sleep(INDEX_RETRY_INTERVAL_S)
+        try:
+            await users.create_index("username", unique=True)
+            await projects.create_index("owner_id")
+        except PyMongoError:
+            continue
+        logger.info("MongoDB доступна, индексы созданы")
+        return

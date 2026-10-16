@@ -13,7 +13,7 @@
 
 ## 1. Запуск
 
-Нужен Docker Desktop (или Docker Engine с Compose v2) и около 8 ГБ свободной памяти.
+Нужен Docker Desktop (или Docker Engine с любым Compose v2) и около 8 ГБ свободной памяти. Нужен интернет: при сборке скачиваются образы, пакеты Python и npm и исходники LibreDWG (с GitHub, а если он недоступен — с зеркал GNU; если не скачались нигде, образ всё равно собирается, но без загрузки DWG — DXF работает).
 
 ```bash
 git clone https://github.com/Artem-Kornilov-pro/GreenCity.git
@@ -30,6 +30,18 @@ docker compose up -d --build
 | http://localhost:3001 | Grafana (admin / admin): метрики и логи |
 
 Бэкенд, базы и мониторинг наружу не открыты, к ним обращается только сайт.
+
+**Если что-то мешает запуску** — всё меняется в `.env`, сам `docker-compose.yml` править не нужно (полный список — `.env.example`, раздел «Запуск в Docker»):
+
+| Что случилось | Что сделать |
+|---|---|
+| порт 5173 или 3001 занят (`port is already allocated`) | `FRONTEND_PORT=8080`, `GRAFANA_PORT=3002` — сайт будет на http://localhost:8080 |
+| `mongo` постоянно перезапускается, в логе `Illegal instruction` (процессор или виртуальная машина без AVX) | `MONGO_IMAGE=mongo:4.4`. Сайт, GreenPlan и экспорт работают и без MongoDB — без неё недоступны только регистрация и проекты |
+| сайт открывают по имени сервера, а не по `localhost` | ничего — любые имена разрешены (`ALLOWED_HOSTS`) |
+| Docker без root, Podman | `DOCKER_SOCKET=/run/user/1000/docker.sock` — для логов в Grafana; сайт работает и без этого |
+| ставили прошлую версию и обновили код | `docker compose up -d --build --renew-anon-volumes` — иначе фронтенд останется со старыми npm-пакетами |
+
+Продакшен-режим (`make docker-prod-up`) требует Docker Compose 2.24.4 или новее; основной запуск выше — любой Compose v2.
 
 **Ключ языковой модели.** В `.env` задаются `YANDEX_CLOUD_API_KEY` и `YANDEX_CLOUD_FOLDER` (Yandex AI Studio). Без них работают:
 

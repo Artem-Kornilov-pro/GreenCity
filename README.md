@@ -86,6 +86,8 @@ docker compose up -d --build
 - Обзор (HTTP + бизнес-метрики): http://localhost:3001/d/greencity-overview
 - Логи: http://localhost:3001/d/greencity-logs
 
+Порты, образ MongoDB (на процессоре без AVX — `MONGO_IMAGE=mongo:4.4`) и путь к сокету Docker меняются переменными в `.env`, сам `docker-compose.yml` править не нужно (`.env.example`, раздел «Запуск в Docker»; что делать, если что-то мешает запуску, — [docs/REVIEWER_GUIDE.md](docs/REVIEWER_GUIDE.md), раздел 1). Основной запуск работает на любом Docker Compose v2, продакшен-режим — на 2.24.4 и новее. Если сервер MongoDB не поднялся, бэкенд его не ждёт: редактор, GreenPlan и экспорт работают, недоступны только аккаунты.
+
 Если при первой сборке `docker pull` какого-то образа падает с `authentication required`/`toomanyrequests` — это временное ограничение частоты анонимных запросов к Docker Hub (не проблема самого проекта, проверено — повторный `docker pull` того же образа сразу проходит); помогает повторить команду через пару минут или выполнить `docker login` (у авторизованных лимит выше).
 
 ### Вариант A2: Docker на сервере (продакшен-режим)

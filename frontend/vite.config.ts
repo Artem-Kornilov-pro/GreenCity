@@ -21,9 +21,16 @@ export default defineConfig(({ mode }) => {
     timeout: 30 * 60 * 1000,
     proxyTimeout: 30 * 60 * 1000,
   }
+  // По каким именам машины можно открыть dev-сервер: по умолчанию vite
+  // пускает только localhost и IP. ALLOWED_HOSTS=all -- любое имя (так в
+  // docker compose: проверяющие открывают сайт и по имени сервера), иначе --
+  // список имён через запятую.
+  const allowedHosts =
+    env.ALLOWED_HOSTS === 'all' ? true : env.ALLOWED_HOSTS ? env.ALLOWED_HOSTS.split(',').map((h) => h.trim()) : undefined
   return {
     plugins: [react(), tailwindcss()],
     server: {
+      allowedHosts,
       proxy: { '/api': proxy, '/docs': proxy, '/openapi.json': proxy },
     },
   }
