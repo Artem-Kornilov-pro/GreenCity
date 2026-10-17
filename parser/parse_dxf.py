@@ -119,14 +119,16 @@ def print_summary(doc):
         print(f"BBox Y: {min(ys):.2f} .. {max(ys):.2f}")
 
 
-def parse_dxf_doc(doc, scale=None, center=True, layer_map=None, dropped_layers=None):
+def parse_dxf_doc(doc, scale=None, center=True, layer_map=None, dropped_layers=None, boundary_points=None):
     """Разобрать уже открытый ezdxf-документ в {boundary, restrictions, objects, meta}.
     Общее ядро для CLI (main()) и для backend/main.py (веб-эндпоинт /api/parse) —
     оба должны парсить одинаково, поэтому вся логика тут, а не продублирована.
 
     layer_map -- назначения пользователя {имя слоя: класс} (layer_names.LAYER_KINDS),
     главнее автоматического распознавания. dropped_layers -- слои, отброшенные
-    до разбора (пачка DWG), {имя: число сущностей}: только для сводки слоёв."""
+    до разбора (пачка DWG), {имя: число сущностей}: только для сводки слоёв.
+    boundary_points -- граница участка, выбранная пользователем из кандидатов
+    (meta.boundaryCandidates), в координатах чертежа: [[x, y], ...]."""
     resolver = LayerResolver(layer_map)
     msp = DrawingView.of_document(doc, resolver)
     warnings = []
@@ -139,15 +141,17 @@ def parse_dxf_doc(doc, scale=None, center=True, layer_map=None, dropped_layers=N
             declared = f"в заголовке -- {_UNIT_NAMES.get(header_scale, header_scale)}" if insunits else "в заголовке единицы не заданы"
             warnings.append(f"Единицы чертежа определены по размеру участка: {_UNIT_NAMES.get(resolved_scale, resolved_scale)} ({declared}).")
 
+    chosen = [(float(x), float(y), 0.0) for x, y in boundary_points] if boundary_points and len(boundary_points) >= 3 else None
     origin_x, origin_y = 0.0, 0.0
     if center:
-        found = boundary_outline(msp, resolved_scale)
+        found = (chosen, CHOSEN_BOUNDARY_SOURCE_LAYER) if chosen else boundary_outline(msp, resolved_scale)
         if found is not None:
             origin_x, origin_y = centroid(found[0])
 
     tf = Transform(scale=resolved_scale, origin_x=origin_x, origin_y=origin_y)
 
-    boundary = extract_boundary(msp, tf)
+    boundary = {"polygon": tf.polygon(chosen), "sourceLayer": CHOSEN_BOUNDARY_SOURCE_LAYER} if chosen else extract_boundary(msp, tf)
+    candidates = None if boundary is not None else boundary_candidates(msp, resolved_scale)
     restrictions = extract_restrictions(msp, tf, boundary)
     buildings = extract_buildings(msp, tf, restrictions)
     points = dedupe_point_objects(extract_point_objects(msp, tf))
@@ -218,6 +222,10 @@ def parse_dxf_doc(doc, scale=None, center=True, layer_map=None, dropped_layers=N
             "warnings": warnings,
         },
     }
+    if candidates:
+        result["meta"]["boundaryCandidates"] = candidates
+    if chosen:
+        result["meta"]["boundaryOverride"] = [[x, y] for x, y, _z in chosen]
     # Граница без своего слоя оценивается только по разобранной сцене, и до
     # этого сцена остаётся в координатах чертежа -- в 10-15 км от начала, где
     # float32 видеокарты теряет точность и тонкие линии мерцают. Сдвигаем
@@ -447,9 +455,59 @@ def reread_in_real_encoding(path, doc):
         return doc
 
 
-def parse_dxf_file(path, scale=None, center=True, layer_map=None):
+def parse_dxf_file(path, scale=None, center=True, layer_map=None, boundary_points=None):
     doc = read_dxf(path)
-    return parse_dxf_doc(doc, scale=scale, center=center, layer_map=layer_map)
+    return parse_dxf_doc(doc, scale=scale, center=center, layer_map=layer_map, boundary_points=boundary_points)
+
+
+# Граница, выбранная пользователем из кандидатов, -- её sourceLayer.
+CHOSEN_BOUNDARY_SOURCE_LAYER = "__chosen_by_user__"
+# Кандидаты в границу участка: замкнутые контуры правдоподобной площади, м².
+_CANDIDATE_AREA_M2 = (300.0, 4_000_000.0)
+_MAX_CANDIDATES = 6
+_CANDIDATE_MAX_VERTICES = 400
+# Слова в имени слоя, по которым контур скорее граница, чем газон или дом.
+_BOUNDARY_HINTS = ("ГРАНИЦ", "УЧАСТ", "ТЕРРИТОР", "ОТВОД", "ЗАКАЗ", "РАБОТ", "BOUNDARY", "SITE", "PLOT", "PARCEL", "LIMIT")
+
+
+def boundary_candidates(msp, scale):
+    """Кандидаты в границу участка, когда слоя границы нет: замкнутые
+    контуры любых слоёв правдоподобной для участка площади, крупные -- первыми,
+    слои со словами «граница», «участок» -- выше. [{id, layer, area, points}],
+    points -- в координатах чертежа (их принимает boundary_points)."""
+    from shapely.geometry import Polygon
+
+    found = []
+    seen = set()
+    for e in msp.query("LWPOLYLINE POLYLINE"):
+        if e.dxftype() == "POLYLINE" and (e.is_poly_face_mesh or e.is_polygon_mesh):
+            continue
+        pts = [(p[0], p[1]) for p in polygon_points(e)]
+        closed = e.closed if e.dxftype() == "LWPOLYLINE" else e.is_closed
+        if len(pts) < 3 or not (closed or pts[0] == pts[-1]):
+            continue
+        poly = Polygon(pts)
+        if not poly.is_valid:
+            poly = poly.buffer(0)
+            if poly.geom_type != "Polygon":
+                continue
+        area = poly.area * scale * scale
+        if not _CANDIDATE_AREA_M2[0] <= area <= _CANDIDATE_AREA_M2[1]:
+            continue
+        key = (round(poly.centroid.x * scale), round(poly.centroid.y * scale), round(area))
+        if key in seen:
+            continue
+        seen.add(key)
+        if len(poly.exterior.coords) > _CANDIDATE_MAX_VERTICES:
+            poly = poly.simplify(0.2 / scale, preserve_topology=True)
+        layer = e.dxf.layer
+        hinted = any(h in layer.upper() for h in _BOUNDARY_HINTS)
+        found.append((not hinted, -area, layer, [[round(x, 3), round(y, 3)] for x, y in poly.exterior.coords[:-1]], area))
+    found.sort(key=lambda c: (c[0], c[1]))
+    return [
+        {"id": i, "layer": layer, "area": round(area), "points": points}
+        for i, (_hint, _neg, layer, points, area) in enumerate(found[:_MAX_CANDIDATES])
+    ]
 
 
 def main():

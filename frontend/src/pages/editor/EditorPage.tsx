@@ -13,6 +13,7 @@ import { EditorSidebar } from "./EditorSidebar";
 import { EditorTopBar } from "./EditorTopBar";
 import { GreenPlanOptionsDialog } from "./GreenPlanOptionsDialog";
 import { GreenPlanPanel } from "./GreenPlanPanel";
+import { BoundaryChoiceDialog } from "./BoundaryChoiceDialog";
 import { LayerMappingDialog } from "./LayerMappingDialog";
 import { SaveAsDialog } from "./SaveAsDialog";
 import { StatusBanners, type BannerError } from "./StatusBanners";
@@ -135,6 +136,7 @@ export default function EditorPage() {
           onDismissDwgWarnings={importer.dismissDwgWarnings}
           layerSummary={layers.summary}
           onOpenLayers={layers.open}
+          onChooseBoundary={layers.boundaryCandidates.length > 0 ? () => layers.setBoundaryOpen(true) : undefined}
           onDismissLayerSummary={layers.dismissSummary}
         />
 
@@ -237,6 +239,13 @@ export default function EditorPage() {
         initial={greenPlan.options}
         busy={greenPlan.generate.busy}
         onRun={(options) => void greenPlan.generate.run(options)}
+      />
+      <BoundaryChoiceDialog
+        open={layers.boundaryOpen}
+        onOpenChange={layers.setBoundaryOpen}
+        candidates={layers.boundaryCandidates}
+        busy={layers.chooseBoundary.busy}
+        onChoose={(candidate) => void layers.chooseBoundary.run(candidate)}
       />
       <LayerMappingDialog
         open={layers.dialogOpen}

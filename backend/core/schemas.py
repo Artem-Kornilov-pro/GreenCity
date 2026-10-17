@@ -76,6 +76,15 @@ class LayerInfo(BaseModel):
     )
 
 
+class BoundaryCandidate(BaseModel):
+    """Замкнутый контур чертежа, который может быть границей участка."""
+
+    id: int
+    layer: str
+    area: float = Field(description="Площадь, м².")
+    points: list[list[float]] = Field(description="Вершины в координатах чертежа.")
+
+
 class SceneMeta(BaseModel):
     """Привязка сцены к исходному чертежу."""
 
@@ -91,6 +100,12 @@ class SceneMeta(BaseModel):
     layers: list[LayerInfo] = Field(default=[], description="Слои чертежа: что из каждого взято при разборе.")
     layerMap: dict[str, str] = Field(default={}, description="Назначения слоёв пользователем {имя слоя: класс}, с которыми разобран чертёж.")
     warnings: list[str] = Field(default=[], description="Что разбор чертежа сделал сам и что стоит проверить.")
+    boundaryCandidates: list[BoundaryCandidate] = Field(
+        default=[], description="Слоя границы нет: замкнутые контуры, из которых пользователь может выбрать границу участка."
+    )
+    boundaryOverride: Optional[list[list[float]]] = Field(
+        default=None, description="Граница участка, выбранная пользователем, в координатах чертежа: [[x, y], ...]."
+    )
 
 
 class LawnArea(BaseModel):

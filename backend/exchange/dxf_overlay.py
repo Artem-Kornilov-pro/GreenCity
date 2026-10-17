@@ -34,7 +34,7 @@ from ezdxf.math import Matrix44
 
 from core.plant_catalog import catalog_by_id
 from core.schemas import Scene, SceneObject
-from exchange.dxf_parser import parse_dxf_doc
+from exchange.dxf_parser import parse_dxf_doc, parse_kwargs
 from exchange.export_dxf import (
     _ACI_BY_SEVERITY,
     _ACI_LAWN,
@@ -112,8 +112,7 @@ def overlay_scene(scene: Scene, doc) -> OverlaySummary:
     doc меняется на месте; исходные сущности не трогаются."""
     # База разбирается с теми же назначениями слоёв, что и сцена: иначе объект
     # с назначенного слоя считался бы добавленным пользователем.
-    layer_kwargs = {"layer_map": scene.meta.layerMap} if scene.meta.layerMap else {}
-    baseline = Scene.model_validate(parse_dxf_doc(doc, **layer_kwargs))
+    baseline = Scene.model_validate(parse_dxf_doc(doc, **parse_kwargs(scene.meta)))
     scale = baseline.meta.scale or 1.0
     ox, oy = float(baseline.meta.origin.get("x", 0.0)), float(baseline.meta.origin.get("y", 0.0))
     to_source = Matrix44.chain(Matrix44.scale(1 / scale, 1 / scale, 1 / scale), Matrix44.translate(ox, oy, 0))

@@ -26,7 +26,7 @@ from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ADDED_META = {"layers", "layerMap", "warnings"}
+ADDED_META = {"layers", "layerMap", "warnings", "boundaryCandidates"}
 
 
 def _parse(args: tuple[str, str]) -> tuple[str, dict | None, str | None]:
