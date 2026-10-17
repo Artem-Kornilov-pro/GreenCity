@@ -5,12 +5,16 @@ ezdxf-документ на путь вывода -- это ровно то, ч�
 просто без реального бинарного формата DWG на входе."""
 
 import io
+import shutil
+import subprocess
+from collections import Counter
 from pathlib import Path, PureWindowsPath
 
 import ezdxf
 import pytest
 
 from dxf_parsing.encoding import repair_mojibake
+from exchange import dwg_batch_converter
 from exchange.dwg_batch_converter import Dwg2DxfNotFound, merge_dwg_files
 
 
@@ -40,7 +44,7 @@ def fake_dwg2dxf(monkeypatch, tmp_path):
     def fake_run(args, capture_output):
         out_path = Path(args[2])
         in_path = Path(args[3])
-        if in_path.read_bytes().startswith(b"bad"):
+        if in_path.read_bytes().removeprefix(b"AC1032 ").startswith(b"bad"):
             # Байты, не валидные как UTF-8 (\xbd), -- ровно то, что реальный
             # dwg2dxf пишет в stderr на кириллических именах слоёв, и ровно
             # то, из-за чего text=True раньше падал внутри subprocess.run
@@ -57,7 +61,7 @@ def fake_dwg2dxf(monkeypatch, tmp_path):
 def test_merge_dwg_files_raises_when_tool_missing(monkeypatch, tmp_path):
     monkeypatch.setattr("exchange.dwg_batch_converter.shutil.which", lambda name: None)
     dwg = tmp_path / "a.dwg"
-    dwg.write_bytes(b"good " + dwg.name.encode())
+    dwg.write_bytes(b"AC1032 good " + dwg.name.encode())
     with pytest.raises(Dwg2DxfNotFound):
         merge_dwg_files([dwg], tmp_path)
 
@@ -65,8 +69,8 @@ def test_merge_dwg_files_raises_when_tool_missing(monkeypatch, tmp_path):
 def test_merge_dwg_files_combines_entities_from_all_files(fake_dwg2dxf, tmp_path):
     a = tmp_path / "a.dwg"
     b = tmp_path / "b.dwg"
-    a.write_bytes(b"good " + a.name.encode())
-    b.write_bytes(b"good " + b.name.encode())
+    a.write_bytes(b"AC1032 good " + a.name.encode())
+    b.write_bytes(b"AC1032 good " + b.name.encode())
 
     result = merge_dwg_files([a, b], tmp_path)
 
@@ -79,8 +83,8 @@ def test_merge_dwg_files_combines_entities_from_all_files(fake_dwg2dxf, tmp_path
 def test_merge_dwg_files_reports_partial_failure_without_stopping_the_batch(fake_dwg2dxf, tmp_path):
     good = tmp_path / "good.dwg"
     bad = tmp_path / "bad.dwg"
-    good.write_bytes(b"good " + good.name.encode())
-    bad.write_bytes(b"bad " + bad.name.encode())
+    good.write_bytes(b"AC1032 good " + good.name.encode())
+    bad.write_bytes(b"AC1032 bad " + bad.name.encode())
 
     result = merge_dwg_files([good, bad], tmp_path)
 
@@ -106,7 +110,7 @@ def test_merge_dwg_files_falls_back_to_recover_on_unicode_decode_error(fake_dwg2
     monkeypatch.setattr("exchange.dwg_batch_converter.ezdxf.readfile", _flaky_readfile)
 
     dwg = tmp_path / "flaky.dwg"
-    dwg.write_bytes(b"good " + dwg.name.encode())
+    dwg.write_bytes(b"AC1032 good " + dwg.name.encode())
 
     result = merge_dwg_files([dwg], tmp_path)
 
@@ -117,7 +121,7 @@ def test_merge_dwg_files_falls_back_to_recover_on_unicode_decode_error(fake_dwg2
 
 def test_merge_dwg_files_all_failed_returns_empty_converted(fake_dwg2dxf, tmp_path):
     bad = tmp_path / "bad.dwg"
-    bad.write_bytes(b"bad " + bad.name.encode())
+    bad.write_bytes(b"AC1032 bad " + bad.name.encode())
 
     result = merge_dwg_files([bad], tmp_path)
 
@@ -134,7 +138,7 @@ def test_merge_dwg_files_processes_in_original_order_regardless_of_size(fake_dwg
     # быть строго в порядке dwg_paths -- регрессия на случайную перестановку.
     paths = [tmp_path / f"{name}.dwg" for name in ("c", "a", "b")]
     for p in paths:
-        p.write_bytes(b"good " + p.name.encode())
+        p.write_bytes(b"AC1032 good " + p.name.encode())
 
     result = merge_dwg_files(paths, tmp_path)
 
@@ -158,7 +162,7 @@ def test_merge_keeps_only_layers_the_parser_reads_and_all_texts(monkeypatch, tmp
     monkeypatch.setattr("exchange.dwg_batch_converter.shutil.which", lambda name: "/usr/bin/dwg2dxf")
     monkeypatch.setattr("exchange.dwg_batch_converter.subprocess.run", fake_run)
     dwg = tmp_path / "a.dwg"
-    dwg.write_bytes(b"x")
+    dwg.write_bytes(b"AC1032 x")
     msp = merge_dwg_files([dwg], tmp_path).doc.modelspace()
     assert [e.dxf.layer for e in msp.query("LINE")] == ["ROAD_EDGE"]
     assert [e.dxf.text for e in msp.query("TEXT")] == ["Дом 1"]
@@ -186,7 +190,7 @@ def test_parallel_merge_gives_the_same_document_in_the_original_order(fake_dwg2d
     paths = []
     for name, body in (("c", b"good"), ("a", b"good"), ("bad", b"bad"), ("b", b"good")):
         path = tmp_path / f"{name}.dwg"
-        path.write_bytes(body + b" " + name.encode())  # разное содержимое -- одинаковые файлы пропускаются
+        path.write_bytes(b"AC1032 " + body + b" " + name.encode())  # разное содержимое -- одинаковые файлы пропускаются
         paths.append(path)
     result = merge_dwg_files(paths, tmp_path, workers=3)
     assert result.converted == ["c.dwg", "a.dwg", "b.dwg"]
@@ -202,9 +206,9 @@ def test_merge_dwg_files_skips_byte_identical_files(fake_dwg2dxf, tmp_path):
     a = tmp_path / "АПОТ.dwg"
     b = tmp_path / "улица ГП.dwg"
     c = tmp_path / "посадочный.dwg"
-    a.write_bytes(b"good same")
-    b.write_bytes(b"good same")
-    c.write_bytes(b"good other")
+    a.write_bytes(b"AC1032 good same")
+    b.write_bytes(b"AC1032 good same")
+    c.write_bytes(b"AC1032 good other")
 
     result = merge_dwg_files([a, b, c], tmp_path)
 
@@ -272,7 +276,7 @@ def test_merge_keeps_synonym_layers_blocks_with_content_and_assigned_layers(monk
 
     _fake_dwg2dxf_writing(monkeypatch, build)
     dwg = tmp_path / "a.dwg"
-    dwg.write_bytes(b"x")
+    dwg.write_bytes(b"AC1032 x")
     # Имена слоёв DXF R2000 с кириллицей ezdxf пишет как \U+XXXX и так их
     # и читает -- как и в чертежах заказчиков; layer_map задан по такому
     # имени, как оно приходит в сводке слоёв.
@@ -291,7 +295,7 @@ def test_merge_reads_names_written_in_utf8_under_a_cp1252_header(monkeypatch, tm
 
     _fake_dwg2dxf_writing(monkeypatch, build, encode_utf8_under_cp1252=True)
     dwg = tmp_path / "a.dwg"
-    dwg.write_bytes(b"x")
+    dwg.write_bytes(b"AC1032 x")
     result = merge_dwg_files([dwg], tmp_path)
     assert [e.dxf.layer for e in result.doc.modelspace()] == ["Здания"]
 
@@ -342,3 +346,69 @@ def test_xref_inserted_at_origin_leaves_the_file_as_is(tmp_path):
     line = next(iter(result.doc.modelspace().query('LINE[layer=="Газопровод"]')))
     assert (line.dxf.start.x, line.dxf.start.y) == (0, 0)
     assert result.placed_by_xref == {}
+
+
+# --- сверка числа объектов DWG и DXF (issue #117) -------------------------------
+
+
+def test_dwg_entities_are_counted_from_dwgread_json_lines():
+    lines = [
+        b'      "entity": "BLOCK",\n', b'      "entity": "LINE",\n', b'      "entity": "POLYLINE_2D",\n',
+        b'      "entity": "VERTEX_2D",\n', b'      "entity": "SEQEND",\n', b'      "entity": "DIMENSION_LINEAR",\n',
+        b'      "entity": "_3DFACE",\n', b'      "entity": "ENDBLK",\n', b'      "object": "LAYER",\n',
+    ]
+    assert dwg_batch_converter.count_dwg_entities(lines) == Counter({"LINE": 1, "POLYLINE": 1, "DIMENSION": 1, "3DFACE": 1})
+
+
+def test_lost_entities_are_the_ones_missing_in_dxf():
+    dwg = Counter({"LINE": 10, "PROXY_ENTITY": 2, "INSERT": 3})
+    dxf = Counter({"LINE": 10, "INSERT": 1})
+    assert dwg_batch_converter.lost_entities(dwg, dxf) == {"INSERT": 2, "PROXY_ENTITY": 2}
+
+
+def test_file_without_dwg_signature_is_not_converted(fake_dwg2dxf, tmp_path):
+    pax = tmp_path / "PaxHeader.dwg"
+    pax.write_bytes("path=Объект/tp.dwg\n".encode())
+    good = tmp_path / "tp.dwg"
+    good.write_bytes(b"AC1032 good tp")
+    result = merge_dwg_files([pax, good], tmp_path)
+    assert result.converted == ["tp.dwg"]
+    assert "AC10" in result.failed["PaxHeader.dwg"]
+
+
+def test_conversion_losses_are_reported(fake_dwg2dxf, tmp_path, monkeypatch):
+    # dwgread видит в DWG прокси-объект, которого dwg2dxf в DXF не записал.
+    monkeypatch.setattr(dwg_batch_converter, "dwg_entities", lambda path: Counter({"LINE": 1, "PROXY_ENTITY": 3}))
+    dwg = tmp_path / "a.dwg"
+    dwg.write_bytes(b"AC1032 good a")
+    result = merge_dwg_files([dwg], tmp_path)
+    assert result.lost == {"a.dwg": {"PROXY_ENTITY": 3}}
+
+
+def test_no_dwgread_means_no_check(monkeypatch, tmp_path):
+    monkeypatch.setattr(dwg_batch_converter.shutil, "which", lambda name: None)
+    assert dwg_batch_converter.dwg_entities(tmp_path / "a.dwg") is None
+
+
+@pytest.mark.skipif(not (shutil.which("dwgread") and shutil.which("dxf2dwg") and shutil.which("dwg2dxf")), reason="нужен LibreDWG")
+def test_real_dwg_converts_without_losses(tmp_path):
+    src = tmp_path / "site.dxf"
+    doc = ezdxf.new("R2018")
+    msp = doc.modelspace()
+    doc.layers.add("Газопровод")
+    msp.add_line((0, 0), (10, 0), dxfattribs={"layer": "Газопровод"})
+    msp.add_lwpolyline([(0, 0), (5, 0), (5, 5)], dxfattribs={"layer": "Газопровод"})
+    msp.add_circle((3, 3), 1.0, dxfattribs={"layer": "Газопровод"})
+    doc.saveas(src)
+    dwg = tmp_path / "site.dwg"
+    subprocess.run(["dxf2dwg", "-y", "-o", str(dwg), str(src)], capture_output=True, check=False)
+    if not dwg.exists():
+        pytest.skip("dxf2dwg не собрал DWG")
+    counts = dwg_batch_converter.dwg_entities(dwg)
+    assert counts and counts["LINE"] == 1
+    work = tmp_path / "work"
+    work.mkdir()
+    result = merge_dwg_files([dwg], work)
+    if not result.converted:
+        pytest.skip(f"LibreDWG не прочитал DWG, который сам записал: {result.failed}")
+    assert result.lost == {}

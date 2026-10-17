@@ -89,7 +89,7 @@ async def test_run_isolated_returns_scene_json_from_child_process(isolated_env, 
     )
     work = tmp_path / "work"
     work.mkdir()
-    (work / "a.dwg").write_bytes(b"dwg")
+    (work / "a.dwg").write_bytes(b"AC1032 dwg")
     payload, summary = await dwg_job.run([work / "a.dwg"], work, isolated=True)
     scene = json.loads(payload)
     assert scene["boundary"] is not None
@@ -102,7 +102,7 @@ async def test_run_isolated_reports_job_error_from_child(isolated_env, tmp_path)
     _fake_dwg2dxf(isolated_env, "sys.stderr.write('unsupported object'); sys.exit(1)")
     work = tmp_path / "work"
     work.mkdir()
-    (work / "a.dwg").write_bytes(b"dwg")
+    (work / "a.dwg").write_bytes(b"AC1032 dwg")
     with pytest.raises(dwg_job.DwgJobError) as err:
         await dwg_job.run([work / "a.dwg"], work, isolated=True)
     assert (err.value.status, err.value.outcome, err.value.failed) == (400, "all_failed", 1)
@@ -115,7 +115,7 @@ async def test_run_isolated_turns_killed_child_into_clear_error(isolated_env, tm
     _fake_dwg2dxf(isolated_env, "import signal\nos.kill(os.getppid(), signal.SIGKILL)")
     work = tmp_path / "work"
     work.mkdir()
-    (work / "a.dwg").write_bytes(b"dwg")
+    (work / "a.dwg").write_bytes(b"AC1032 dwg")
     with pytest.raises(dwg_job.DwgJobError) as err:
         await dwg_job.run([work / "a.dwg"], work, isolated=True)
     assert (err.value.status, err.value.outcome) == (500, "crashed")

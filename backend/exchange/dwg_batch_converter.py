@@ -69,6 +69,8 @@ class BatchConversionResult:
     layer_counts: dict[str, int] = field(default_factory=dict)
     # Файлы, сдвинутые по вставке внешней ссылки: {имя файла: кто вставил}.
     placed_by_xref: dict[str, str] = field(default_factory=dict)
+    # Потери при конвертации DWG -> DXF: {имя файла: {тип: сколько не дошло}}.
+    lost: dict[str, dict[str, int]] = field(default_factory=dict)
 
 
 def _convert_one(tool: str, dwg_path: Path, dxf_path: Path) -> None:
@@ -208,25 +210,104 @@ def _place(doc: ezdxf.document.Drawing, matrix: list[float]) -> None:
 def _read_source(path: Path, intermediate: Path) -> ezdxf.document.Drawing:
     if path.suffix.lower() == ".dxf":
         return read_dxf(path)
+    if not is_dwg(path):
+        raise RuntimeError("не DWG: в начале файла нет сигнатуры AC10xx (служебный файл архиватора или другой формат)")
     _convert_one(dwg2dxf_path(), path, intermediate)
     return _read_converted_dxf(intermediate)
 
 
+def is_dwg(path: Path) -> bool:
+    """DWG по содержимому, а не по расширению: файл начинается с версии
+    формата «AC10xx» (AC1015 -- AutoCAD 2000 ... AC1032 -- 2018+)."""
+    with path.open("rb") as f:
+        return f.read(4) == b"AC10"
+
+
+# --- Сверка числа объектов DWG и DXF ----------------------------------------
+#
+# LibreDWG иногда не дописывает в DXF объекты, которые прочитал с ошибками
+# или не умеет записывать (прокси, OLE). dwgread -O JSON перечисляет все
+# объекты DWG; их число по типам сравнивается с DXF после dwg2dxf. JSON
+# читается потоком по строкам -- память не растёт и на больших файлах.
+_ENTITY_LINE = re.compile(rb'^\s*"entity": "(\w+)"')
+# Объекты, которых нет среди сущностей листов и блоков ezdxf: обрамление
+# блока, вершины и концы полилиний, атрибуты вставки (лежат внутри родителя).
+_NOT_LISTED = {"BLOCK", "ENDBLK", "SEQEND", "ATTRIB"}
+FIDELITY_TIMEOUT_S = 120
+
+
+def _entity_type(name: str) -> Optional[str]:
+    """Тип LibreDWG -> тип DXF: POLYLINE_2D -> POLYLINE, DIMENSION_LINEAR ->
+    DIMENSION, _3DFACE -> 3DFACE. None -- не считается (см. _NOT_LISTED)."""
+    if name in _NOT_LISTED or name.startswith("VERTEX"):
+        return None
+    name = name.lstrip("_")
+    for family in ("POLYLINE", "DIMENSION"):
+        if name.startswith(family + "_"):
+            return family
+    return name
+
+
+def count_dwg_entities(lines) -> Counter:
+    """Сущности DWG по типам DXF из строк JSON dwgread."""
+    counts: Counter = Counter()
+    for line in lines:
+        m = _ENTITY_LINE.match(line)
+        if m:
+            kind = _entity_type(m.group(1).decode("ascii", "replace"))
+            if kind:
+                counts[kind] += 1
+    return counts
+
+
+def dwg_entities(dwg_path: Path) -> Optional[Counter]:
+    """Число сущностей DWG по типам или None, если dwgread нет или он не
+    справился (тогда сверка просто не делается)."""
+    tool = shutil.which("dwgread")
+    if tool is None:
+        return None
+    try:
+        with subprocess.Popen([tool, "-O", "JSON", str(dwg_path)], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) as proc:
+            counts = count_dwg_entities(proc.stdout)
+            proc.wait(timeout=FIDELITY_TIMEOUT_S)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return counts if proc.returncode == 0 and counts else None
+
+
+def dxf_entities(doc: ezdxf.document.Drawing) -> Counter:
+    counts: Counter = Counter()
+    for block in doc.blocks:
+        for entity in block:
+            counts[entity.dxftype()] += 1
+    return counts
+
+
+def lost_entities(dwg: Counter, dxf: Counter) -> dict[str, int]:
+    """{тип: сколько сущностей DWG не дошло до DXF}."""
+    return {kind: n - dxf.get(kind, 0) for kind, n in sorted(dwg.items()) if n > dxf.get(kind, 0)}
+
+
 def _extract_compact(
     dwg_path: str, work_dir: str, layer_map: Optional[dict[str, str]] = None
-) -> tuple[str, str | None, str | None, dict[str, int], dict[str, list[float]]]:
+) -> tuple[str, str | None, str | None, dict[str, int], dict[str, list[float]], dict[str, int]]:
     """Рабочий процесс: чтение файла (.dwg -- через dwg2dxf), отбор нужного
     парсеру -- в компактный DXF. (имя файла, путь к компактному DXF или None,
-    ошибка, сущностей по слоям до отбора, вставки внешних ссылок)."""
+    ошибка, сущностей по слоям до отбора, вставки внешних ссылок, потери при
+    конвертации DWG -> DXF по типам)."""
     src, work = Path(dwg_path), Path(work_dir)
     dxf_tmp = work / (src.stem + ".dxf")
     counts: Counter = Counter()
     try:
         source_doc = _read_source(src, dxf_tmp)
+        lost = {}
+        if src.suffix.lower() == ".dwg":
+            dwg_counts = dwg_entities(src)
+            lost = lost_entities(dwg_counts, dxf_entities(source_doc)) if dwg_counts else {}
     except Exception as e:
         if src.suffix.lower() != ".dxf":
             dxf_tmp.unlink(missing_ok=True)
-        return src.name, None, str(e), {}, {}
+        return src.name, None, str(e), {}, {}, {}
     try:
         placements = xref_placements(source_doc)
         compact = ezdxf.new(dxfversion=DXF_VERSION)
@@ -234,11 +315,11 @@ def _extract_compact(
         compact_path = work / (src.stem + ".compact.dxf")
         compact.saveas(compact_path)
     except Exception as e:
-        return src.name, None, f"ошибка импорта в общий документ: {e}", {}, {}
+        return src.name, None, f"ошибка импорта в общий документ: {e}", {}, {}, {}
     finally:
         if src.suffix.lower() != ".dxf":
             dxf_tmp.unlink(missing_ok=True)  # полный DXF больше не нужен -- место на диске
-    return src.name, str(compact_path), None, dict(counts), placements
+    return src.name, str(compact_path), None, dict(counts), placements, lost
 
 
 def _skip_identical_files(dwg_paths: list[Path], result: BatchConversionResult) -> list[Path]:
@@ -284,13 +365,15 @@ def merge_dwg_files(
     # Вставки внешних ссылок из всех файлов: файл, на который ссылается
     # другой файл комплекта, кладётся так, как стоит вставка.
     placements: dict[str, tuple[str, list[float]]] = {}
-    for name, _path, _error, _counts, file_placements in extracted:
+    for name, _path, _error, _counts, file_placements, _lost in extracted:
         for key, matrix in file_placements.items():
             if key != _xref_key(name):
                 placements.setdefault(key, (name, matrix))
 
     counts: Counter = Counter()
-    for name, compact_path, error, file_counts, _placements in extracted:
+    for name, compact_path, error, file_counts, _placements, lost in extracted:
+        if lost:
+            result.lost[name] = lost
         if compact_path is None:
             result.failed[name] = error or "неизвестная ошибка"
             continue
