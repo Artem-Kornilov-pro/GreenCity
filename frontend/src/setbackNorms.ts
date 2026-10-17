@@ -66,6 +66,19 @@ export function genusOf(species?: string): string | undefined {
   return first ? first.toLowerCase().replace(/ё/g, "е") : undefined;
 }
 
+// Воздушная ЛЭП (ПУЭ, п. 2.4.8 и табл. 2.5.21): от провода до кроны -- 1 м
+// до 1 кВ, 3 м до 20 кВ, 4/5/6/7 м до 110/220/330/500 кВ; крона принята 5 м,
+// зона ЛЭП -- коридор шириной 2 x minDistance вокруг провода. Нет класса
+// напряжения -- 10 кВ.
+const PUE_CROWN_DISTANCE: [number, number][] = [[1, 1], [20, 3], [110, 4], [220, 5], [330, 6], [Infinity, 7]];
+const CROWN_RADIUS_M = 2.5;
+
+export function overheadLineSetback(zoneMinDistance: number, voltageKv?: number | null): number {
+  const kv = voltageKv ?? 10;
+  const crown = PUE_CROWN_DISTANCE.find(([limit]) => kv <= limit)?.[1] ?? 7;
+  return Math.round(Math.max(0, crown + CROWN_RADIUS_M - zoneMinDistance) * 1000) / 1000;
+}
+
 // Прикорневой барьер (СП 42.13330.2016, прим. 4-7 к табл. 9.1): дереву,
 // которое GreenPlan поставил «условно, с корнезащитой» (metadata.rootBarrier),
 // от подземной сети хватает 1 м.
@@ -80,9 +93,11 @@ export function setbackFor(
   zoneMinDistance: number,
   species?: string,
   rootBarrier = false,
+  voltageKv?: number | null,
 ): number {
   const rule = SETBACK_NORMS[zoneType];
   let distance = rule ? rule[plantKind] : zoneMinDistance;
+  if (zoneType === "overhead_power_line" && plantKind === "tree") distance = overheadLineSetback(zoneMinDistance, voltageKv);
   if (rootBarrier && plantKind === "tree" && ROOT_BARRIER_ZONE_TYPES.has(zoneType)) {
     distance = Math.min(distance, ROOT_BARRIER_MIN_M);
   }

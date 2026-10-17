@@ -3,7 +3,7 @@
 из git-ревизии (по умолчанию main, во временном worktree) и текущим кодом --
 тем же путём, что /api/parse, -- и сцены сравниваются. Новые поля, которые
 только добавляют сведения (meta.layers, meta.layerMap, meta.warnings,
-layerKind зоны), не считаются отличием.
+layerKind и voltageKv зоны), не считаются отличием.
 
     .venv/bin/python tools/parser_regression.py                 # весь корпус против main
     .venv/bin/python tools/parser_regression.py --base v1.0.1   # против тега
@@ -62,6 +62,7 @@ def _without_added_fields(scene: dict) -> dict:
         scene["meta"].pop(key, None)
     for zone in scene.get("restrictions", []):
         zone.pop("layerKind", None)
+        zone.pop("voltageKv", None)
     return scene
 
 

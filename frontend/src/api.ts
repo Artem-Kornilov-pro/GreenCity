@@ -136,6 +136,8 @@ export interface GreenPlanOptions {
   remove_violating_plants: boolean;
   // Деревья ближе нормы к подземным сетям с прикорневым барьером («условно»).
   root_barrier: boolean;
+  // Класс напряжения ЛЭП без подписи в имени слоя, кВ; null -- 10 кВ.
+  overhead_voltage_kv: number | null;
   preferred_trees: string[];
   preferred_bushes: string[];
   paths: boolean;
@@ -150,6 +152,7 @@ export const DEFAULT_GREENPLAN_OPTIONS: GreenPlanOptions = {
   lawn: true,
   remove_violating_plants: false,
   root_barrier: false,
+  overhead_voltage_kv: null,
   preferred_trees: [],
   preferred_bushes: [],
   paths: false,

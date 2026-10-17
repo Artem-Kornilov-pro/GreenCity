@@ -45,6 +45,10 @@ class RestrictionZone(BaseModel):
     layerKind: Optional[str] = Field(
         default=None, description="Класс слоя, с которого взята зона (GET /api/layer-kinds): газон, парковка… -- не зависит от имени слоя."
     )
+    voltageKv: Optional[float] = Field(
+        default=None,
+        description="Класс напряжения воздушной ЛЭП, кВ: из имени слоя («ВЛ 10кВ») или из параметров GreenPlan; не задан -- 10 кВ.",
+    )
 
 
 class SceneObject(BaseModel):

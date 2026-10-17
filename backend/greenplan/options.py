@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -23,6 +23,15 @@ class GreenPlanOptions(BaseModel):
     trees: bool = Field(default=True, description="Сажать деревья.")
     bushes: bool = Field(default=True, description="Сажать кустарники.")
     lawn: bool = Field(default=True, description="Устраивать газон на свободной земле.")
+    overhead_voltage_kv: Optional[float] = Field(
+        default=None,
+        gt=0,
+        le=1150,
+        description=(
+            "Класс напряжения воздушных ЛЭП, кВ, у которых он не указан в имени слоя; "
+            "не задан -- 10 кВ. От него -- отступ деревьев до кроны по ПУЭ (1 м до 1 кВ, 3 м до 20 кВ, 4-7 м выше)."
+        ),
+    )
     root_barrier: bool = Field(
         default=False,
         description=(
@@ -53,6 +62,8 @@ class GreenPlanOptions(BaseModel):
             f"стиль участка: {STYLE_CHOICE_LABELS[self.style]}",
             f"посадки: {', '.join(planting) if planting else 'не заданы'}",
         ]
+        if self.overhead_voltage_kv is not None:
+            rows.append(f"класс напряжения ЛЭП без подписи: {self.overhead_voltage_kv:g} кВ")
         if self.root_barrier:
             rows.append("деревья у подземных сетей: допускаются с прикорневым барьером (условно)")
         if self.remove_violating_plants:

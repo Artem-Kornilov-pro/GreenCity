@@ -187,7 +187,9 @@ class Placer:
         """Нормативный отступ посадки вида kind от зоны; малым формам и
         мощению -- небольшой технический зазор."""
         if kind in ("tree", "bush"):
-            return setback_for(zone.type, kind, zone.minDistance, species=species, root_barrier=self.root_barrier)
+            return setback_for(
+                zone.type, kind, zone.minDistance, species=species, root_barrier=self.root_barrier, voltage_kv=zone.voltageKv
+            )
         return FURNITURE_CLEARANCE_M
 
     def region(self, kind: Optional[str], species: SpeciesArg = None):

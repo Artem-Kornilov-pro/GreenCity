@@ -39,7 +39,7 @@ def _keep_out_shapes(
         poly = polygon_from_points(zone.polygon)
         if poly is None:
             continue
-        setback = setback_for(zone.type, plant_kind, zone.minDistance, species=species)
+        setback = setback_for(zone.type, plant_kind, zone.minDistance, species=species, voltage_kv=zone.voltageKv)
         shapes.append(poly.buffer(setback) if setback > 0 else poly)
     return shapes
 

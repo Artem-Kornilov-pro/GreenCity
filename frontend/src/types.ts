@@ -31,6 +31,8 @@ export interface RestrictionZone {
   // Класс слоя, с которого взята зона (газон, парковка…), -- не зависит от
   // того, как слой назван в чертеже.
   layerKind?: string | null;
+  // Класс напряжения воздушной ЛЭП, кВ: из имени слоя или параметров GreenPlan; нет -- 10 кВ.
+  voltageKv?: number | null;
 }
 
 export interface SceneObject {
