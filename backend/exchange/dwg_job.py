@@ -77,6 +77,7 @@ def build_scene(
     пользователем; notes -- {файл: причина} для файлов комплекта, не
     взятых в сборку (exchange/drawing_package.py), -- уйдут в
     dwgConversionWarnings. Бросает DwgJobError."""
+    from core.versions import sha256_of_files
     from exchange import dwg_batch_converter
     from exchange.dxf_parser import complete_scene, parse_dxf_doc
 
@@ -107,6 +108,8 @@ def build_scene(
     gc.collect()
 
     complete_scene(scene)
+    if all(path.is_file() for path in dwg_paths):
+        scene["meta"]["sourceSha256"] = sha256_of_files(dwg_paths)
     if source_id:
         scene["meta"]["sourceId"] = source_id
     if result.placed_by_xref:
@@ -186,7 +189,7 @@ def build_export(dwg_paths: list[Path], work_dir: Path, scene_json: bytes) -> by
 
     from core.schemas import Scene
     from exchange import dwg_batch_converter
-    from exchange.dxf_overlay import overlay_scene
+    from exchange.dxf_overlay import overlay_scene, stamp_versions
 
     workers = max(1, int(os.environ.get("DWG_WORKERS") or DEFAULT_WORKERS))
     scene = Scene.model_validate_json(scene_json)
@@ -197,6 +200,7 @@ def build_export(dwg_paths: list[Path], work_dir: Path, scene_json: bytes) -> by
     if not result.converted:
         raise DwgJobError(400, "Исходные DWG не сконвертировались при экспорте", "all_failed", len(result.failed))
     overlay_scene(scene, result.doc)
+    stamp_versions(result.doc, scene.meta.sourceSha256)
     buf = io.StringIO()
     result.doc.write(buf)
     return buf.getvalue().encode("utf-8")

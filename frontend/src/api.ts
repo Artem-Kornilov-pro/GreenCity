@@ -37,6 +37,28 @@ export async function exportDxf(scene: Scene): Promise<{ blob: Blob; mode: "over
   return { blob: await res.blob(), mode };
 }
 
+// Независимая проверка выгрузки (backend/exchange/export_check.py): выходной
+// DXF читается заново -- исходник цел, посадки на местах, нормы соблюдены.
+export interface ExportVerification {
+  ok: boolean;
+  mode: "overlay" | "rebuilt";
+  source_sha256: string | null;
+  output_sha256: string;
+  versions: Record<string, string>;
+  source_entities_checked: number;
+  source_entities_missing: number;
+  source_entities_changed: number;
+  source_check: string;
+  plants_checked: number;
+  plants_missing: string[];
+  plants_moved: string[];
+  violations: { object_id: string; zone_type: string; distance_m: number; required_m: number }[];
+}
+
+export function verifyExport(scene: Scene): Promise<ExportVerification> {
+  return request<ExportVerification>("/api/export-dxf/verify", { json: scene, errorMessage: "Не удалось проверить выгрузку" });
+}
+
 // Объяснение каждой посадки со ссылкой на НПА и пункт (backend/greenplan/explanations.py).
 export function downloadGreenPlanExplanations(
   scene: Scene,

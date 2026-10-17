@@ -36,6 +36,7 @@ from core.paths import LOCATIONS_DIR, NORMS_DIR
 from core.plant_catalog import catalog_by_id
 from core.schemas import Scene
 from core.setback_norms import NORM_STATUS_LABELS, SETBACK_NORMS, setback_reference, species_rules
+from core.versions import versions
 from greenplan.assortment_report import AssortmentRow, improvements_assortment, lawn_assortment, summarize_assortment
 from greenplan.decision_report import ZONE_KIND_LABELS
 from greenplan.improvements import is_greenplan_zone
@@ -277,6 +278,13 @@ def _section_general(doc, title: str, c: Optional[SiteCharacteristics], scene: S
     if scene.lawns:
         new_lawn, existing_lawn = lawn_totals(scene.lawns)
         rows.append(["Газон", f"устройство нового — {_fmt_area(new_lawn)} м², существующий сохраняется — {_fmt_area(existing_lawn)} м²"])
+    if scene.meta.sourceSha256:
+        rows.append(["Исходный чертёж, SHA-256", scene.meta.sourceSha256])
+    v = versions()
+    rows.append([
+        "Версии",
+        f"GreenCity {v['app']}; правила разбора {v['parser_rules']}; нормы {v['norms']}; корпус прецедентов {v['precedent_corpus']}",
+    ])
     _table(doc, ["Показатель", "Значение"], rows, [70, 100])
 
 
