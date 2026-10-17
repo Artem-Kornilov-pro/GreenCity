@@ -27,7 +27,7 @@ from core.concurrency import ServerBusy, run_heavy, run_light
 from core.plant_catalog import CatalogItem, load_catalog
 from core.schemas import Scene
 from core.setback_norms import DEFAULT_TREE_SPECIES
-from exchange import dwg_job, source_store
+from exchange import drawing_package, dwg_job, source_store
 from exchange.dxf_overlay import overlay_scene
 from exchange.dxf_parser import LAYER_KINDS, complete_scene, parse_dxf_file, read_dxf
 from exchange.export_dxf import scene_to_dxf
@@ -188,36 +188,44 @@ async def parse_dxf_endpoint(
 @router.post(
     "/api/parse-dwg",
     tags=["Чертежи"],
-    summary="Загрузить папку DWG",
+    summary="Загрузить комплект чертежей: папку DWG/DXF или zip",
     responses={**SCENE_RESPONSE, **HEAVY_RESPONSES},
     dependencies=[rate_limit("parse_dwg")],
 )
 async def parse_dwg_folder_endpoint(
-    files: list[UploadFile] = File(..., description="Файлы .dwg проекта; остальные файлы папки игнорируются."),
+    files: list[UploadFile] = File(
+        ..., description="Чертежи объекта: .dwg, .dxf и zip-архивы с ними; остальные файлы папки игнорируются."
+    ),
     layerMap: Optional[str] = Form(default=None, description=LAYER_MAP_DESCRIPTION),  # noqa: N803 -- имя поля API
 ):
-    """Конвертирует каждый DWG в DXF (LibreDWG), сливает в один чертёж и
-    разбирает так же, как `/api/parse`. Файлы, которые не удалось прочитать,
-    не прерывают загрузку: они перечислены в `dwgConversionWarnings`.
-    Разбор идёт в отдельном процессе; одновременно -- не больше
-    `DWG_MAX_PARALLEL` пачек, остальные ждут очереди."""
+    """Комплект чертежей объекта, как его присылает заказчик: топосъёмка,
+    сети, рамки с границей заказа, генплан с внешними ссылками -- файлами
+    .dwg и .dxf или zip-архивом (архивы распаковываются, служебные файлы
+    архиваторов пропускаются). Каждый DWG конвертируется в DXF (LibreDWG),
+    все чертежи сливаются в один и разбираются так же, как `/api/parse`.
+    Файл, вставленный другим файлом комплекта внешней ссылкой со сдвигом или
+    поворотом, кладётся так, как стоит вставка. Если в комплекте есть DWG,
+    отдельные DXF не берутся (обычно это выгруженная копия). Файлы, которые
+    не удалось прочитать или которые пропущены, не прерывают загрузку: они
+    перечислены в `dwgConversionWarnings`. Разбор идёт в отдельном процессе;
+    одновременно -- не больше `DWG_MAX_PARALLEL` комплектов, остальные ждут
+    очереди."""
     layer_map = _layer_map(layerMap)
-    dwg_files = [f for f in files if (f.filename or "").lower().endswith(".dwg")]
-    if not dwg_files:
-        raise HTTPException(400, "Среди загруженных файлов нет ни одного .dwg")
-    if len(dwg_files) > MAX_DWG_FILES:
-        raise HTTPException(400, f"Не больше {MAX_DWG_FILES} файлов .dwg за одну загрузку")
+    uploads = [f for f in files if Path(f.filename or "").suffix.lower() in PACKAGE_UPLOAD_SUFFIXES]
+    if not uploads:
+        raise HTTPException(400, "Среди загруженных файлов нет ни одного .dwg, .dxf или .zip")
 
     tmp_path = Path(await run_light(tempfile.mkdtemp))
     try:
-        dwg_paths = []
-        for f in dwg_files:
-            dest = tmp_path / Path(f.filename).name  # .name отрезает "../" из имени файла
-            await run_light(dest.write_bytes, await f.read())
-            dwg_paths.append(dest)
+        saved = await _save_uploads(uploads, tmp_path)
+        selection = await run_light(_unpack_package, saved, tmp_path)
+        if not selection.drawings:
+            raise HTTPException(400, "В комплекте нет ни одного чертежа .dwg или .dxf")
+        if len(selection.drawings) > MAX_DWG_FILES:
+            raise HTTPException(400, f"Не больше {MAX_DWG_FILES} чертежей за одну загрузку")
 
-        source_id = await run_light(source_store.save_dwg_batch, dwg_paths)
-        payload, summary = await _run_dwg_job(dwg_paths, tmp_path, source_id, layer_map)
+        source_id = await run_light(source_store.save_dwg_batch, selection.drawings)
+        payload, summary = await _run_dwg_job(selection.drawings, tmp_path, source_id, layer_map, selection.skipped)
     finally:
         await run_light(shutil.rmtree, tmp_path, True)
 
@@ -226,17 +234,55 @@ async def parse_dwg_folder_endpoint(
     metrics.dwg_files_processed_total.labels(outcome="failed").inc(summary["failed"])
     metrics.dxf_parses_total.inc()
     log.info(
-        "DWG-пачка разобрана: %d/%d файлов, %d объектов, %d зон",
-        summary["converted"], len(dwg_files), summary["objects"], summary["zones"],
+        "комплект чертежей разобран: %d/%d файлов, %d объектов, %d зон",
+        summary["converted"], len(selection.drawings), summary["objects"], summary["zones"],
     )
     # JSON из дочернего процесса отдаётся как есть, без повторного разбора.
     return Response(content=payload, media_type="application/json")
 
 
+PACKAGE_UPLOAD_SUFFIXES = (*drawing_package.DRAWING_SUFFIXES, drawing_package.ARCHIVE_SUFFIX)
+
+
+async def _save_uploads(uploads: list[UploadFile], folder: Path) -> list[Path]:
+    """Файлы формы -- в folder под своими именами (без папок: .name отрезает
+    «../»); одноимённые из разных папок не перезаписывают друг друга."""
+    saved = []
+    for f in uploads:
+        dest = drawing_package.unique_path(folder, Path(f.filename).name)
+        await run_light(dest.write_bytes, await f.read())
+        saved.append(dest)
+    return saved
+
+
+def _unpack_package(paths: list[Path], folder: Path) -> drawing_package.PackageSelection:
+    """Архивы распаковываются в folder; что пойдёт в сборку -- по правилу
+    drawing_package.select_drawings."""
+    drawings = []
+    for path in paths:
+        if path.suffix.lower() == drawing_package.ARCHIVE_SUFFIX:
+            unpacked = drawing_package.unique_path(folder, f"{path.stem}.unzipped")
+            unpacked.mkdir()
+            try:
+                drawings += drawing_package.extract_drawings(path, unpacked)
+            except drawing_package.PackageError as e:
+                raise HTTPException(400, str(e)) from e
+            path.unlink()
+        else:
+            drawings.append(path)
+    return drawing_package.select_drawings(drawings)
+
+
 async def _run_dwg_job(
-    dwg_paths: list[Path], work_dir: Path, source_id: Optional[str], layer_map: Optional[dict[str, str]]
+    dwg_paths: list[Path],
+    work_dir: Path,
+    source_id: Optional[str],
+    layer_map: Optional[dict[str, str]],
+    notes: Optional[dict[str, str]] = None,
 ) -> tuple[bytes, dict]:
     job_kwargs = {"layer_map": layer_map} if layer_map else {}
+    if notes:
+        job_kwargs["notes"] = notes
     try:
         async with dwg_job.slot():
             return await dwg_job.run(dwg_paths, work_dir, request_id=current_request_id(), source_id=source_id, **job_kwargs)

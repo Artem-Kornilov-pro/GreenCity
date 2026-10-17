@@ -7,7 +7,7 @@ import { CATEGORY_LABELS, objectTypeLabel, type CatalogCategory, type CatalogIte
 import type { ZoneViolation } from "../../geometry";
 import type { TransformMode } from "../../scene/PlacedObjects";
 import type { RestrictionZone, SceneObject } from "../../types";
-import { UploadDwgFolderButton, UploadDxfButton } from "./UploadButtons";
+import { UploadDrawingButton, UploadDwgFolderButton } from "./UploadButtons";
 
 // Карточки почти белые: сквозь прозрачное стекло просвечивала сцена, и на
 // зелёном газоне или тёмных зданиях текст карточек было не прочитать.
@@ -21,12 +21,12 @@ const STEPS = [
 
 // Пока сцены нет: с чего начать -- вместо пустой колонки.
 function StartCard({
-  onDxfFile,
+  onDrawingFiles,
   onDwgFolder,
   dxfLoading,
   dwgLoading,
 }: {
-  onDxfFile: (file: File) => void;
+  onDrawingFiles: (files: File[]) => void;
   onDwgFolder: (files: File[]) => void;
   dxfLoading: boolean;
   dwgLoading: boolean;
@@ -40,9 +40,9 @@ function StartCard({
         </span>
         <h3 className="text-base font-semibold text-ink-900">Начните с чертежа</h3>
       </div>
-      <p className="mt-3 text-sm text-ink-500">DXF-файл или папка проекта с DWG. Их можно просто перетащить в окно.</p>
+      <p className="mt-3 text-sm text-ink-500">DXF, DWG или ZIP -- один чертёж или все файлы объекта сразу (топосъёмка, сети, граница заказа), а можно папку проекта. Их можно просто перетащить в окно.</p>
       <div className="mt-4 flex flex-col gap-2">
-        <UploadDxfButton className="block" size="lg" variant="primary" loading={dxfLoading} disabled={busy} onFile={onDxfFile} />
+        <UploadDrawingButton className="block" size="lg" variant="primary" loading={dxfLoading} disabled={busy} onFiles={onDrawingFiles} />
         <UploadDwgFolderButton className="block" size="lg" loading={dwgLoading} disabled={busy} onFiles={onDwgFolder} />
       </div>
       <ol className="mt-5 flex flex-col gap-3">
@@ -64,7 +64,7 @@ function StartCard({
 // сцена видна между карточками.
 export function EditorSidebar({
   sceneLoaded,
-  onDxfFile,
+  onDrawingFiles,
   onDwgFolder,
   dxfLoading,
   dwgLoading,
@@ -88,7 +88,7 @@ export function EditorSidebar({
   onDelete,
 }: {
   sceneLoaded: boolean;
-  onDxfFile: (file: File) => void;
+  onDrawingFiles: (files: File[]) => void;
   onDwgFolder: (files: File[]) => void;
   dxfLoading: boolean;
   dwgLoading: boolean;
@@ -113,7 +113,7 @@ export function EditorSidebar({
 }) {
   return (
     <aside className="scrollbar-thin absolute left-0 top-0 z-20 flex h-full w-80 flex-col gap-3 overflow-y-auto border-r border-white/30 bg-white/25 px-3 pb-3 pt-16 shadow-sm backdrop-blur-2xl backdrop-saturate-150">
-      {!sceneLoaded && <StartCard onDxfFile={onDxfFile} onDwgFolder={onDwgFolder} dxfLoading={dxfLoading} dwgLoading={dwgLoading} />}
+      {!sceneLoaded && <StartCard onDrawingFiles={onDrawingFiles} onDwgFolder={onDwgFolder} dxfLoading={dxfLoading} dwgLoading={dwgLoading} />}
 
       {sceneLoaded && (
         <Card className={CARD}>

@@ -5,7 +5,7 @@ ezdxf-документ на путь вывода -- это ровно то, ч�
 просто без реального бинарного формата DWG на входе."""
 
 import io
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 import ezdxf
 import pytest
@@ -192,8 +192,8 @@ def test_parallel_merge_gives_the_same_document_in_the_original_order(fake_dwg2d
     assert result.converted == ["c.dwg", "a.dwg", "b.dwg"]
     assert list(result.failed) == ["bad.dwg"]
     assert [e.dxf.layer for e in result.doc.modelspace().query("LINE")] == ["PATH_c", "PATH_a", "PATH_b"]
-    # Полный промежуточный DXF удаляется, остаётся компактный.
-    assert not list(tmp_path.glob("c.dxf")) and list(tmp_path.glob("c.compact.dxf"))
+    # Промежуточные DXF -- полный и компактный -- после сборки удаляются.
+    assert not list(tmp_path.glob("c.dxf")) and not list(tmp_path.glob("c.compact.dxf"))
 
 
 def test_merge_dwg_files_skips_byte_identical_files(fake_dwg2dxf, tmp_path):
@@ -294,3 +294,51 @@ def test_merge_reads_names_written_in_utf8_under_a_cp1252_header(monkeypatch, tm
     dwg.write_bytes(b"x")
     result = merge_dwg_files([dwg], tmp_path)
     assert [e.dxf.layer for e in result.doc.modelspace()] == ["Здания"]
+
+
+# --- комплект из DXF и внешние ссылки -------------------------------------------
+
+
+def test_dxf_files_are_merged_without_dwg2dxf(monkeypatch, tmp_path):
+    # Тайлы подосновы в DXF (tp, up, brd): конвертер не нужен вовсе.
+    monkeypatch.setattr("exchange.dwg_batch_converter.shutil.which", lambda name: None)
+    tp, up = tmp_path / "tp.dxf", tmp_path / "up.dxf"
+    _write_dxf_with_line(tp, "PATH_tp")
+    _write_dxf_with_line(up, "Газопровод")
+    result = merge_dwg_files([tp, up], tmp_path)
+    assert result.converted == ["tp.dxf", "up.dxf"]
+    assert sorted(e.dxf.layer for e in result.doc.modelspace().query("LINE")) == ["PATH_tp", "Газопровод"]
+    assert tp.exists() and up.exists()  # исходники не трогаются
+
+
+def _write_base_with_xref(path: Path, xref_file: str, insert, rotation=0.0) -> None:
+    doc = ezdxf.new()
+    name = PureWindowsPath(xref_file).stem
+    doc.add_xref_def(xref_file, name)
+    doc.modelspace().add_blockref(name, insert, dxfattribs={"rotation": rotation})
+    doc.layers.add("Граница работ")
+    doc.modelspace().add_lwpolyline([(0, 0), (10, 0), (10, 10)], close=True, dxfattribs={"layer": "Граница работ"})
+    doc.saveas(path)
+
+
+def test_file_referenced_as_xref_with_offset_is_placed_like_the_insert(tmp_path):
+    # Генплан вставляет сети внешней ссылкой со сдвигом (1000, 2000) и
+    # поворотом 90°: файл сетей ложится туда же, а не в начало координат.
+    base, up = tmp_path / "Генплан.dxf", tmp_path / "up.dxf"
+    _write_base_with_xref(base, r"C:\Проект\Подоснова\UP.dwg", (1000, 2000), rotation=90)
+    _write_dxf_with_line(up, "Газопровод")  # линия (0,0)-(1,1)
+    result = merge_dwg_files([base, up], tmp_path)
+    line = next(iter(result.doc.modelspace().query('LINE[layer=="Газопровод"]')))
+    assert (round(line.dxf.start.x, 6), round(line.dxf.start.y, 6)) == (1000, 2000)
+    assert (round(line.dxf.end.x, 6), round(line.dxf.end.y, 6)) == (999, 2001)
+    assert result.placed_by_xref == {"up.dxf": "Генплан.dxf"}
+
+
+def test_xref_inserted_at_origin_leaves_the_file_as_is(tmp_path):
+    base, up = tmp_path / "base.dxf", tmp_path / "up.dxf"
+    _write_base_with_xref(base, "up.dwg", (0, 0))
+    _write_dxf_with_line(up, "Газопровод")
+    result = merge_dwg_files([base, up], tmp_path)
+    line = next(iter(result.doc.modelspace().query('LINE[layer=="Газопровод"]')))
+    assert (line.dxf.start.x, line.dxf.start.y) == (0, 0)
+    assert result.placed_by_xref == {}

@@ -11,7 +11,7 @@ import {
 } from "../../components/ui/dropdown-menu";
 import { logout, selectSession } from "../../store/authSlice";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { UploadDwgFolderButton, UploadDxfButton } from "./UploadButtons";
+import { UploadDrawingButton, UploadDwgFolderButton } from "./UploadButtons";
 
 // Топбар плавает поверх сцены, чтобы сквозь стекло была видна сама сцена.
 export function EditorTopBar({
@@ -19,7 +19,7 @@ export function EditorTopBar({
   dxfLoading,
   dwgLoading,
   projectLoading,
-  onDxfFile,
+  onDrawingFiles,
   onDwgFolder,
   sceneLoaded,
   onLayers,
@@ -42,7 +42,7 @@ export function EditorTopBar({
   dxfLoading: boolean;
   dwgLoading: boolean;
   projectLoading: boolean;
-  onDxfFile: (file: File) => void;
+  onDrawingFiles: (files: File[]) => void;
   onDwgFolder: (files: File[]) => void;
   sceneLoaded: boolean;
   // Окно «Слои чертежа»; нет -- у сцены нет сводки слоёв (сохранена раньше).
@@ -79,7 +79,7 @@ export function EditorTopBar({
       <span className="truncate text-sm font-medium text-ink-700">{title}</span>
 
       <div className="ml-auto flex items-center gap-1.5">
-        <UploadDxfButton size="sm" loading={dxfLoading} disabled={busy} onFile={onDxfFile} />
+        <UploadDrawingButton size="sm" loading={dxfLoading} disabled={busy} onFiles={onDrawingFiles} />
         <UploadDwgFolderButton size="sm" loading={dwgLoading} disabled={busy} onFiles={onDwgFolder} />
 
         {sceneLoaded && (

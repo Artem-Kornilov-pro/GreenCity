@@ -59,10 +59,18 @@ type UploadButtonProps = {
   className?: string;
 };
 
-export function UploadDxfButton({ onFile, ...props }: UploadButtonProps & { onFile: (file: File) => void }) {
+// Один чертёж или несколько файлов объекта сразу: топосъёмка, сети,
+// граница заказа -- DXF, DWG или zip-архив с ними.
+export function UploadDrawingButton({ onFiles, ...props }: UploadButtonProps & { onFiles: (files: File[]) => void }) {
   return (
-    <FilePickButton {...props} icon={<UploadCloud className="h-4 w-4" />} inputProps={{ accept: ".dxf" }} onFiles={(files) => onFile(files[0])}>
-      Загрузить DXF
+    <FilePickButton
+      {...props}
+      icon={<UploadCloud className="h-4 w-4" />}
+      title="DXF, DWG или ZIP. Можно выбрать несколько файлов объекта сразу -- топосъёмку, сети, границу заказа: они сольются в одну сцену"
+      inputProps={{ accept: ".dxf,.dwg,.zip", multiple: true }}
+      onFiles={onFiles}
+    >
+      Загрузить чертёж
     </FilePickButton>
   );
 }
@@ -73,11 +81,11 @@ export function UploadDwgFolderButton({ onFiles, ...props }: UploadButtonProps &
     <FilePickButton
       {...props}
       icon={<FolderUp className="h-4 w-4" />}
-      title="Папка проекта с исходными .dwg -- каждый файл конвертируется в DXF на сервере и сливается в одну сцену"
+      title="Папка проекта: .dwg, .dxf и .zip сливаются в одну сцену на сервере (DWG конвертируются в DXF)"
       inputProps={{ webkitdirectory: "", multiple: true }}
       onFiles={onFiles}
     >
-      Загрузить DWG (папка)
+      Загрузить папку
     </FilePickButton>
   );
 }

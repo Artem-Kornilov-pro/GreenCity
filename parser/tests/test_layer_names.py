@@ -272,6 +272,31 @@ def test_repair_mojibake_decodes_cad_unicode_escapes():
     assert describe_key(LayerResolver().layer_key("\\U+0413\\U+0430\\U+0437"))[0] == "gas"
 
 
+def test_repair_mojibake_restores_utf8_read_as_cp1251():
+    # Чертёж объявляет ANSI_1251, а имена записаны в UTF-8.
+    for name in ("Газон", "Отдельно стоящее дерево", "Граница заказа", "ЛЭП", "Кабель связи 0,4кВ"):
+        garbled = name.encode("utf-8").decode("cp1251", errors="replace")
+        assert repair_mojibake(garbled) == name
+    assert describe_key(LayerResolver().layer_key("Р“Р°Р·РѕРїСЂРѕРІРѕРґ"))[0] == "gas"
+
+
+def test_repair_mojibake_never_touches_real_russian_names():
+    # Обычные русские имена не должны «чиниться»: слова справочника видов и
+    # слои топосъёмки Мосгеотреста.
+    import json
+
+    from dxf_parsing.rules import SPECIES_CATALOG_PATH
+
+    names = [e["name"] for e in json.loads(SPECIES_CATALOG_PATH.read_text(encoding="utf-8")) if e.get("name")]
+    names += [
+        "Здания", "Части зданий", "Крыльца", "Бортовой камень", "Граница улицы", "Ограды", "Откосы",
+        "Отдельно стоящее дерево", "Полоса деревьев", "Леса и газоны", "Колодцы", "Люки", "Фонари",
+        "Газопровод", "Водопровод", "Канализация самотёчная", "Водосток", "Дренаж", "Теплосеть",
+        "Кабель электрический", "Кабель связи", "Общий коллектор", "Подземные коммуникации", "Ёлки", "ёж",
+    ]
+    assert [n for n in names if repair_mojibake(n) != n] == []
+
+
 def test_repair_mojibake_restores_utf8_and_cp1251():
     assert repair_mojibake("Здания".encode().decode("cp1252", errors="surrogateescape")) == "Здания"
     assert repair_mojibake("Газон".encode("cp1251").decode("cp1252")) == "Газон"

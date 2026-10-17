@@ -67,10 +67,16 @@ class DwgJobError(Exception):
 
 
 def build_scene(
-    dwg_paths: list[Path], work_dir: Path, source_id: Optional[str] = None, layer_map: Optional[dict[str, str]] = None
+    dwg_paths: list[Path],
+    work_dir: Path,
+    source_id: Optional[str] = None,
+    layer_map: Optional[dict[str, str]] = None,
+    notes: Optional[dict[str, str]] = None,
 ) -> tuple[dict, dict]:
     """(сцена, сводка для метрик и логов). layer_map -- назначения слоёв
-    пользователем. Бросает DwgJobError."""
+    пользователем; notes -- {файл: причина} для файлов комплекта, не
+    взятых в сборку (exchange/drawing_package.py), -- уйдут в
+    dwgConversionWarnings. Бросает DwgJobError."""
     from exchange import dwg_batch_converter
     from exchange.dxf_parser import complete_scene, parse_dxf_doc
 
@@ -83,7 +89,7 @@ def build_scene(
 
     if not result.converted:
         detail = "; ".join(f"{name}: {err}" for name, err in result.failed.items())
-        raise DwgJobError(400, f"Не удалось сконвертировать ни один .dwg-файл. {detail}", "all_failed", len(result.failed))
+        raise DwgJobError(400, f"Не удалось прочитать ни один чертёж. {detail}", "all_failed", len(result.failed))
 
     # Собранный документ разбирается прямо из памяти, без записи в файл и
     # повторного чтения.
@@ -103,8 +109,13 @@ def build_scene(
     complete_scene(scene)
     if source_id:
         scene["meta"]["sourceId"] = source_id
-    if result.failed:
-        scene["dwgConversionWarnings"] = [{"file": name, "error": err} for name, err in result.failed.items()]
+    if result.placed_by_xref:
+        scene["meta"].setdefault("warnings", []).extend(
+            f"{name} положен так, как его вставляет внешней ссылкой {host}." for name, host in result.placed_by_xref.items()
+        )
+    failed = {**(notes or {}), **result.failed}
+    if failed:
+        scene["dwgConversionWarnings"] = [{"file": name, "error": err} for name, err in failed.items()]
     summary = {
         "converted": len(result.converted),
         "failed": len(result.failed),
@@ -137,12 +148,13 @@ async def run(
     isolated: Optional[bool] = None,
     source_id: Optional[str] = None,
     layer_map: Optional[dict[str, str]] = None,
+    notes: Optional[dict[str, str]] = None,
 ) -> tuple[bytes, dict]:
     """(JSON сцены, сводка). isolated=None -- по DWG_JOB_ISOLATED (по
     умолчанию да). В самом процессе (в пуле потоков) -- для тестов, которые
     подменяют merge_dwg_files: подмена в дочерний процесс не переходит."""
     if not _isolated(isolated):
-        scene, summary = await run_light(build_scene, dwg_paths, work_dir, source_id, layer_map)
+        scene, summary = await run_light(build_scene, dwg_paths, work_dir, source_id, layer_map, notes)
         return json.dumps(scene, ensure_ascii=False).encode("utf-8"), summary
 
     scene_path = work_dir / "scene.json"
@@ -152,6 +164,7 @@ async def run(
         "GREENCITY_REQUEST_ID": request_id,
         "GREENCITY_SOURCE_ID": source_id or "",
         "GREENCITY_LAYER_MAP": json.dumps(layer_map or {}, ensure_ascii=False),
+        "GREENCITY_PACKAGE_NOTES": json.dumps(notes or {}, ensure_ascii=False),
     }
     returncode = await _run_child(
         [str(work_dir), str(scene_path), str(meta_path), *map(str, dwg_paths)], env, JOB_TIMEOUT_S, "Разбор DWG"
@@ -268,8 +281,9 @@ def _main(argv: list[str]) -> int:
     work_dir, scene_path, meta_path = (Path(a) for a in argv[:3])
     dwg_paths = [Path(a) for a in argv[3:]]
     layer_map = json.loads(os.environ.get("GREENCITY_LAYER_MAP") or "{}") or None
+    notes = json.loads(os.environ.get("GREENCITY_PACKAGE_NOTES") or "{}") or None
     try:
-        scene, summary = build_scene(dwg_paths, work_dir, os.environ.get("GREENCITY_SOURCE_ID") or None, layer_map)
+        scene, summary = build_scene(dwg_paths, work_dir, os.environ.get("GREENCITY_SOURCE_ID") or None, layer_map, notes)
     except DwgJobError as e:
         error = {"ok": False, "status": e.status, "detail": e.detail, "outcome": e.outcome, "failed": e.failed}
         meta_path.write_text(json.dumps(error, ensure_ascii=False), encoding="utf-8")
