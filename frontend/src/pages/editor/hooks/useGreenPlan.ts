@@ -90,7 +90,7 @@ export function useGreenPlan({
     downloadBlob(blob, `Пояснительная записка — ${title}.docx`);
   });
 
-  const explanations = useAsyncTask(async (format: "json" | "csv") => {
+  const explanations = useAsyncTask(async (format: "json" | "csv" | "xlsx") => {
     if (!scene || !result) return;
     const blob = await downloadGreenPlanExplanations(scene, result.assignments, result.rejections, format);
     downloadBlob(blob, `Объяснения посадок — ${title}.${format}`);

@@ -29,7 +29,7 @@ export function GreenPlanPanel({
   reportLoading: boolean;
   documentBusy: boolean;
   onDownloadDocument: () => void;
-  onDownloadExplanations: (format: "json" | "csv") => void;
+  onDownloadExplanations: (format: "json" | "csv" | "xlsx") => void;
   onRetryReport: () => void;
 }) {
   const existingLawnSqm = (result?.scene.lawns ?? []).filter((l) => l.status === "existing").reduce((sum, l) => sum + l.area_sqm, 0);
@@ -80,6 +80,15 @@ export function GreenPlanPanel({
               </Button>
               <Button size="sm" variant="outline" onClick={() => onDownloadExplanations("csv")} disabled={documentBusy}>
                 CSV
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onDownloadExplanations("xlsx")}
+                disabled={documentBusy}
+                title="Ведомость, посадки, проверки отступов, отклонённые места, запрет посадки, сведения"
+              >
+                Excel
               </Button>
             </div>
 
