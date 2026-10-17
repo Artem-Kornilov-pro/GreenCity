@@ -85,6 +85,9 @@ class SceneMeta(BaseModel):
     buildingCount: int
     pointObjectCount: int
     sourceId: Optional[str] = Field(default=None, description="id исходного чертежа на сервере: экспорт DXF пишет результат поверх него.")
+    sourceSha256: Optional[str] = Field(
+        default=None, description="SHA-256 исходного чертежа (у комплекта -- имён и содержимого файлов в порядке загрузки)."
+    )
     layers: list[LayerInfo] = Field(default=[], description="Слои чертежа: что из каждого взято при разборе.")
     layerMap: dict[str, str] = Field(default={}, description="Назначения слоёв пользователем {имя слоя: класс}, с которыми разобран чертёж.")
     warnings: list[str] = Field(default=[], description="Что разбор чертежа сделал сам и что стоит проверить.")

@@ -37,6 +37,7 @@ from core.setback_norms import (
     ROOT_BARRIER_SOURCE,
     setback_reference,
 )
+from core.versions import versions
 from exchange.export_dxf import is_source_object, result_layer
 from greenplan.pattern_assignment import ZoneAssignment
 from greenplan.pattern_library import PATTERN_LIBRARY, STYLE_LABELS
@@ -367,6 +368,8 @@ def explanations_json(scene: Scene, plants: list[PlantExplanation], rejections: 
     return {
         "site": {
             "source_id": scene.meta.sourceId,
+            "source_sha256": scene.meta.sourceSha256,
+            "versions": versions(),
             "scale_m_per_unit": scene.meta.scale,
             "origin": scene.meta.origin,
             "coordinates": "x, z — метры от центра участка; dxf_x, dxf_y — координаты исходного чертежа",

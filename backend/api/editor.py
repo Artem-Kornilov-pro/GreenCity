@@ -27,9 +27,11 @@ from core.concurrency import ServerBusy, run_heavy, run_light
 from core.plant_catalog import CatalogItem, load_catalog
 from core.schemas import Scene
 from core.setback_norms import DEFAULT_TREE_SPECIES
-from exchange import drawing_package, dwg_job, source_store
-from exchange.dxf_overlay import overlay_scene
+from core.versions import sha256_of, sha256_of_files
+from exchange import drawing_package, dwg_batch_converter, dwg_job, source_store
+from exchange.dxf_overlay import overlay_scene, stamp_versions
 from exchange.dxf_parser import LAYER_KINDS, complete_scene, parse_dxf_file, read_dxf
+from exchange.export_check import ExportVerification, verify_export
 from exchange.export_dxf import scene_to_dxf
 from generation.greenery_generator import (
     DEFAULT_BUSH_GRID_SPACING_M,
@@ -106,6 +108,7 @@ def _parse_dxf(data: bytes, filename: str, layer_map: Optional[dict[str, str]] =
         Path(tmp.name).unlink(missing_ok=True)
 
     complete_scene(scene)
+    scene["meta"]["sourceSha256"] = sha256_of(data)
     source_id = source_store.save_dxf(data)
     if source_id:
         scene["meta"]["sourceId"] = source_id
@@ -459,6 +462,7 @@ async def edit_with_text(request: TextEditRequest):
 def _overlay_dxf(path: Path, scene: Scene) -> bytes:
     doc = read_dxf(path)
     summary = overlay_scene(scene, doc)
+    stamp_versions(doc, scene.meta.sourceSha256)
     buf = io.StringIO()
     doc.write(buf)
     logging.getLogger("greencity.export").info("экспорт поверх исходного DXF: %s", summary.layers)
@@ -467,7 +471,9 @@ def _overlay_dxf(path: Path, scene: Scene) -> bytes:
 
 def _rebuilt_dxf(scene: Scene) -> bytes:
     buf = io.StringIO()
-    scene_to_dxf(scene).write(buf)
+    doc = scene_to_dxf(scene)
+    stamp_versions(doc, scene.meta.sourceSha256)
+    doc.write(buf)
     return buf.getvalue().encode("utf-8")
 
 
@@ -480,20 +486,9 @@ async def _overlay_dwg(paths: list[Path], scene: Scene) -> bytes:
         await run_light(shutil.rmtree, tmp_path, True)
 
 
-@router.post(
-    "/api/export-dxf",
-    tags=["Чертежи"],
-    summary="Экспорт плана в DXF",
-    responses={**DXF_RESPONSE, **HEAVY_RESPONSES},
-    dependencies=[rate_limit("export")],
-)
-async def export_dxf_endpoint(scene: Scene):
-    """Исходный чертёж без изменений плюс слои результата в его координатах:
-    `NEW_*` -- посадка и благоустройство GreenPlan, `USER_*` -- правки
-    пользователя, `USER_REMOVED` -- места удалённых и перенесённых исходных
-    объектов. У каждой сущности результата XDATA с id посадки -- тем же, что
-    в файле объяснений. Если исходника на сервере нет, DXF собирается из
-    сцены (метры от центра участка)."""
+async def _export(scene: Scene) -> tuple[bytes, str, Optional[tuple[str, Path | list[Path]]]]:
+    """(DXF, режим: overlay -- поверх исходника, rebuilt -- из сцены, исходник
+    из хранилища или None)."""
     export_log = logging.getLogger("greencity.export")
     mode = "rebuilt"
     content: Optional[bytes] = None
@@ -511,10 +506,69 @@ async def export_dxf_endpoint(scene: Scene):
         content, mode = None, "rebuilt"
     if content is None:
         content = await run_heavy(_rebuilt_dxf, scene)
+    return content, mode, found if mode == "overlay" else None
+
+
+@router.post(
+    "/api/export-dxf",
+    tags=["Чертежи"],
+    summary="Экспорт плана в DXF",
+    responses={**DXF_RESPONSE, **HEAVY_RESPONSES},
+    dependencies=[rate_limit("export")],
+)
+async def export_dxf_endpoint(scene: Scene):
+    """Исходный чертёж без изменений плюс слои результата в его координатах:
+    `NEW_*` -- посадка и благоустройство GreenPlan, `USER_*` -- правки
+    пользователя, `USER_REMOVED` -- места удалённых и перенесённых исходных
+    объектов. У каждой сущности результата XDATA с id посадки -- тем же, что
+    в файле объяснений. В заголовке файла -- SHA-256 исходника и версии
+    правил (`GreenCity.*`). Если исходника на сервере нет, DXF собирается из
+    сцены (метры от центра участка). Проверка выгрузки -- `/api/export-dxf/verify`."""
+    content, mode, _found = await _export(scene)
     metrics.dxf_exports_total.inc()
-    export_log.info("экспортирована сцена (%s): %d объектов", mode, len(scene.objects))
+    logging.getLogger("greencity.export").info("экспортирована сцена (%s): %d объектов", mode, len(scene.objects))
     return Response(
         content=content,
         media_type="application/dxf",
         headers={"Content-Disposition": 'attachment; filename="greencity_plan.dxf"', "X-GreenCity-Export": mode},
     )
+
+
+def _verify(scene: Scene, content: bytes, mode: str, found) -> ExportVerification:
+    if found and found[0] == "dxf":
+        return verify_export(scene, content, mode, source_doc=read_dxf(found[1]), source_sha256=sha256_of(found[1].read_bytes()))
+    if found and found[0] == "dwg":
+        # Комплект собирается детерминированно: собранный заново -- тот же
+        # исходник, что лёг под слои результата при экспорте.
+        with tempfile.TemporaryDirectory() as work:
+            try:
+                merge_kwargs = {"layer_map": scene.meta.layerMap} if scene.meta.layerMap else {}
+                merged = dwg_batch_converter.merge_dwg_files(found[1], Path(work), **merge_kwargs).doc
+            except Exception as e:  # noqa: BLE001 -- без исходника проверяются нормы и места
+                note = f"комплект файлов не собран заново ({e}) — отпечатки сущностей не сравниваются"
+                return verify_export(scene, content, mode, source_sha256=sha256_of_files(found[1]), source_note=note)
+            return verify_export(scene, content, mode, source_doc=merged, source_sha256=sha256_of_files(found[1]))
+    return verify_export(scene, content, mode, source_sha256=scene.meta.sourceSha256)
+
+
+@router.post(
+    "/api/export-dxf/verify",
+    response_model=ExportVerification,
+    tags=["Чертежи"],
+    summary="Независимая проверка выгрузки DXF",
+    responses=HEAVY_RESPONSES,
+    dependencies=[rate_limit("export")],
+)
+async def verify_export_endpoint(scene: Scene):
+    """Тот же DXF, что отдаёт `/api/export-dxf`, читается заново и
+    проверяется без опоры на сцену в памяти: сущности исходного чертежа
+    целы (сравниваются отпечатки по handle), новые посадки стоят на своих
+    местах, и по геометрии из файла у них нет нарушений норм отступов. В
+    отчёте -- SHA-256 исходника и результата и версии правил."""
+    content, mode, found = await _export(scene)
+    report = await run_heavy(_verify, scene, content, mode, found)
+    logging.getLogger("greencity.export").info(
+        "проверка выгрузки (%s): исходник %s, посадок %d, нарушений %d",
+        mode, report.source_check, report.plants_checked, len(report.violations),
+    )
+    return report

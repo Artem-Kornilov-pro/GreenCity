@@ -94,6 +94,19 @@ def _plant_notes(obj: SceneObject) -> tuple[str, ...]:
     return species, origin
 
 
+def stamp_versions(doc, source_sha256: str | None) -> None:
+    """В заголовок DXF ($CUSTOMPROPERTY) -- SHA-256 исходника и версии
+    правил (core/versions.py): по ним видно, каким файлом и какими правилами
+    получен план. Сущности чертежа не трогаются."""
+    from core.versions import versions
+
+    stamp = {"GreenCity.sourceSha256": source_sha256 or "", **{f"GreenCity.{k}": v for k, v in versions().items()}}
+    kept = [(tag, value) for tag, value in doc.header.custom_vars if tag not in stamp]
+    doc.header.custom_vars.clear()
+    for tag, value in [*kept, *stamp.items()]:
+        doc.header.custom_vars.append(tag, value)
+
+
 def overlay_scene(scene: Scene, doc) -> OverlaySummary:
     """Дописать в doc (исходный чертёж) слои результата по сцене scene.
     doc меняется на месте; исходные сущности не трогаются."""

@@ -276,7 +276,10 @@ def scene_to_dxf(scene: Scene) -> ezdxf.document.Drawing:
     for obj in scene.objects:
         if obj.type in ("building", "entrance"):
             continue  # уже записаны выше своей геометрией
-        _write_point_object(doc, msp, obj, catalog)
+        # XDATA с id -- как в экспорте поверх исходника: по нему посадка
+        # находится в файле объяснений и в проверке выгрузки.
+        for entity in _write_point_object(doc, msp, obj, catalog):
+            entity.set_xdata("GREENCITY", [(1000, obj.id[:255])])
 
     _write_lawns(doc, msp, scene)
     _write_facade(doc, msp, scene.windows, "WINDOWS", 5)
