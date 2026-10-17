@@ -72,6 +72,7 @@ def build_scene(
     source_id: Optional[str] = None,
     layer_map: Optional[dict[str, str]] = None,
     notes: Optional[dict[str, str]] = None,
+    boundary: Optional[list[list[float]]] = None,
 ) -> tuple[dict, dict]:
     """(сцена, сводка для метрик и логов). layer_map -- назначения слоёв
     пользователем; notes -- {файл: причина} для файлов комплекта, не
@@ -97,6 +98,8 @@ def build_scene(
     parse_kwargs = {}
     if layer_map:
         parse_kwargs["layer_map"] = layer_map
+    if boundary:
+        parse_kwargs["boundary_points"] = boundary
     if result.layer_counts:
         parse_kwargs["dropped_layers"] = result.layer_counts
     try:
@@ -158,12 +161,13 @@ async def run(
     source_id: Optional[str] = None,
     layer_map: Optional[dict[str, str]] = None,
     notes: Optional[dict[str, str]] = None,
+    boundary: Optional[list[list[float]]] = None,
 ) -> tuple[bytes, dict]:
     """(JSON сцены, сводка). isolated=None -- по DWG_JOB_ISOLATED (по
     умолчанию да). В самом процессе (в пуле потоков) -- для тестов, которые
     подменяют merge_dwg_files: подмена в дочерний процесс не переходит."""
     if not _isolated(isolated):
-        scene, summary = await run_light(build_scene, dwg_paths, work_dir, source_id, layer_map, notes)
+        scene, summary = await run_light(build_scene, dwg_paths, work_dir, source_id, layer_map, notes, boundary)
         return json.dumps(scene, ensure_ascii=False).encode("utf-8"), summary
 
     scene_path = work_dir / "scene.json"
@@ -174,6 +178,7 @@ async def run(
         "GREENCITY_SOURCE_ID": source_id or "",
         "GREENCITY_LAYER_MAP": json.dumps(layer_map or {}, ensure_ascii=False),
         "GREENCITY_PACKAGE_NOTES": json.dumps(notes or {}, ensure_ascii=False),
+        "GREENCITY_BOUNDARY": json.dumps(boundary or []),
     }
     returncode = await _run_child(
         [str(work_dir), str(scene_path), str(meta_path), *map(str, dwg_paths)], env, JOB_TIMEOUT_S, "Разбор DWG"
@@ -292,8 +297,9 @@ def _main(argv: list[str]) -> int:
     dwg_paths = [Path(a) for a in argv[3:]]
     layer_map = json.loads(os.environ.get("GREENCITY_LAYER_MAP") or "{}") or None
     notes = json.loads(os.environ.get("GREENCITY_PACKAGE_NOTES") or "{}") or None
+    boundary = json.loads(os.environ.get("GREENCITY_BOUNDARY") or "[]") or None
     try:
-        scene, summary = build_scene(dwg_paths, work_dir, os.environ.get("GREENCITY_SOURCE_ID") or None, layer_map, notes)
+        scene, summary = build_scene(dwg_paths, work_dir, os.environ.get("GREENCITY_SOURCE_ID") or None, layer_map, notes, boundary)
     except DwgJobError as e:
         error = {"ok": False, "status": e.status, "detail": e.detail, "outcome": e.outcome, "failed": e.failed}
         meta_path.write_text(json.dumps(error, ensure_ascii=False), encoding="utf-8")

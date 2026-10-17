@@ -31,7 +31,7 @@ from pydantic import BaseModel, Field
 from core.schemas import Scene, SceneObject
 from core.versions import sha256_of, versions
 from exchange.dxf_overlay import APPID
-from exchange.dxf_parser import parse_dxf_doc
+from exchange.dxf_parser import parse_dxf_doc, parse_kwargs
 from exchange.export_dxf import is_source_object
 from greenplan.violation_report import Violation, find_violations
 
@@ -111,8 +111,7 @@ def verify_export(
         note = source_note or "исходника на сервере нет — DXF собран из сцены"
 
     # Нормы -- по геометрии файла: ограничения разбираются из него же.
-    layer_kwargs = {"layer_map": scene.meta.layerMap} if scene.meta.layerMap else {}
-    parsed = Scene.model_validate(parse_dxf_doc(doc, **layer_kwargs))
+    parsed = Scene.model_validate(parse_dxf_doc(doc, **parse_kwargs(scene.meta)))
     voltage = {zone.id: zone.voltageKv for zone in scene.restrictions if zone.voltageKv is not None}
     restrictions = [
         zone.model_copy(update={"voltageKv": voltage[zone.id]}) if zone.voltageKv is None and zone.id in voltage else zone

@@ -60,6 +60,17 @@ export interface SceneMeta {
   layerMap?: Record<string, string>;
   // Что разбор сделал сам и что стоит проверить: единицы, граница, блоки.
   warnings?: string[];
+  // Слоя границы нет: замкнутые контуры, из которых можно выбрать границу.
+  boundaryCandidates?: BoundaryCandidate[];
+  // Граница, выбранная пользователем, в координатах чертежа.
+  boundaryOverride?: number[][] | null;
+}
+
+export interface BoundaryCandidate {
+  id: number;
+  layer: string;
+  area: number; // м²
+  points: number[][]; // координаты чертежа
 }
 
 // Слой чертежа в сводке распознавания (parser/dxf_parsing/drawing.py).

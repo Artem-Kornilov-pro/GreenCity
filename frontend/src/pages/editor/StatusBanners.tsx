@@ -1,4 +1,4 @@
-import { Layers, Loader2, RotateCw, X } from "lucide-react";
+import { Layers, Loader2, RotateCw, Square, X } from "lucide-react";
 import type { LayerSummary } from "./hooks/useLayerMapping";
 
 // Ошибка действия; onRetry -- повторить его с теми же данными.
@@ -21,6 +21,7 @@ export function StatusBanners({
   onDismissDwgWarnings,
   layerSummary,
   onOpenLayers,
+  onChooseBoundary,
   onDismissLayerSummary,
 }: {
   notice: string | null;
@@ -32,6 +33,8 @@ export function StatusBanners({
   onDismissDwgWarnings: () => void;
   layerSummary: LayerSummary | null;
   onOpenLayers: () => void;
+  // Есть кандидаты в границу участка -- кнопка «Выбрать границу».
+  onChooseBoundary?: () => void;
   onDismissLayerSummary: () => void;
 }) {
   if (error) {
@@ -129,6 +132,15 @@ export function StatusBanners({
           ))}
         </span>
         <span className="flex shrink-0 items-center gap-2">
+          {onChooseBoundary && (
+            <button
+              onClick={onChooseBoundary}
+              className="inline-flex items-center gap-1 rounded-lg bg-white/40 px-2.5 py-1 text-xs font-medium hover:bg-white/60"
+            >
+              <Square className="h-3.5 w-3.5" />
+              Выбрать границу
+            </button>
+          )}
           <button
             onClick={onOpenLayers}
             className="inline-flex items-center gap-1 rounded-lg bg-white/40 px-2.5 py-1 text-xs font-medium hover:bg-white/60"

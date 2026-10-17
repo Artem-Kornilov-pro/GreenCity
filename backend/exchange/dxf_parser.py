@@ -25,7 +25,7 @@ from parse_dxf import parse_dxf_doc as _parse_dxf_doc  # noqa: E402
 from parse_dxf import parse_dxf_file as _parse_dxf_file  # noqa: E402
 from parse_dxf import read_dxf, reread_in_real_encoding  # noqa: E402
 
-__all__ = ["LAYER_KINDS", "complete_scene", "parse_dxf_doc", "parse_dxf_file", "read_dxf", "reread_in_real_encoding"]
+__all__ = ["LAYER_KINDS", "complete_scene", "parse_dxf_doc", "parse_dxf_file", "parse_kwargs", "read_dxf", "reread_in_real_encoding"]
 
 
 def _with_catalog_ids(scene: dict) -> dict:
@@ -44,6 +44,18 @@ def parse_dxf_file(path, *args, **kwargs) -> dict:
 
 def parse_dxf_doc(doc, *args, **kwargs) -> dict:
     return _with_catalog_ids(_parse_dxf_doc(doc, *args, **kwargs))
+
+
+def parse_kwargs(meta) -> dict:
+    """С какими параметрами разобран чертёж сцены -- для любого повторного
+    разбора того же исходника (экспорт поверх исходника, проверка выгрузки,
+    сборка комплекта): назначения слоёв и выбранная граница участка."""
+    kwargs = {}
+    if meta.layerMap:
+        kwargs["layer_map"] = meta.layerMap
+    if meta.boundaryOverride:
+        kwargs["boundary_points"] = meta.boundaryOverride
+    return kwargs
 
 
 def complete_scene(scene: dict) -> dict:

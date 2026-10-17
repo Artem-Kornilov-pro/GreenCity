@@ -24,8 +24,13 @@ export function getLayerKinds(): Promise<LayerKind[]> {
 
 // Загруженный чертёж (DXF или пачка DWG) разбирается заново на сервере с
 // назначениями слоёв: файлы второй раз не отправляются.
-export function reparseScene(sourceId: string, layerMap: Record<string, string>): Promise<Scene> {
-  return request<Scene>("/api/reparse", { json: { sourceId, layerMap }, errorMessage: "Не удалось разобрать чертёж заново" });
+// boundary -- граница участка, выбранная из meta.boundaryCandidates (или уже
+// выбранная раньше: meta.boundaryOverride), в координатах чертежа.
+export function reparseScene(sourceId: string, layerMap: Record<string, string>, boundary?: number[][] | null): Promise<Scene> {
+  return request<Scene>("/api/reparse", {
+    json: { sourceId, layerMap, boundary: boundary ?? null },
+    errorMessage: "Не удалось разобрать чертёж заново",
+  });
 }
 
 // Итоговый план -> .dxf. mode: "overlay" -- слои результата дописаны в

@@ -13,6 +13,7 @@ from __future__ import annotations
 import io
 import json
 import logging
+import math
 import shutil
 import tempfile
 from pathlib import Path
@@ -20,7 +21,7 @@ from typing import Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response
-from pydantic import BaseModel, Field, TypeAdapter
+from pydantic import BaseModel, Field, TypeAdapter, field_validator
 
 from api.protection import HEAVY_RESPONSES, MAX_DWG_FILES, rate_limit
 from core.concurrency import ServerBusy, run_heavy, run_light
@@ -92,14 +93,19 @@ async def get_catalog():
     return catalog
 
 
-def _parse_dxf(data: bytes, filename: str, layer_map: Optional[dict[str, str]] = None) -> dict:
+def _parse_dxf(
+    data: bytes, filename: str, layer_map: Optional[dict[str, str]] = None, boundary: Optional[list[list[float]]] = None
+) -> dict:
     # delete=False: на Windows открытый временный файл нельзя открыть повторно по имени.
     tmp = tempfile.NamedTemporaryFile(suffix=".dxf", delete=False)  # noqa: SIM115
     try:
         tmp.write(data)
         tmp.close()
         try:
-            scene = parse_dxf_file(tmp.name, layer_map=layer_map) if layer_map else parse_dxf_file(tmp.name)
+            kwargs = {"layer_map": layer_map} if layer_map else {}
+            if boundary:
+                kwargs["boundary_points"] = boundary
+            scene = parse_dxf_file(tmp.name, **kwargs)
         except Exception as e:
             metrics.dxf_parse_errors_total.inc()
             log.warning("не удалось разобрать %r: %s", filename, e)
@@ -282,10 +288,13 @@ async def _run_dwg_job(
     source_id: Optional[str],
     layer_map: Optional[dict[str, str]],
     notes: Optional[dict[str, str]] = None,
+    boundary: Optional[list[list[float]]] = None,
 ) -> tuple[bytes, dict]:
     job_kwargs = {"layer_map": layer_map} if layer_map else {}
     if notes:
         job_kwargs["notes"] = notes
+    if boundary:
+        job_kwargs["boundary"] = boundary
     try:
         async with dwg_job.slot():
             return await dwg_job.run(dwg_paths, work_dir, request_id=current_request_id(), source_id=source_id, **job_kwargs)
@@ -301,6 +310,17 @@ async def _run_dwg_job(
 class ReparseRequest(BaseModel):
     sourceId: str = Field(description="meta.sourceId загруженной сцены.")
     layerMap: dict[str, str] = Field(default={}, description="Назначения слоёв {имя слоя: класс}; пустой -- только автоматическое распознавание.")
+    boundary: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Граница участка в координатах чертежа -- points одного из meta.boundaryCandidates; null -- искать как обычно.",
+    )
+
+    @field_validator("boundary")
+    @classmethod
+    def _boundary_is_a_polygon(cls, value):
+        if value is not None and (len(value) < 3 or any(len(p) != 2 or not all(math.isfinite(c) for c in p) for p in value)):
+            raise ValueError("граница -- не меньше трёх точек [x, y] с конечными координатами")
+        return value
 
 
 @router.post(
@@ -321,12 +341,12 @@ async def reparse_endpoint(request: ReparseRequest):
     kind, source = found
     if kind == "dxf":
         data = await run_light(source.read_bytes)
-        scene = await run_heavy(_parse_dxf, data, source.name, layer_map)
+        scene = await run_heavy(_parse_dxf, data, source.name, layer_map, request.boundary)
         metrics.dxf_parses_total.inc()
         return scene
     tmp_path = Path(await run_light(tempfile.mkdtemp))
     try:
-        payload, _summary = await _run_dwg_job(source, tmp_path, request.sourceId, layer_map)
+        payload, _summary = await _run_dwg_job(source, tmp_path, request.sourceId, layer_map, boundary=request.boundary)
     finally:
         await run_light(shutil.rmtree, tmp_path, True)
     metrics.dxf_parses_total.inc()

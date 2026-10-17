@@ -150,3 +150,52 @@ def test_prefilter_keeps_a_boundary_recognized_by_synonyms(empty_doc):
         e = msp.add_lwpolyline([(0, 0), (10, 0), (10, 10)], close=True, dxfattribs={"layer": layer})
         assert keep(e), layer
     assert not keep(msp.add_line((0, 0), (1, 1), dxfattribs={"layer": "Рамки"}))
+
+
+# --- граница участка из кандидатов (issue #116) ----------------------------------
+
+
+def _customer_site_without_boundary_layer(doc):
+    """Контур участка лежит на безымянном слое, слоя границы нет."""
+    msp = doc.modelspace()
+    msp.add_lwpolyline([(1000, 2000), (1120, 2000), (1120, 2080), (1000, 2080)], close=True, dxfattribs={"layer": "Слой 3"})
+    msp.add_lwpolyline([(1020, 2020), (1040, 2020), (1040, 2040), (1020, 2040)], close=True, dxfattribs={"layer": "Здания"})
+    msp.add_lwpolyline([(1060, 2010), (1110, 2010), (1110, 2070), (1060, 2070)], close=True, dxfattribs={"layer": "Газон"})
+    msp.add_point((1090, 2050), dxfattribs={"layer": "Деревья"})
+
+
+def test_drawing_without_a_boundary_layer_offers_candidates(empty_doc):
+    _customer_site_without_boundary_layer(empty_doc)
+    scene = parse_dxf_doc(empty_doc)
+    candidates = scene["meta"]["boundaryCandidates"]
+    assert [c["layer"] for c in candidates][:2] == ["Слой 3", "Газон"]  # крупный -- первым
+    assert candidates[0]["area"] == 9600
+    assert "boundaryOverride" not in scene["meta"]
+
+
+def test_chosen_candidate_becomes_the_site_boundary(empty_doc):
+    _customer_site_without_boundary_layer(empty_doc)
+    candidate = parse_dxf_doc(empty_doc)["meta"]["boundaryCandidates"][0]
+    scene = parse_dxf_doc(empty_doc, boundary_points=candidate["points"])
+    assert scene["boundary"]["sourceLayer"] == "__chosen_by_user__"
+    assert scene["meta"]["origin"] == {"x": 1060.0, "y": 2040.0}
+    assert scene["meta"]["boundaryOverride"] == candidate["points"]
+    assert "boundaryCandidates" not in scene["meta"]
+    assert not any("граница оценена" in w for w in scene["meta"]["warnings"])
+
+
+def test_no_candidates_when_the_boundary_layer_is_found(empty_doc):
+    _customer_site_without_boundary_layer(empty_doc)
+    empty_doc.modelspace().add_lwpolyline(
+        [(990, 1990), (1130, 1990), (1130, 2090), (990, 2090)], close=True, dxfattribs={"layer": "Граница участка"}
+    )
+    assert "boundaryCandidates" not in parse_dxf_doc(empty_doc)["meta"]
+
+
+def test_candidates_prefer_layers_named_like_a_boundary(empty_doc):
+    _customer_site_without_boundary_layer(empty_doc)
+    # Небольшой контур со словом «отвод» в имени слоя -- выше крупного газона.
+    empty_doc.modelspace().add_lwpolyline(
+        [(1000, 2000), (1030, 2000), (1030, 2030), (1000, 2030)], close=True, dxfattribs={"layer": "ОТВОД_ЗУ"}
+    )
+    assert parse_dxf_doc(empty_doc)["meta"]["boundaryCandidates"][0]["layer"] == "ОТВОД_ЗУ"

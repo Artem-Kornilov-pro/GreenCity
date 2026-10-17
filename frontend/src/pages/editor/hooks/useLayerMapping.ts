@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { getLayerKinds, reparseScene } from "../../../api";
 import { useAsyncTask } from "../../../hooks/useAsyncTask";
-import type { LayerKind, Scene } from "../../../types";
+import type { BoundaryCandidate, LayerKind, Scene } from "../../../types";
 
 export interface LayerSummary {
   total: number;
@@ -46,12 +46,24 @@ export function useLayerMapping({
     if (kinds.length === 0) setKinds(await getLayerKinds());
   });
 
+  const [boundaryOpen, setBoundaryOpen] = useState(false);
+
+  // Назначения слоёв применяются вместе с уже выбранной границей участка.
   const reparse = useAsyncTask(async (layerMap: Record<string, string>) => {
     const sourceId = scene?.meta.sourceId;
     if (!sourceId) throw new Error("Исходного чертежа на сервере нет -- загрузите его заново");
-    loadScene(await reparseScene(sourceId, layerMap));
+    loadScene(await reparseScene(sourceId, layerMap, scene?.meta.boundaryOverride));
     onReparsed();
     setDialogOpen(false);
+  });
+
+  // Граница участка из кандидатов -- с текущими назначениями слоёв.
+  const chooseBoundary = useAsyncTask(async (candidate: BoundaryCandidate) => {
+    const sourceId = scene?.meta.sourceId;
+    if (!sourceId) throw new Error("Исходного чертежа на сервере нет -- загрузите его заново");
+    loadScene(await reparseScene(sourceId, scene?.meta.layerMap ?? {}, candidate.points));
+    onReparsed();
+    setBoundaryOpen(false);
   });
 
   const { run: runLoadKinds } = loadKinds;
@@ -73,5 +85,9 @@ export function useLayerMapping({
     summary: showSummary ? summary : null,
     hasLayers: Boolean(scene?.meta.layers?.length),
     dismissSummary: () => setDismissedToken(sceneLoadToken),
+    boundaryCandidates: scene?.meta.sourceId ? (scene.meta.boundaryCandidates ?? []) : [],
+    boundaryOpen,
+    setBoundaryOpen,
+    chooseBoundary,
   };
 }
