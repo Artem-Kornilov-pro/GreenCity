@@ -13,6 +13,7 @@ from ezdxf import path as ezpath
 from shapely.geometry import LineString, MultiPoint, Polygon
 from shapely.ops import linemerge
 
+from dxf_parsing import networks
 from dxf_parsing.geometry import buffer_segment, curve_points, polygon_points, split_holes
 from dxf_parsing.layer_names import BOUNDARY_TIER_KEYS, describe_key, layer_key_of
 from dxf_parsing.rules import (
@@ -204,27 +205,76 @@ def _reconstruct_buildings_from_line_fragments(zones, idx_by_type, building_line
 # LINE и полилиний. Коридор на каждый отрезок дал бы сотни тысяч зон, поэтому
 # трассы объединяются по слою до расширения. Заодно буфер цельной ломаной
 # накрывает клин на изломе, который отдельные прямоугольники пропускали.
-def _merge_corridors(zones, idx_by_type, corridors, tf):
+# Сети, у которых бывают выноски с подписями: трубы и кабели.
+_LABELLED_NETWORK_TYPES = (*networks.NETWORK_TYPES, "electrical", "signal_cable", "custom")
+
+
+def _merge_corridors(zones, idx_by_type, corridors, tf, labels_by_layer=None):
+    """labels_by_layer -- {имя слоя: подписи слоя (networks.LabelIndex)}: по
+    ним отделяются выноски и находятся диаметры труб (dxf_parsing/networks.py).
+    Трасса с подписью диаметра -- зона шириной в трубу, остальные -- прежний
+    коридор 2 x minDistance."""
+    labels_by_layer = labels_by_layer or {}
     for (layer, key), (cfg, lines) in corridors.items():
         if not lines:
             continue
-        # Расширяем каждую линию отдельно (векторизованно) и объединяем: в
-        # разы быстрее, чем буфер одной общей MultiLineString. quad_segs=2 --
-        # скругление на изломе порядка сантиметров, а вершин вчетверо меньше.
-        # Полуширина -- в метрах, координаты -- в единицах чертежа.
-        merged = shapely.union_all(
-            shapely.buffer([LineString(c) for c in lines], cfg["minDistance"] / tf.scale, cap_style=2, quad_segs=2)
-        )
-        if merged.is_empty:
-            continue
-        # Зона хранит один контур без дыр, поэтому многоугольники с дырками
-        # режутся на куски (split_holes).
-        for poly in split_holes(merged):
-            # [:-1] -- shapely повторяет первую точку в конце кольца, а зона
-            # хранится незамкнутой.
-            pts = list(poly.exterior.coords)[:-1]
-            if len(pts) >= 3:
-                _add_zone(zones, idx_by_type, cfg, layer, pts, tf, key)
+        sized = {}
+        labels = labels_by_layer.get(layer)
+        if labels is not None and cfg["type"] in _LABELLED_NETWORK_TYPES:
+            lines, notes = networks.split_leaders(lines, labels, tf.scale)
+            if cfg["type"] in networks.NETWORK_TYPES:
+                runs, sized = networks.run_widths(lines, notes, tf.scale)
+            if sized:
+                for run, (width, text) in sized.items():
+                    run_lines = [c for c, r in zip(lines, runs, strict=True) if r == run]
+                    rule = _sized_rule(cfg, width * tf.scale, text)
+                    _add_corridor(zones, idx_by_type, rule, layer, key, run_lines, width / 2, tf, networks.RUN_BRIDGE_M / tf.scale)
+                lines = [c for c, r in zip(lines, runs, strict=True) if r not in sized]
+        _add_corridor(zones, idx_by_type, cfg, layer, key, lines, cfg["minDistance"] / tf.scale, tf)
+
+
+_NETWORK_NAMES = {
+    "gas_pipeline": "Газопровод",
+    "sewer": "Канализация, водосток",
+    "water_pipeline": "Водопровод",
+    "heat_network": "Теплосеть",
+}
+
+
+def _sized_rule(cfg, width_m, text):
+    """Правило зоны трубы известного диаметра: зона -- сама труба."""
+    diameter = networks.diameter_mm(text)
+    size = f"d={diameter} мм" if diameter else f"ширина {width_m:.2f} м"
+    name = _NETWORK_NAMES.get(cfg["type"], "Сеть")
+    return {
+        **cfg,
+        "minDistance": round(width_m / 2, 3),
+        "message": f"{name}, {size} (подпись «{text}»): отступ посадок -- от наружной стенки трубы (СП 42.13330.2016, прим. 5 к табл. 9.1)",
+    }
+
+
+def _add_corridor(zones, idx_by_type, cfg, layer, key, lines, half_width, tf, close_gap=0.0):
+    """close_gap -- промежутки короче этого (пунктир трубы) закрываются: зона
+    трубы шириной в сантиметры иначе рвётся на штрихи."""
+    if not lines:
+        return
+    # Расширяем каждую линию отдельно (векторизованно) и объединяем: в
+    # разы быстрее, чем буфер одной общей MultiLineString. quad_segs=2 --
+    # скругление на изломе порядка сантиметров, а вершин вчетверо меньше.
+    # Полуширина -- в единицах чертежа.
+    merged = shapely.union_all(shapely.buffer([LineString(c) for c in lines], half_width, cap_style=2, quad_segs=2))
+    if close_gap > 0 and not merged.is_empty:
+        merged = merged.buffer(close_gap / 2, quad_segs=2, join_style=2).buffer(-close_gap / 2, quad_segs=2, join_style=2)
+    if merged.is_empty:
+        return
+    # Зона хранит один контур без дыр, поэтому многоугольники с дырками
+    # режутся на куски (split_holes).
+    for poly in split_holes(merged):
+        # [:-1] -- shapely повторяет первую точку в конце кольца, а зона
+        # хранится незамкнутой.
+        pts = list(poly.exterior.coords)[:-1]
+        if len(pts) >= 3:
+            _add_zone(zones, idx_by_type, cfg, layer, pts, tf, key)
 
 
 # Объединение замкнутых контуров одного слоя (газон, плитка, дорожное
@@ -372,6 +422,18 @@ _CIRCLE_AREA_TYPES = ("building", "protected_zone", "playground_zone", "road", "
 _CURVE_FLATTENING_M = 0.25
 
 
+def _network_labels(msp, layers):
+    """{имя слоя: подписи (networks.LabelIndex)} -- для слоёв сетей."""
+    found: dict[str, list] = {}
+    for e in msp.query("TEXT MTEXT"):
+        layer = e.dxf.layer
+        if layer in layers:
+            label = networks.label_of(e)
+            if label is not None:
+                found.setdefault(layer, []).append(label)
+    return {layer: networks.LabelIndex(labels) for layer, labels in found.items()}
+
+
 def extract_restrictions(msp, tf, boundary=None):
     """Зоны ограничений по правилам слоёв.
 
@@ -500,7 +562,7 @@ def extract_restrictions(msp, tf, boundary=None):
                 add_closed_polygon(group, cfg, pts)
 
     _reconstruct_buildings_from_line_fragments(zones, idx_by_type, building_lines, tf)
-    _merge_corridors(zones, idx_by_type, corridors, tf)
+    _merge_corridors(zones, idx_by_type, corridors, tf, _network_labels(msp, {group[0] for group in corridors}))
     _merge_polygon_zones(zones, idx_by_type, polygon_zones, tf)
     return _clip_offsite_zones(_dedupe_buildings(zones), boundary)
 
