@@ -35,7 +35,7 @@ from docx.shared import Mm, Pt, RGBColor
 from core.paths import LOCATIONS_DIR, NORMS_DIR
 from core.plant_catalog import catalog_by_id
 from core.schemas import Scene
-from core.setback_norms import SETBACK_NORMS, species_rules
+from core.setback_norms import NORM_STATUS_LABELS, SETBACK_NORMS, setback_reference, species_rules
 from greenplan.assortment_report import AssortmentRow, improvements_assortment, lawn_assortment, summarize_assortment
 from greenplan.decision_report import ZONE_KIND_LABELS
 from greenplan.improvements import is_greenplan_zone
@@ -285,26 +285,42 @@ def _section_norms(doc, scene: Scene, assignments: list[ZoneAssignment]) -> None
     _table(doc, ["Документ", "Что применено"], [list(r) for r in NORMATIVE_BASIS], [70, 100])
 
     doc.add_heading("2.1. Отступы посадок, применённые на участке", level=2)
-    present = sorted({z.type for z in scene.restrictions if z.severity != "allowed"})
+    zones_by_type = {}
+    for zone in scene.restrictions:
+        if zone.severity != "allowed":
+            zones_by_type.setdefault(zone.type, zone)
     rows = []
-    for zone_type in present:
-        norm = SETBACK_NORMS.get(zone_type)
-        if norm:
-            rows.append([ZONE_TYPE_LABELS.get(zone_type, zone_type), _num(norm["tree"]), _num(norm["bush"]), SETBACK_SOURCE])
-        else:
-            rows.append([ZONE_TYPE_LABELS.get(zone_type, zone_type), "—", "—", "табличной нормы нет — отступ по ширине самой зоны"])
-    _table(doc, ["Ограничение", "Дерево, м", "Кустарник, м", "Источник"], rows, [55, 22, 25, 68])
+    for zone_type in sorted(zones_by_type):
+        zone = zones_by_type[zone_type]
+        tree = setback_reference(zone_type, "tree", zone.minDistance, voltage_kv=zone.voltageKv)
+        bush = setback_reference(zone_type, "bush", zone.minDistance, voltage_kv=zone.voltageKv)
+        source = tree.text() if tree.status != "verified" or zone_type not in SETBACK_NORMS else SETBACK_SOURCE
+        rows.append([
+            ZONE_TYPE_LABELS.get(zone_type, zone_type), _num(tree.distance_m), _num(bush.distance_m), source,
+            NORM_STATUS_LABELS[tree.status],
+        ])
+    _table(doc, ["Ограничение", "Дерево, м", "Кустарник, м", "Источник", "Статус"], rows, [42, 18, 20, 62, 28])
     doc.add_paragraph(
-        "Отступ отсчитывается от края зоны ограничения; для сетей зона уже включает охранный коридор, "
-        "поэтому фактическое расстояние до оси сети больше нормы."
+        "Отступ отсчитывается от края зоны ограничения. У трубы с подписью диаметра зона — сама труба, и отступ — "
+        "от её наружной стенки, как в СП 42.13330.2016 (прим. 5 к табл. 9.1); у сети без подписи зона включает "
+        "охранный коридор, и фактическое расстояние до оси сети больше нормы. Статус: «сверено» — число из "
+        "таблицы или пункта акта; «допущение» — экспертная оценка, выбор из диапазона или добавка, которой в акте "
+        "нет; «значение сервиса» — нормы нет, отступ по ширине самой зоны."
     )
+    unchecked = [row[0] for row in rows if row[4] == NORM_STATUS_LABELS["service"]]
+    if unchecked:
+        doc.add_paragraph(
+            "Не проверялось нормами: " + ", ".join(unchecked) + " — для них в табл. 9.1 СП 42.13330.2016 нормы нет, "
+            "посадки держатся на расстоянии ширины самой зоны."
+        )
 
     used = sorted({s for a in assignments for s in (*a.tree_species, *a.bush_species)})
     species_rows = []
     for name in used:
         for rule in sorted(species_rules(name), key=lambda r: r.zone_type):
-            if rule.zone_type in present:
-                species_rows.append([name, ZONE_TYPE_LABELS.get(rule.zone_type, rule.zone_type), _num(rule.distance_m), rule.source])
+            if rule.zone_type in zones_by_type:
+                source = f"{rule.source} — допущение: {rule.note}" if rule.status == "assumption" and rule.note else rule.source
+                species_rows.append([name, ZONE_TYPE_LABELS.get(rule.zone_type, rule.zone_type), _num(rule.distance_m), source])
     if species_rows:
         doc.add_heading("2.2. Увеличенные отступы по породе", level=2)
         _table(doc, ["Вид", "От чего", "Не ближе, м", "Источник"], species_rows, [50, 45, 22, 53])

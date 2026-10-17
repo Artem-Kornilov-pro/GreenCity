@@ -88,9 +88,12 @@ def test_explanations_csv_opens_in_excel(client):
     assert r.status_code == 200 and r.content.startswith("﻿".encode())
     rows = list(csv.reader(io.StringIO(r.content.decode("utf-8-sig")), delimiter=";"))
     header, body_rows = rows[0], rows[1:]
-    assert header[-1] == "НПА и пункт"
+    assert header[-2:] == ["НПА и пункт", "статус нормы"]
     statuses = {row[1] for row in body_rows}
     assert {"посажено", "запрет посадки"} <= statuses
+    # Запрет посадки у здания -- норма СП 42, сверенная с таблицей.
+    building = next(row for row in body_rows if row[1] == "запрет посадки" and row[13] == "здание")
+    assert building[-1] == "сверено с текстом акта" and "СП 42.13330.2016" in building[-2]
 
 
 def test_user_edits_land_on_user_layers(client):

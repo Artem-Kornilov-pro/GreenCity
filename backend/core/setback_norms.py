@@ -43,6 +43,22 @@ SETBACK_NORMS: dict[str, dict[PlantKind, float]] = {
 }
 
 
+# Статус нормы -- насколько число опирается на текст акта:
+#   verified   -- число из таблицы или пункта акта, сверено с текстом
+#                 (табл. 9.1 СП 42 -- автотест с data/norms/sp-42-13330-2016);
+#   assumption -- допущение: экспертная оценка, выбор из диапазона или
+#                 добавка, которой в акте нет (радиус кроны у ЛЭП);
+#   service    -- значение сервиса: нормы нет, отступ -- ширина самой зоны.
+# Номер пункта печатается у сверенных и у допущений, опирающихся на акт;
+# у значения сервиса -- только причина.
+NormStatus = Literal["verified", "assumption", "service"]
+NORM_STATUS_LABELS: dict[str, str] = {
+    "verified": "сверено с текстом акта",
+    "assumption": "допущение",
+    "service": "значение сервиса (нормы нет)",
+}
+
+
 @dataclass(frozen=True)
 class SpeciesSetbackRule:
     """Отступ растений перечисленных родов от зоны одного типа; kinds --
@@ -53,10 +69,20 @@ class SpeciesSetbackRule:
     distance_m: float
     kinds: frozenset[PlantKind]
     source: str
+    status: NormStatus = "verified"
+    note: str = ""
 
 
-def _rule(genera: tuple[str, ...], zone_type: str, distance_m: float, kinds: tuple[PlantKind, ...], source: str):
-    return SpeciesSetbackRule(frozenset(genera), zone_type, distance_m, frozenset(kinds), source)
+def _rule(
+    genera: tuple[str, ...],
+    zone_type: str,
+    distance_m: float,
+    kinds: tuple[PlantKind, ...],
+    source: str,
+    status: NormStatus = "verified",
+    note: str = "",
+):
+    return SpeciesSetbackRule(frozenset(genera), zone_type, distance_m, frozenset(kinds), source, status, note)
 
 
 _BOTH: tuple[PlantKind, ...] = ("tree", "bush")
@@ -81,14 +107,14 @@ SPECIES_SETBACK_RULES: tuple[SpeciesSetbackRule, ...] = (
     _rule(THORNY_GENERA, "pedestrian_path", 2.0, _BOTH, "СП 82.13330.2016, п. 9.22"),
     _rule(THORNY_GENERA, "playground_zone", 2.0, _BOTH, "СП 82.13330.2016, п. 9.22"),
     _rule(HEAT_SENSITIVE_2M_GENERA, "heat_network", 2.0, _BOTH, "МГСН 1.02-02, п. 4.2.8"),
-    _rule(HEAT_SENSITIVE_4M_GENERA, "heat_network", 4.0, _BOTH, "МГСН 1.02-02, п. 4.2.8"),
+    _rule(HEAT_SENSITIVE_4M_GENERA, "heat_network", 4.0, _BOTH, "МГСН 1.02-02, п. 4.2.8", "assumption", "в норме 3–4 м, взят больший"),
     # Агрессивные корни тополя и ивы у труб и фундамента: числа в нормах нет,
     # поэтому источник так и помечен.
-    _rule(("тополь",), "sewer", 3.0, ("tree",), EXPERT),
-    _rule(("тополь",), "water_pipeline", 3.0, ("tree",), EXPERT),
-    _rule(("ива",), "building", 6.0, ("tree",), EXPERT),
-    _rule(("ива",), "sewer", 3.5, ("tree",), EXPERT),
-    _rule(("ива",), "water_pipeline", 3.5, ("tree",), EXPERT),
+    _rule(("тополь",), "sewer", 3.0, ("tree",), EXPERT, "assumption", "агрессивные корни, числа в нормах нет"),
+    _rule(("тополь",), "water_pipeline", 3.0, ("tree",), EXPERT, "assumption", "агрессивные корни, числа в нормах нет"),
+    _rule(("ива",), "building", 6.0, ("tree",), EXPERT, "assumption", "агрессивные корни, числа в нормах нет"),
+    _rule(("ива",), "sewer", 3.5, ("tree",), EXPERT, "assumption", "агрессивные корни, числа в нормах нет"),
+    _rule(("ива",), "water_pipeline", 3.5, ("tree",), EXPERT, "assumption", "агрессивные корни, числа в нормах нет"),
 )
 
 # Наибольший отступ -- запас для грубого отбора кандидатов по индексу.
@@ -215,6 +241,58 @@ def setback_for(
 TABLE_SOURCE = "СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1"
 
 
+@dataclass(frozen=True)
+class SetbackReference:
+    """Требуемый отступ, документ, который его задаёт, статус нормы и
+    пояснение (почему допущение, почему нормы нет)."""
+
+    distance_m: float
+    source: str
+    status: NormStatus
+    note: str = ""
+
+    def text(self) -> str:
+        """Ссылка для объяснения: у сверенной нормы -- акт и пункт, у
+        допущения -- пометка и причина, у значения сервиса -- только причина."""
+        if self.status == "verified":
+            return f"{self.source}; {self.note}" if self.note else self.source
+        if self.status == "assumption":
+            return f"допущение: {self.note} ({self.source})" if self.note else f"допущение ({self.source})"
+        return f"значение сервиса: {self.note}"
+
+
+def setback_reference(
+    zone_type: str,
+    plant_kind: PlantKind,
+    zone_min_distance: float,
+    species: SpeciesArg = None,
+    root_barrier: bool = False,
+    voltage_kv: Optional[float] = None,
+) -> SetbackReference:
+    """То же число, что setback_for(), с документом и статусом нормы."""
+    rule = SETBACK_NORMS.get(zone_type)
+    if rule:
+        distance = rule[plant_kind]
+        ref = SetbackReference(distance, TABLE_SOURCE, "verified", "прочерк в таблице — не нормируется" if distance == 0 else "")
+    elif zone_type == OVERHEAD_LINE and plant_kind == "tree":
+        kv = "класс напряжения не указан — принято 10 кВ, " if voltage_kv is None else ""
+        ref = SetbackReference(
+            overhead_line_setback(zone_min_distance, voltage_kv), overhead_line_source(voltage_kv), "assumption",
+            f"{kv}к норме ПУЭ «до кроны» добавлен радиус кроны 2,5 м",
+        )
+    else:
+        ref = SetbackReference(
+            zone_min_distance, "", "service",
+            f"в табл. 9.1 СП 42.13330.2016 нормы нет — отступ {zone_min_distance:g} м по ширине зоны",
+        )
+    if root_barrier and root_barrier_applies(zone_type, plant_kind) and ref.distance_m > ROOT_BARRIER_MIN_M:
+        ref = SetbackReference(ROOT_BARRIER_MIN_M, ROOT_BARRIER_SOURCE, "verified", "с прикорневым барьером")
+    for species_rule in species_rules(species):
+        if species_rule.zone_type == zone_type and plant_kind in species_rule.kinds and species_rule.distance_m > ref.distance_m:
+            ref = SetbackReference(species_rule.distance_m, species_rule.source, species_rule.status, species_rule.note)
+    return ref
+
+
 def setback_basis(
     zone_type: str,
     plant_kind: PlantKind,
@@ -223,21 +301,9 @@ def setback_basis(
     root_barrier: bool = False,
     voltage_kv: Optional[float] = None,
 ) -> tuple[float, str]:
-    """(отступ, акт и пункт) -- то же число, что setback_for(), и документ,
-    который его задаёт."""
-    rule = SETBACK_NORMS.get(zone_type)
-    if rule:
-        distance, source = rule[plant_kind], TABLE_SOURCE
-    elif zone_type == OVERHEAD_LINE and plant_kind == "tree":
-        distance, source = overhead_line_setback(zone_min_distance, voltage_kv), overhead_line_source(voltage_kv)
-    else:
-        distance, source = zone_min_distance, "охранная зона по чертежу (отступ зоны)"
-    if root_barrier and root_barrier_applies(zone_type, plant_kind) and distance > ROOT_BARRIER_MIN_M:
-        distance, source = ROOT_BARRIER_MIN_M, ROOT_BARRIER_SOURCE
-    for species_rule in species_rules(species):
-        if species_rule.zone_type == zone_type and plant_kind in species_rule.kinds and species_rule.distance_m > distance:
-            distance, source = species_rule.distance_m, species_rule.source
-    return distance, source
+    """(отступ, ссылка на норму со статусом) -- то же число, что setback_for()."""
+    ref = setback_reference(zone_type, plant_kind, zone_min_distance, species, root_barrier, voltage_kv)
+    return ref.distance_m, ref.text()
 
 
 def plant_kind_of_object_type(object_type: str) -> Optional[PlantKind]:

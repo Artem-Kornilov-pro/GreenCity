@@ -10,7 +10,7 @@
 * почему этот вид: ассортимент Москвы для типа территории, базовый
   ассортимент 515-ПП, без инвазивных видов 369-ПП;
 * почему здесь можно: ближайшие ограничения с фактическим расстоянием,
-  требуемым отступом и пунктом НПА (core/setback_norms.setback_basis).
+  требуемым отступом, пунктом НПА и статусом нормы (core/setback_norms.setback_reference).
 
 Отдельно -- кандидаты, которые расстановка отклонила по норме, с тем же
 разбором причины (собирает RejectionLog в deterministic_placement.py).
@@ -30,7 +30,13 @@ from shapely.strtree import STRtree
 
 from core.placement import OBJECT_CLEARANCE_M, POINT_CLEARANCE_M, SITE_CLEARANCE_M, Placer
 from core.schemas import Scene, SceneObject
-from core.setback_norms import MAX_SETBACK_M, ROOT_BARRIER_MEASURE, ROOT_BARRIER_SOURCE, setback_basis
+from core.setback_norms import (
+    MAX_SETBACK_M,
+    NORM_STATUS_LABELS,
+    ROOT_BARRIER_MEASURE,
+    ROOT_BARRIER_SOURCE,
+    setback_reference,
+)
 from exchange.export_dxf import is_source_object, result_layer
 from greenplan.pattern_assignment import ZoneAssignment
 from greenplan.pattern_library import PATTERN_LIBRARY, STYLE_LABELS
@@ -71,6 +77,9 @@ class Constraint(BaseModel):
     required_m: float
     ok: bool
     norm: str
+    # verified / assumption / service (core/setback_norms.NormStatus); у
+    # правила планировщика -- None.
+    norm_status: Optional[str] = None
 
 
 class PlantExplanation(BaseModel):
@@ -125,6 +134,8 @@ class RestrictedZone(BaseModel):
     tree_norm: str
     bush_setback_m: float
     bush_norm: str
+    tree_norm_status: str = "verified"
+    bush_norm_status: str = "verified"
 
 
 class _ZoneIndex:
@@ -151,11 +162,15 @@ def _zone_constraints(
     уменьшенный отступ (setback_norms.ROOT_BARRIER_MIN_M)."""
     out = []
     for zone, distance in index.near(x, z, MAX_SETBACK_M + NEAR_MARGIN_M):
-        required, norm = setback_basis(zone.type, kind, zone.minDistance, species, root_barrier=root_barrier, voltage_kv=zone.voltageKv)
+        ref = setback_reference(zone.type, kind, zone.minDistance, species, root_barrier=root_barrier, voltage_kv=zone.voltageKv)
+        required = ref.distance_m
         if distance > required + NEAR_MARGIN_M:
             continue
         label = ZONE_TYPE_LABELS.get(zone.type, zone.name or zone.type)
-        out.append(Constraint(what=label, zone_id=zone.id, distance_m=round(distance, 2), required_m=required, ok=distance >= required, norm=norm))
+        out.append(Constraint(
+            what=label, zone_id=zone.id, distance_m=round(distance, 2), required_m=required, ok=distance >= required,
+            norm=ref.text(), norm_status=ref.status,
+        ))
     return out
 
 
@@ -169,7 +184,10 @@ def _object_constraints(placer: Placer, obj_id: Optional[str], x: float, z: floa
         if norm_value is None:
             continue
         norm = LAMP_SOURCE if other_type == "lamp" else PLANNER_RULE
-        out.append(Constraint(what=f"{other_type} {key}", distance_m=round(distance, 2), required_m=norm_value, ok=distance >= norm_value, norm=norm))
+        out.append(Constraint(
+            what=f"{other_type} {key}", distance_m=round(distance, 2), required_m=norm_value, ok=distance >= norm_value, norm=norm,
+            norm_status="verified" if norm == LAMP_SOURCE else None,
+        ))
     return out
 
 
@@ -335,11 +353,12 @@ def restricted_zones(scene: Scene) -> list[RestrictedZone]:
     for zone in scene.restrictions:
         if zone.severity == "allowed" or len(zone.polygon) < 3:
             continue
-        tree, tree_norm = setback_basis(zone.type, "tree", zone.minDistance, voltage_kv=zone.voltageKv)
-        bush, bush_norm = setback_basis(zone.type, "bush", zone.minDistance, voltage_kv=zone.voltageKv)
+        tree = setback_reference(zone.type, "tree", zone.minDistance, voltage_kv=zone.voltageKv)
+        bush = setback_reference(zone.type, "bush", zone.minDistance, voltage_kv=zone.voltageKv)
         out.append(RestrictedZone(
             zone_id=zone.id, what=ZONE_TYPE_LABELS.get(zone.type, zone.name or zone.type),
-            tree_setback_m=tree, tree_norm=tree_norm, bush_setback_m=bush, bush_norm=bush_norm,
+            tree_setback_m=tree.distance_m, tree_norm=tree.text(), bush_setback_m=bush.distance_m, bush_norm=bush.text(),
+            tree_norm_status=tree.status, bush_norm_status=bush.status,
         ))
     return out
 
@@ -361,13 +380,31 @@ def explanations_json(scene: Scene, plants: list[PlantExplanation], rejections: 
         "plants": [p.model_dump() for p in plants],
         "rejected": [r.model_dump() for r in rejections.detailed],
         "restricted_zones": [z.model_dump() for z in restricted_zones(scene)],
+        "not_checked": not_checked(scene),
     }
+
+
+def not_checked(scene: Scene) -> list[dict]:
+    """Ограничения участка, для которых нормы отступа нет: посадки от них
+    держатся на расстоянии ширины самой зоны («значение сервиса»)."""
+    found: dict[str, dict] = {}
+    for zone in scene.restrictions:
+        if zone.severity == "allowed" or zone.type in found:
+            continue
+        ref = setback_reference(zone.type, "tree", zone.minDistance, voltage_kv=zone.voltageKv)
+        if ref.status == "service":
+            found[zone.type] = {"what": ZONE_TYPE_LABELS.get(zone.type, zone.name or zone.type), "reason": ref.note}
+    return list(found.values())
 
 
 CSV_COLUMNS = [
     "id", "статус", "тип", "вид", "слой DXF", "x", "z", "dxf_x", "dxf_y", "приём", "проект-аналог",
-    "обоснование", "основание вида", "ограничение", "расстояние, м", "норма, м", "НПА и пункт",
+    "обоснование", "основание вида", "ограничение", "расстояние, м", "норма, м", "НПА и пункт", "статус нормы",
 ]
+
+
+def _status_label(status: Optional[str]) -> str:
+    return NORM_STATUS_LABELS.get(status, "правило планировщика") if status else ""
 
 
 def explanations_csv(scene: Scene, plants: list[PlantExplanation], rejections: RejectionStats) -> str:
@@ -382,20 +419,23 @@ def explanations_csv(scene: Scene, plants: list[PlantExplanation], rejections: R
         writer.writerow([
             p.id, p.status, p.type, p.species, p.dxf_layer, p.x, p.z, p.dxf_x, p.dxf_y, p.pattern or "", p.source_project or "",
             p.reason, p.species_basis, c.what if c else "", c.distance_m if c else "", c.required_m if c else "", c.norm if c else "",
+            _status_label(c.norm_status) if c else "",
         ])
     for r in rejections.detailed:
         writer.writerow([
             "", "отклонено", r.type, r.species, "", r.x, r.z, "", "", r.pattern or "", "",
             r.reason, "", "", r.distance_m if r.distance_m is not None else "",
-            r.required_m if r.required_m is not None else "", r.norm,
+            r.required_m if r.required_m is not None else "", r.norm, "",
         ])
     for z in restricted_zones(scene):
         writer.writerow([
             z.zone_id, "запрет посадки", "дерево", "", "", "", "", "", "", "", "",
             f"полоса вокруг объекта «{z.what}», где деревья не ставятся", "", z.what, "", z.tree_setback_m, z.tree_norm,
+            _status_label(z.tree_norm_status),
         ])
         writer.writerow([
             z.zone_id, "запрет посадки", "кустарник", "", "", "", "", "", "", "", "",
             f"полоса вокруг объекта «{z.what}», где кустарники не ставятся", "", z.what, "", z.bush_setback_m, z.bush_norm,
+            _status_label(z.bush_norm_status),
         ])
     return buf.getvalue()
