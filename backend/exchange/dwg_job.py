@@ -112,6 +112,12 @@ def build_scene(
         scene["meta"]["sourceSha256"] = sha256_of_files(dwg_paths)
     if source_id:
         scene["meta"]["sourceId"] = source_id
+    for name, lost in result.lost.items():
+        kinds = ", ".join(f"{kind} — {n}" for kind, n in lost.items())
+        scene["meta"].setdefault("warnings", []).append(
+            f"{name}: при конвертации DWG → DXF не дошло объектов: {sum(lost.values())} ({kinds}) — "
+            "LibreDWG прочитал их с ошибками или не умеет записывать; сверьте чертёж в CAD."
+        )
     if result.placed_by_xref:
         scene["meta"].setdefault("warnings", []).extend(
             f"{name} положен так, как его вставляет внешней ссылкой {host}." for name, host in result.placed_by_xref.items()
