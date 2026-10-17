@@ -14,6 +14,7 @@ import { EditorTopBar } from "./EditorTopBar";
 import { GreenPlanOptionsDialog } from "./GreenPlanOptionsDialog";
 import { GreenPlanPanel } from "./GreenPlanPanel";
 import { BoundaryChoiceDialog } from "./BoundaryChoiceDialog";
+import { VisualizationsDialog } from "./VisualizationsDialog";
 import { LayerMappingDialog } from "./LayerMappingDialog";
 import { SaveAsDialog } from "./SaveAsDialog";
 import { StatusBanners, type BannerError } from "./StatusBanners";
@@ -95,6 +96,7 @@ export default function EditorPage() {
     exporter.dxf,
     greenPlan.docx,
     greenPlan.explanations,
+    greenPlan.visuals,
     catalog.load,
     layers.loadKinds,
     layers.reparse,
@@ -219,6 +221,8 @@ export default function EditorPage() {
             onDownloadDocument={() => void greenPlan.docx.run()}
             onDownloadExplanations={(format) => void greenPlan.explanations.run(format)}
             onRetryReport={greenPlan.retryReport}
+            visualsBusy={greenPlan.visuals.busy}
+            onVisualize={() => void greenPlan.visuals.run()}
           />
         </main>
 
@@ -247,6 +251,12 @@ export default function EditorPage() {
         candidates={layers.boundaryCandidates}
         busy={layers.chooseBoundary.busy}
         onChoose={(candidate) => void layers.chooseBoundary.run(candidate)}
+      />
+      <VisualizationsDialog
+        open={greenPlan.visualsOpen}
+        onOpenChange={greenPlan.setVisualsOpen}
+        result={greenPlan.visualizations}
+        title={greenPlan.title}
       />
       <LayerMappingDialog
         open={layers.dialogOpen}

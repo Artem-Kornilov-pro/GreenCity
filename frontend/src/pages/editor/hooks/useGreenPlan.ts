@@ -4,6 +4,8 @@ import {
   downloadGreenPlanExplanations,
   fetchGreenPlanReport,
   generateGreenPlan,
+  generateGreenPlanVisualizations,
+  type GreenPlanVisualizations,
   type GreenPlanOptions,
   type GreenPlanZoneAssignment,
 } from "../../../api";
@@ -90,6 +92,17 @@ export function useGreenPlan({
     downloadBlob(blob, `Пояснительная записка — ${title}.docx`);
   });
 
+  // Визуализации (YandexART): каждый запуск -- другое зерно, другие картинки.
+  const [visualizations, setVisualizations] = useState<GreenPlanVisualizations | null>(null);
+  const [visualsOpen, setVisualsOpen] = useState(false);
+  const seed = useRef(1);
+  const visuals = useAsyncTask(async () => {
+    if (!scene || !result) return;
+    setVisualizations(await generateGreenPlanVisualizations(scene, result.assignments, seed.current));
+    seed.current += 3;
+    setVisualsOpen(true);
+  });
+
   const explanations = useAsyncTask(async (format: "json" | "csv" | "xlsx") => {
     if (!scene || !result) return;
     const blob = await downloadGreenPlanExplanations(scene, result.assignments, result.rejections, format);
@@ -107,5 +120,10 @@ export function useGreenPlan({
     retryReport,
     docx,
     explanations,
+    visuals,
+    visualizations,
+    visualsOpen,
+    setVisualsOpen,
+    title,
   };
 }
