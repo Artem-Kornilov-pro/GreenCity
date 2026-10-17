@@ -22,7 +22,8 @@ from helpers import make_scene, make_zone, rect_points
 def test_tree_next_to_an_underground_network_needs_less_with_a_root_barrier(zone_type, full):
     assert setback_for(zone_type, "tree", 0.1) == full
     assert setback_for(zone_type, "tree", 0.1, root_barrier=True) == ROOT_BARRIER_MIN_M
-    assert setback_basis(zone_type, "tree", 0.1, root_barrier=True) == (ROOT_BARRIER_MIN_M, ROOT_BARRIER_SOURCE)
+    distance, norm = setback_basis(zone_type, "tree", 0.1, root_barrier=True)
+    assert distance == ROOT_BARRIER_MIN_M and norm.startswith(ROOT_BARRIER_SOURCE) and "барьер" in norm
 
 
 @pytest.mark.parametrize("zone_type", ["building", "road", "pedestrian_path"])
