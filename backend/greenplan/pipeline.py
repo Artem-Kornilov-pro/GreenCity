@@ -83,7 +83,7 @@ def run_greenplan(scene: Scene, options: GreenPlanOptions | None = None, k: int 
     preferred, notes = _preferred(options, by_id)
     log, token = start_rejection_log()
     try:
-        plan = plan_site(working, trees, bushes, k, style=options.style, preferred=preferred)
+        plan = plan_site(working, trees, bushes, k, style=options.style, preferred=preferred, root_barrier=options.root_barrier)
     finally:
         stop_rejection_log(token)
 

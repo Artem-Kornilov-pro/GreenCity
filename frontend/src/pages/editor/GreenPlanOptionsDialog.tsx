@@ -185,6 +185,12 @@ export function GreenPlanOptionsDialog({
               <Toggle checked={options.bushes} onChange={(v) => set("bushes", v)} label="Кустарники" />
               <Toggle checked={options.lawn} onChange={(v) => set("lawn", v)} label="Газон" />
             </div>
+            <Toggle
+              checked={options.root_barrier}
+              onChange={(v) => set("root_barrier", v)}
+              label="Деревья у подземных сетей с корнезащитой"
+              hint="ближе нормы, но не ближе 1 м к сети — с прикорневым барьером по СП 42.13330.2016 (прим. 4–7 к табл. 9.1); такие деревья помечаются «условно» и требуют согласования"
+            />
           </section>
 
           <section>

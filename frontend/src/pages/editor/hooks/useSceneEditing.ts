@@ -134,6 +134,7 @@ export function useSceneEditing() {
             zoneIndex,
             plantKindOfObjectType(selectedObject.type),
             typeof selectedObject.metadata.species === "string" ? selectedObject.metadata.species : undefined,
+            Array.isArray(selectedObject.metadata.rootBarrier) && selectedObject.metadata.rootBarrier.length > 0,
           )
         : [],
     [selectedObject, zoneIndex],

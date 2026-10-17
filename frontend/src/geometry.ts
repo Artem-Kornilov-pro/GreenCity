@@ -143,7 +143,8 @@ export function violatesAt(
   pz: number,
   index: ZoneIndex,
   plantKind?: PlantKind,
-  species?: string
+  species?: string,
+  rootBarrier = false,
 ): boolean {
   if (!index.cols) return false;
   const c = Math.floor((px - index.originX) / index.cell);
@@ -153,7 +154,7 @@ export function violatesAt(
   for (const item of index.buckets[r * index.cols + c]) {
     if (px < item.minX || px > item.maxX || pz < item.minZ || pz > item.maxZ) continue;
     const zone = item.zone;
-    const minDistance = plantKind ? setbackFor(zone.type, plantKind, zone.minDistance, species) : zone.minDistance;
+    const minDistance = plantKind ? setbackFor(zone.type, plantKind, zone.minDistance, species, rootBarrier) : zone.minDistance;
     if (pointInPolygon(px, pz, zone.polygon) || distanceToPolygonEdge(px, pz, zone.polygon) < minDistance) {
       return true;
     }
@@ -168,7 +169,8 @@ export function checkViolationsAt(
   pz: number,
   index: ZoneIndex,
   plantKind?: PlantKind,
-  species?: string
+  species?: string,
+  rootBarrier = false,
 ): ZoneViolation[] {
   if (!index.cols) return [];
   const c = Math.floor((px - index.originX) / index.cell);
@@ -179,7 +181,7 @@ export function checkViolationsAt(
   for (const item of index.buckets[r * index.cols + c]) {
     if (px < item.minX || px > item.maxX || pz < item.minZ || pz > item.maxZ) continue;
     const zone = item.zone;
-    const minDistance = plantKind ? setbackFor(zone.type, plantKind, zone.minDistance, species) : zone.minDistance;
+    const minDistance = plantKind ? setbackFor(zone.type, plantKind, zone.minDistance, species, rootBarrier) : zone.minDistance;
     if (pointInPolygon(px, pz, zone.polygon) || distanceToPolygonEdge(px, pz, zone.polygon) < minDistance) {
       result.push({ zone, minDistance });
     }
