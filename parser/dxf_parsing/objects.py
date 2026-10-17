@@ -119,6 +119,14 @@ _DUPLICATE_POINT_TOLERANCE_M = 0.1
 # Дерево и куст в одной точке -- одно растение: слой-привязка вроде
 # "(ГП) Привязка дер и куст" ставит метку прямо на дерево.
 _PLANT_TYPES = ("tree", "bush")
+# Окружности одного условного знака -- центры ближе этого. В топосъёмке
+# Мосгеотреста знак дерева бывает продублирован (та же дуга дважды или
+# со сдвигом в сантиметры), а знаки соседних деревьев почти всегда дальше
+# 0,5 м друг от друга. Порог взят с запасом в меньшую сторону: лишнее
+# существующее дерево безопаснее потерянного -- рядом с ним не посадят новое.
+_SYMBOL_MERGE_M = 0.15
+# Дуга с таким недобором до полного оборота -- всё ещё окружность.
+_FULL_TURN_TOLERANCE_DEG = 0.1
 
 
 def dedupe_point_objects(objects):
@@ -172,7 +180,10 @@ def extract_point_objects(msp, tf):
         # знака (крест в круге дерева) или кабель на слое освещения: столбами
         # они не считаются, иначе каждый штрих стал бы объектом.
         lines = [e for e in entities if e.dxftype() == "LINE" and _is_vertical(e)]
-        circles = [e for e in entities if e.dxftype() == "CIRCLE"]
+        # Дуга на полный оборот -- окружность только у растений: у фонаря
+        # такая дуга -- плафон в метре от столба, а не второй фонарь.
+        full_arcs = cfg["type"] in _PLANT_TYPES
+        circles = _symbol_circles([e for e in entities if _is_circle(e, full_arcs)], _SYMBOL_MERGE_M / tf.scale)
 
         for e in inserts_or_points:
             loc = e.dxf.insert if e.dxftype() == "INSERT" else e.dxf.location
@@ -236,6 +247,42 @@ def extract_point_objects(msp, tf):
                 })
 
     return objects
+
+
+def _is_circle(e, full_arcs: bool) -> bool:
+    """CIRCLE или (при full_arcs) дуга на полный оборот: в топосъёмке
+    Мосгеотреста знак отдельно стоящего дерева нарисован именно такой дугой
+    (ARC 0..360°), без блока."""
+    if e.dxftype() == "CIRCLE":
+        return True
+    if not full_arcs or e.dxftype() != "ARC":
+        return False
+    span = (e.dxf.end_angle - e.dxf.start_angle) % 360
+    return span < _FULL_TURN_TOLERANCE_DEG or span > 360 - _FULL_TURN_TOLERANCE_DEG
+
+
+def _symbol_circles(circles, merge_distance):
+    """По одной окружности на условный знак: в знаке бывает несколько
+    концентрических или почти совпадающих окружностей (обвод, крона), и
+    каждая не должна стать отдельным объектом. Остаётся первая окружность
+    из каждой группы с центрами ближе merge_distance друг к другу."""
+    if len(circles) < 2:
+        return circles
+    kept, cells = [], {}
+    for c in circles:
+        x, y = c.dxf.center.x, c.dxf.center.y
+        gx, gy = math.floor(x / merge_distance), math.floor(y / merge_distance)
+        near = any(
+            math.hypot(x - ox, y - oy) < merge_distance
+            for dx in (-1, 0, 1)
+            for dy in (-1, 0, 1)
+            for ox, oy in cells.get((gx + dx, gy + dy), ())
+        )
+        if near:
+            continue
+        cells.setdefault((gx, gy), []).append((x, y))
+        kept.append(c)
+    return kept
 
 
 def _is_vertical(line) -> bool:

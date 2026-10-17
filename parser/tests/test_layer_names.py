@@ -164,9 +164,41 @@ def test_masked_word_does_not_give_a_point_object():
 
 def test_unrecognized_names_stay_unrecognized():
     resolver = LayerResolver()
-    for name in ("0", "Defpoints", "Слой1", "Рамка", "Ограждение", "Колодцы"):
+    for name in ("0", "Defpoints", "Слой1", "Ограждение"):
         assert resolver.resolve_layer(name) == (None, None)
         assert resolver.layer_key(name) == name
+
+
+# --- топосъёмка Мосгеотреста (тайлы tp/up/brd датасета) --------------------------
+
+
+@pytest.mark.parametrize(
+    "name,kind",
+    [
+        ("Граница заказа", "boundary"),
+        ("Трубопроводы", "underground"),
+        ("Столбы", "lamp"),
+        ("Рамки", "skip"),
+        ("Координатные кресты", "skip"),
+        ("Колодцы", "topo"),
+        ("Люки", "topo"),
+        ("Ограды", "topo"),
+        ("Откосы", "topo"),
+        ("Светофоры", "topo"),
+        ("Полоса деревьев", "topo"),
+        ("Граница растительности и грунта", "topo"),
+        ("Внутреннее заполнение", "topo"),
+        ("Территории", "topo"),
+        ("Выгребные ямы", "topo"),
+    ],
+)
+def test_mosgeotrest_survey_layers(name, kind):
+    assert kind_of(name) == kind
+
+
+@pytest.mark.parametrize("name", ["_за границами работ", "Вне границ участка", "Граница улицы", "Граница площадки"])
+def test_outside_and_other_borders_are_not_the_site_boundary(name):
+    assert kind_of(name) != "boundary"
 
 
 # --- назначения пользователя ----------------------------------------------------
