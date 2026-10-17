@@ -29,3 +29,6 @@ tools/ai_editor_eval/last_run.json
 
 # Исходные чертежи для экспорта поверх них (exchange/source_store.py)
 var/
+
+# Чужие решения конкурентов -- только для локального сравнения, не публикуются
+competitors/
