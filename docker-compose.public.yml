@@ -1,0 +1,52 @@
+# Публичный стенд для экспертов поверх продакшен-режима (docker-compose.prod.yml):
+#
+#     make docker-public-up
+#     # = docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.public.yml up -d --build
+#
+# Что добавляется: Caddy на портах 80 и 443 с автоматическим HTTPS
+# (Let's Encrypt) для PUBLIC_DOMAIN -- эксперт открывает сайт по ссылке.
+# Наружу смотрит только Caddy: фронтенд, Grafana и остальные сервисы -- во
+# внутренней сети Docker. Swagger выключен ещё в продакшен-режиме.
+#
+# Нужны: ВМ 4 vCPU / 8 ГБ / 40 ГБ, DNS-запись A домена на её адрес, в .env --
+# PUBLIC_DOMAIN, JWT_SECRET, GRAFANA_ADMIN_PASSWORD. Пошагово --
+# docs/PUBLIC_STAND.md. Проверка на своей машине без домена:
+# PUBLIC_DOMAIN=localhost -- Caddy выпустит самоподписанный сертификат.
+
+services:
+  caddy:
+    image: caddy:2.8.4-alpine
+    restart: unless-stopped
+    depends_on:
+      frontend:
+        condition: service_healthy
+    environment:
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?задайте PUBLIC_DOMAIN в .env -- домен стенда, например greencity.example.ru}
+    ports:
+      - "${PUBLIC_HTTP_PORT:-80}:80"
+      - "${PUBLIC_HTTPS_PORT:-443}:443"
+      - "${PUBLIC_HTTPS_PORT:-443}:443/udp"
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro,z
+      - caddy_data:/data
+      - caddy_config:/config
+    mem_limit: 128m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Сайт -- только через Caddy.
+  frontend:
+    ports: !reset []
+
+  # Grafana на публичном стенде наружу не открывается: порт -- только на
+  # 127.0.0.1 сервера, смотреть через туннель ssh -L 3001:127.0.0.1:3001.
+  grafana:
+    ports: !override
+      - "127.0.0.1:${GRAFANA_PORT:-3001}:3000"
+
+volumes:
+  caddy_data:
+  caddy_config:

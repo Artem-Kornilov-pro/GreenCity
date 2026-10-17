@@ -9,7 +9,7 @@ CATEGORY ?= tree
 
 .PHONY: help venv backend frontend-install frontend frontend-build parse clean \
         lint lint-py lint-web lint-fix models test test-e2e test-cov parser-regression greenplan-regression corpus-features primers examples docs \
-        docker-build docker-up docker-down docker-logs docker-prod-up docker-prod-down docker-prune
+        docker-build docker-up docker-down docker-logs docker-prod-up docker-prod-down docker-public-up docker-public-down docker-prune
 
 help:
 	@echo "make venv              - создать venv и поставить Python-зависимости"
@@ -39,6 +39,8 @@ help:
 	@echo "make docker-logs       - логи обоих сервисов (docker compose up без -d)"
 	@echo "make docker-prod-up    - продакшен-режим: статика за nginx на :80, без --reload (docker-compose.prod.yml)"
 	@echo "make docker-prod-down  - остановить продакшен-режим"
+	@echo "make docker-public-up  - публичный стенд: продакшен-режим + HTTPS (Caddy) для PUBLIC_DOMAIN (docs/PUBLIC_STAND.md)"
+	@echo "make docker-public-down - остановить публичный стенд"
 	@echo "make docker-prune      - удалить старые образы и кеш сборки старше недели (место на диске сервера)"
 
 # venv пересоздаётся только если список зависимостей новее .venv/bin/activate
@@ -158,6 +160,15 @@ docker-prod-up:
 
 docker-prod-down:
 	$(PROD_COMPOSE) down
+
+PUBLIC_COMPOSE := $(PROD_COMPOSE) -f docker-compose.public.yml
+
+docker-public-up:
+	$(PUBLIC_COMPOSE) up -d --build
+
+# Для остановки домен не нужен -- заглушка, если его нет в окружении и .env.
+docker-public-down:
+	PUBLIC_DOMAIN=$${PUBLIC_DOMAIN:-stopping} $(PUBLIC_COMPOSE) down
 
 # После каждой пересборки старые образы и слои кеша сборки остаются на диске
 # (каждая сборка фронтенда и бэкенда -- сотни МБ). Тома с данными (mongo,
