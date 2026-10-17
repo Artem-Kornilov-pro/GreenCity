@@ -20,6 +20,7 @@ data/norms/sp-42-13330-2016/setbacks.csv.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Literal, Optional
@@ -142,6 +143,46 @@ ROOT_BARRIER_MEASURE = (
 )
 
 
+# Воздушная ЛЭП. СП 42.13330.2016, прим. 2 к табл. 9.1 отсылает к ПУЭ:
+# наименьшее расстояние по горизонтали от крайнего провода до кроны дерева --
+# 1 м для ВЛ до 1 кВ с неизолированными проводами (ПУЭ, п. 2.4.8), 3 м до
+# 20 кВ, 4 м 35-110 кВ, 5 м 150-220 кВ, 6 м 330 кВ, 7 м 500 кВ (ПУЭ,
+# табл. 2.5.21). Норма -- до края кроны, а не до ствола: к ней добавляется
+# радиус кроны (допущение 2,5 м -- крона 5 м, та же база, что в прим. 1 к
+# табл. 9.1 СП 42). Зона ЛЭП в сцене -- коридор шириной 2 x minDistance
+# вокруг провода, и отступ от её края меньше на minDistance. Класс
+# напряжения: из имени слоя, параметров GreenPlan, иначе 10 кВ.
+OVERHEAD_LINE = "overhead_power_line"
+DEFAULT_OVERHEAD_VOLTAGE_KV = 10.0
+CROWN_RADIUS_M = 2.5
+_PUE_CROWN_DISTANCE_M = (
+    (1.0, 1.0, "п. 2.4.8"),
+    (20.0, 3.0, "табл. 2.5.21"),
+    (110.0, 4.0, "табл. 2.5.21"),
+    (220.0, 5.0, "табл. 2.5.21"),
+    (330.0, 6.0, "табл. 2.5.21"),
+    (math.inf, 7.0, "табл. 2.5.21"),
+)
+
+
+def pue_crown_distance(voltage_kv: Optional[float]) -> tuple[float, str]:
+    """(расстояние от провода до кроны по ПУЭ, м; пункт) для класса напряжения."""
+    kv = DEFAULT_OVERHEAD_VOLTAGE_KV if voltage_kv is None else voltage_kv
+    return next((d, clause) for limit, d, clause in _PUE_CROWN_DISTANCE_M if kv <= limit)
+
+
+def overhead_line_setback(zone_min_distance: float, voltage_kv: Optional[float]) -> float:
+    """Отступ ствола дерева от края зоны ЛЭП (коридора вокруг провода)."""
+    crown, _clause = pue_crown_distance(voltage_kv)
+    return round(max(0.0, crown + CROWN_RADIUS_M - zone_min_distance), 3)
+
+
+def overhead_line_source(voltage_kv: Optional[float]) -> str:
+    _distance, clause = pue_crown_distance(voltage_kv)
+    kv = "напряжение не указано — принято 10 кВ" if voltage_kv is None else f"{voltage_kv:g} кВ"
+    return f"ПУЭ, {clause} ({kv}): до кроны, крона принята 5 м; СП 42.13330.2016, прим. 2 к табл. 9.1"
+
+
 def root_barrier_applies(zone_type: str, plant_kind: PlantKind) -> bool:
     return plant_kind == "tree" and zone_type in ROOT_BARRIER_ZONE_TYPES
 
@@ -152,13 +193,17 @@ def setback_for(
     zone_min_distance: float,
     species: SpeciesArg = None,
     root_barrier: bool = False,
+    voltage_kv: Optional[float] = None,
 ) -> float:
     """Требуемый отступ посадки от зоны: табличная норма (для типа зоны вне
     таблицы -- minDistance самой зоны), ужесточённая правилами по породе.
     root_barrier -- дерево с прикорневым барьером: от подземной сети хватает
-    ROOT_BARRIER_MIN_M (правила по породе по-прежнему могут ужесточить)."""
+    ROOT_BARRIER_MIN_M (правила по породе по-прежнему могут ужесточить).
+    voltage_kv -- класс напряжения ЛЭП: дерево от ЛЭП -- по ПУЭ."""
     rule = SETBACK_NORMS.get(zone_type)
     distance = rule[plant_kind] if rule else zone_min_distance
+    if zone_type == OVERHEAD_LINE and plant_kind == "tree":
+        distance = overhead_line_setback(zone_min_distance, voltage_kv)
     if root_barrier and root_barrier_applies(zone_type, plant_kind):
         distance = min(distance, ROOT_BARRIER_MIN_M)
     for species_rule in species_rules(species):
@@ -176,12 +221,15 @@ def setback_basis(
     zone_min_distance: float,
     species: SpeciesArg = None,
     root_barrier: bool = False,
+    voltage_kv: Optional[float] = None,
 ) -> tuple[float, str]:
     """(отступ, акт и пункт) -- то же число, что setback_for(), и документ,
     который его задаёт."""
     rule = SETBACK_NORMS.get(zone_type)
     if rule:
         distance, source = rule[plant_kind], TABLE_SOURCE
+    elif zone_type == OVERHEAD_LINE and plant_kind == "tree":
+        distance, source = overhead_line_setback(zone_min_distance, voltage_kv), overhead_line_source(voltage_kv)
     else:
         distance, source = zone_min_distance, "охранная зона по чертежу (отступ зоны)"
     if root_barrier and root_barrier_applies(zone_type, plant_kind) and distance > ROOT_BARRIER_MIN_M:

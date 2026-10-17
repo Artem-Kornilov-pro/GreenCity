@@ -68,8 +68,8 @@ def _build_zone_index(scene: Scene):
         if poly is None:
             continue
         reach = max(
-            setback_for(zone.type, "tree", zone.minDistance),
-            setback_for(zone.type, "bush", zone.minDistance),
+            setback_for(zone.type, "tree", zone.minDistance, voltage_kv=zone.voltageKv),
+            setback_for(zone.type, "bush", zone.minDistance, voltage_kv=zone.voltageKv),
             *(rule.distance_m for rule in SPECIES_SETBACK_RULES if rule.zone_type == zone.type),
         )
         entries.append((zone, poly))
@@ -94,7 +94,10 @@ def find_violations(scene: Scene) -> list[Violation]:
         species = obj.metadata.get("species")
         for idx in tree.query(point):
             zone, poly = entries[idx]
-            required = setback_for(zone.type, kind, zone.minDistance, species=species, root_barrier=bool(obj.metadata.get("rootBarrier")))
+            required = setback_for(
+                zone.type, kind, zone.minDistance, species=species,
+                root_barrier=bool(obj.metadata.get("rootBarrier")), voltage_kv=zone.voltageKv,
+            )
             distance = poly.distance(point)
             if distance < required:
                 violations.append(

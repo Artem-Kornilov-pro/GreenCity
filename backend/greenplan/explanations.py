@@ -151,7 +151,7 @@ def _zone_constraints(
     уменьшенный отступ (setback_norms.ROOT_BARRIER_MIN_M)."""
     out = []
     for zone, distance in index.near(x, z, MAX_SETBACK_M + NEAR_MARGIN_M):
-        required, norm = setback_basis(zone.type, kind, zone.minDistance, species, root_barrier=root_barrier)
+        required, norm = setback_basis(zone.type, kind, zone.minDistance, species, root_barrier=root_barrier, voltage_kv=zone.voltageKv)
         if distance > required + NEAR_MARGIN_M:
             continue
         label = ZONE_TYPE_LABELS.get(zone.type, zone.name or zone.type)
@@ -335,8 +335,8 @@ def restricted_zones(scene: Scene) -> list[RestrictedZone]:
     for zone in scene.restrictions:
         if zone.severity == "allowed" or len(zone.polygon) < 3:
             continue
-        tree, tree_norm = setback_basis(zone.type, "tree", zone.minDistance)
-        bush, bush_norm = setback_basis(zone.type, "bush", zone.minDistance)
+        tree, tree_norm = setback_basis(zone.type, "tree", zone.minDistance, voltage_kv=zone.voltageKv)
+        bush, bush_norm = setback_basis(zone.type, "bush", zone.minDistance, voltage_kv=zone.voltageKv)
         out.append(RestrictedZone(
             zone_id=zone.id, what=ZONE_TYPE_LABELS.get(zone.type, zone.name or zone.type),
             tree_setback_m=tree, tree_norm=tree_norm, bush_setback_m=bush, bush_norm=bush_norm,

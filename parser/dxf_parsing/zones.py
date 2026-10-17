@@ -6,6 +6,7 @@
 """
 
 import math
+import re
 from collections import Counter
 
 import shapely
@@ -150,7 +151,25 @@ def _add_zone(zones, idx_by_type, cfg, layer, pts_xyz, tf, key=None):
     kind = describe_key(key)[0] if key else None
     if kind:
         zone["layerKind"] = kind
+    if cfg["type"] == "overhead_power_line":
+        voltage = overhead_voltage_kv(layer)
+        if voltage is not None:
+            zone["voltageKv"] = voltage
     zones.append(zone)
+
+
+# Класс напряжения воздушной линии в имени слоя: «ВЛ 10кВ», «ЛЭП 0,4 кВ»,
+# «OHL_110kV». По нему -- отступ до кроны по ПУЭ (backend/core/setback_norms.py).
+_VOLTAGE = re.compile(r"(\d+(?:[.,]\d+)?)\s*(?:кв|kv)(?![a-zа-я])", re.IGNORECASE)
+
+
+def overhead_voltage_kv(layer: str):
+    """Напряжение воздушной линии, кВ, из имени слоя или None."""
+    m = _VOLTAGE.search(layer or "")
+    if not m:
+        return None
+    value = float(m.group(1).replace(",", "."))
+    return value if 0 < value <= 1150 else None
 
 
 # Насколько близко должны сойтись концы склеенной цепочки, чтобы контур

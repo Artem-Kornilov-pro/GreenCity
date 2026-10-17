@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 
 from core.plant_catalog import CatalogItem, catalog_by_id, load_catalog
 from core.schemas import Scene, SceneObject
+from core.setback_norms import OVERHEAD_LINE
 from greenplan.deterministic_placement import plan_site
 from greenplan.explanations import RejectionStats, start_rejection_log, stop_rejection_log
 from greenplan.improvements import SOURCE, Improvements, is_greenplan_zone, plan_improvements
@@ -49,6 +50,18 @@ def is_greenplan_object(obj: SceneObject) -> bool:
     return obj.metadata.get("source") == SOURCE or (bool(obj.metadata.get("generated")) and "pattern_id" in obj.metadata)
 
 
+def with_overhead_voltage(scene: Scene, voltage_kv: float | None) -> Scene:
+    """Сцена, где воздушным ЛЭП без класса напряжения в имени слоя задан
+    voltage_kv (параметр GreenPlan); None -- сцена как есть (10 кВ по умолчанию)."""
+    if voltage_kv is None:
+        return scene
+    zones = [
+        zone.model_copy(update={"voltageKv": voltage_kv}) if zone.type == OVERHEAD_LINE and zone.voltageKv is None else zone
+        for zone in scene.restrictions
+    ]
+    return scene.model_copy(update={"restrictions": zones})
+
+
 def without_greenplan(scene: Scene) -> Scene:
     """Сцена без результата GreenPlan: его посадок и МАФ, новых дорожек и газона."""
     return scene.model_copy(
@@ -64,7 +77,7 @@ def run_greenplan(scene: Scene, options: GreenPlanOptions | None = None, k: int 
     options = options or GreenPlanOptions()
     catalog = load_catalog()
     by_id = catalog_by_id()
-    base = without_greenplan(scene)
+    base = with_overhead_voltage(without_greenplan(scene), options.overhead_voltage_kv)
     removed: list[SceneObject] = []
     removal_notes: list[str] = []
     if options.remove_violating_plants:

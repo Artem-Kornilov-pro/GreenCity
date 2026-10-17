@@ -16,6 +16,16 @@ const STYLES: { value: GreenPlanOptions["style"]; label: string; hint: string }[
 // (больше сотни деревьев) в диалоге не нужен, нужен поиск.
 const MAX_SUGGESTIONS = 40;
 
+const VOLTAGES: { value: number | null; label: string }[] = [
+  { value: null, label: "не знаю — 10 кВ" },
+  { value: 0.4, label: "до 1 кВ (0,4 кВ)" },
+  { value: 10, label: "6–20 кВ" },
+  { value: 35, label: "35–110 кВ" },
+  { value: 220, label: "150–220 кВ" },
+  { value: 330, label: "330 кВ" },
+  { value: 500, label: "500 кВ и выше" },
+];
+
 function Toggle({
   checked,
   onChange,
@@ -191,6 +201,23 @@ export function GreenPlanOptionsDialog({
               label="Деревья у подземных сетей с корнезащитой"
               hint="ближе нормы, но не ближе 1 м к сети — с прикорневым барьером по СП 42.13330.2016 (прим. 4–7 к табл. 9.1); такие деревья помечаются «условно» и требуют согласования"
             />
+            <label className="mt-2 flex flex-col gap-1 text-sm text-ink-800">
+              Класс напряжения ЛЭП, если не указан в имени слоя
+              <select
+                className="rounded-lg border border-ink-200 bg-white px-2 py-1.5 text-sm"
+                value={options.overhead_voltage_kv ?? ""}
+                onChange={(e) => set("overhead_voltage_kv", e.target.value === "" ? null : Number(e.target.value))}
+              >
+                {VOLTAGES.map((v) => (
+                  <option key={v.label} value={v.value ?? ""}>
+                    {v.label}
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs text-ink-500">
+                отступ деревьев до кроны по ПУЭ: 1 м до 1 кВ, 3 м до 20 кВ, 4–7 м выше; для класса из имени слоя («ВЛ 0,4 кВ») — по нему
+              </span>
+            </label>
           </section>
 
           <section>

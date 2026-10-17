@@ -80,7 +80,7 @@ def usable_planting_area(scene: Scene, root_barrier: bool = False) -> BaseGeomet
         poly = polygon_from_points(zone.polygon)
         if poly is None:
             continue
-        setback = setback_for(zone.type, "tree", zone.minDistance, root_barrier=root_barrier)
+        setback = setback_for(zone.type, "tree", zone.minDistance, root_barrier=root_barrier, voltage_kv=zone.voltageKv)
         keep_out.append(poly.buffer(setback) if setback > 0 else poly)
 
     usable = base.intersection(boundary_poly)

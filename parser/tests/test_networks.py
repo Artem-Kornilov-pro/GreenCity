@@ -126,3 +126,23 @@ def test_diameter_rules_do_not_apply_to_cables(empty_doc):
 
 def test_network_types_with_diameters():
     assert set(networks.NETWORK_TYPES) == {"gas_pipeline", "sewer", "water_pipeline", "heat_network"}
+
+
+# --- воздушные ЛЭП: класс напряжения из имени слоя (issue #107) ---------------------
+
+
+@pytest.mark.parametrize(
+    "layer,kv",
+    [("ВЛ 10кВ", 10.0), ("ЛЭП 0,4 кВ", 0.4), ("OHL_110kV", 110.0), ("ВЛ-35 кВ", 35.0), ("ЛЭП", None), ("ВЛ 10 кВт", None)],
+)
+def test_overhead_line_voltage_from_layer_name(layer, kv):
+    from dxf_parsing.zones import overhead_voltage_kv
+
+    assert overhead_voltage_kv(layer) == kv
+
+
+def test_overhead_line_zone_carries_the_voltage(empty_doc):
+    msp = empty_doc.modelspace()
+    msp.add_line((0, 0), (50, 0), dxfattribs={"layer": "ЛЭП 0,4 кВ"})
+    zones = [z for z in extract_restrictions(msp, Transform()) if z["type"] == "overhead_power_line"]
+    assert zones and all(z["voltageKv"] == 0.4 for z in zones)
