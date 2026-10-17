@@ -138,3 +138,15 @@ def test_order_boundary_from_a_survey_frame_file_is_the_site_boundary(empty_doc)
     scene = parse_dxf_doc(empty_doc)
     assert scene["boundary"]["sourceLayer"] == "Граница заказа"
     assert not any("граница оценена" in w for w in scene["meta"]["warnings"])
+
+
+def test_prefilter_keeps_a_boundary_recognized_by_synonyms(empty_doc):
+    # Отбор перед сборкой пачки DWG выбрасывал «Граница участка» и «Граница
+    # заказа»: их ключ -- особый ярус синонимов, которого нет среди ключевых
+    # слов правил, и граница в сцене оценивалась по содержимому.
+    msp = empty_doc.modelspace()
+    keep = ParsedContentFilter(LayerResolver())
+    for layer in ("Граница участка", "Граница заказа", "Граница"):
+        e = msp.add_lwpolyline([(0, 0), (10, 0), (10, 10)], close=True, dxfattribs={"layer": layer})
+        assert keep(e), layer
+    assert not keep(msp.add_line((0, 0), (1, 1), dxfattribs={"layer": "Рамки"}))

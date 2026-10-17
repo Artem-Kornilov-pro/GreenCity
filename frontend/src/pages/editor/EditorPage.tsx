@@ -107,7 +107,7 @@ export default function EditorPage() {
           dxfLoading={importer.dxf.busy}
           dwgLoading={importer.dwg.busy}
           projectLoading={project.load.busy}
-          onDxfFile={importer.uploadDxf}
+          onDrawingFiles={importer.importFiles}
           onDwgFolder={importer.uploadDwg}
           sceneLoaded={scene !== null}
           onLayers={layers.hasLayers ? layers.open : undefined}
@@ -159,7 +159,7 @@ export default function EditorPage() {
             <div className="flex h-full items-center justify-center pl-80">
               <div className="flex flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-ink-300 px-16 py-14 text-center text-ink-400">
                 <UploadCloud className="h-12 w-12" />
-                <p className="text-base font-medium text-ink-600">Перетащите сюда DXF-файл или папку с DWG</p>
+                <p className="text-base font-medium text-ink-600">Перетащите сюда чертежи DXF, DWG, ZIP или папку проекта</p>
                 <p className="text-sm">или выберите их кнопками слева</p>
               </div>
             </div>
@@ -167,7 +167,7 @@ export default function EditorPage() {
 
           <EditorSidebar
             sceneLoaded={scene !== null}
-            onDxfFile={importer.uploadDxf}
+            onDrawingFiles={importer.importFiles}
             onDwgFolder={importer.uploadDwg}
             dxfLoading={importer.dxf.busy}
             dwgLoading={importer.dwg.busy}

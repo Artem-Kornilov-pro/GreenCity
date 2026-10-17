@@ -142,7 +142,19 @@ def test_source_store_keeps_dwg_batch_order(tmp_path):
         (tmp_path / name).write_bytes(name.encode())
         files.append(tmp_path / name)
     kind, paths = source_store.find(source_store.save_dwg_batch(files))
-    assert kind == "dwg" and [p.name for p in paths] == ["000_b.dwg", "001_a.dwg"]
+    # Имена файлов сохраняются: по ним внешние ссылки находят свои файлы.
+    assert kind == "dwg" and [p.name for p in paths] == ["b.dwg", "a.dwg"]
+    assert [p.read_bytes() for p in paths] == [b"b.dwg", b"a.dwg"]
+
+
+def test_source_store_reads_batches_saved_in_the_old_layout(tmp_path, monkeypatch):
+    monkeypatch.setenv("GREENCITY_SOURCES_DIR", str(tmp_path))
+    folder = tmp_path / ("1" * 32)
+    folder.mkdir()
+    (folder / "000_b.dwg").write_bytes(b"b")
+    (folder / "order.txt").write_text("000_b.dwg", encoding="utf-8")
+    kind, paths = source_store.find("1" * 32)
+    assert kind == "dwg" and [p.read_bytes() for p in paths] == [b"b"]
 
 
 async def test_dwg_export_overlays_the_rebuilt_batch(monkeypatch, tmp_path):

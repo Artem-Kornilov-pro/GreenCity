@@ -18,7 +18,7 @@ from typing import Optional
 from ezdxf.query import EntityQuery
 
 from dxf_parsing.encoding import repair_mojibake
-from dxf_parsing.layer_names import LayerResolver, _point_rule, describe_key, is_known
+from dxf_parsing.layer_names import BOUNDARY_TIER_KEYS, LayerResolver, _point_rule, describe_key, is_known
 from dxf_parsing.rules import POLYGON_RULES, match_rule
 
 # Глубже вложенные блоки не раскрываются -- защита от рекурсии в битых файлах.
@@ -231,9 +231,12 @@ class ParsedContentFilter:
 
     def _is_useful(self, key: str) -> bool:
         """Ключ, с которого разбор что-то возьмёт: оформление (подписи,
-        штамп) и «не учитывать» -- не берёт."""
+        штамп) и «не учитывать» -- не берёт. Граница, узнанная по синонимам
+        («Граница участка», «Граница заказа»), -- особый ключ яруса, которого
+        нет среди ключевых слов правил, но разбор её берёт."""
         if key not in self._useful:
-            self._useful[key] = is_known(key) and describe_key(key)[0] not in ("skip", "ignore")
+            known = is_known(key) or key in BOUNDARY_TIER_KEYS
+            self._useful[key] = known and describe_key(key)[0] not in ("skip", "ignore")
         return self._useful[key]
 
     def __call__(self, entity) -> bool:

@@ -629,3 +629,97 @@ def test_scene_response_is_gzipped_when_client_accepts_it(client):
 def test_small_responses_are_not_compressed(client):
     r = client.get("/api/health", headers={"Accept-Encoding": "gzip"})
     assert "content-encoding" not in r.headers
+
+
+# --- комплект чертежей: DXF-тайлы и zip (issue #103) ---------------------------
+
+
+def _tile(layers_and_entities) -> bytes:
+    import io
+
+    import ezdxf
+
+    doc = ezdxf.new()
+    msp = doc.modelspace()
+    for add in layers_and_entities:
+        add(msp)
+    buf = io.StringIO()
+    doc.write(buf)
+    return buf.getvalue().encode("utf-8")
+
+
+def _survey_package() -> dict[str, bytes]:
+    """Объект, как в датасете: топосъёмка (tp), сети (up), рамки (brd) --
+    отдельными DXF в общих координатах."""
+    origin = (2_000_000.0, 500_000.0)
+    ox, oy = origin
+    tp = _tile([
+        lambda m: m.add_arc((ox + 20, oy + 20), 0.21, 0, 360, dxfattribs={"layer": "Отдельно стоящее дерево"}),
+        lambda m: m.add_lwpolyline([(ox + 50, oy + 50), (ox + 60, oy + 50), (ox + 60, oy + 60), (ox + 50, oy + 60)], close=True, dxfattribs={"layer": "Здания"}),
+    ])
+    up = _tile([lambda m: m.add_line((ox, oy + 30), (ox + 100, oy + 30), dxfattribs={"layer": "Газопровод"})])
+    brd = _tile([
+        lambda m: m.add_lwpolyline([(ox, oy), (ox + 100, oy), (ox + 100, oy + 80), (ox, oy + 80), (ox, oy)], dxfattribs={"layer": "Граница заказа"}),
+        lambda m: m.add_lwpolyline([(ox - 50, oy - 50), (ox + 150, oy - 50), (ox + 150, oy + 130)], dxfattribs={"layer": "Рамки"}),
+    ])
+    return {"3_ДЖКХ-25_00752tp.dxf": tp, "3_ДЖКХ-25_00752up.dxf": up, "brd.dxf": brd}
+
+
+def _check_survey_scene(body):
+    assert body["boundary"]["sourceLayer"] == "Граница заказа"
+    assert sorted(o["type"] for o in body["objects"]) == ["building", "tree"]
+    assert any(z["type"] == "gas_pipeline" for z in body["restrictions"])
+    assert "dwgConversionWarnings" not in body
+
+
+def test_parse_package_of_dxf_tiles_gives_one_site(client):
+    files = [("files", (name, data, "application/dxf")) for name, data in _survey_package().items()]
+    r = client.post("/api/parse-dwg", files=files)
+    assert r.status_code == 200, r.text
+    _check_survey_scene(r.json())
+
+
+def test_parse_package_from_a_zip_archive(client):
+    import io
+    import zipfile
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        for name, data in _survey_package().items():
+            zf.writestr(f"Песчаный переулок/ИРД/{name}", data)
+        zf.writestr("Песчаный переулок/Ведомость.xlsx", b"x")
+        zf.writestr("__MACOSX/Песчаный переулок/._brd.dxf", b"x")
+    r = client.post("/api/parse-dwg", files=[("files", ("объект.zip", buf.getvalue(), "application/zip"))])
+    assert r.status_code == 200, r.text
+    _check_survey_scene(r.json())
+    # Повторный разбор берёт тот же комплект с сервера.
+    again = client.post("/api/reparse", json={"sourceId": r.json()["meta"]["sourceId"], "layerMap": {}})
+    assert again.status_code == 200
+    _check_survey_scene(again.json())
+
+
+def test_parse_package_skips_loose_dxf_next_to_dwg_with_a_warning(client, monkeypatch):
+    import ezdxf
+
+    taken = []
+
+    def _merge(paths, intermediate_dir, workers=1):
+        taken.extend(p.name for p in paths)
+        result = dwg_batch_converter.BatchConversionResult(doc=ezdxf.new())
+        result.converted = [p.name for p in paths]
+        return result
+
+    monkeypatch.setattr(dwg_batch_converter, "merge_dwg_files", _merge)
+    r = client.post(
+        "/api/parse-dwg",
+        files=[("files", ("tp.dwg", b"dwg", "application/octet-stream")), ("files", ("tp.dxf", b"dxf", "application/dxf"))],
+    )
+    assert r.status_code == 200, r.text
+    assert taken == ["tp.dwg"]
+    assert [w["file"] for w in r.json()["dwgConversionWarnings"]] == ["tp.dxf"]
+
+
+def test_parse_package_rejects_a_broken_archive(client):
+    r = client.post("/api/parse-dwg", files=[("files", ("объект.zip", b"not a zip", "application/zip"))])
+    assert r.status_code == 400
+    assert "повреждён" in r.json()["detail"]

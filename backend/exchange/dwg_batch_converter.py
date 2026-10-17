@@ -1,7 +1,12 @@
 """
-Сборка пачки .dwg в один DXF-документ: каждый файл конвертируется через
-dwg2dxf (LibreDWG), затем modelspace и непустые листы импортируются в общий
-document ezdxf (ezdxf.addons.importer.Importer).
+Сборка пачки чертежей в один DXF-документ: каждый .dwg конвертируется через
+dwg2dxf (LibreDWG), .dxf читается как есть, затем modelspace и непустые
+листы импортируются в общий document ezdxf (ezdxf.addons.importer.Importer).
+
+Внешние ссылки (XREF): файлы комплекта кладутся в общие координаты, но если
+чертёж вставляет внешнюю ссылку на другой файл комплекта со сдвигом,
+поворотом или масштабом, этот файл сдвигается так же (xref_placements).
+Сама вставка внешней ссылки содержимого не даёт -- его даёт файл комплекта.
 
 Частичный успех -- обычный сценарий: проекты приходят пачкой в 20-30 файлов,
 и часть из них почти пуста или содержит то, что LibreDWG не читает. Такие
@@ -25,17 +30,18 @@ import subprocess
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Optional
 
 import ezdxf
 import ezdxf.recover
 from ezdxf.addons.importer import Importer
+from ezdxf.math import Matrix44
 
 import exchange.dxf_parser  # noqa: F401 -- добавляет parser/ в sys.path
 from dxf_parsing.drawing import ParsedContentFilter
 from dxf_parsing.layer_names import LayerResolver
-from exchange.dxf_parser import reread_in_real_encoding
+from exchange.dxf_parser import read_dxf, reread_in_real_encoding
 
 DXF_VERSION = "R2010"
 
@@ -61,6 +67,8 @@ class BatchConversionResult:
     failed: dict[str, str] = field(default_factory=dict)
     # Слои исходных файлов до отбора: {имя слоя: число сущностей}.
     layer_counts: dict[str, int] = field(default_factory=dict)
+    # Файлы, сдвинутые по вставке внешней ссылки: {имя файла: кто вставил}.
+    placed_by_xref: dict[str, str] = field(default_factory=dict)
 
 
 def _convert_one(tool: str, dwg_path: Path, dxf_path: Path) -> None:
@@ -158,30 +166,79 @@ def _import_all_layouts(
     importer.finalize()
 
 
+def _xref_key(path_or_name: str) -> str:
+    """Имя файла внешней ссылки без папки и расширения, в нижнем регистре:
+    путь в чертеже -- виндовый и часто абсолютный («C:\\Проект\\tp.dwg»)."""
+    return PureWindowsPath(path_or_name).stem.lower()
+
+
+def xref_placements(doc: ezdxf.document.Drawing) -> dict[str, list[float]]:
+    """{имя файла внешней ссылки: матрица её вставки (16 чисел)} -- по
+    первой вставке каждой ссылки в пространстве модели."""
+    found: dict[str, list[float]] = {}
+    for insert in doc.modelspace().query("INSERT"):
+        block = doc.blocks.get(insert.dxf.name)
+        if block is None or not block.block_record.is_xref:
+            continue
+        matrix = list(insert.matrix44())
+        for name in (block.block.dxf.get("xref_path") or "", insert.dxf.name):
+            if name:
+                found.setdefault(_xref_key(name), matrix)
+    return found
+
+
+def _is_identity(matrix: list[float]) -> bool:
+    return all(abs(a - b) < 1e-9 for a, b in zip(matrix, Matrix44(), strict=True))
+
+
+def _place(doc: ezdxf.document.Drawing, matrix: list[float]) -> None:
+    """Сдвинуть, повернуть, отмасштабировать пространство модели и листы так,
+    как стоит вставка внешней ссылки на этот файл."""
+    m = Matrix44(matrix)
+    for layout in doc.layouts:
+        for entity in layout:
+            try:
+                entity.transform(m)
+            except (NotImplementedError, ezdxf.DXFError, ValueError, ArithmeticError):
+                # Сущность без поддержки преобразования (прокси, ACIS) --
+                # парсер её всё равно не читает.
+                continue
+
+
+def _read_source(path: Path, intermediate: Path) -> ezdxf.document.Drawing:
+    if path.suffix.lower() == ".dxf":
+        return read_dxf(path)
+    _convert_one(dwg2dxf_path(), path, intermediate)
+    return _read_converted_dxf(intermediate)
+
+
 def _extract_compact(
     dwg_path: str, work_dir: str, layer_map: Optional[dict[str, str]] = None
-) -> tuple[str, str | None, str | None, dict[str, int]]:
-    """Рабочий процесс: dwg2dxf, чтение, отбор нужного парсеру -- в
-    компактный DXF. (имя файла, путь к компактному DXF или None, ошибка,
-    сущностей по слоям до отбора)."""
-    dwg, work = Path(dwg_path), Path(work_dir)
-    dxf_tmp = work / (dwg.stem + ".dxf")
+) -> tuple[str, str | None, str | None, dict[str, int], dict[str, list[float]]]:
+    """Рабочий процесс: чтение файла (.dwg -- через dwg2dxf), отбор нужного
+    парсеру -- в компактный DXF. (имя файла, путь к компактному DXF или None,
+    ошибка, сущностей по слоям до отбора, вставки внешних ссылок)."""
+    src, work = Path(dwg_path), Path(work_dir)
+    dxf_tmp = work / (src.stem + ".dxf")
     counts: Counter = Counter()
     try:
-        _convert_one(dwg2dxf_path(), dwg, dxf_tmp)
-        source_doc = _read_converted_dxf(dxf_tmp)
+        source_doc = _read_source(src, dxf_tmp)
     except Exception as e:
-        return dwg.name, None, str(e), {}
+        if src.suffix.lower() != ".dxf":
+            dxf_tmp.unlink(missing_ok=True)
+        return src.name, None, str(e), {}, {}
     try:
+        placements = xref_placements(source_doc)
         compact = ezdxf.new(dxfversion=DXF_VERSION)
         _import_all_layouts(source_doc, compact, layer_map, counts)
-        compact_path = work / (dwg.stem + ".compact.dxf")
+        compact_path = work / (src.stem + ".compact.dxf")
         compact.saveas(compact_path)
     except Exception as e:
-        return dwg.name, None, f"ошибка импорта в общий документ: {e}", {}
+        return src.name, None, f"ошибка импорта в общий документ: {e}", {}, {}
     finally:
-        dxf_tmp.unlink(missing_ok=True)  # полный DXF больше не нужен -- место на диске
-    return dwg.name, str(compact_path), None, dict(counts)
+        if src.suffix.lower() != ".dxf":
+            dxf_tmp.unlink(missing_ok=True)  # полный DXF больше не нужен -- место на диске
+    return src.name, str(compact_path), None, dict(counts), placements
 
 
 def _skip_identical_files(dwg_paths: list[Path], result: BatchConversionResult) -> list[Path]:
@@ -204,54 +261,52 @@ def _skip_identical_files(dwg_paths: list[Path], result: BatchConversionResult) 
 def merge_dwg_files(
     dwg_paths: list[Path], intermediate_dir: Path, workers: int = 1, layer_map: Optional[dict[str, str]] = None
 ) -> BatchConversionResult:
-    """Конвертирует каждый файл из `dwg_paths` и сливает в один ezdxf-документ
-    (только то, что читает парсер; layer_map -- назначения слоёв
-    пользователем). workers > 1 -- файлы обрабатываются параллельно в
-    отдельных процессах (см. докстринг модуля). Поднимает `Dwg2DxfNotFound`,
-    если сам конвертер не установлен -- эта ошибка останавливает весь батч, в
-    отличие от ошибок на отдельных файлах."""
-    tool = dwg2dxf_path()
+    """Читает каждый файл из `dwg_paths` (.dwg -- через dwg2dxf, .dxf -- как
+    есть) и сливает в один ezdxf-документ (только то, что читает парсер;
+    layer_map -- назначения слоёв пользователем). workers > 1 -- файлы
+    обрабатываются параллельно в отдельных процессах (см. докстринг модуля).
+    Поднимает `Dwg2DxfNotFound`, если в пачке есть .dwg, а сам конвертер не
+    установлен -- эта ошибка останавливает весь батч, в отличие от ошибок на
+    отдельных файлах."""
+    if any(p.suffix.lower() == ".dwg" for p in dwg_paths):
+        dwg2dxf_path()
     target_doc = ezdxf.new(dxfversion=DXF_VERSION)
     result = BatchConversionResult(doc=target_doc)
     dwg_paths = _skip_identical_files(dwg_paths, result)
+    n = len(dwg_paths)
+    args = ([str(p) for p in dwg_paths], [str(intermediate_dir)] * n, [layer_map] * n)
+    if workers > 1 and n > 1:
+        with ProcessPoolExecutor(max_workers=min(workers, n)) as pool:
+            extracted = list(pool.map(_extract_compact, *args))
+    else:
+        extracted = list(map(_extract_compact, *args))
+
+    # Вставки внешних ссылок из всех файлов: файл, на который ссылается
+    # другой файл комплекта, кладётся так, как стоит вставка.
+    placements: dict[str, tuple[str, list[float]]] = {}
+    for name, _path, _error, _counts, file_placements in extracted:
+        for key, matrix in file_placements.items():
+            if key != _xref_key(name):
+                placements.setdefault(key, (name, matrix))
+
     counts: Counter = Counter()
-
-    if workers > 1 and len(dwg_paths) > 1:
-        with ProcessPoolExecutor(max_workers=min(workers, len(dwg_paths))) as pool:
-            n = len(dwg_paths)
-            extracted = list(pool.map(_extract_compact, [str(p) for p in dwg_paths], [str(intermediate_dir)] * n, [layer_map] * n))
-        for name, compact_path, error, file_counts in extracted:
-            if compact_path is None:
-                result.failed[name] = error or "неизвестная ошибка"
-                continue
-            try:
-                _import_all_layouts(ezdxf.readfile(compact_path), target_doc, layer_map)
-            except Exception as e:
-                result.failed[name] = f"ошибка импорта в общий документ: {e}"
-                continue
-            counts.update(file_counts)
-            result.converted.append(name)
-        result.layer_counts = dict(counts)
-        return result
-
-    for dwg_path in dwg_paths:
-        dxf_tmp = intermediate_dir / (dwg_path.stem + ".dxf")
-        try:
-            _convert_one(tool, dwg_path, dxf_tmp)
-            source_doc = _read_converted_dxf(dxf_tmp)
-        except Exception as e:
-            result.failed[dwg_path.name] = str(e)
+    for name, compact_path, error, file_counts, _placements in extracted:
+        if compact_path is None:
+            result.failed[name] = error or "неизвестная ошибка"
             continue
-
-        file_counts: Counter = Counter()
         try:
-            _import_all_layouts(source_doc, target_doc, layer_map, file_counts)
+            compact = ezdxf.readfile(compact_path)
+            placed = placements.get(_xref_key(name))
+            if placed is not None and not _is_identity(placed[1]):
+                _place(compact, placed[1])
+                result.placed_by_xref[name] = placed[0]
+            _import_all_layouts(compact, target_doc, layer_map)
         except Exception as e:
-            result.failed[dwg_path.name] = f"ошибка импорта в общий документ: {e}"
+            result.failed[name] = f"ошибка импорта в общий документ: {e}"
             continue
-
+        finally:
+            Path(compact_path).unlink(missing_ok=True)
         counts.update(file_counts)
-        result.converted.append(dwg_path.name)
-
+        result.converted.append(name)
     result.layer_counts = dict(counts)
     return result

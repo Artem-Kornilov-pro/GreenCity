@@ -62,8 +62,8 @@ export function StatusBanners({
       <div className="absolute inset-x-0 top-14 z-30 flex items-center gap-2 border-b border-brand-500/20 bg-brand-500/90 px-4 py-2 text-sm text-white backdrop-blur-sm">
         <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
         <span>
-          Конвертация {totalDwgFiles} DWG-файлов в DXF на сервере -- на крупных реальных файлах это может занять до минуты, не
-          закрывайте страницу.
+          Сборка комплекта из {totalDwgFiles} файлов на сервере (DWG конвертируются в DXF) -- на крупных реальных файлах это может
+          занять до минуты, не закрывайте страницу.
         </span>
       </div>
     );
@@ -83,19 +83,26 @@ export function StatusBanners({
     // _skip_identical_files) -- это не ошибка, и в общем списке "не удалось"
     // он пугал: пользователь видел отказ там, где всё отработало как надо.
     const duplicates = dwgWarnings.filter((w) => w.error.includes("пропущен как дубль"));
-    const failures = dwgWarnings.filter((w) => !duplicates.includes(w));
+    // DXF рядом с DWG -- обычно выгруженная копия, сервер её не берёт.
+    const skipped = dwgWarnings.filter((w) => w.error.startsWith("пропущен:"));
+    const failures = dwgWarnings.filter((w) => !duplicates.includes(w) && !skipped.includes(w));
     return (
       <div className="absolute inset-x-0 top-14 z-30 flex items-start justify-between gap-3 border-b border-warning-500/30 bg-warning-500/90 px-4 py-2 text-sm text-ink-900 backdrop-blur-sm">
         <span className="flex flex-col gap-0.5">
           {failures.length > 0 && (
             <span>
-              Сцена загружена, но {failures.length} из {totalDwgFiles} .dwg-файлов не удалось сконвертировать:{" "}
+              Сцена загружена, но {failures.length} из {totalDwgFiles} файлов не удалось прочитать:{" "}
               {failures.map((w) => `${w.file} (${w.error})`).join("; ")}
             </span>
           )}
           {duplicates.length > 0 && (
             <span>
               Пропущены одинаковые файлы: {duplicates.map((w) => `${w.file} — ${w.error.replace(/ -- пропущен как дубль$/, "")}`).join("; ")}
+            </span>
+          )}
+          {skipped.length > 0 && (
+            <span>
+              Не взяты {skipped.map((w) => w.file).join(", ")}: в комплекте есть DWG, а DXF рядом с ними -- обычно выгруженная копия.
             </span>
           )}
         </span>

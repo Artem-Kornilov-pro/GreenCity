@@ -5,9 +5,9 @@
 (meta.sourceId).
 
 Хранение по содержимому (sha256): один файл лежит один раз. DXF -- файлом
-<id>.dxf, пачка DWG -- каталогом <id>/ с самими .dwg; при экспорте она
-заново конвертируется тем же конвейером, так загрузка не платит за
-сохранение собранного чертежа.
+<id>.dxf, комплект чертежей (пачка DWG, DXF из папки или архива) --
+каталогом <id>/ с самими файлами; при экспорте он заново собирается тем же
+конвейером, так загрузка не платит за сохранение собранного чертежа.
 
 Каталог -- GREENCITY_SOURCES_DIR (в Docker -- том), по умолчанию var/sources
 в корне репозитория.
@@ -61,7 +61,8 @@ def save_dxf(data: bytes) -> Optional[str]:
 
 
 def save_dwg_batch(paths: list[Path]) -> Optional[str]:
-    """id пачки DWG: сами файлы, в порядке загрузки (от него зависит сборка)."""
+    """id комплекта чертежей (.dwg, .dxf): сами файлы, в порядке загрузки (от
+    него зависит сборка)."""
     digest = hashlib.sha256()
     for path in paths:
         digest.update(path.name.encode("utf-8") + b"\0")
@@ -70,9 +71,13 @@ def save_dwg_batch(paths: list[Path]) -> Optional[str]:
     folder = sources_dir() / source_id
     try:
         if not (folder / "order.txt").exists():
-            for index, path in enumerate(paths):
-                _atomic_write(folder / f"{index:03d}_{path.name}", path.read_bytes())
-            _atomic_write(folder / "order.txt", "\n".join(f"{i:03d}_{p.name}" for i, p in enumerate(paths)).encode("utf-8"))
+            # Файл -- в своей папке под своим именем: по имени файла внешняя
+            # ссылка другого файла комплекта находит, куда его положить.
+            # Прежние комплекты (имя «000_файл») читаются по order.txt как были.
+            names = [f"{index:03d}/{path.name}" for index, path in enumerate(paths)]
+            for name, path in zip(names, paths, strict=True):
+                _atomic_write(folder / name, path.read_bytes())
+            _atomic_write(folder / "order.txt", "\n".join(names).encode("utf-8"))
     except OSError as e:
         log.warning("исходная пачка DWG не сохранена: %s", e)
         return None
