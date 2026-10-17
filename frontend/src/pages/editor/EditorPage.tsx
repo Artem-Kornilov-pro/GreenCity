@@ -98,6 +98,7 @@ export default function EditorPage() {
     catalog.load,
     layers.loadKinds,
     layers.reparse,
+    layers.chooseBoundary,
   ]);
 
   return (
