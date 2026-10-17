@@ -1,6 +1,6 @@
 """
 Кракозябры в именах слоёв: чертёж объявляет одну кодировку ($DWGCODEPAGE =
-ANSI_1252), а имена записаны в другой (UTF-8 или cp1251). Так бывает после
+ANSI_1252 или ANSI_1251), а имена записаны в другой (UTF-8 или cp1251). Так бывает после
 конвертации DWG -> DXF и у файлов, сохранённых нерусской версией CAD: слой
 «Здания» читается как «Ð—Ð´Ð°Ð½Ð¸Ñ...», и правила его не узнают.
 
@@ -43,9 +43,30 @@ def _raw_bytes(name: str) -> Optional[bytes]:
     return bytes(raw)
 
 
+def _cyrillic_word(text: str) -> bool:
+    letters = _LETTER.findall(text)
+    return bool(letters) and len(_CYRILLIC.findall(text)) >= 0.6 * len(letters)
+
+
+def _utf8_read_as_cp1251(name: str) -> Optional[str]:
+    """«Р“Р°Р·РѕРЅ» -> «Газон»: имя в UTF-8, прочитанное как cp1251 (чертёж
+    объявляет ANSI_1251, а записан в UTF-8). Обычное русское имя так не
+    раскодируется: байты cp1251 почти никогда не образуют верный UTF-8."""
+    if name.isascii():
+        return None
+    try:
+        fixed = name.encode("cp1251").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return None
+    return fixed if fixed != name and _cyrillic_word(fixed) else None
+
+
 def _decoded(name: str) -> Optional[tuple[str, str]]:
     """(исправленное имя, кодировка) или None, если имя -- не кракозябры."""
-    if not _SUSPECT.search(name) or _CYRILLIC.search(name):
+    if _CYRILLIC.search(name):
+        fixed = _utf8_read_as_cp1251(name)
+        return (fixed, "utf-8") if fixed else None
+    if not _SUSPECT.search(name):
         return None
     raw = _raw_bytes(name)
     if raw is None:
@@ -55,8 +76,7 @@ def _decoded(name: str) -> Optional[tuple[str, str]]:
             fixed = raw.decode(encoding)
         except UnicodeDecodeError:
             continue
-        letters = _LETTER.findall(fixed)
-        if letters and len(_CYRILLIC.findall(fixed)) >= 0.6 * len(letters):
+        if _cyrillic_word(fixed):
             return fixed, encoding
     return None
 
