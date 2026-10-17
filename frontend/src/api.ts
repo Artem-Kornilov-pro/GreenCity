@@ -202,6 +202,23 @@ export function fetchGreenPlanReport(assignments: GreenPlanZoneAssignment[]): Pr
   return request<GreenPlanReportResult>("/api/greenplan/report", { json: assignments, errorMessage: "Не удалось получить отчёт GreenPlan" });
 }
 
+// Иллюстрации участка после озеленения (YandexART) -- по решениям GreenPlan.
+export interface GreenPlanVisualizations {
+  note: string;
+  visualizations: { view: string; prompt: string; image: string }[];
+}
+
+export function generateGreenPlanVisualizations(
+  scene: Scene,
+  assignments: GreenPlanZoneAssignment[],
+  seed = 1,
+): Promise<GreenPlanVisualizations> {
+  return request<GreenPlanVisualizations>("/api/greenplan/visualizations", {
+    json: { scene, assignments, seed },
+    errorMessage: "Не удалось получить визуализации",
+  });
+}
+
 export interface TextEditResult {
   scene: Scene;
   explanation: string;

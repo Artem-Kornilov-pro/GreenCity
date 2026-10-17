@@ -10,14 +10,16 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import logging
 from typing import Optional
 from urllib.parse import quote
 
-from fastapi import APIRouter, Query
+import httpx
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from api.protection import HEAVY_RESPONSES, rate_limit
 from core.concurrency import run_heavy
@@ -32,6 +34,8 @@ from greenplan.options import GreenPlanOptions
 from greenplan.pattern_assignment import ZoneAssignment
 from greenplan.pipeline import run_greenplan
 from greenplan.violation_report import Violation, find_violations
+from greenplan.visualization import NOTE as VISUALIZATION_NOTE
+from greenplan.visualization import VIEWS, VisualizationFailed, VisualizationNotConfigured, generate_visualizations
 from monitoring import metrics
 
 router = APIRouter()
@@ -61,6 +65,34 @@ class GreenPlanGenerateResult(BaseModel):
 class GreenPlanReportResult(BaseModel):
     report: Optional[str] = Field(description="Текст-обоснование решений или null.")
     report_error: Optional[str] = Field(description="Почему текст не получен (нет ключа, модель недоступна) или null.")
+
+
+class GreenPlanVisualizationsRequest(BaseModel):
+    scene: Scene = Field(description="Сцена с результатом /api/greenplan/generate.")
+    assignments: list[ZoneAssignment] = Field(description="Решения по зонам из /api/greenplan/generate.")
+    views: list[str] = Field(
+        default=list(VIEWS), description=f"Ракурсы: {', '.join(f'{k} -- {v.lower()}' for k, v in VIEWS.items())}."
+    )
+    seed: int = Field(default=1, ge=0, le=2**31 - 1, description="Зерно генерации: другое -- другие картинки.")
+
+    @field_validator("views")
+    @classmethod
+    def _known_views(cls, value):
+        unknown = [v for v in value if v not in VIEWS]
+        if unknown or not value or len(value) > len(VIEWS):
+            raise ValueError(f"ракурсы -- от 1 до {len(VIEWS)} из {list(VIEWS)}; неизвестные: {unknown}")
+        return list(dict.fromkeys(value))
+
+
+class GreenPlanVisualization(BaseModel):
+    view: str
+    prompt: str = Field(description="Что попросили нарисовать -- по решениям GreenPlan.")
+    image: str = Field(description="JPEG в base64.")
+
+
+class GreenPlanVisualizationsResult(BaseModel):
+    note: str = Field(description="Пометка для показа рядом с картинками.")
+    visualizations: list[GreenPlanVisualization]
 
 
 class GreenPlanDocumentRequest(BaseModel):
@@ -114,6 +146,36 @@ def _generate(request: GreenPlanGenerateRequest, k: int) -> GreenPlanGenerateRes
         improvements=improvements_assortment(run.scene),
         notes=run.notes,
         rejections=run.rejections,
+    )
+
+
+@router.post(
+    "/api/greenplan/visualizations",
+    response_model=GreenPlanVisualizationsResult,
+    tags=["GreenPlan"],
+    summary="Фотореалистичные визуализации плана (ИИ)",
+    responses={429: HEAVY_RESPONSES[429], 502: {"description": "YandexART не вернул изображение."}, 503: {"description": "Ключ Yandex AI Studio не задан."}},
+    dependencies=[rate_limit("llm")],
+)
+async def greenplan_visualizations(request: GreenPlanVisualizationsRequest):
+    """Бонусное задание ТЗ: иллюстрации участка после озеленения (YandexART).
+    Картинка рисуется по описанию решений GreenPlan -- стиль, приёмы, породы,
+    газон, -- а не по чертежу, поэтому это иллюстрация замысла, а не точная
+    расстановка (пометка `note`). Ракурсы -- `views`, до трёх; генерация --
+    десятки секунд."""
+    try:
+        images = await generate_visualizations(request.scene, request.assignments, request.views, request.seed)
+    except VisualizationNotConfigured as e:
+        raise HTTPException(503, str(e)) from e
+    except (VisualizationFailed, httpx.HTTPError) as e:
+        log.warning("визуализации не получены: %s", e)
+        raise HTTPException(502, f"Визуализации не получены: {e}") from e
+    log.info("визуализации GreenPlan: %d ракурсов", len(images))
+    return GreenPlanVisualizationsResult(
+        note=VISUALIZATION_NOTE,
+        visualizations=[
+            GreenPlanVisualization(view=v.view, prompt=v.prompt, image=base64.b64encode(v.image_jpeg).decode("ascii")) for v in images
+        ],
     )
 
 

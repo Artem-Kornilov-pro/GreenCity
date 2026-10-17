@@ -1,4 +1,4 @@
-import { Download, Loader2, RotateCw, Trees } from "lucide-react";
+import { Download, Image as ImageIcon, Loader2, RotateCw, Trees } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
@@ -21,6 +21,8 @@ export function GreenPlanPanel({
   onDownloadDocument,
   onDownloadExplanations,
   onRetryReport,
+  visualsBusy,
+  onVisualize,
 }: {
   open: boolean;
   onToggle: () => void;
@@ -31,6 +33,8 @@ export function GreenPlanPanel({
   onDownloadDocument: () => void;
   onDownloadExplanations: (format: "json" | "csv" | "xlsx") => void;
   onRetryReport: () => void;
+  visualsBusy: boolean;
+  onVisualize: () => void;
 }) {
   const existingLawnSqm = (result?.scene.lawns ?? []).filter((l) => l.status === "existing").reduce((sum, l) => sum + l.area_sqm, 0);
   const [showExisting, setShowExisting] = useState(false);
@@ -71,6 +75,12 @@ export function GreenPlanPanel({
               {documentBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
               Пояснительная записка (DOCX)
             </Button>
+            {/* Бонус ТЗ: иллюстрации участка после озеленения (YandexART). */}
+            <Button size="sm" variant="outline" onClick={onVisualize} disabled={visualsBusy}>
+              {visualsBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
+              {visualsBusy ? "Рисуем визуализации…" : "Визуализации (ИИ)"}
+            </Button>
+
             {/* Объяснение каждой посадки со ссылкой на НПА и пункт (ТЗ, п. 8):
                 машиночитаемый файл, id -- как в XDATA выгруженного DXF. */}
             <div className="flex items-center gap-2">
