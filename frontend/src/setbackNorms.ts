@@ -66,11 +66,26 @@ export function genusOf(species?: string): string | undefined {
   return first ? first.toLowerCase().replace(/ё/g, "е") : undefined;
 }
 
+// Прикорневой барьер (СП 42.13330.2016, прим. 4-7 к табл. 9.1): дереву,
+// которое GreenPlan поставил «условно, с корнезащитой» (metadata.rootBarrier),
+// от подземной сети хватает 1 м.
+const ROOT_BARRIER_ZONE_TYPES = new Set(["gas_pipeline", "sewer", "water_pipeline", "heat_network", "electrical", "signal_cable"]);
+const ROOT_BARRIER_MIN_M = 1.0;
+
 // Зоны без табличного значения (трансформатор, площадка, парковка, ЛЭП) --
 // minDistance зоны. Правила по породе только ужесточают норму.
-export function setbackFor(zoneType: string, plantKind: PlantKind, zoneMinDistance: number, species?: string): number {
+export function setbackFor(
+  zoneType: string,
+  plantKind: PlantKind,
+  zoneMinDistance: number,
+  species?: string,
+  rootBarrier = false,
+): number {
   const rule = SETBACK_NORMS[zoneType];
   let distance = rule ? rule[plantKind] : zoneMinDistance;
+  if (rootBarrier && plantKind === "tree" && ROOT_BARRIER_ZONE_TYPES.has(zoneType)) {
+    distance = Math.min(distance, ROOT_BARRIER_MIN_M);
+  }
   const genus = genusOf(species);
   if (genus) {
     for (const speciesRule of SPECIES_SETBACK_RULES) {

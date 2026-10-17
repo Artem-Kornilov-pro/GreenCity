@@ -53,10 +53,11 @@ class SiteCharacteristics(BaseModel):
     territory_type_is_heuristic: bool = True
 
 
-def usable_planting_area(scene: Scene) -> BaseGeometry:
+def usable_planting_area(scene: Scene, root_barrier: bool = False) -> BaseGeometry:
     """Грубая площадь под озеленение: разрешённые зоны (или весь участок)
     минус запретные и предупреждающие зоны с отступом для дерева. Для
-    признаков и разбиения на зоны; точные отступы -- при расстановке."""
+    признаков и разбиения на зоны; точные отступы -- при расстановке.
+    root_barrier -- отступ от подземных сетей с прикорневым барьером."""
     if scene.boundary is None or len(scene.boundary.polygon) < 3:
         return Polygon()
 
@@ -79,7 +80,7 @@ def usable_planting_area(scene: Scene) -> BaseGeometry:
         poly = polygon_from_points(zone.polygon)
         if poly is None:
             continue
-        setback = setback_for(zone.type, "tree", zone.minDistance)
+        setback = setback_for(zone.type, "tree", zone.minDistance, root_barrier=root_barrier)
         keep_out.append(poly.buffer(setback) if setback > 0 else poly)
 
     usable = base.intersection(boundary_poly)

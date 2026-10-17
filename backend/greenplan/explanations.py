@@ -30,7 +30,7 @@ from shapely.strtree import STRtree
 
 from core.placement import OBJECT_CLEARANCE_M, POINT_CLEARANCE_M, SITE_CLEARANCE_M, Placer
 from core.schemas import Scene, SceneObject
-from core.setback_norms import MAX_SETBACK_M, setback_basis
+from core.setback_norms import MAX_SETBACK_M, ROOT_BARRIER_MEASURE, ROOT_BARRIER_SOURCE, setback_basis
 from exchange.export_dxf import is_source_object, result_layer
 from greenplan.pattern_assignment import ZoneAssignment
 from greenplan.pattern_library import PATTERN_LIBRARY, STYLE_LABELS
@@ -77,7 +77,7 @@ class PlantExplanation(BaseModel):
     id: str
     type: str
     species: str
-    status: str  # "посажено"
+    status: str  # "посажено" / "условно, с корнезащитой"
     origin: str  # GreenPlan / правка пользователя
     dxf_layer: str
     x: float
@@ -144,10 +144,14 @@ class _ZoneIndex:
         return [(self.items[i][0], self.items[i][1].distance(point)) for i in hits]
 
 
-def _zone_constraints(index: _ZoneIndex, x: float, z: float, kind: str, species: str) -> list[Constraint]:
+def _zone_constraints(
+    index: _ZoneIndex, x: float, z: float, kind: str, species: str, root_barrier: bool = False
+) -> list[Constraint]:
+    """root_barrier -- дерево с прикорневым барьером: от подземных сетей --
+    уменьшенный отступ (setback_norms.ROOT_BARRIER_MIN_M)."""
     out = []
     for zone, distance in index.near(x, z, MAX_SETBACK_M + NEAR_MARGIN_M):
-        required, norm = setback_basis(zone.type, kind, zone.minDistance, species)
+        required, norm = setback_basis(zone.type, kind, zone.minDistance, species, root_barrier=root_barrier)
         if distance > required + NEAR_MARGIN_M:
             continue
         label = ZONE_TYPE_LABELS.get(zone.type, zone.name or zone.type)
@@ -199,7 +203,8 @@ def explain_plants(scene: Scene, assignments: list[ZoneAssignment]) -> list[Plan
             continue
         species = str(obj.metadata.get("species") or obj.metadata.get("label") or obj.type)
         x, z = obj.position.x, obj.position.z
-        constraints = _zone_constraints(index, x, z, kind, species) + _object_constraints(placer, obj.id, x, z, kind)
+        barrier = obj.metadata.get("rootBarrier") or []
+        constraints = _zone_constraints(index, x, z, kind, species, bool(barrier)) + _object_constraints(placer, obj.id, x, z, kind)
         # Нормативные ограничения -- первыми: объяснение "почему здесь можно"
         # опирается на них, а не на зазор до соседнего дерева.
         constraints.sort(key=lambda c: (c.norm == PLANNER_RULE, c.distance_m - c.required_m))
@@ -220,13 +225,15 @@ def explain_plants(scene: Scene, assignments: list[ZoneAssignment]) -> list[Plan
             reason += f"; ближайшее ограничение — {nearest.what}: {nearest.distance_m:.1f} м при норме {nearest.required_m:.1f} м ({nearest.norm})"
         else:
             reason += f"; нормируемых ограничений ближе {NEAR_MARGIN_M:.0f} м сверх нормы нет"
+        if barrier:
+            reason += f"; условно: ближе нормы к сетям ({', '.join(barrier)}) — нужен {ROOT_BARRIER_MEASURE} ({ROOT_BARRIER_SOURCE})"
         dxf_x, dxf_y = _to_dxf(scene, x, z)
         out.append(
             PlantExplanation(
                 id=obj.id,
                 type=obj.type,
                 species=species,
-                status="посажено",
+                status="условно, с корнезащитой" if barrier else "посажено",
                 origin="GreenPlan" if generated else "правка пользователя",
                 dxf_layer=result_layer(obj),
                 x=round(x, 3),
@@ -282,7 +289,7 @@ def _rejection(placer, index, x, z, obj_type, kind, species, zone_kind, pattern)
     if placer.site is not None and (not placer.site.contains(point) or placer.site.exterior.distance(point) < SITE_CLEARANCE_M):
         return Rejection(**base, reason="у самой границы участка", norm=PLANNER_RULE)
     if kind is not None:
-        violated = [c for c in _zone_constraints(index, x, z, kind, species) if not c.ok]
+        violated = [c for c in _zone_constraints(index, x, z, kind, species, placer.root_barrier) if not c.ok]
         if violated:
             worst = min(violated, key=lambda c: c.distance_m - c.required_m)
             return Rejection(

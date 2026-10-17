@@ -201,6 +201,12 @@ export function EditorSidebar({
               Вращать
             </Button>
           </div>
+          {Array.isArray(selectedObject.metadata.rootBarrier) && selectedObject.metadata.rootBarrier.length > 0 && (
+            <Badge variant="warning" className="mt-3 justify-start">
+              Условно, с корнезащитой: ближе нормы к сетям ({selectedObject.metadata.rootBarrier.join(", ")}) — нужен прикорневой
+              барьер (СП 42.13330.2016, прим. 4–7 к табл. 9.1)
+            </Badge>
+          )}
           {selectedViolations.length > 0 ? (
             <div className="mt-3 flex flex-col gap-1.5">
               {selectedViolations.map((v) => (

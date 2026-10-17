@@ -94,7 +94,7 @@ def find_violations(scene: Scene) -> list[Violation]:
         species = obj.metadata.get("species")
         for idx in tree.query(point):
             zone, poly = entries[idx]
-            required = setback_for(zone.type, kind, zone.minDistance, species=species)
+            required = setback_for(zone.type, kind, zone.minDistance, species=species, root_barrier=bool(obj.metadata.get("rootBarrier")))
             distance = poly.distance(point)
             if distance < required:
                 violations.append(

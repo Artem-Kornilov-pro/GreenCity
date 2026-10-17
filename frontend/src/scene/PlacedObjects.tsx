@@ -55,7 +55,8 @@ export function PlacedObjects({
               obj.position.z,
               index,
               plantKindOfObjectType(obj.type),
-              typeof obj.metadata.species === "string" ? obj.metadata.species : undefined
+              typeof obj.metadata.species === "string" ? obj.metadata.species : undefined,
+              Array.isArray(obj.metadata.rootBarrier) && obj.metadata.rootBarrier.length > 0,
             ),
         };
       });

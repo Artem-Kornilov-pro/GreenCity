@@ -23,6 +23,13 @@ class GreenPlanOptions(BaseModel):
     trees: bool = Field(default=True, description="Сажать деревья.")
     bushes: bool = Field(default=True, description="Сажать кустарники.")
     lawn: bool = Field(default=True, description="Устраивать газон на свободной земле.")
+    root_barrier: bool = Field(
+        default=False,
+        description=(
+            "Сажать деревья ближе нормы к подземным сетям с прикорневым барьером "
+            "(СП 42.13330.2016, прим. 4-7 к табл. 9.1): такие деревья помечаются «условно, с корнезащитой»."
+        ),
+    )
     remove_violating_plants: bool = Field(
         default=False,
         description="Убрать существующие деревья и кусты с нарушением норм отступов до расстановки; их место засаживается заново.",
@@ -46,6 +53,8 @@ class GreenPlanOptions(BaseModel):
             f"стиль участка: {STYLE_CHOICE_LABELS[self.style]}",
             f"посадки: {', '.join(planting) if planting else 'не заданы'}",
         ]
+        if self.root_barrier:
+            rows.append("деревья у подземных сетей: допускаются с прикорневым барьером (условно)")
         if self.remove_violating_plants:
             rows.append("существующие деревья и кусты с нарушением норм: удалены")
         for title, ids in (("предпочтительные деревья", self.preferred_trees), ("предпочтительные кустарники", self.preferred_bushes)):

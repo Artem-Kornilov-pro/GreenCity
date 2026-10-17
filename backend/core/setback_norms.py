@@ -124,16 +124,43 @@ def species_rules(species: SpeciesArg) -> frozenset[SpeciesSetbackRule]:
     return frozenset(rule for rule in SPECIES_SETBACK_RULES if rule.genera & genera)
 
 
+# Прикорневой барьер. СП 42.13330.2016, прим. 4-7 к табл. 9.1: отступ дерева
+# от подземной сети уменьшается при устройстве защитных прикорневых барьеров
+# (не более чем с двух сторон ствола, из безопасного для корней материала);
+# до барьера -- 0,5 м при высоте кроны до 5 м и 1 м при кроне 5-20 м. Высота
+# кроны при расстановке не известна -- берётся больший минимум. Только
+# деревья и только подземные сети; это мероприятие, а не норма по умолчанию:
+# включается параметром GreenPlan, и посадка помечается «условно».
+ROOT_BARRIER_ZONE_TYPES = frozenset(
+    {"gas_pipeline", "sewer", "water_pipeline", "heat_network", "electrical", "signal_cable"}
+)
+ROOT_BARRIER_MIN_M = 1.0
+ROOT_BARRIER_SOURCE = "СП 42.13330.2016, прим. 4–7 к табл. 9.1"
+ROOT_BARRIER_MEASURE = (
+    "защитный прикорневой барьер со стороны сети, не более чем с двух сторон ствола, "
+    "из безопасного для корней материала"
+)
+
+
+def root_barrier_applies(zone_type: str, plant_kind: PlantKind) -> bool:
+    return plant_kind == "tree" and zone_type in ROOT_BARRIER_ZONE_TYPES
+
+
 def setback_for(
     zone_type: str,
     plant_kind: PlantKind,
     zone_min_distance: float,
     species: SpeciesArg = None,
+    root_barrier: bool = False,
 ) -> float:
     """Требуемый отступ посадки от зоны: табличная норма (для типа зоны вне
-    таблицы -- minDistance самой зоны), ужесточённая правилами по породе."""
+    таблицы -- minDistance самой зоны), ужесточённая правилами по породе.
+    root_barrier -- дерево с прикорневым барьером: от подземной сети хватает
+    ROOT_BARRIER_MIN_M (правила по породе по-прежнему могут ужесточить)."""
     rule = SETBACK_NORMS.get(zone_type)
     distance = rule[plant_kind] if rule else zone_min_distance
+    if root_barrier and root_barrier_applies(zone_type, plant_kind):
+        distance = min(distance, ROOT_BARRIER_MIN_M)
     for species_rule in species_rules(species):
         if species_rule.zone_type == zone_type and plant_kind in species_rule.kinds:
             distance = max(distance, species_rule.distance_m)
@@ -148,6 +175,7 @@ def setback_basis(
     plant_kind: PlantKind,
     zone_min_distance: float,
     species: SpeciesArg = None,
+    root_barrier: bool = False,
 ) -> tuple[float, str]:
     """(отступ, акт и пункт) -- то же число, что setback_for(), и документ,
     который его задаёт."""
@@ -156,6 +184,8 @@ def setback_basis(
         distance, source = rule[plant_kind], TABLE_SOURCE
     else:
         distance, source = zone_min_distance, "охранная зона по чертежу (отступ зоны)"
+    if root_barrier and root_barrier_applies(zone_type, plant_kind) and distance > ROOT_BARRIER_MIN_M:
+        distance, source = ROOT_BARRIER_MIN_M, ROOT_BARRIER_SOURCE
     for species_rule in species_rules(species):
         if species_rule.zone_type == zone_type and plant_kind in species_rule.kinds and species_rule.distance_m > distance:
             distance, source = species_rule.distance_m, species_rule.source

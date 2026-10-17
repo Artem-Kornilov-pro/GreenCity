@@ -150,7 +150,10 @@ class Placer:
     раз на вид посадки (объединение тысяч зон района -- дорогая операция), а
     индекс объектов обновляется по мере добавления и удаления."""
 
-    def __init__(self, scene: Scene):
+    def __init__(self, scene: Scene, root_barrier: bool = False):
+        # root_barrier -- деревьям у подземных сетей хватает уменьшенного
+        # отступа с прикорневым барьером (setback_norms.ROOT_BARRIER_MIN_M).
+        self.root_barrier = root_barrier
         self.zones: list[tuple[RestrictionZone, object]] = []
         for zone in scene.restrictions:
             geom = _geometry(zone.polygon)
@@ -180,12 +183,11 @@ class Placer:
 
     # --- Нормы и допустимая область ----------------------------------------
 
-    @staticmethod
-    def required(zone: RestrictionZone, kind: Optional[str], species: SpeciesArg = None) -> float:
+    def required(self, zone: RestrictionZone, kind: Optional[str], species: SpeciesArg = None) -> float:
         """Нормативный отступ посадки вида kind от зоны; малым формам и
         мощению -- небольшой технический зазор."""
         if kind in ("tree", "bush"):
-            return setback_for(zone.type, kind, zone.minDistance, species=species)
+            return setback_for(zone.type, kind, zone.minDistance, species=species, root_barrier=self.root_barrier)
         return FURNITURE_CLEARANCE_M
 
     def region(self, kind: Optional[str], species: SpeciesArg = None):
@@ -214,13 +216,12 @@ class Placer:
             self._regions[key] = (area, prep(area) if area is not None else None)
         return self._regions[key]
 
-    @classmethod
     def _required_by_rules(
-        cls, zone: RestrictionZone, kind: Optional[str], rules: frozenset[SpeciesSetbackRule]
+        self, zone: RestrictionZone, kind: Optional[str], rules: frozenset[SpeciesSetbackRule]
     ) -> float:
         """То же, что required(), но по уже найденному набору правил --
         region() кэширует именно по нему."""
-        distance = cls.required(zone, kind)
+        distance = self.required(zone, kind)
         for rule in rules:
             if rule.zone_type == zone.type and kind in rule.kinds:
                 distance = max(distance, rule.distance_m)

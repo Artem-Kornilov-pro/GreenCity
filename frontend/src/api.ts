@@ -134,6 +134,8 @@ export interface GreenPlanOptions {
   lawn: boolean;
   // Убрать существующие деревья и кусты с нарушением норм до расстановки.
   remove_violating_plants: boolean;
+  // Деревья ближе нормы к подземным сетям с прикорневым барьером («условно»).
+  root_barrier: boolean;
   preferred_trees: string[];
   preferred_bushes: string[];
   paths: boolean;
@@ -147,6 +149,7 @@ export const DEFAULT_GREENPLAN_OPTIONS: GreenPlanOptions = {
   bushes: true,
   lawn: true,
   remove_violating_plants: false,
+  root_barrier: false,
   preferred_trees: [],
   preferred_bushes: [],
   paths: false,

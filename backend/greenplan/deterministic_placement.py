@@ -27,7 +27,7 @@ import logging
 import random
 from dataclasses import dataclass, field
 
-from shapely.geometry import Polygon
+from shapely.geometry import Point, Polygon
 
 from core.placement import Placer
 from core.placement_geometry import (
@@ -44,7 +44,8 @@ from core.placement_geometry import (
 )
 from core.plant_catalog import CatalogItem
 from core.schemas import Point3, Scene, SceneObject
-from greenplan.explanations import record_rejection
+from core.setback_norms import ROOT_BARRIER_MEASURE, ROOT_BARRIER_SOURCE, ROOT_BARRIER_ZONE_TYPES, setback_for
+from greenplan.explanations import ZONE_TYPE_LABELS, record_rejection
 from greenplan.pattern_assignment import ZoneAssignment, assign_patterns
 from greenplan.pattern_library import PATTERN_LIBRARY, PatternSpec
 from greenplan.site_characterization import characterize_site, usable_planting_area
@@ -364,21 +365,26 @@ def plan_site(
     k: int = 3,
     style: str = "auto",
     preferred: list[CatalogItem] | None = None,
+    root_barrier: bool = False,
 ) -> SitePlan:
     """То же, что generate_for_scene, с параметрами пользователя: style --
     стиль участка ("auto" -- по похожим проектам), preferred -- виды,
     которые ставятся первыми в любой роли своей категории (если проходят
-    нормы)."""
+    нормы), root_barrier -- деревья у подземных сетей с прикорневым барьером
+    (ближе нормы, «условно»: metadata.rootBarrier)."""
     preferred = preferred or []
     trees = trees or []
     bushes = bushes or []
     # Площадь под озеленение -- самая дорогая операция прохода: считаем
-    # один раз и передаём в разбиение и поиск аналогов.
+    # один раз и передаём в разбиение и поиск аналогов. Аналоги ищутся по
+    # участку с обычными отступами: корнезащита -- мероприятие на месте
+    # посадки, а не другой участок, и подбор приёмов от неё не меняется.
     usable = usable_planting_area(scene)
-    zones = partition_zones(scene, usable=usable)
+    planting_area = usable_planting_area(scene, root_barrier=True) if root_barrier else usable
+    zones = partition_zones(scene, usable=planting_area)
     characteristics = characterize_site(scene, usable=usable)
     assignments = assign_patterns(scene, zones, k=k, characteristics=characteristics, style=style)
-    placer = Placer(scene)
+    placer = Placer(scene, root_barrier=root_barrier)
 
     # Один набор видов на пару (вид зоны, приём) на всём участке: изгородь
     # вдоль всех дорожек -- из одного вида.
@@ -412,10 +418,40 @@ def plan_site(
             )
         )
     objects = _thin_to_site_cap(objects)
+    notes_barrier = _mark_root_barriers(placer, objects) if root_barrier else []
     planted = {obj.metadata.get("species") for obj in objects}
     kinds = [zone.kind for zone in zones]
     notes = [preference_note(item, kinds, site) for item in preferred if item.label not in planted]
-    return SitePlan(objects=objects, assignments=placed_assignments, notes=notes)
+    return SitePlan(objects=objects, assignments=placed_assignments, notes=[*notes, *notes_barrier])
+
+
+def _mark_root_barriers(placer: Placer, objects: list[SceneObject]) -> list[str]:
+    """Деревья ближе полной нормы к подземной сети -- «условно, с
+    корнезащитой»: metadata.rootBarrier = типы сетей, от которых нужен
+    барьер. Заметка для записки -- сколько таких деревьев."""
+    networks = [(zone, geom) for zone, geom in placer.zones if zone.type in ROOT_BARRIER_ZONE_TYPES]
+    marked = 0
+    for obj in objects:
+        if obj.type != "tree" or not networks:
+            continue
+        point = Point(obj.position.x, obj.position.z)
+        species = obj.metadata.get("species")
+        near = sorted(
+            {
+                ZONE_TYPE_LABELS.get(zone.type, zone.type)
+                for zone, geom in networks
+                if geom.distance(point) < setback_for(zone.type, "tree", zone.minDistance, species=species)
+            }
+        )
+        if near:
+            obj.metadata["rootBarrier"] = near
+            marked += 1
+    if not marked:
+        return ["Посадка с корнезащитой разрешена, но все деревья встали по полной норме — барьеры не нужны"]
+    return [
+        f"Условно, с корнезащитой — деревьев ближе нормы к подземным сетям: {marked}. Нужен {ROOT_BARRIER_MEASURE} "
+        f"({ROOT_BARRIER_SOURCE}); согласовать с эксплуатирующей организацией"
+    ]
 
 
 def _thin_to_site_cap(objects: list[SceneObject]) -> list[SceneObject]:
