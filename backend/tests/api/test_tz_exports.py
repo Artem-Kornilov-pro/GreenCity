@@ -106,3 +106,26 @@ def test_user_edits_land_on_user_layers(client):
     scene["objects"].append(user_tree)
     exported = _layers(client.post("/api/export-dxf", json=scene).content)
     assert exported.get("USER_TREE") == 2  # точка и кружок-маркер
+
+
+def test_explanations_xlsx_has_the_statement_and_all_checks(client):
+    from openpyxl import load_workbook
+
+    scene = _upload(client)
+    result = client.post("/api/greenplan/generate", json={"scene": scene}).json()
+    body = {"scene": result["scene"], "assignments": result["assignments"], "rejections": result["rejections"]}
+    r = client.post("/api/greenplan/explanations?format=xlsx", json=body)
+    assert r.status_code == 200 and r.headers["content-type"].startswith("application/vnd.openxmlformats")
+    wb = load_workbook(io.BytesIO(r.content))
+    assert wb.sheetnames == ["Ведомость", "Посадки", "Проверки", "Отклонено", "Запрет посадки", "Сведения"]
+
+    new_plants = [o for o in result["scene"]["objects"] if o["metadata"].get("generated") and o["type"] in ("tree", "bush")]
+    statement = [row for row in wb["Ведомость"].iter_rows(min_row=2, values_only=True) if row[0] in ("дерево", "кустарник")]
+    assert sum(row[2] for row in statement) == len(new_plants)
+
+    explained = client.post("/api/greenplan/explanations", json=body).json()["plants"]
+    checks = list(wb["Проверки"].iter_rows(min_row=2, values_only=True))
+    assert len(checks) == sum(len(p["constraints"]) for p in explained)
+    assert {row[5] for row in checks} <= {"да", "НЕТ"}
+    info = dict(wb["Сведения"].iter_rows(min_row=2, values_only=True))
+    assert info["Исходный чертёж, SHA-256"] == scene["meta"]["sourceSha256"]

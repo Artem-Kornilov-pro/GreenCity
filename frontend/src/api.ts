@@ -64,7 +64,7 @@ export function downloadGreenPlanExplanations(
   scene: Scene,
   assignments: GreenPlanZoneAssignment[],
   rejections: GreenPlanRejections | undefined,
-  format: "json" | "csv",
+  format: "json" | "csv" | "xlsx",
 ): Promise<Blob> {
   return requestBlob("/api/greenplan/explanations", {
     query: { format },

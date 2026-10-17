@@ -26,6 +26,7 @@ from core.schemas import Scene
 from greenplan.assortment_report import AssortmentRow, improvements_assortment, lawn_assortment, summarize_assortment
 from greenplan.decision_report import DecisionReportUnavailable, generate_report
 from greenplan.document import build_document
+from greenplan.excel_report import explanations_xlsx
 from greenplan.explanations import RejectionStats, explain_plants, explanations_csv, explanations_json
 from greenplan.options import GreenPlanOptions
 from greenplan.pattern_assignment import ZoneAssignment
@@ -174,12 +175,24 @@ async def greenplan_document(request: GreenPlanDocumentRequest):
     "/api/greenplan/explanations",
     tags=["GreenPlan"],
     summary="Объяснения посадок со ссылками на НПА",
-    responses={200: {"content": {"application/json": {}, "text/csv": {}}, "description": "Файл объяснений."}, **HEAVY_RESPONSES},
+    responses={
+        200: {
+            "content": {
+                "application/json": {}, "text/csv": {}, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
+            },
+            "description": "Файл объяснений.",
+        },
+        **HEAVY_RESPONSES,
+    },
     dependencies=[rate_limit("greenplan")],
 )
 async def greenplan_explanations(
     request: GreenPlanExplanationsRequest,
-    format: str = Query(default="json", pattern="^(json|csv)$", description="json или csv (разделитель «;», UTF-8 с BOM)."),
+    format: str = Query(
+        default="json",
+        pattern="^(json|csv|xlsx)$",
+        description="json, csv (разделитель «;», UTF-8 с BOM) или xlsx: ведомость, посадки, проверки, отклонённые, запрет посадки, сведения.",
+    ),
 ):
     """Для каждой новой посадки: вид, координаты в сцене и в исходном
     чертеже, слой DXF, приём и проект-аналог, основание подбора вида и
@@ -197,6 +210,9 @@ async def greenplan_explanations(
 
 def _explanations(request: GreenPlanExplanationsRequest, format: str) -> tuple[bytes, str, str, int]:
     plants = explain_plants(request.scene, request.assignments)
+    if format == "xlsx":
+        content = explanations_xlsx(request.scene, plants, request.rejections)
+        return content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "xlsx", len(plants)
     if format == "csv":
         # BOM -- чтобы Excel сразу распознал UTF-8.
         content = ("\ufeff" + explanations_csv(request.scene, plants, request.rejections)).encode("utf-8")
