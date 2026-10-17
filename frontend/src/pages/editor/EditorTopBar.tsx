@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Download, FolderKanban, LassoSelect, Layers, Leaf, Loader2, LogOut, Save, Sparkles, Trees, User } from "lucide-react";
+import { Download, FolderKanban, LassoSelect, Layers, Leaf, Loader2, LogOut, Map as MapIcon, Save, Sparkles, Trees, User } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import {
   DropdownMenu,
@@ -25,6 +25,8 @@ export function EditorTopBar({
   onLayers,
   selectionMode,
   onToggleSelection,
+  onToggleBasemap,
+  basemapOn = false,
   assistantOpen,
   onToggleAssistant,
   greenPlanBusy,
@@ -49,6 +51,9 @@ export function EditorTopBar({
   onLayers?: () => void;
   selectionMode: boolean;
   onToggleSelection: () => void;
+  // Есть привязка к карте -- кнопка «Карта».
+  onToggleBasemap?: () => void;
+  basemapOn?: boolean;
   assistantOpen: boolean;
   onToggleAssistant: () => void;
   greenPlanBusy: boolean;
@@ -88,6 +93,19 @@ export function EditorTopBar({
               <Button size="sm" variant="outline" onClick={onLayers} title="Что взято из каждого слоя чертежа; назначить тип нераспознанным слоям">
                 <Layers className="h-3.5 w-3.5" />
                 Слои
+              </Button>
+            )}
+            {onToggleBasemap && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onToggleBasemap}
+                aria-pressed={basemapOn}
+                className={basemapOn ? "border-brand-300 bg-brand-50" : undefined}
+                title="Подложка карты под участком (OpenStreetMap). Чертёж привязан в предположении, что он в Московской системе координат"
+              >
+                <MapIcon className="h-3.5 w-3.5" />
+                Карта
               </Button>
             )}
             <Button

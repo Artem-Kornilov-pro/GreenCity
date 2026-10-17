@@ -48,12 +48,16 @@ function FlatLayer({ geometry, color, y, order }: { geometry: THREE.BufferGeomet
   );
 }
 
+// withSurroundings=false -- под сценой подложка карты: окрестности на ней
+// уже видны настоящие, условная земля вокруг домов только мешала бы.
 export function Ground({
   boundary,
   surroundings,
+  withSurroundings = true,
 }: {
   boundary: Boundary | null;
   surroundings: { yards: Point2[][]; streets: Point2[][] };
+  withSurroundings?: boolean;
 }) {
   const site = useMemo(() => (boundary ? flatPolygonGeometry(boundary.polygon) : null), [boundary]);
   const yards = useMemo(() => mergedFlatGeometry(surroundings.yards), [surroundings]);
@@ -61,8 +65,8 @@ export function Ground({
 
   return (
     <>
-      <FlatLayer geometry={yards} color="#a3b394" y={SURROUNDINGS_Y} order={FLAT_LAYER_ORDER.surroundings} />
-      <FlatLayer geometry={streets} color="#9c9d98" y={SURROUNDINGS_Y} order={FLAT_LAYER_ORDER.surroundings} />
+      {withSurroundings && <FlatLayer geometry={yards} color="#a3b394" y={SURROUNDINGS_Y} order={FLAT_LAYER_ORDER.surroundings} />}
+      {withSurroundings && <FlatLayer geometry={streets} color="#9c9d98" y={SURROUNDINGS_Y} order={FLAT_LAYER_ORDER.surroundings} />}
       <FlatLayer geometry={site} color="#6f8f5c" y={GROUND_Y} order={FLAT_LAYER_ORDER.ground} />
     </>
   );

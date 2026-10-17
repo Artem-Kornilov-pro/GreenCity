@@ -64,6 +64,8 @@ export interface SceneMeta {
   boundaryCandidates?: BoundaryCandidate[];
   // Граница, выбранная пользователем, в координатах чертежа.
   boundaryOverride?: number[][] | null;
+  // Привязка к карте (backend/core/geo.py): только у чертежей в МСК.
+  geo?: SceneGeo | null;
 }
 
 export interface BoundaryCandidate {
@@ -71,6 +73,14 @@ export interface BoundaryCandidate {
   layer: string;
   area: number; // м²
   points: number[][]; // координаты чертежа
+}
+
+export interface SceneGeo {
+  crs: string;
+  assumed: boolean;
+  center: { lat: number; lon: number };
+  // x = a*lon + b*lat + c, z = d*lon + e*lat + f -- метры сцены.
+  toScene: [number, number, number, number, number, number];
 }
 
 // Слой чертежа в сводке распознавания (parser/dxf_parsing/drawing.py).

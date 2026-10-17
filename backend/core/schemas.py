@@ -106,6 +106,10 @@ class SceneMeta(BaseModel):
     boundaryOverride: Optional[list[list[float]]] = Field(
         default=None, description="Граница участка, выбранная пользователем, в координатах чертежа: [[x, y], ...]."
     )
+    geo: Optional[dict] = Field(
+        default=None,
+        description="Привязка к карте (core/geo.py): {crs, assumed, center: {lat, lon}, toScene: 6 чисел} -- если координаты похожи на МСК.",
+    )
 
 
 class LawnArea(BaseModel):
