@@ -8,7 +8,7 @@ OUT      ?= output
 CATEGORY ?= tree
 
 .PHONY: help venv backend frontend-install frontend frontend-build parse clean \
-        lint lint-py lint-web lint-fix models test test-e2e test-cov parser-regression greenplan-regression corpus-features primers examples docs \
+        lint lint-py lint-web lint-fix models test test-e2e test-cov parser-regression greenplan-regression audit-references corpus-features primers examples docs \
         docker-build docker-up docker-down docker-logs docker-prod-up docker-prod-down docker-public-up docker-public-down docker-prune
 
 help:
@@ -23,6 +23,7 @@ help:
 	@echo "make test-cov          - то же самое + отчёт о покрытии (terminal + htmlcov/)"
 	@echo "make parser-regression [BASE=main] - разбор всех DXF корпуса: текущий код против ревизии BASE"
 	@echo "make greenplan-regression [BASE=main] - посадки GreenPlan на тестовых участках и примерах: текущий код против BASE"
+	@echo "make audit-references  - аудит эталонов: реальные проекты корпуса против норм отступов (docs/AUDIT_REFERENCES.md)"
 	@echo "make corpus-features   - пересчитать data/pattern_corpus_features.json (после правки DXF корпуса)"
 	@echo "make primers           - пересобрать синтетические эталоны locations/2x_*_primer и признаки корпуса"
 	@echo "make examples          - пересобрать примеры результата examples/ (без LLM) и проверить выходные DXF"
@@ -92,6 +93,9 @@ parser-regression: $(VENV)/bin/activate
 
 greenplan-regression: $(VENV)/bin/activate
 	$(PYTHON) tools/greenplan_regression.py --base $(or $(BASE),main)
+
+audit-references: $(VENV)/bin/activate
+	$(PYTHON) tools/audit_references.py --write
 
 corpus-features: $(VENV)/bin/activate
 	cd backend && $(PYTHON) -m greenplan.pattern_corpus
