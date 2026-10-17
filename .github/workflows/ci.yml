@@ -73,6 +73,8 @@ jobs:
         run: docker build -f frontend/Dockerfile.prod frontend
       - name: Проверить продакшен-конфигурацию docker compose
         run: docker compose -f docker-compose.yml -f docker-compose.prod.yml config -q
+      - name: Проверить конфигурацию публичного стенда (docker-compose.public.yml)
+        run: PUBLIC_DOMAIN=greencity.example.org docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.public.yml config -q
 
       # Полная проверка: реально поднять весь стек (все восемь сервисов, тот
       # же docker-compose.yml, что и у разработчика) и дождаться, что каждый

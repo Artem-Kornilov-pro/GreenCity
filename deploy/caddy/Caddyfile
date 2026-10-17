@@ -1,0 +1,24 @@
+# Публичный стенд (docker-compose.public.yml): Caddy получает и продлевает
+# сертификат Let's Encrypt для PUBLIC_DOMAIN сам и отдаёт сайт по HTTPS.
+# Всё за ним -- как в продакшен-режиме: nginx фронтенда отдаёт статику и
+# проксирует /api/ на бэкенд.
+{$PUBLIC_DOMAIN} {
+	encode zstd gzip
+	# Чертежи бывают сотни мегабайт; лимит тела проверяет и сам бэкенд.
+	request_body {
+		max_size 600MB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+	reverse_proxy frontend:80 {
+		# Разбор комплекта DWG и экспорт идут минутами -- не обрывать.
+		transport http {
+			read_timeout 15m
+			write_timeout 15m
+		}
+	}
+}
