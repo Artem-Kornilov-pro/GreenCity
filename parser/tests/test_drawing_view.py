@@ -126,3 +126,15 @@ def test_parsed_content_filter_keeps_what_the_parser_reads(empty_doc):
     keep = ParsedContentFilter(LayerResolver({"Слой 7": "path"}))
     assert {name for name, e in kept.items() if keep(e)} == set(kept)
     assert {name for name, e in dropped.items() if keep(e)} == set()
+
+
+def test_order_boundary_from_a_survey_frame_file_is_the_site_boundary(empty_doc):
+    # Файл рамок (brd) Мосгеотреста: граница заказа -- незамкнутая полилиния
+    # (closed=False) с совпадающими первой и последней точкой.
+    msp = empty_doc.modelspace()
+    msp.add_lwpolyline([(0, 0), (120, 0), (120, 80), (0, 80), (0, 0)], dxfattribs={"layer": "Граница заказа"})
+    msp.add_lwpolyline([(-50, -50), (200, -50), (200, 150), (-50, 150)], close=True, dxfattribs={"layer": "Рамки"})
+    msp.add_lwpolyline([(130, 0), (160, 0), (160, 30), (130, 30)], close=True, dxfattribs={"layer": "_за границами работ"})
+    scene = parse_dxf_doc(empty_doc)
+    assert scene["boundary"]["sourceLayer"] == "Граница заказа"
+    assert not any("граница оценена" in w for w in scene["meta"]["warnings"])

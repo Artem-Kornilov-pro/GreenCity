@@ -289,6 +289,50 @@ def test_extract_point_objects_excludes_tree_strip_zone_despite_keyword_match(em
     assert extract_point_objects(msp, Transform()) == []
 
 
+def _mosgeotrest_tree_symbol(msp, x, y, layer="Отдельно стоящее дерево"):
+    """Знак отдельно стоящего дерева, как в тайлах tp Мосгеотреста (Багрицкого,
+    Макеева): окружность дугой ARC 0..360°, эллипс-крона в метре от неё и
+    короткий штрих -- без блока."""
+    msp.add_arc((x, y), 0.21, 0, 360, dxfattribs={"layer": layer})
+    msp.add_ellipse((x, y + 1.09), major_axis=(0.7, 0), ratio=0.37, dxfattribs={"layer": layer})
+    msp.add_lwpolyline([(x, y + 0.21), (x, y + 0.39)], dxfattribs={"layer": layer})
+
+
+def test_tree_symbol_drawn_with_a_full_arc_is_one_tree(empty_doc):
+    msp = empty_doc.modelspace()
+    for i in range(3):
+        _mosgeotrest_tree_symbol(msp, i * 5.0, 0.0)
+    trees = [o for o in extract_point_objects(msp, Transform()) if o["type"] == "tree"]
+    assert sorted(o["position"]["x"] for o in trees) == [0.0, 5.0, 10.0]
+
+
+def test_duplicated_tree_symbol_circles_give_one_tree(empty_doc):
+    # В тайлах дуга знака бывает продублирована или сдвинута на сантиметры.
+    msp = empty_doc.modelspace()
+    _mosgeotrest_tree_symbol(msp, 0.0, 0.0)
+    msp.add_arc((0, 0), 0.21, 0, 360, dxfattribs={"layer": "Отдельно стоящее дерево"})
+    msp.add_arc((0.05, 0), 0.18, 0, 360, dxfattribs={"layer": "Отдельно стоящее дерево"})
+    _mosgeotrest_tree_symbol(msp, 0.8, 0.0)  # соседнее дерево -- отдельно
+    trees = [o for o in extract_point_objects(msp, Transform()) if o["type"] == "tree"]
+    assert len(trees) == 2
+
+
+def test_partial_arc_is_not_a_tree(empty_doc):
+    msp = empty_doc.modelspace()
+    msp.add_arc((0, 0), 0.21, 0, 180, dxfattribs={"layer": "Отдельно стоящее дерево"})
+    assert extract_point_objects(msp, Transform()) == []
+
+
+def test_full_arc_on_a_lamp_layer_is_not_another_lamp(empty_doc):
+    # У фонаря Мосгеотреста дуга на полный оборот -- плафон в метре от
+    # столба, а не второй фонарь.
+    msp = empty_doc.modelspace()
+    msp.add_circle((0, 0), 0.2, dxfattribs={"layer": "Фонари"})
+    msp.add_arc((0.95, 0), 0.2, 0, 360, dxfattribs={"layer": "Фонари"})
+    lamps = [o for o in extract_point_objects(msp, Transform()) if o["type"] == "lamp"]
+    assert len(lamps) == 1
+
+
 def test_extract_point_objects_assigns_independent_counters_per_type(empty_doc):
     msp = empty_doc.modelspace()
     msp.add_point((0, 0, 0), dxfattribs={"layer": "TREE_A"})
