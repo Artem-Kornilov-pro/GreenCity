@@ -129,6 +129,24 @@ def test_new_paths_are_path_zones_without_holes_and_furniture_stays_off_them(sce
         assert obj.metadata["generated"] and obj.metadata["source"] == "greenplan"
 
 
+def test_new_paths_go_around_existing_trees(scene_02):
+    # Деревья из чертежа ровно там, где без них прошла бы новая дорожка:
+    # дорожка их обходит, край полосы -- не ближе нормы (0,7 м), а не
+    # проходит по стволам.
+    free = plan_improvements(scene_02, BY_ID, GreenPlanOptions(paths=True))
+    pieces = sorted((polygon_from_points(z.polygon) for z in free.zones), key=lambda p: -p.area)[:3]
+    trees = [_tree(f"tree_drawing_{i}", p.x, p.y) for i, p in enumerate(piece.representative_point() for piece in pieces)]
+    scene = scene_02.model_copy(update={"objects": [*scene_02.objects, *trees]})
+
+    result = plan_improvements(scene, BY_ID, GreenPlanOptions(paths=True))
+    paths = unary_union([polygon_from_points(z.polygon) for z in result.zones])
+    assert paths.area > 0.8 * sum(polygon_from_points(z.polygon).area for z in free.zones)
+    for tree in trees:
+        assert paths.distance(Point(tree.position.x, tree.position.z)) >= 0.7 - 1e-6
+    with_paths = scene.model_copy(update={"restrictions": [*scene.restrictions, *result.zones]})
+    assert [v for v in find_violations(with_paths) if v.object_id.startswith("tree_drawing_") and v.zone_id.startswith("greenplan_path_")] == []
+
+
 def test_benches_need_new_paths(scene_02):
     result = plan_improvements(scene_02, BY_ID, GreenPlanOptions(benches=True))
     assert not any(o.type == "bench" for o in result.objects)

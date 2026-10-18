@@ -12,6 +12,10 @@
 зона (полоса шириной PATH_WIDTH_M), а не плитки-объекты: так её учитывают
 нормы, газон, проверка нарушений и экспорт в DXF (слой NEW_PATHS, при
 повторной загрузке читается как пешеходная дорожка).
+
+Существующие деревья и кусты дорожка обходит (_around_plants): край полосы
+-- не ближе нормы посадки от дорожки, иначе дерево из чертежа оказывалось
+прямо на новой плитке и подсвечивалось нарушением.
 """
 
 from __future__ import annotations
@@ -19,17 +23,19 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 
+from shapely.geometry import LineString, Point
 from shapely.geometry.polygon import orient
-from shapely.ops import unary_union
+from shapely.ops import linemerge, substring, unary_union
 
 from core.placement import Placer, polygons
 from core.placement_geometry import lines_of, sample_line
 from core.plant_catalog import CatalogItem
 from core.schemas import Point2, Point3, RestrictionZone, Scene, SceneObject
+from core.setback_norms import plant_kind_of_object_type, setback_for
 from greenplan.options import GreenPlanOptions
 from greenplan.zone_partitioning import _iter_polygons
 from text_editor.courtyard_design import BENCH_OFFSET_M, LAMP_OFFSET_M, CourtyardDesigner
-from text_editor.courtyard_layout import ENCLOSURE_MIN_BUILDINGS, ENCLOSURE_MIN_RATIO, ENTRANCE_REACH_M
+from text_editor.courtyard_layout import ENCLOSURE_MIN_BUILDINGS, ENCLOSURE_MIN_RATIO, ENTRANCE_LINK_LEAK_M, ENTRANCE_REACH_M
 
 # Зоны и объекты, которые добавляет GreenPlan: по ним повторный запуск
 # убирает прошлый результат (api/greenplan.py), а записка находит дорожки.
@@ -51,6 +57,14 @@ EXISTING_PATH_LAMP_OFFSET_M = 0.8
 MAX_LAMPS_ON_EXISTING = 300
 
 ITEM_IDS = {"lamp": "lamp", "bench": "bench", "trash": "trash"}
+
+# Обход существующего дерева или куста: ось дорожки -- не ближе половины
+# ширины полосы плюс норма посадки от дорожки (СП 42.13330.2016, табл. 9.1:
+# дерево 0,7 м, кустарник 0,5 м; колючим -- 2 м) с запасом на округление
+# окружности многоугольником. Дуга обхода длиннее прямой не больше чем на
+# MAX_DETOUR_EXTRA_M -- иначе (ряд деревьев поперёк) дорожка прерывается.
+DETOUR_EPS_M = 0.05
+MAX_DETOUR_EXTRA_M = 10.0
 
 
 @dataclass
@@ -92,6 +106,8 @@ def plan_improvements(scene: Scene, catalog: dict[str, CatalogItem], options: Gr
     axes = _new_path_axes(designer) if options.paths else []
     if options.paths and not axes:
         result.notes.append("дорожки не добавлены: на участке нет двора без зданий, проездов и площадок площадью от 150 м²")
+    if axes:
+        axes = _around_plants(axes, _plant_keepout(scene, PATH_WIDTH_M / 2 + DETOUR_EPS_M), designer.paving)
     designer.axes = axes
     designer._axes_union = unary_union(axes) if axes else None
 
@@ -105,8 +121,72 @@ def plan_improvements(scene: Scene, catalog: dict[str, CatalogItem], options: Gr
         else:
             result.notes.append("скамейки и урны ставятся вдоль новых дорожек — включите «Дорожки»")
 
-    result.zones = _path_zones(axes, placer)
+    result.zones = _path_zones(axes, placer, _plant_keepout(scene, DETOUR_EPS_M / 5))
     return result
+
+
+def _plant_keepout(scene: Scene, reach: float):
+    """Круги вокруг существующих деревьев и кустов, куда не заходит дорожка:
+    радиус -- норма посадки от дорожки (по виду и породе) плюс reach. None --
+    посадок нет."""
+    discs = []
+    for obj in scene.objects:
+        kind = plant_kind_of_object_type(obj.type)
+        if kind is None:
+            continue
+        setback = setback_for("pedestrian_path", kind, 0.0, species=obj.metadata.get("species"))
+        discs.append(Point(obj.position.x, obj.position.z).buffer(setback + reach, quad_segs=8))
+    return unary_union(discs) if discs else None
+
+
+def _around_plants(axes: list, keepout, passable) -> list:
+    """Оси дорожек в обход существующих деревьев и кустов: кусок оси внутри
+    запретного круга (или пятна из слившихся кругов) заменяется более
+    короткой дугой по его краю, если дуга не выходит из мостимой области
+    (passable) и не намного длиннее; иначе дорожка здесь прерывается."""
+    if keepout is None:
+        return axes
+    blobs = polygons(keepout)
+    result: list = []
+    for axis in axes:
+        if not axis.intersects(keepout):
+            result.append(axis)
+            continue
+        result += lines_of(axis.difference(keepout))
+        for blob in blobs:
+            ring = LineString(blob.exterior.coords)
+            for inside in lines_of(axis.intersection(blob)):
+                arc = _detour(ring, Point(inside.coords[0]), Point(inside.coords[-1]), inside.length, passable)
+                if arc is not None:
+                    result.append(arc)
+    merged = linemerge(result) if result else None
+    return [g for g in lines_of(merged) if g.length >= 1.0]
+
+
+def _detour(ring: LineString, a: Point, b: Point, straight: float, passable):
+    """Более короткая из двух дуг контура ring от a до b, что лежит в
+    passable; None -- концы не на контуре (ось кончается внутри круга или
+    входит в дыру пятна) или обе дуги не годятся."""
+    if ring.distance(a) > 1e-6 or ring.distance(b) > 1e-6:
+        return None
+    da, db = ring.project(a), ring.project(b)
+    lo, hi = sorted((da, db))
+    if hi - lo < 1e-9:
+        return None
+    direct = list(substring(ring, lo, hi).coords)
+    wrapped = list(substring(ring, hi, ring.length).coords) + list(substring(ring, 0.0, lo).coords)[1:]
+    for coords in sorted((direct, wrapped), key=lambda c: LineString(c).length if len(c) >= 2 else math.inf):
+        if len(coords) < 2:
+            continue
+        arc = LineString(coords)
+        if arc.length - straight > MAX_DETOUR_EXTRA_M:
+            continue
+        if passable is not None and arc.difference(passable).length > ENTRANCE_LINK_LEAK_M:
+            continue
+        # Концы -- ровно точки оси: тогда linemerge склеит обход с дорожкой.
+        start, end = (a, b) if (coords is direct) == (da <= db) else (b, a)
+        return LineString([(start.x, start.y), *coords[1:-1], (end.x, end.y)])
+    return None
 
 
 def _new_path_axes(designer: CourtyardDesigner) -> list:
@@ -134,10 +214,14 @@ def _is_yard(designer: CourtyardDesigner, poly) -> bool:
     return any(poly.distance(e) <= ENTRANCE_REACH_M for e in designer.entrances)
 
 
-def _path_zones(axes: list, placer: Placer) -> list[RestrictionZone]:
+def _path_zones(axes: list, placer: Placer, keepout=None) -> list[RestrictionZone]:
     if not axes:
         return []
     strip = unary_union([axis.buffer(PATH_WIDTH_M / 2) for axis in axes]).intersection(placer.site)
+    if keepout is not None:
+        # Страховка к _around_plants: полоса не подходит к стволу ближе нормы,
+        # даже где обход не сложился.
+        strip = strip.difference(keepout)
     zones = []
     # Кольцевая дорожка -- полигон с дыркой; зона хранит один контур, поэтому
     # такой полигон режется на куски без дыр (иначе двор внутри кольца стал
