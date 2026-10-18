@@ -9,7 +9,9 @@
 * не ближе OBJECT_CLEARANCE_M к точечным объектам, а для пар из
   POINT_CLEARANCE_M -- не ближе нормы (дерево -- 4 м от опоры освещения).
 
-Разрешённые зоны (газон) область не сужают.
+Разрешённые зоны (газон) область не сужают -- кроме посадок GreenPlan
+(planting_ground=True): там дерево и куст стоят только на земле (газон или
+открытая земля) и не ближе нормы к бортовому камню, см. Placer.region.
 """
 
 from __future__ import annotations
@@ -17,12 +19,12 @@ from __future__ import annotations
 import math
 from typing import Optional
 
-from shapely.geometry import MultiPoint, Point, Polygon
-from shapely.ops import nearest_points, unary_union
+from shapely.geometry import LineString, MultiPoint, Point, Polygon
+from shapely.ops import nearest_points, polygonize, unary_union
 from shapely.prepared import prep
 
 from core.schemas import RestrictionZone, Scene
-from core.setback_norms import SpeciesArg, SpeciesSetbackRule, setback_for, species_rules
+from core.setback_norms import SETBACK_NORMS, SpeciesArg, SpeciesSetbackRule, setback_for, species_rules
 from core.shapes import polygon_from_points
 
 # Цели групповых операций (llm_editor.PlaceAlongOp и др.) и их подписи.
@@ -67,6 +69,8 @@ _KIND_OF_TYPE = {"tree": "tree", "bush": "bush", "hedge_segment": "bush"}
 
 # Точку с нарушением сдвигаем не дальше этого: «у входа» не должно стать
 # «на другом конце двора», но дереву у подъезда нужно 5 м от стены и 4 м от фонаря.
+PLANT_KINDS = ("tree", "bush")
+
 MAX_SNAP_DISTANCE_M = 10.0
 
 # Запасной ряд чуть дальше от цели: куст, которому в основном ряду помешал
@@ -100,6 +104,62 @@ def polygons(geom) -> list[Polygon]:
     if geom.geom_type == "Polygon":
         return [geom]
     return [g for g in getattr(geom, "geoms", []) if g.geom_type == "Polygon"]
+
+
+def ground_area(scene: Scene):
+    """Земля, на которой можно сажать: объединение разрешённых зон (газон
+    чертежа и открытая земля, вычисленная парсером). None -- разрешённых зон
+    нет вовсе, землёй считается весь участок."""
+    shapes = [geom for zone in scene.restrictions if zone.severity == "allowed" for geom in polygons(_geometry(zone.polygon))]
+    return unary_union(shapes) if shapes else None
+
+
+def curb_lines(scene: Scene):
+    """Бортовой камень -- край тротуара или проезда. На многих чертежах
+    тротуар нарисован только бортами, без контура зоны: для парсера это
+    открытая земля, и без бортов посадка встала бы прямо на плитку."""
+    lines = [LineString([(p.x, p.z) for p in curb]) for curb in scene.curbs if len(curb) >= 2]
+    return unary_union(lines) if lines else None
+
+
+# Открытая земля, которую вычислил парсер (участок минус известные зоны), а
+# не газон из чертежа -- то же имя, что parser/dxf_parsing/zones.py
+# GROUND_ZONE_SOURCE_NAME.
+COMPUTED_GROUND_NAME = "__computed_ground__"
+# Полоса между бортами уже этого -- тротуар или газонная полоса (тротуары
+# 1,5-4 м); что из них газон, говорит только чертёж.
+CURB_STRIP_MAX_WIDTH_M = 4.0
+
+
+def paved_strips(scene: Scene, curbs=None):
+    """Узкие полосы, замкнутые бортами, где чертёж не рисует газона, --
+    тротуар. Борт с отступом не спасает от тротуара шире двух отступов:
+    посередине оставалась бы полоса «земли» прямо на плитке. Газонная полоса
+    у проезжей части тоже между бортами, но на ней газон нарисован --
+    она остаётся землёй. None -- таких полос нет."""
+    curbs = curb_lines(scene) if curbs is None else curbs
+    site = _geometry(scene.boundary.polygon, single=True) if scene.boundary else None
+    if curbs is None or site is None:
+        return None
+    strips = [face for face in polygonize(unary_union([curbs, site.exterior])) if face.length and 2 * face.area / face.length < CURB_STRIP_MAX_WIDTH_M]
+    if not strips:
+        return None
+    lawn = [
+        geom
+        for zone in scene.restrictions
+        if zone.severity == "allowed" and zone.name != COMPUTED_GROUND_NAME
+        for geom in polygons(_geometry(zone.polygon))
+    ]
+    paved = unary_union(strips)
+    if lawn:
+        paved = paved.difference(unary_union(lawn))
+    return None if paved.is_empty else paved
+
+
+def curb_setback(kind: str) -> float:
+    """Отступ посадки от бортового камня -- как от края тротуара
+    (СП 42.13330.2016, табл. 9.1: дерево 0,7 м, кустарник 0,5 м)."""
+    return SETBACK_NORMS["pedestrian_path"][kind]
 
 
 class PointIndex:
@@ -150,10 +210,16 @@ class Placer:
     раз на вид посадки (объединение тысяч зон района -- дорогая операция), а
     индекс объектов обновляется по мере добавления и удаления."""
 
-    def __init__(self, scene: Scene, root_barrier: bool = False):
+    def __init__(self, scene: Scene, root_barrier: bool = False, planting_ground: bool = False):
         # root_barrier -- деревьям у подземных сетей хватает уменьшенного
         # отступа с прикорневым барьером (setback_norms.ROOT_BARRIER_MIN_M).
         self.root_barrier = root_barrier
+        # planting_ground -- посадки GreenPlan: дерево и куст только на земле
+        # и не ближе нормы к бортовому камню (region). Правки текстом и ручная
+        # расстановка этим не ограничены.
+        self.ground = ground_area(scene) if planting_ground else None
+        self.curbs = curb_lines(scene) if planting_ground else None
+        self.paved = paved_strips(scene, self.curbs) if self.curbs is not None else None
         self.zones: list[tuple[RestrictionZone, object]] = []
         for zone in scene.restrictions:
             geom = _geometry(zone.polygon)
@@ -213,6 +279,15 @@ class Placer:
                 ]
                 if keep_out:
                     area = area.difference(unary_union(keep_out))
+                if kind in PLANT_KINDS:
+                    # Посадки GreenPlan: только на земле и не на тротуаре,
+                    # нарисованном одними бортами (см. __init__).
+                    if self.ground is not None:
+                        area = area.intersection(self.ground)
+                    if self.curbs is not None:
+                        area = area.difference(self.curbs.buffer(curb_setback(kind) + REGION_EPS_M))
+                    if self.paved is not None:
+                        area = area.difference(self.paved)
                 if area.is_empty:
                     area = None
             self._regions[key] = (area, prep(area) if area is not None else None)
@@ -296,11 +371,30 @@ class Placer:
             distance = geom.distance(point)
             if distance < required:
                 return f"{zone.message} (до зоны {distance:.1f} м, нужно {required:.1f} м)"
+        surface = self.surface_problem(x, z, kind)
+        if surface is not None:
+            return surface
         hit = self.blocker(x, z, kind, clearance)
         if hit is not None:
             key, required, distance = hit
             return f"рядом {key} (до него {distance:.1f} м, нужно {required:.1f} м)"
         return "у самой границы зоны ограничений"
+
+    def surface_problem(self, x: float, z: float, kind: Optional[str]) -> Optional[str]:
+        """Посадка GreenPlan не на земле или у бортового камня -- причина
+        текстом; иначе None."""
+        if kind not in PLANT_KINDS:
+            return None
+        point = Point(x, z)
+        if self.ground is not None and not self.ground.contains(point):
+            return "не на земле: вне газона и открытой земли (тротуар, покрытие)"
+        if self.paved is not None and self.paved.contains(point):
+            return "на тротуаре: узкая полоса между бортами без газона в чертеже"
+        if self.curbs is not None:
+            distance = self.curbs.distance(point)
+            if distance < curb_setback(kind):
+                return f"у бортового камня (до него {distance:.1f} м, нужно {curb_setback(kind):.1f} м)"
+        return None
 
     def nearest_free(
         self, x: float, z: float, kind: Optional[str], clearance: float = OBJECT_CLEARANCE_M, species: SpeciesArg = None

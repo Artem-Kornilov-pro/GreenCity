@@ -18,9 +18,14 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 
+from shapely.geometry import Point
+from shapely.strtree import STRtree
+
+from core.placement import PLANT_KINDS, curb_lines, curb_setback, ground_area, paved_strips
 from core.plant_catalog import CatalogItem, catalog_by_id, load_catalog
 from core.schemas import Scene, SceneObject
 from core.setback_norms import OVERHEAD_LINE
+from core.shapes import polygon_from_points
 from greenplan.deterministic_placement import plan_site
 from greenplan.explanations import RejectionStats, start_rejection_log, stop_rejection_log
 from greenplan.improvements import SOURCE, Improvements, is_greenplan_zone, plan_improvements
@@ -100,21 +105,60 @@ def run_greenplan(scene: Scene, options: GreenPlanOptions | None = None, k: int 
     finally:
         stop_rejection_log(token)
 
-    final = working.model_copy(update={"objects": [*working.objects, *plan.objects]})
+    new_plants, guard_notes = keep_on_ground(working, plan.objects)
+    final = working.model_copy(update={"objects": [*working.objects, *new_plants]})
     # Газон выключен в параметрах -- нового нет, но газон из чертежа остаётся.
     final.lawns = plan_lawns(final, by_id) if options.lawn else existing_lawns(final, by_id)
     return GreenPlanRun(
         scene=final,
-        new_plants=plan.objects,
+        new_plants=new_plants,
         improvements=improvements,
         assignments=plan.assignments,
-        notes=[*removal_notes, *improvements.notes, *notes, *plan.notes],
+        notes=[*removal_notes, *improvements.notes, *notes, *plan.notes, *guard_notes],
         rejections=log.stats(),
         removed_plants=removed,
     )
 
 
 _PLANT_NAMES = {"tree": "деревьев", "bush": "кустарников"}
+
+
+def keep_on_ground(scene: Scene, plants: list[SceneObject]) -> tuple[list[SceneObject], list[str]]:
+    """Финальная проверка посадок GreenPlan, независимая от расстановки
+    (Placer): посадка не внутри зоны ограничений (тротуар, дорога, здание,
+    площадка...), на земле (газон или открытая земля), не на тротуаре между
+    бортами и не ближе нормы к бортовому камню; высота -- на уровне земли. Что не прошло -- убирается,
+    с заметкой; в норме расстановка такого не ставит и убирать нечего."""
+    zones = [
+        poly
+        for poly in (polygon_from_points(z.polygon) for z in scene.restrictions if z.severity != "allowed" and len(z.polygon) >= 3)
+        if poly is not None
+    ]
+    index = STRtree(zones) if zones else None
+    ground = ground_area(scene)
+    curbs = curb_lines(scene)
+    paved = paved_strips(scene, curbs)
+    kept: list[SceneObject] = []
+    dropped: Counter = Counter()
+    for obj in plants:
+        point = Point(obj.position.x, obj.position.z)
+        kind = obj.type if obj.type in PLANT_KINDS else None
+        if index is not None and len(index.query(point, predicate="within")):
+            dropped["внутри зоны ограничений"] += 1
+        elif ground is not None and not ground.contains(point):
+            dropped["не на земле"] += 1
+        elif paved is not None and paved.contains(point):
+            dropped["на тротуаре между бортами"] += 1
+        elif kind and curbs is not None and curbs.distance(point) < curb_setback(kind):
+            dropped["у бортового камня"] += 1
+        else:
+            if obj.position.y != 0:
+                obj = obj.model_copy(update={"position": obj.position.model_copy(update={"y": 0.0})})
+            kept.append(obj)
+    if not dropped:
+        return kept, []
+    reasons = "; ".join(f"{reason} — {n}" for reason, n in dropped.most_common())
+    return kept, [f"Финальная проверка убрала посадки, не прошедшие нормы ({sum(dropped.values())}): {reasons}"]
 
 
 def remove_violating_plants(scene: Scene) -> tuple[Scene, list[SceneObject], list[str]]:

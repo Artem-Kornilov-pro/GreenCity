@@ -195,14 +195,29 @@ export function checkViolationsAt(
 
 // Земля окрестностей (scene/Ground.tsx) -- только под тем, что есть в чертеже,
 // без заливки пустого места: площадка вокруг каждого дома (оболочка контура с
-// запасом pad) и полотна улиц и дорожек. Дома у границы и улицы между ними и
-// участком не висят в пустоте, а сцена не расширяется.
+// запасом pad), круг радиуса pad под каждым прочим объектом за границей
+// участка (дерево из чертежа в паре метров за ней) и полотна улиц и дорожек.
+// Дома, деревья у границы и улицы между ними и участком не висят в пустоте, а
+// сцена не расширяется.
 const STREET_ZONE_TYPES = new Set(["road", "pedestrian_path"]);
+const OBJECT_PAD_SIDES = 12;
 
 export function computeSurroundings(scene: Scene, pad: number): { yards: Point2[][]; streets: Point2[][] } {
   const yards: Point2[][] = [];
+  const site = scene.boundary?.polygon;
   for (const o of scene.objects) {
-    if (o.type !== "building") continue;
+    if (o.type !== "building") {
+      const { x, z } = o.position;
+      if (site && site.length >= 3 && !pointInPolygon(x, z, site)) {
+        yards.push(
+          Array.from({ length: OBJECT_PAD_SIDES }, (_, i) => {
+            const a = (i * 2 * Math.PI) / OBJECT_PAD_SIDES;
+            return { x: x + pad * Math.cos(a), z: z + pad * Math.sin(a) };
+          }),
+        );
+      }
+      continue;
+    }
     const footprint = (o.metadata.footprint as Point2[] | undefined) ?? [];
     const pts: Point2[] = [];
     // Запас -- восемь точек вокруг вершины: оболочка отстоит от неё на ~pad.
