@@ -1,6 +1,7 @@
-import { memo, Suspense, useMemo, useRef, type RefObject } from "react";
+import { memo, Suspense, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Html, TransformControls } from "@react-three/drei";
+import { createPortal, useThree } from "@react-three/fiber";
 import type { RestrictionZone, SceneObject } from "../types";
 import type { CatalogItem } from "../catalog";
 import { fitHeight, objectDisplayName, resolveCatalogItem } from "../catalog";
@@ -144,6 +145,9 @@ const PlacedObjectItem = memo(function PlacedObjectItem({
   onRotate: (id: string, rotationY: number) => void;
 }) {
   const groupRef = useRef<THREE.Group>(null);
+  const scene = useThree((s) => s.scene);
+  // Двойник объекта в мировых координатах -- им управляет гизмо (см. ниже).
+  const proxy = useMemo(() => new THREE.Object3D(), []);
   // Редактируется всё, что есть в каталоге: пользователь сам это поставил или
   // может поставить. Структурные объекты из подосновы (подъезды, площадки) в
   // каталог не входят и не двигаются.
@@ -179,24 +183,62 @@ const PlacedObjectItem = memo(function PlacedObjectItem({
   // вертикальной оси (X/Z выключены), иначе объект завалится набок.
   const isTranslate = transformMode === "translate";
 
+  // Гизмо -- в корне сцены и тянет двойник объекта в мировых координатах, а
+  // не сам объект внутри отражённой группы SceneView (SCENE_TO_WORLD, z -> -z).
+  // Внутри отражения гизмо оказывалось в зеркальной точке и ехало в обратную
+  // сторону, а поворот шёл против движения мыши. Мир -> сцена: z -> -z,
+  // поворот -> -поворот (отражение меняет направление вращения).
   return (
-    <TransformControls
-      object={groupRef as RefObject<THREE.Object3D>}
-      mode={transformMode}
-      showX={isTranslate}
-      showY={!isTranslate}
-      showZ={isTranslate}
-      onMouseUp={() => {
-        const g = groupRef.current;
-        if (!g) return;
-        if (isTranslate) {
-          onMove(obj.id, g.position.x, g.position.z);
-        } else {
-          onRotate(obj.id, g.rotation.y);
-        }
-      }}
-    >
+    <>
       {body}
-    </TransformControls>
+      <GizmoProxySync proxy={proxy} obj={obj} />
+      {createPortal(
+        <>
+          <primitive object={proxy} />
+          <TransformControls
+            object={proxy}
+            mode={transformMode}
+            showX={isTranslate}
+            showY={!isTranslate}
+            showZ={isTranslate}
+            onObjectChange={() => {
+              const g = groupRef.current;
+              if (!g) return;
+              g.position.set(proxy.position.x, proxy.position.y, -proxy.position.z);
+              g.rotation.y = -yawOf(proxy);
+            }}
+            onMouseUp={() => {
+              if (isTranslate) {
+                onMove(obj.id, proxy.position.x, -proxy.position.z);
+              } else {
+                onRotate(obj.id, -yawOf(proxy));
+              }
+            }}
+          />
+        </>,
+        scene,
+      )}
+    </>
   );
 });
+
+// Поворот вокруг вертикали по направлению оси X объекта: rotation.y у three.js
+// после поворота больше чем на 90° «заворачивается» (Euler XYZ: x = z = π).
+const AXIS_X = new THREE.Vector3(1, 0, 0);
+function yawOf(o: THREE.Object3D): number {
+  const v = AXIS_X.clone().applyQuaternion(o.quaternion);
+  return Math.atan2(-v.z, v.x);
+}
+
+// Двойник встаёт туда, где объект в мире, -- при выделении и после каждой
+// правки сцены (перемещение, поворот, отмена).
+function GizmoProxySync({ proxy, obj }: { proxy: THREE.Object3D; obj: SceneObject }) {
+  const { x, y, z } = obj.position;
+  const rotation = obj.rotation;
+  useLayoutEffect(() => {
+    proxy.position.set(x, y, -z);
+    proxy.rotation.set(0, -rotation, 0);
+    proxy.updateMatrixWorld();
+  }, [proxy, x, y, z, rotation]);
+  return null;
+}
