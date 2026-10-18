@@ -187,6 +187,7 @@ def parse_dxf_doc(doc, scale=None, center=True, layer_map=None, dropped_layers=N
         objects, curbs = _clip_offsite_points(objects, curbs, boundary)
         objects, restrictions, facade = _clip_offsite_buildings(objects, restrictions, facade, boundary)
         _mark_offsite_points(objects, boundary)
+        _mark_offsite_zones(restrictions, boundary)
         buildings = [o for o in objects if o["type"] == "building"]
 
     # Открытая земля -- участок минус всё известное: план покрытий часто не
@@ -449,6 +450,26 @@ def _mark_offsite_points(objects, boundary):
     for o in objects:
         if o["type"] not in _ONSITE_TYPES and not shapely.intersects_xy(site, o["position"]["x"], o["position"]["z"]):
             o.setdefault("metadata", {})[OFFSITE_KEY] = True
+
+
+def _mark_offsite_zones(zones, boundary):
+    """То же для зон (сети, дорожки, площадки, газон), которые на участок не
+    заходят совсем: кабель в паре метров за границей задаёт отступ дереву у
+    края, но на сцене это обрывок над пустотой (zone["offsite"]). Зоны
+    зданий не помечаются -- дома за границей на сцене остаются. Самопере-
+    секающийся контур проверяется по починенной геометрии -- вся его площадь."""
+    site = Polygon([(p["x"], p["z"]) for p in boundary["polygon"]])
+    if not site.is_valid:
+        site = site.buffer(0)
+    shapely.prepare(site)
+    for zone in zones:
+        if zone["type"] == "building" or len(zone["polygon"]) < 3:
+            continue
+        poly = Polygon([(p["x"], p["z"]) for p in zone["polygon"]])
+        if not poly.is_valid:
+            poly = shapely.make_valid(poly)
+        if not site.intersects(poly):
+            zone[OFFSITE_KEY] = True
 
 
 def read_dxf(path):

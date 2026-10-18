@@ -57,6 +57,22 @@ def test_points_outside_the_boundary_stay_as_hidden_constraints(empty_doc):
     assert trees == {20: False, 40: False, 43: True}
 
 
+def test_zones_outside_the_boundary_are_marked_offsite(empty_doc):
+    # Кусок кабеля в 5 м за границей -- offsite (на сцене не рисуется, норма
+    # у края остаётся); кабель через участок и здание за границей -- нет.
+    msp = empty_doc.modelspace()
+    msp.add_lwpolyline([(0, 0), (40, 0), (40, 40), (0, 40)], close=True, dxfattribs={"layer": "TERRITORY_BOUNDARY"})
+    msp.add_line((45, 25), (45, 35), dxfattribs={"layer": "Кабель электрический"})
+    msp.add_line((-10, 10), (50, 10), dxfattribs={"layer": "Кабель электрический"})
+    msp.add_lwpolyline([(44, 44), (50, 44), (50, 50), (44, 50)], close=True, dxfattribs={"layer": "Здания"})
+    result = parse_dxf_doc(empty_doc, center=False)
+    cables = sorted(
+        (min(p["x"] for p in z["polygon"]) > 40, z.get("offsite", False)) for z in result["restrictions"] if z["type"] == "electrical"
+    )
+    assert cables == [(False, False), (True, True)]
+    assert not any(z.get("offsite") for z in result["restrictions"] if z["type"] == "building")
+
+
 def test_points_are_not_hidden_with_an_estimated_boundary(empty_doc):
     # Оценённая граница строится по самому содержимому -- по ней ничего не прячем.
     msp = empty_doc.modelspace()

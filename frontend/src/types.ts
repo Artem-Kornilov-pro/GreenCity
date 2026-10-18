@@ -33,6 +33,9 @@ export interface RestrictionZone {
   layerKind?: string | null;
   // Класс напряжения воздушной ЛЭП, кВ: из имени слоя или параметров GreenPlan; нет -- 10 кВ.
   voltageKv?: number | null;
+  // Зона из чертежа целиком за границей участка: нормы её учитывают, на
+  // сцене она не рисуется (обрывок сети над пустотой).
+  offsite?: boolean;
 }
 
 export interface SceneObject {
