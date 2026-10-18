@@ -42,10 +42,10 @@ def test_prompt_describes_the_plan(planted):
 
 
 def test_visualizations_come_back_as_jpeg_with_a_note(client, planted, monkeypatch):
-    monkeypatch.setattr(yandex_ai, "credentials", lambda: ("key", "folder"))
+    monkeypatch.setattr(yandex_ai, "art_credentials", lambda: ("key", "folder", "yandex-art/latest"))
     seen = []
 
-    async def _fake(client_, api_key, folder, prompt, seed):
+    async def _fake(client_, api_key, folder, prompt, seed, model):
         seen.append((folder, seed))
         return b"\xff\xd8jpeg"
 
@@ -61,13 +61,13 @@ def test_visualizations_come_back_as_jpeg_with_a_note(client, planted, monkeypat
 
 
 def test_not_configured_is_503(client, planted, monkeypatch):
-    monkeypatch.setattr(yandex_ai, "credentials", lambda: None)
+    monkeypatch.setattr(yandex_ai, "art_credentials", lambda: None)
     r = client.post("/api/greenplan/visualizations", json={"scene": planted["scene"], "assignments": planted["assignments"]})
     assert r.status_code == 503 and "YANDEX_CLOUD_API_KEY" in r.json()["detail"]
 
 
 def test_model_failure_is_502(client, planted, monkeypatch):
-    monkeypatch.setattr(yandex_ai, "credentials", lambda: ("key", "folder"))
+    monkeypatch.setattr(yandex_ai, "art_credentials", lambda: ("key", "folder", "yandex-art/latest"))
 
     async def _fail(*args):
         raise visualization.VisualizationFailed("YandexART отказал (429)")
@@ -121,3 +121,57 @@ def test_operation_is_polled_until_the_image_is_ready(monkeypatch):
             return await visualization._generate(client, "key", "folder", "prompt", 1)
 
     assert asyncio.run(_run()) == b"JPG" and len(polls) == 2
+
+
+def test_art_key_is_separate_from_the_llm_key(monkeypatch):
+    monkeypatch.setenv("YANDEX_CLOUD_API_KEY", "llm-key")
+    monkeypatch.setenv("YANDEX_CLOUD_FOLDER", "llm-folder")
+    for var in ("YANDEX_ART_API_KEY", "YANDEX_ART_FOLDER", "YANDEX_ART_MODEL"):
+        monkeypatch.delenv(var, raising=False)
+    assert yandex_ai.art_credentials() == ("llm-key", "llm-folder", "yandex-art/latest")
+    monkeypatch.setenv("YANDEX_ART_API_KEY", "art-key")
+    monkeypatch.setenv("YANDEX_ART_FOLDER", "art-folder")
+    monkeypatch.setenv("YANDEX_ART_MODEL", "yandex-art-2.0/latest")
+    assert yandex_ai.art_credentials() == ("art-key", "art-folder", "yandex-art-2.0/latest")
+    assert yandex_ai.credentials() == ("llm-key", "llm-folder")
+
+
+def _openai_run(handler):
+    import asyncio
+
+    import httpx
+
+    async def _run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await visualization._generate(client, "key", "folder", "prompt", 1, "yandex-art-2.0/latest")
+
+    return asyncio.run(_run())
+
+
+def test_yandex_art_2_goes_through_the_openai_compatible_api():
+    import json
+
+    import httpx
+
+    def _handler(request):
+        assert request.url == visualization.IMAGES_URL
+        assert request.headers["Authorization"] == "Bearer key" and request.headers["OpenAI-Project"] == "folder"
+        assert json.loads(request.read())["model"] == "art://folder/yandex-art-2.0/latest"
+        return httpx.Response(200, json={"data": [{"b64_json": base64.b64encode(b"PNG").decode()}]})
+
+    assert _openai_run(_handler) == b"PNG"
+
+
+@pytest.mark.parametrize(
+    ("status", "body", "expected"),
+    [
+        (403, {"error": "denied"}, "ai.imageGeneration.user"),
+        (500, {"error": {"message": "failed to execute calls to all endpoints"}}, "нет доступа к модели"),
+        (200, {"data": []}, "без изображения"),
+    ],
+)
+def test_openai_compatible_api_failures_are_explained(status, body, expected):
+    import httpx
+
+    with pytest.raises(visualization.VisualizationFailed, match=expected):
+        _openai_run(lambda request: httpx.Response(status, json=body))

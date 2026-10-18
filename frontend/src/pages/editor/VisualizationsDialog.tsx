@@ -31,7 +31,9 @@ export function VisualizationsDialog({
         </DialogHeader>
         <div className="flex flex-col gap-4">
           {result?.visualizations.map((v) => {
-            const src = `data:image/jpeg;base64,${v.image}`;
+            // yandex-art-2.0 отдаёт PNG, yandex-art/latest -- JPEG.
+            const png = v.image.startsWith("iVBOR");
+            const src = `data:image/${png ? "png" : "jpeg"};base64,${v.image}`;
             const label = VIEW_LABELS[v.view] ?? v.view;
             return (
               <figure key={v.view} className="flex flex-col gap-2">
@@ -41,7 +43,7 @@ export function VisualizationsDialog({
                     <span className="font-medium text-ink-700">{label}.</span> {v.prompt}
                   </span>
                   <Button asChild size="sm" variant="outline">
-                    <a href={src} download={`Визуализация — ${title} — ${label}.jpg`}>
+                    <a href={src} download={`Визуализация — ${title} — ${label}.${png ? "png" : "jpg"}`}>
                       <Download className="h-3.5 w-3.5" />
                       JPG
                     </a>

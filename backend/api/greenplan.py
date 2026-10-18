@@ -87,7 +87,7 @@ class GreenPlanVisualizationsRequest(BaseModel):
 class GreenPlanVisualization(BaseModel):
     view: str
     prompt: str = Field(description="Что попросили нарисовать -- по решениям GreenPlan.")
-    image: str = Field(description="JPEG в base64.")
+    image: str = Field(description="JPEG (yandex-art/latest) или PNG (yandex-art-2.0) в base64.")
 
 
 class GreenPlanVisualizationsResult(BaseModel):

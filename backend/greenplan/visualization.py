@@ -1,7 +1,7 @@
 """
 Фотореалистичные визуализации по плану GreenPlan (бонусное задание ТЗ,
-issue #114) -- YandexART в Yandex AI Studio, тот же ключ и каталог, что у
-LLM проекта (core/yandex_ai.py).
+issue #114) -- YandexART в Yandex AI Studio; ключ и каталог -- YANDEX_ART_*
+или те же, что у LLM проекта (core/yandex_ai.py).
 
 YandexART рисует по тексту, а не по чертежу: описание собирается из решений
 GreenPlan -- стиль участка, приёмы по зонам, породы деревьев и кустарников,
@@ -9,8 +9,9 @@ GreenPlan -- стиль участка, приёмы по зонам, пород
 расстановку. Это прямо написано рядом с каждой картинкой («иллюстрация ИИ»):
 проектный документ -- DXF и записка.
 
-Генерация асинхронная: запрос возвращает операцию, её результат --
-изображение JPEG в base64 -- забирается опросом.
+Два API: yandex-art/latest -- асинхронный (запрос возвращает операцию,
+изображение JPEG в base64 забирается опросом), yandex-art-2.0 и новее --
+OpenAI-совместимый /v1/images/generations (картинка сразу в ответе).
 """
 
 from __future__ import annotations
@@ -29,7 +30,8 @@ from greenplan.pattern_library import PATTERN_LIBRARY, STYLE_LABELS
 
 ART_URL = "https://llm.api.cloud.yandex.net/foundationModels/v1/imageGenerationAsync"
 OPERATION_URL = "https://llm.api.cloud.yandex.net:443/operations/{id}"
-ART_MODEL = "yandex-art/latest"
+IMAGES_URL = f"{yandex_ai.YANDEX_BASE_URL}/images/generations"
+IMAGES_SIZE = "1024x1024"
 POLL_INTERVAL_S = 2.0
 TIMEOUT_S = 120.0
 NOTE = "Иллюстрация ИИ (YandexART) по решениям GreenPlan — не проектный чертёж: точная расстановка — в DXF и записке."
@@ -92,19 +94,33 @@ def prompt_for(view: str, description: str) -> str:
     )
 
 
-async def _generate(client: httpx.AsyncClient, api_key: str, folder: str, prompt: str, seed: int) -> bytes:
+def _access_denied() -> VisualizationFailed:
+    return VisualizationFailed(
+        "нет доступа к YandexART: выдайте сервисному аккаунту ключа (YANDEX_ART_API_KEY или YANDEX_CLOUD_API_KEY) роль "
+        "ai.imageGeneration.user в его каталоге (YANDEX_ART_FOLDER или YANDEX_CLOUD_FOLDER); у ключа должна быть "
+        "область yc.ai.imageGeneration.execute"
+    )
+
+
+def _openai_api(model: str) -> bool:
+    """yandex-art-2.0 и новее -- только через OpenAI-совместимый API."""
+    return model.startswith("yandex-art-") and model != "yandex-art/latest"
+
+
+async def _generate(
+    client: httpx.AsyncClient, api_key: str, folder: str, prompt: str, seed: int, model: str = yandex_ai.DEFAULT_ART_MODEL
+) -> bytes:
+    if _openai_api(model):
+        return await _generate_openai(client, api_key, folder, prompt, model)
     headers = {"Authorization": f"Api-Key {api_key}"}
     body = {
-        "modelUri": f"art://{folder}/{ART_MODEL}",
+        "modelUri": f"art://{folder}/{model}",
         "generationOptions": {"seed": str(seed), "aspectRatio": {"widthRatio": "16", "heightRatio": "9"}},
         "messages": [{"weight": "1", "text": prompt}],
     }
     started = await client.post(ART_URL, json=body, headers=headers)
     if started.status_code in (401, 403):
-        raise VisualizationFailed(
-            "нет доступа к YandexART: выдайте сервисному аккаунту ключа YANDEX_CLOUD_API_KEY роль "
-            "ai.imageGeneration.user в каталоге YANDEX_CLOUD_FOLDER (у ключа должна быть область yc.ai.imageGeneration.execute)"
-        )
+        raise _access_denied()
     if started.status_code != 200:
         raise VisualizationFailed(f"YandexART отказал ({started.status_code}): {started.text[:200]}")
     operation_id = started.json().get("id")
@@ -121,16 +137,35 @@ async def _generate(client: httpx.AsyncClient, api_key: str, folder: str, prompt
     raise VisualizationFailed(f"YandexART не ответил за {int(TIMEOUT_S)} с")
 
 
+async def _generate_openai(client: httpx.AsyncClient, api_key: str, folder: str, prompt: str, model: str) -> bytes:
+    headers = {"Authorization": f"Bearer {api_key}", "OpenAI-Project": folder}
+    body = {"model": f"art://{folder}/{model}", "prompt": prompt, "size": IMAGES_SIZE}
+    res = await client.post(IMAGES_URL, json=body, headers=headers, timeout=TIMEOUT_S)
+    if res.status_code in (401, 403):
+        raise _access_denied()
+    if res.status_code != 200:
+        # Модель, к которой у ключа нет доступа, этот API отдаёт как 500
+        # «failed to execute calls to all endpoints».
+        hint = " -- обычно это значит, что у ключа нет доступа к модели" if "all endpoints" in res.text else ""
+        raise VisualizationFailed(f"YandexART отказал ({res.status_code}): {res.text[:200]}{hint}")
+    try:
+        return base64.b64decode(res.json()["data"][0]["b64_json"])
+    except (KeyError, IndexError, ValueError) as e:
+        raise VisualizationFailed(f"YandexART вернул ответ без изображения: {res.text[:200]}") from e
+
+
 async def generate_visualizations(
     scene: Scene, assignments: list[ZoneAssignment], views: list[str], seed: int = 1
 ) -> list[Visualization]:
     """Картинки для ракурсов views (ключи VIEWS) -- параллельно."""
-    creds = yandex_ai.credentials()
+    creds = yandex_ai.art_credentials()
     if creds is None:
-        raise VisualizationNotConfigured("Визуализации не настроены: задайте YANDEX_CLOUD_API_KEY и YANDEX_CLOUD_FOLDER (см. .env.example).")
-    api_key, folder = creds
+        raise VisualizationNotConfigured(
+            "Визуализации не настроены: задайте YANDEX_CLOUD_API_KEY и YANDEX_CLOUD_FOLDER или YANDEX_ART_API_KEY и YANDEX_ART_FOLDER (см. .env.example)."
+        )
+    api_key, folder, model = creds
     description = plan_description(scene, assignments)
     prompts = [(view, prompt_for(view, description)) for view in views]
     async with httpx.AsyncClient(timeout=30.0) as client:
-        images = await asyncio.gather(*(_generate(client, api_key, folder, prompt, seed + i) for i, (_view, prompt) in enumerate(prompts)))
+        images = await asyncio.gather(*(_generate(client, api_key, folder, prompt, seed + i, model) for i, (_view, prompt) in enumerate(prompts)))
     return [Visualization(view, prompt, image) for (view, prompt), image in zip(prompts, images, strict=True)]

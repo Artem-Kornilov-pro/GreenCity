@@ -10,7 +10,9 @@ base_url и каталогом в project). Общий для обеих LLM п�
   русский текст пояснительной записки.
 
 Ключ и каталог одни на обе: YANDEX_CLOUD_API_KEY, YANDEX_CLOUD_FOLDER (см.
-.env.example). Модель адресуется URI gpt://<каталог>/<модель>.
+.env.example). Модель адресуется URI gpt://<каталог>/<модель>. У YandexART
+(greenplan/visualization.py) могут быть свои ключ, каталог и модель --
+YANDEX_ART_API_KEY, YANDEX_ART_FOLDER, YANDEX_ART_MODEL.
 """
 
 from __future__ import annotations
@@ -30,6 +32,7 @@ load_dotenv(ENV_FILE)
 YANDEX_BASE_URL = "https://ai.api.cloud.yandex.net/v1"
 DEFAULT_EDITOR_MODEL = "qwen3-235b-a22b-fp8/latest"
 DEFAULT_REPORT_MODEL = "yandexgpt-5.1/latest"
+DEFAULT_ART_MODEL = "yandex-art/latest"
 
 
 def credentials() -> Optional[tuple[str, str]]:
@@ -37,6 +40,14 @@ def credentials() -> Optional[tuple[str, str]]:
     api_key = os.environ.get("YANDEX_CLOUD_API_KEY", "").strip()
     folder = os.environ.get("YANDEX_CLOUD_FOLDER", "").strip()
     return (api_key, folder) if api_key and folder else None
+
+
+def art_credentials() -> Optional[tuple[str, str, str]]:
+    """(ключ, каталог, модель) YandexART: YANDEX_ART_* или общие ключ и каталог."""
+    api_key = (os.environ.get("YANDEX_ART_API_KEY", "") or os.environ.get("YANDEX_CLOUD_API_KEY", "")).strip()
+    folder = (os.environ.get("YANDEX_ART_FOLDER", "") or os.environ.get("YANDEX_CLOUD_FOLDER", "")).strip()
+    model = os.environ.get("YANDEX_ART_MODEL", "").strip() or DEFAULT_ART_MODEL
+    return (api_key, folder, model) if api_key and folder else None
 
 
 def make_client(api_key: str, folder: str, **kwargs) -> openai.AsyncOpenAI:
