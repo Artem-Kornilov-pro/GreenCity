@@ -323,9 +323,9 @@ $ .venv/bin/python tools/check_export.py locations/12_natashinsky_proezd/12_nata
 
 | Участок | Стиль, ведущий аналог | Зон | Новых деревьев | Новых кустарников | Новый газон | Нарушений у новых | Отклонено точек |
 |---|---|---|---|---|---|---|---|
-| [07_nizhnie_polya](../examples/07_nizhnie_polya/) | пейзажный, 19_2ya_pryadilnaya | 246 | 290 | 1253 | 670 м² | 0 | 1065 |
-| [06_kamchatskaya_ulitsa](../examples/06_kamchatskaya_ulitsa/) | регулярный, 06_kamchatskaya_ulitsa | 114 | 80 | 660 | 12 748 м² | 0 | 513 |
-| [12_natashinsky_proezd](../examples/12_natashinsky_proezd/) | пейзажный, 12_natashinsky_proezd | 44 | 115 | 483 | 2085 м² | 0 | 269 |
+| [07_nizhnie_polya](../examples/07_nizhnie_polya/) | пейзажный, 19_2ya_pryadilnaya | 241 | 292 | 1215 | 671 м² | 0 | 1061 |
+| [06_kamchatskaya_ulitsa](../examples/06_kamchatskaya_ulitsa/) | регулярный, 06_kamchatskaya_ulitsa | 109 | 81 | 633 | 12 781 м² | 0 | 463 |
+| [12_natashinsky_proezd](../examples/12_natashinsky_proezd/) | пейзажный, 12_natashinsky_proezd | 44 | 114 | 482 | 2085 м² | 0 | 267 |
 
 «Отклонено точек» — кандидаты, не прошедшие проверку при расстановке: по норме и по зазору между соседними объектами. Разбивка по правилам — в `summary.rejected_by_rule` файла объяснений.
 
@@ -334,7 +334,7 @@ $ .venv/bin/python tools/check_export.py locations/12_natashinsky_proezd/12_nata
 | Файл | Что в нём |
 |---|---|
 | `<участок>_greenplan.dxf` | выходной DXF: исходник и слои `NEW_*` |
-| `<участок>_explanations.json`, `.csv` | файл объяснений |
+| `<участок>_explanations.json`, `.csv`, `.xlsx` | файл объяснений; в Excel -- ещё таблица всех проверок отступов со статусом нормы |
 | `<участок>_note.docx` | пояснительная записка (без приложения с текстом ИИ) |
 | `summary.json` | сводка и ведомость по видам |
 

@@ -3,17 +3,17 @@
  "source_dxf": "locations/06_kamchatskaya_ulitsa/06_kamchatskaya_ulitsa.dxf",
  "site_style": "regular",
  "lead_project": "06_kamchatskaya_ulitsa",
- "zones": 114,
- "new_trees": 80,
- "new_bushes": 660,
- "new_lawn_sqm": 12748,
+ "zones": 109,
+ "new_trees": 81,
+ "new_bushes": 633,
+ "new_lawn_sqm": 12781,
  "violations_new_objects": 0,
- "rejected_by_norm": 513,
+ "rejected_by_norm": 463,
  "assortment": [
   {
    "category": "дерево",
    "species": "Вяз гибридный Резиста",
-   "count": 76,
+   "count": 77,
    "unit": "шт."
   },
   {
@@ -25,25 +25,25 @@
   {
    "category": "кустарник",
    "species": "Спирея Бумальда",
-   "count": 386,
+   "count": 369,
    "unit": "шт."
   },
   {
    "category": "кустарник",
    "species": "Смородина золотистая",
-   "count": 165,
+   "count": 160,
    "unit": "шт."
   },
   {
    "category": "кустарник",
    "species": "Спирея трехлопастная",
-   "count": 109,
+   "count": 104,
    "unit": "шт."
   },
   {
    "category": "газон",
    "species": "Газон обыкновенный",
-   "count": 12748,
+   "count": 12781,
    "unit": "м²"
   }
  ]
