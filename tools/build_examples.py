@@ -41,7 +41,7 @@ def build(client, slug: str) -> dict:
     (out / f"{slug}_greenplan.dxf").write_bytes(res.content)
 
     body = {"scene": plan["scene"], "assignments": plan["assignments"], "rejections": plan["rejections"]}
-    for fmt in ("json", "csv"):
+    for fmt in ("json", "csv", "xlsx"):
         res = client.post(f"/api/greenplan/explanations?format={fmt}", json=body)
         res.raise_for_status()
         (out / f"{slug}_explanations.{fmt}").write_bytes(res.content)

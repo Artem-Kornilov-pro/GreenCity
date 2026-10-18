@@ -53,6 +53,7 @@ MAX_DETAILED_REJECTIONS = 300
 ASSORTMENT_SOURCE = "ассортимент для озеленения Москвы; ППМ 515-ПП (базовый ассортимент); ППМ 369-ПП (без инвазивных видов)"
 LAMP_SOURCE = "СП 42.13330.2016, табл. 9.1; ППМ 743-ПП, табл. 3.6.1 (опора освещения — дерево)"
 PLANNER_RULE = "правило планировщика (не норма): зазор между объектами"
+PLANNER_STATUS_LABEL = "правило планировщика (не норма)"
 
 ZONE_TYPE_LABELS = {
     "building": "здание",
@@ -68,6 +69,14 @@ ZONE_TYPE_LABELS = {
     "playground_zone": "детская площадка",
     "parking": "парковка",
     "protected_zone": "охранная зона",
+}
+
+OBJECT_TYPE_LABELS = {
+    "tree": "дерево",
+    "bush": "кустарник",
+    "hedge_segment": "живая изгородь",
+    "lamp": "опора освещения",
+    "entrance": "подъезд",
 }
 
 
@@ -186,7 +195,7 @@ def _object_constraints(placer: Placer, obj_id: Optional[str], x: float, z: floa
             continue
         norm = LAMP_SOURCE if other_type == "lamp" else PLANNER_RULE
         out.append(Constraint(
-            what=f"{other_type} {key}", distance_m=round(distance, 2), required_m=norm_value, ok=distance >= norm_value, norm=norm,
+            what=f"{OBJECT_TYPE_LABELS.get(other_type, other_type)} {key}", distance_m=round(distance, 2), required_m=norm_value, ok=distance >= norm_value, norm=norm,
             norm_status="verified" if norm == LAMP_SOURCE else None,
         ))
     return out
@@ -406,8 +415,9 @@ CSV_COLUMNS = [
 ]
 
 
-def _status_label(status: Optional[str]) -> str:
-    return NORM_STATUS_LABELS.get(status, "правило планировщика") if status else ""
+def status_label(status: Optional[str]) -> str:
+    """Статус нормы по-русски; None -- зазор по правилу планировщика."""
+    return NORM_STATUS_LABELS.get(status, PLANNER_STATUS_LABEL) if status else PLANNER_STATUS_LABEL
 
 
 def explanations_csv(scene: Scene, plants: list[PlantExplanation], rejections: RejectionStats) -> str:
@@ -422,7 +432,7 @@ def explanations_csv(scene: Scene, plants: list[PlantExplanation], rejections: R
         writer.writerow([
             p.id, p.status, p.type, p.species, p.dxf_layer, p.x, p.z, p.dxf_x, p.dxf_y, p.pattern or "", p.source_project or "",
             p.reason, p.species_basis, c.what if c else "", c.distance_m if c else "", c.required_m if c else "", c.norm if c else "",
-            _status_label(c.norm_status) if c else "",
+            status_label(c.norm_status) if c else "",
         ])
     for r in rejections.detailed:
         writer.writerow([
@@ -434,11 +444,11 @@ def explanations_csv(scene: Scene, plants: list[PlantExplanation], rejections: R
         writer.writerow([
             z.zone_id, "запрет посадки", "дерево", "", "", "", "", "", "", "", "",
             f"полоса вокруг объекта «{z.what}», где деревья не ставятся", "", z.what, "", z.tree_setback_m, z.tree_norm,
-            _status_label(z.tree_norm_status),
+            status_label(z.tree_norm_status),
         ])
         writer.writerow([
             z.zone_id, "запрет посадки", "кустарник", "", "", "", "", "", "", "", "",
             f"полоса вокруг объекта «{z.what}», где кустарники не ставятся", "", z.what, "", z.bush_setback_m, z.bush_norm,
-            _status_label(z.bush_norm_status),
+            status_label(z.bush_norm_status),
         ])
     return buf.getvalue()

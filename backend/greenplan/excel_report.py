@@ -27,10 +27,9 @@ from openpyxl.utils import get_column_letter
 
 from core.plant_catalog import catalog_by_id
 from core.schemas import Scene
-from core.setback_norms import NORM_STATUS_LABELS
 from core.versions import versions
 from greenplan.assortment_report import improvements_assortment, lawn_assortment, summarize_assortment
-from greenplan.explanations import PlantExplanation, RejectionStats, not_checked, restricted_zones
+from greenplan.explanations import PlantExplanation, RejectionStats, not_checked, restricted_zones, status_label
 
 _HEADER_FONT = Font(bold=True)
 _HEADER_FILL = PatternFill("solid", fgColor="DCEFE0")
@@ -54,10 +53,6 @@ def _sheet(wb: Workbook, title: str, header: list[str], rows: list[list], first:
         width = max((len(str(cell.value)) for cell in column if cell.value is not None), default=8)
         ws.column_dimensions[get_column_letter(index)].width = min(_MAX_WIDTH, max(8, width + 2))
     return ws
-
-
-def _status(status) -> str:
-    return NORM_STATUS_LABELS.get(status, "правило планировщика") if status else ""
 
 
 def explanations_xlsx(scene: Scene, plants: list[PlantExplanation], rejections: RejectionStats) -> bytes:
@@ -88,7 +83,7 @@ def explanations_xlsx(scene: Scene, plants: list[PlantExplanation], rejections: 
         "Проверки",
         ["id посадки", "Вид", "Ограничение", "Расстояние, м", "Норма, м", "Выполнено", "НПА и пункт", "Статус нормы"],
         [
-            [p.id, p.species, c.what, c.distance_m, c.required_m, "да" if c.ok else "НЕТ", c.norm, _status(c.norm_status)]
+            [p.id, p.species, c.what, c.distance_m, c.required_m, "да" if c.ok else "НЕТ", c.norm, status_label(c.norm_status)]
             for p in plants
             for c in p.constraints
         ],
@@ -107,7 +102,7 @@ def explanations_xlsx(scene: Scene, plants: list[PlantExplanation], rejections: 
 
     zones = restricted_zones(scene)
     rows = [
-        [z.zone_id, z.what, z.tree_setback_m, z.tree_norm, _status(z.tree_norm_status), z.bush_setback_m, z.bush_norm, _status(z.bush_norm_status)]
+        [z.zone_id, z.what, z.tree_setback_m, z.tree_norm, status_label(z.tree_norm_status), z.bush_setback_m, z.bush_norm, status_label(z.bush_norm_status)]
         for z in zones
     ]
     rows += [["", f"не проверялось нормами: {row['what']}", "", row["reason"], "", "", "", ""] for row in not_checked(scene)]

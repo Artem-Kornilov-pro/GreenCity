@@ -4,16 +4,16 @@
  "site_style": "landscape",
  "lead_project": "12_natashinsky_proezd",
  "zones": 44,
- "new_trees": 115,
- "new_bushes": 483,
+ "new_trees": 114,
+ "new_bushes": 482,
  "new_lawn_sqm": 2085,
  "violations_new_objects": 0,
- "rejected_by_norm": 269,
+ "rejected_by_norm": 267,
  "assortment": [
   {
    "category": "дерево",
    "species": "Клен остролистный",
-   "count": 46,
+   "count": 45,
    "unit": "шт."
   },
   {
@@ -37,7 +37,7 @@
   {
    "category": "кустарник",
    "species": "Жимолость золотистая",
-   "count": 337,
+   "count": 336,
    "unit": "шт."
   },
   {
