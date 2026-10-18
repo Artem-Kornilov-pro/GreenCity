@@ -5,7 +5,7 @@ import { createPortal, useThree } from "@react-three/fiber";
 import type { RestrictionZone, SceneObject } from "../types";
 import type { CatalogItem } from "../catalog";
 import { fitHeight, objectDisplayName, resolveCatalogItem } from "../catalog";
-import { buildZoneIndex, violatesAt } from "../geometry";
+import { buildZoneIndex, isOffsite, violatesAt } from "../geometry";
 import { plantKindOfObjectType } from "../setbackNorms";
 import { ObjectVisual } from "./ObjectVisual";
 import { InstancedVegetationGroup, type InstancePlacement } from "./InstancedVegetation";
@@ -37,8 +37,10 @@ export function PlacedObjects({
   // а не на каждый клик.
   const rows = useMemo(() => {
     const index = buildZoneIndex(restrictions);
+    // Объекты из чертежа за границей участка не рисуются: это невидимые
+    // ограничения для расстановки, а не объекты участка.
     return objects
-      .filter((o) => o.type !== "building")
+      .filter((o) => o.type !== "building" && !isOffsite(o))
       .map((obj) => {
         // Подъезд встроен в стену -- отступ от здания к нему неприменим.
         // Мощение по норме допускается над охранной зоной сети -- это не

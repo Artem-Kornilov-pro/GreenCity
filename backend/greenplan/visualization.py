@@ -27,7 +27,7 @@ from typing import Optional
 import httpx
 
 from core import yandex_ai
-from core.schemas import Scene
+from core.schemas import Scene, is_offsite
 from greenplan.pattern_assignment import ZoneAssignment
 from greenplan.plant_appearance import described, short_described
 
@@ -120,7 +120,7 @@ def site_brief(scene: Scene, assignments: list[ZoneAssignment]) -> SiteBrief:
         patterns=[pid for pid, _count in patterns.most_common()],
         trees=_species(o for o in new if o.type == "tree"),
         bushes=_species(o for o in new if o.type in ("bush", "hedge_segment")),
-        existing_trees=sum(1 for o in scene.objects if o.type == "tree" and not o.metadata.get("generated")),
+        existing_trees=sum(1 for o in scene.objects if o.type == "tree" and not o.metadata.get("generated") and not is_offsite(o)),
         new_lawn=any(lawn.status == "new" for lawn in scene.lawns),
     )
 

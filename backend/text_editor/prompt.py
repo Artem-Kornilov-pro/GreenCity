@@ -19,7 +19,7 @@ from core.placement import (
 )
 from core.plant_catalog import CATALOG as BASE_CATALOG
 from core.plant_catalog import CatalogItem
-from core.schemas import Scene
+from core.schemas import Scene, is_offsite
 from greenplan.species_selection import in_base_515
 from text_editor.plan_common import TYPE_ALIASES, name_words, same_word
 
@@ -141,7 +141,7 @@ def _build_context(scene: Scene, catalog: list[CatalogItem], placer: Placer, ins
 
     # Номер («подъезд 3») -- чтобы «у первого подъезда» значило одно и то же;
     # id -- чтобы на подъезд можно было сослаться в from_id/to_id/near_id/at_id.
-    all_landmarks = [o for o in scene.objects if o.type in LANDMARK_TYPES]
+    all_landmarks = [o for o in scene.objects if o.type in LANDMARK_TYPES and not is_offsite(o)]
     numbers: Counter = Counter()
     landmarks = []
     for o in all_landmarks[:MAX_LANDMARKS_IN_PROMPT]:
@@ -170,7 +170,7 @@ def _build_context(scene: Scene, catalog: list[CatalogItem], placer: Placer, ins
         for number, poly in enumerate(placer.free_areas(), 1)
     ]
 
-    editable_objects = [o for o in scene.objects if o.type in editable]
+    editable_objects = [o for o in scene.objects if o.type in editable and not is_offsite(o)]
     objects = [
         {
             "id": o.id,

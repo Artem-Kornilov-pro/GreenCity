@@ -60,7 +60,17 @@ class SceneObject(BaseModel):
     position: Point3
     rotation: float = Field(description="Поворот вокруг вертикальной оси, радианы.")
     scale: float
-    metadata: dict = Field(description="species, catalogId, sourceLayer (из чертежа), generated и source (GreenPlan, ассистент), …")
+    metadata: dict = Field(
+        description="species, catalogId, sourceLayer (из чертежа), generated и source (GreenPlan, ассистент), "
+        "offsite (из чертежа, за границей участка), …"
+    )
+
+
+def is_offsite(obj: SceneObject) -> bool:
+    """Объект из чертежа за границей участка (parse_dxf._mark_offsite_points):
+    невидимое ограничение -- расстановка соблюдает норму до него, но в
+    редакторе, отчётах, проверке нарушений и правке текстом его нет."""
+    return bool(obj.metadata.get("offsite"))
 
 
 class LayerInfo(BaseModel):

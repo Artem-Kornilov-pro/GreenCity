@@ -22,7 +22,7 @@ from core.placement import (
     Placer,
 )
 from core.plant_catalog import CatalogItem
-from core.schemas import Point3, RestrictionZone, Scene, SceneObject
+from core.schemas import Point3, RestrictionZone, Scene, SceneObject, is_offsite
 from core.setback_norms import SpeciesArg
 from greenplan.options import GreenPlanOptions
 from text_editor.operations import (
@@ -204,7 +204,7 @@ class PlanApplier(PlacementOpsMixin, EditingOpsMixin):
 
     def _editable(self, action: str, obj_id: str) -> Optional[SceneObject]:
         obj = self.objects.get(obj_id)
-        if obj is None:
+        if obj is None or is_offsite(obj):
             self.rejected.append(f"{action} {obj_id}: такого объекта нет")
             return None
         if obj.type not in self.editable:

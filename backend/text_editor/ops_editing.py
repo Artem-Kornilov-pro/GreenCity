@@ -23,7 +23,7 @@ from core.placement import (
     clamp,
 )
 from core.placement_geometry import shortest_path
-from core.schemas import Point2, Point3, RestrictionZone, SceneObject
+from core.schemas import Point2, Point3, RestrictionZone, SceneObject, is_offsite
 from greenplan.species_selection import courtyard_palette
 from text_editor.courtyard_design import DEFAULT_ELEMENTS, DESIGN_ITEM_IDS, ELEMENTS, CourtyardDesigner
 from text_editor.courtyard_layout import STYLES
@@ -242,7 +242,8 @@ class EditingOpsMixin:
         def collect(circle, use_target: bool = True) -> list[SceneObject]:
             matches = []
             for obj in self.objects.values():
-                if obj.type not in types:
+                # За границей участка -- невидимое ограничение, не правится.
+                if obj.type not in types or is_offsite(obj):
                     continue
                 if wanted_ids and obj.id not in wanted_ids:
                     continue
