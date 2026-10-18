@@ -66,6 +66,9 @@ filterwarnings = [
     # starlette.testclient использует устаревший алиас anyio.abc.BlockingPortal
     # -- предупреждение из самой starlette, не из нашего кода.
     "ignore:The anyio.abc.BlockingPortal alias is deprecated.*:DeprecationWarning",
+    # ezdxf (math/_matrix44.py) задаёт m.shape -- NumPy 2.5 объявил это
+    # устаревшим; предупреждение из самой ezdxf, результат верный.
+    "ignore:Setting the shape on a NumPy array has been deprecated:DeprecationWarning",
 ]
 
 [tool.coverage.run]

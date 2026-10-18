@@ -29,6 +29,26 @@ export default defineConfig(({ mode }) => {
     env.ALLOWED_HOSTS === 'all' ? true : env.ALLOWED_HOSTS ? env.ALLOWED_HOSTS.split(',').map((h) => h.trim()) : undefined
   return {
     plugins: [react(), tailwindcss()],
+    build: {
+      rolldownOptions: {
+        output: {
+          // Библиотеки -- отдельными чанками: меняются реже кода приложения и
+          // остаются в кэше браузера между релизами.
+          codeSplitting: {
+            groups: [
+              { name: 'three', test: /node_modules[\\/]three[\\/]/, priority: 3 },
+              { name: 'react-three', test: /node_modules[\\/]@react-three[\\/]/, priority: 2 },
+              { name: 'three-extras', test: /node_modules[\\/](three-stdlib|three-mesh-bvh|troika[^\\/]*|camera-controls|maath|meshline|stats-gl|@monogrid)[\\/]/, priority: 2 },
+              { name: 'react', test: /node_modules[\\/](react|react-dom|scheduler|react-router|@reduxjs|react-redux)[\\/]/, priority: 1 },
+              { name: 'vendor', test: /node_modules/ },
+            ],
+          },
+        },
+      },
+      // Ядро three.js после минификации -- около 700 КБ и на части не
+      // делится; порог по умолчанию (500 КБ) ругался бы на него всегда.
+      chunkSizeWarningLimit: 800,
+    },
     server: {
       allowedHosts,
       proxy: { '/api': proxy, '/docs': proxy, '/openapi.json': proxy },

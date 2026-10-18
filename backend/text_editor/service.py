@@ -11,7 +11,7 @@
 
 Настройки -- из окружения: LLM_PROVIDER («yandex» по умолчанию или
 «gemini»); для yandex -- YANDEX_CLOUD_API_KEY, YANDEX_CLOUD_FOLDER,
-YANDEX_CLOUD_MODEL (по умолчанию qwen3-235b-a22b-fp8/latest); для gemini --
+YANDEX_CLOUD_MODEL (по умолчанию deepseek-v4-flash/latest); для gemini --
 GEMINI_API_KEY, GEMINI_MODEL.
 
 Файлы: operations.py -- словарь операций; prompt.py -- контекст и системный

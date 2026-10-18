@@ -51,14 +51,22 @@ def is_service_file(name: str) -> bool:
 
 
 def _member_name(info: zipfile.ZipInfo) -> str:
-    """Имя файла в архиве. Архивы из русской Windows пишут имена в cp866 без
-    флага UTF-8, и zipfile читает их как cp437 -- такие имена перекодируются."""
+    """Имя файла в архиве. Без флага UTF-8 zipfile читает имя как cp437, а
+    записано оно бывает в UTF-8 (zip на macOS и Linux) или в cp866 (русская
+    Windows). Сначала пробуется UTF-8: байты cp866 корректным UTF-8 почти
+    никогда не складываются, а наоборот -- складываются всегда."""
     if info.flag_bits & 0x800:
         return info.filename
     try:
-        return info.filename.encode("cp437").decode("cp866")
-    except (UnicodeEncodeError, UnicodeDecodeError):
+        raw = info.filename.encode("cp437")
+    except UnicodeEncodeError:
         return info.filename
+    for encoding in ("utf-8", "cp866"):
+        try:
+            return raw.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return info.filename
 
 
 def unique_path(dest_dir: Path, name: str) -> Path:

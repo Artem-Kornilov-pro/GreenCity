@@ -112,3 +112,24 @@ def test_explanations_name_the_source_hash_and_versions(client):
 def test_versions_are_stable():
     assert versions() == versions()
     assert set(versions()) == {"app", "parser_rules", "norms", "precedent_corpus"}
+
+
+def test_attribute_written_with_a_default_tag_is_not_a_change():
+    # Атрибут из конвертации DWG несёт «67 0» (пространство модели); ezdxf
+    # пишет его, а прочитав файл заново, опускает -- это не правка исходника
+    # (Парковая, 4 вставки с атрибутами).
+    from exchange.export_check import entity_fingerprints
+
+    def roundtrip(doc):
+        buf = io.StringIO()
+        doc.write(buf)
+        return ezdxf.read(io.StringIO(buf.getvalue()))
+
+    doc = ezdxf.new()
+    doc.blocks.new("TAG").add_attdef("NAME", (0, 0))
+    doc.modelspace().add_blockref("TAG", (5, 5)).add_auto_attribs({"NAME": "дерево"})
+    source = roundtrip(doc)  # как исходник, прочитанный из файла
+    insert = source.modelspace().query("INSERT").first
+    for attrib in insert.attribs:
+        attrib.dxf.paperspace = 0
+    assert entity_fingerprints(roundtrip(source)) == entity_fingerprints(source)

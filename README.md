@@ -54,7 +54,7 @@ tools/           эталоны корпуса, примеры, проверка
 
 ## Быстрый старт
 
-Обе LLM проекта — в Yandex AI Studio, с одним ключом и каталогом (`YANDEX_CLOUD_API_KEY`, `YANDEX_CLOUD_FOLDER`): ИИ-ассистент — Qwen3 235B (`YANDEX_CLOUD_MODEL`), текст-обоснование GreenPlan — YandexGPT 5.1 Pro (`YANDEX_CLOUD_REPORT_MODEL`). Для ассистента можно переключиться на Gemini (`LLM_PROVIDER=gemini`). Скопируйте шаблон и заполните значения — сам `.env` в git не попадает:
+Обе LLM проекта — в Yandex AI Studio, с одним ключом и каталогом (`YANDEX_CLOUD_API_KEY`, `YANDEX_CLOUD_FOLDER`): ИИ-ассистент — DeepSeek V4 Flash (`YANDEX_CLOUD_MODEL`), текст-обоснование GreenPlan — YandexGPT 5.1 Pro (`YANDEX_CLOUD_REPORT_MODEL`). Для ассистента можно переключиться на Gemini (`LLM_PROVIDER=gemini`). Скопируйте шаблон и заполните значения — сам `.env` в git не попадает:
 
 ```bash
 cp .env.example .env
@@ -228,7 +228,7 @@ make lint-fix    # автоисправление того, что чинитс�
 
   Виды можно называть по-русски («липы», «сирень», «клён остролистный») — названные в просьбе виды всегда попадают в контекст модели. Ассистент помнит последние правки чата («убери их», «то же самое у второго дома»), а последнюю правку можно отменить кнопкой в чате.
 
-  Провайдер выбирается переменной `LLM_PROVIDER` в `.env` — `yandex` (по умолчанию, Yandex AI Studio, модель Qwen3 235B) или `gemini`, оба через OpenAI-совместимый API (`backend/text_editor/service.py`, `backend/core/yandex_ai.py`); ответ приходит за несколько секунд
+  Провайдер выбирается переменной `LLM_PROVIDER` в `.env` — `yandex` (по умолчанию, Yandex AI Studio, модель DeepSeek V4 Flash) или `gemini`, оба через OpenAI-совместимый API (`backend/text_editor/service.py`, `backend/core/yandex_ai.py`); ответ приходит за несколько секунд
 - Запуск в Docker (`docker compose up -d --build`) — healthcheck на каждом сервисе, зависимости по факту готовности (`depends_on: condition: service_healthy`), автоматический перезапуск упавшего контейнера (`restart: unless-stopped`)
 - Наблюдаемость: метрики Prometheus (стандартные HTTP + бизнес-метрики — сколько распарсено/сгенерировано/экспортировано, исходы правки текстом и входа/регистрации) и структурированные JSON-логи с request_id, дашборды Grafana готовы из коробки — поднимаются вместе со всем остальным одной командой `docker compose up`, подробности `observability/README.md`
 

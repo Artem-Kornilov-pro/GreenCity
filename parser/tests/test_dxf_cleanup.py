@@ -6,7 +6,7 @@
 import pytest
 from shapely.geometry import Point, Polygon
 
-from dxf_parsing.geometry import split_holes
+from dxf_parsing.geometry import fill_small_holes, split_holes
 from dxf_parsing.objects import dedupe_point_objects
 from parse_dxf import Transform, extract_restrictions, parse_dxf_doc
 
@@ -33,6 +33,23 @@ def test_split_holes_handles_several_holes_and_plain_polygons():
     assert all(not p.interiors for p in pieces)
     assert sum(p.area for p in pieces) == pytest.approx(10000 - 100 - 300)
     assert split_holes(square) == [square]
+
+
+def test_sponge_corridor_around_exploded_symbol_is_not_cut_into_slivers():
+    # Коридор вокруг тысяч миллиметровых штрихов условного знака (Парковая):
+    # тысячи щелей -- заполняются, и зона остаётся одной, а не тысячами осколков.
+    from shapely.geometry import box
+
+    holes = [box(x + 0.4, y + 0.4, x + 0.405, y + 0.405).exterior.coords for x in range(50) for y in range(30)]
+    sponge = Polygon(box(0, 0, 50, 30).exterior.coords, holes)
+    filled = fill_small_holes(sponge, min_area=1.0, min_holes=1000)
+    assert not filled.interiors and len(split_holes(filled)) == 1
+
+
+def test_ordinary_corridor_keeps_its_holes():
+    # Обычный коридор с просветами (кольцо трассы вокруг квартала) не трогается.
+    ring = Polygon([(0, 0), (100, 0), (100, 100), (0, 100)], [[(40, 40), (40.5, 40), (40.5, 40.5), (40, 40.5)]])
+    assert fill_small_holes(ring, min_area=1.0, min_holes=1000) is ring
 
 
 # --- Кольцевая трасса сети -------------------------------------------------------

@@ -3,7 +3,7 @@
 base_url и каталогом в project). Общий для обеих LLM проекта:
 
 * правка плана текстом (text_editor/llm_client.py) -- модель
-  YANDEX_CLOUD_MODEL, по умолчанию Qwen3 235B: строгий JSON по длинной
+  YANDEX_CLOUD_MODEL, по умолчанию DeepSeek V4 Flash: строгий JSON по длинной
   инструкции, без рассуждений, которые съедают лимит ответа;
 * текст-обоснование решений GreenPlan (greenplan/decision_report.py) --
   модель YANDEX_CLOUD_REPORT_MODEL, по умолчанию YandexGPT 5.1 Pro: связный
@@ -30,7 +30,9 @@ from core.paths import ENV_FILE
 load_dotenv(ENV_FILE)
 
 YANDEX_BASE_URL = "https://ai.api.cloud.yandex.net/v1"
-DEFAULT_EDITOR_MODEL = "qwen3-235b-a22b-fp8/latest"
+# Qwen3 235B Yandex вывел из AI Studio (No permission use_model); DeepSeek V4
+# Flash отвечает без рассуждений и проходит оценку tools/ai_editor_eval 29/29.
+DEFAULT_EDITOR_MODEL = "deepseek-v4-flash/latest"
 DEFAULT_REPORT_MODEL = "yandexgpt-5.1/latest"
 # YandexART (yandex-art/latest, yandex-art-2.0) выведена из эксплуатации -- осталась Alice AI ART.
 DEFAULT_ART_MODEL = "aliceai-image-art-3.0"

@@ -368,7 +368,7 @@ def main_diagram() -> Diagram:
         Node("Corpus", "store", "Корпус 34 проектов, нормы НПА, ассортимент", B, 2, 8),
         Node("Check", "task", "Проверка результата, ручные правки на сцене", U, 0, 9),
         Node("TextEdit", "xor", "Правка текстом?", U, 0, 10),
-        Node("Assistant", "llm", "ИИ-ассистент: список операций правки (Qwen3 235B)", L, 0, 11),
+        Node("Assistant", "llm", "ИИ-ассистент: список операций правки (DeepSeek V4 Flash)", L, 0, 11),
         Node("Apply", "task", "Применение операций планировщиком с проверкой норм", B, 0, 12),
         Node("EditJoin", "xor", "", U, 0, 13),
         Node("Fork", "and", "", U, 0, 14),

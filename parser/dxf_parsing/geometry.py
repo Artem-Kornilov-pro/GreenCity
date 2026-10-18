@@ -6,7 +6,7 @@
 
 import math
 
-from shapely.geometry import box
+from shapely.geometry import Polygon, box
 
 
 def polygon_points(entity):
@@ -88,6 +88,28 @@ class Transform:
     def polygon(self, pts):
         return [{"x": round((x - self.ox) * self.scale, 3),
                   "z": round((y - self.oy) * self.scale, 3)} for x, y, *_ in pts]
+
+
+def fill_small_holes(geom, min_area, min_holes):
+    """У многоугольника, где дыр больше min_holes, заполнить дыры площадью
+    меньше min_area (единицы чертежа в квадрате). Коридор сети вокруг
+    «взорванного» условного знака -- тысячи штрихов по несколько миллиметров
+    вплотную -- после объединения похож на губку из десятков тысяч
+    микроскопических дыр, и split_holes нарезал бы его на сотни тысяч
+    осколков (Парковая: 309 тыс. зон с одного слоя кабеля, сцена 191 МБ). В
+    такой дыре ничего не посадить. Обычные чертежи не трогаются: у них дыр в
+    коридоре -- сотни (в корпусе не больше 760)."""
+    if geom is None or geom.is_empty:
+        return geom
+    if geom.geom_type in ("MultiPolygon", "GeometryCollection"):
+        # Части -- как были, по порядку: меняются только их дырки.
+        return type(geom)([fill_small_holes(g, min_area, min_holes) for g in geom.geoms])
+    if geom.geom_type != "Polygon" or len(geom.interiors) <= min_holes:
+        return geom
+    keep = [ring for ring in geom.interiors if Polygon(ring).area >= min_area]
+    if len(keep) == len(geom.interiors):
+        return geom
+    return Polygon(geom.exterior, keep)
 
 
 def split_holes(geom, _depth=0):

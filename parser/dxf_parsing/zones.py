@@ -15,7 +15,7 @@ from shapely.geometry import LineString, MultiPoint, Polygon
 from shapely.ops import linemerge
 
 from dxf_parsing import networks
-from dxf_parsing.geometry import buffer_segment, curve_points, polygon_points, split_holes
+from dxf_parsing.geometry import buffer_segment, curve_points, fill_small_holes, polygon_points, split_holes
 from dxf_parsing.layer_names import BOUNDARY_TIER_KEYS, describe_key, layer_key_of
 from dxf_parsing.rules import (
     BOUNDARY_LAYER_KEYWORDS,
@@ -272,6 +272,13 @@ def _sized_rule(cfg, width_m, text):
     }
 
 
+# Коридор сети, где дыр больше _SPONGE_HOLES, -- «губка» вокруг штрихов
+# условного знака: дыры меньше _MIN_CORRIDOR_HOLE_SQM в нём заполняются, а не
+# режут зону на осколки (geometry.fill_small_holes).
+_SPONGE_HOLES = 1000
+_MIN_CORRIDOR_HOLE_SQM = 1.0
+
+
 def _add_corridor(zones, idx_by_type, cfg, layer, key, lines, half_width, tf, close_gap=0.0):
     """close_gap -- промежутки короче этого (пунктир трубы) закрываются: зона
     трубы шириной в сантиметры иначе рвётся на штрихи."""
@@ -287,7 +294,9 @@ def _add_corridor(zones, idx_by_type, cfg, layer, key, lines, half_width, tf, cl
     if merged.is_empty:
         return
     # Зона хранит один контур без дыр, поэтому многоугольники с дырками
-    # режутся на куски (split_holes).
+    # режутся на куски (split_holes); у «губки» мелкие дыры сначала
+    # заполняются (fill_small_holes).
+    merged = fill_small_holes(merged, _MIN_CORRIDOR_HOLE_SQM / tf.scale**2, _SPONGE_HOLES)
     for poly in split_holes(merged):
         # [:-1] -- shapely повторяет первую точку в конце кольца, а зона
         # хранится незамкнутой.

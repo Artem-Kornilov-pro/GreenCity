@@ -210,8 +210,13 @@ CASES: list[Case] = [
         (len(outs[0].added_of("tree")) == 10, f"деревьев {len(outs[0].added_of('tree'))}, ждали 10"),
         no_violations(outs[0]),
     )),
+    # Ожидаемые числа -- из самой сцены: разбор участка уточняется, и
+    # зашитые числа устаревали (было 444 куста, после дедупликации -- 443).
     Case("real_how_many_trees", "real", ["сколько на участке деревьев и кустов?"], lambda outs: expect(
         (not outs[0].added and not outs[0].removed, "вопрос изменил план"),
-        ("171" in outs[0].result.explanation and "444" in outs[0].result.explanation, f"неверные числа: {outs[0].result.explanation!r}"),
+        (
+            all(str(sum(o.type == t for o in outs[0].before.objects)) in outs[0].result.explanation for t in ("tree", "bush")),
+            f"неверные числа: {outs[0].result.explanation!r}",
+        ),
     )),
 ]
