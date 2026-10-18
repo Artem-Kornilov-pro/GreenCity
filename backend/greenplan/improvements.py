@@ -35,7 +35,12 @@ from core.setback_norms import plant_kind_of_object_type, setback_for
 from greenplan.options import GreenPlanOptions
 from greenplan.zone_partitioning import _iter_polygons
 from text_editor.courtyard_design import BENCH_OFFSET_M, LAMP_OFFSET_M, CourtyardDesigner
-from text_editor.courtyard_layout import ENCLOSURE_MIN_BUILDINGS, ENCLOSURE_MIN_RATIO, ENTRANCE_LINK_LEAK_M, ENTRANCE_REACH_M
+from text_editor.courtyard_layout import (
+    ENCLOSURE_MIN_BUILDINGS,
+    ENCLOSURE_MIN_RATIO,
+    ENTRANCE_LINK_LEAK_M,
+    ENTRANCE_REACH_M,
+)
 
 # Зоны и объекты, которые добавляет GreenPlan: по ним повторный запуск
 # убирает прошлый результат (api/greenplan.py), а записка находит дорожки.
