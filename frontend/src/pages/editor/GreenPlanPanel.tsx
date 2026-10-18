@@ -75,7 +75,7 @@ export function GreenPlanPanel({
               {documentBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
               Пояснительная записка (DOCX)
             </Button>
-            {/* Бонус ТЗ: иллюстрации участка после озеленения (YandexART). */}
+            {/* Бонус ТЗ: иллюстрации участка после озеленения (Alice AI ART). */}
             <Button size="sm" variant="outline" onClick={onVisualize} disabled={visualsBusy}>
               {visualsBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
               {visualsBusy ? "Рисуем визуализации…" : "Визуализации (ИИ)"}

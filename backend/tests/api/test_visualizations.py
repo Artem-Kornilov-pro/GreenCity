@@ -37,8 +37,17 @@ def test_prompt_describes_the_plan(planted):
     species = {o.metadata.get("species") for o in scene.objects if o.metadata.get("generated") and o.type == "tree"}
     assert text.startswith("Городской участок в Москве")
     assert "деревья:" in text and any(s.lower() in text for s in species if s)
+    assert "в пейзажном стиле" in text or "в регулярном стиле" in text
     prompt = visualization.prompt_for("pedestrian", text)
     assert "уровне глаз пешехода" in prompt and "без текста" in prompt
+    assert len(prompt) <= visualization.MAX_PROMPT_CHARS
+
+
+def test_long_description_is_cut_by_whole_parts():
+    text = "Городской участок в Москве; деревья: " + ", ".join(["липа мелколистная"] * 20) + "; кустарники: спирея."
+    prompt = visualization.prompt_for("overview", text)
+    assert len(prompt) <= visualization.MAX_PROMPT_CHARS
+    assert "Городской участок в Москве." in prompt and "кустарники" not in prompt and prompt.endswith("без текста и надписей.")
 
 
 def test_visualizations_come_back_as_jpeg_with_a_note(client, planted, monkeypatch):
@@ -92,7 +101,7 @@ def test_access_denied_explains_which_role_to_grant(monkeypatch):
 
     async def _run():
         async with httpx.AsyncClient(transport=httpx.MockTransport(_handler)) as client:
-            await visualization._generate(client, "key", "folder", "prompt", 1)
+            await visualization._generate(client, "key", "folder", "prompt", 1, "yandex-art/latest")
 
     with pytest.raises(visualization.VisualizationFailed, match="ai.imageGeneration.user"):
         asyncio.run(_run())
@@ -118,7 +127,7 @@ def test_operation_is_polled_until_the_image_is_ready(monkeypatch):
 
     async def _run():
         async with httpx.AsyncClient(transport=httpx.MockTransport(_handler)) as client:
-            return await visualization._generate(client, "key", "folder", "prompt", 1)
+            return await visualization._generate(client, "key", "folder", "prompt", 1, "yandex-art/latest")
 
     assert asyncio.run(_run()) == b"JPG" and len(polls) == 2
 
@@ -128,7 +137,7 @@ def test_art_key_is_separate_from_the_llm_key(monkeypatch):
     monkeypatch.setenv("YANDEX_CLOUD_FOLDER", "llm-folder")
     for var in ("YANDEX_ART_API_KEY", "YANDEX_ART_FOLDER", "YANDEX_ART_MODEL"):
         monkeypatch.delenv(var, raising=False)
-    assert yandex_ai.art_credentials() == ("llm-key", "llm-folder", "yandex-art/latest")
+    assert yandex_ai.art_credentials() == ("llm-key", "llm-folder", "aliceai-image-art-3.0")
     monkeypatch.setenv("YANDEX_ART_API_KEY", "art-key")
     monkeypatch.setenv("YANDEX_ART_FOLDER", "art-folder")
     monkeypatch.setenv("YANDEX_ART_MODEL", "yandex-art-2.0/latest")
@@ -136,19 +145,19 @@ def test_art_key_is_separate_from_the_llm_key(monkeypatch):
     assert yandex_ai.credentials() == ("llm-key", "llm-folder")
 
 
-def _openai_run(handler):
+def _openai_run(handler, model="aliceai-image-art-3.0"):
     import asyncio
 
     import httpx
 
     async def _run():
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-            return await visualization._generate(client, "key", "folder", "prompt", 1, "yandex-art-2.0/latest")
+            return await visualization._generate(client, "key", "folder", "prompt", 1, model)
 
     return asyncio.run(_run())
 
 
-def test_yandex_art_2_goes_through_the_openai_compatible_api():
+def test_alice_art_goes_through_the_openai_compatible_api():
     import json
 
     import httpx
@@ -156,10 +165,10 @@ def test_yandex_art_2_goes_through_the_openai_compatible_api():
     def _handler(request):
         assert request.url == visualization.IMAGES_URL
         assert request.headers["Authorization"] == "Bearer key" and request.headers["OpenAI-Project"] == "folder"
-        assert json.loads(request.read())["model"] == "art://folder/yandex-art-2.0/latest"
-        return httpx.Response(200, json={"data": [{"b64_json": base64.b64encode(b"PNG").decode()}]})
+        assert json.loads(request.read())["model"] == "art://folder/aliceai-image-art-3.0"
+        return httpx.Response(200, json={"data": [{"b64_json": base64.b64encode(b"JPG").decode()}]})
 
-    assert _openai_run(_handler) == b"PNG"
+    assert _openai_run(_handler) == b"JPG"
 
 
 @pytest.mark.parametrize(

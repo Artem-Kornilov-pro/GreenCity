@@ -10,8 +10,8 @@ base_url и каталогом в project). Общий для обеих LLM п�
   русский текст пояснительной записки.
 
 Ключ и каталог одни на обе: YANDEX_CLOUD_API_KEY, YANDEX_CLOUD_FOLDER (см.
-.env.example). Модель адресуется URI gpt://<каталог>/<модель>. У YandexART
-(greenplan/visualization.py) могут быть свои ключ, каталог и модель --
+.env.example). Модель адресуется URI gpt://<каталог>/<модель>. У генерации
+картинок (greenplan/visualization.py) могут быть свои ключ, каталог и модель --
 YANDEX_ART_API_KEY, YANDEX_ART_FOLDER, YANDEX_ART_MODEL.
 """
 
@@ -32,7 +32,8 @@ load_dotenv(ENV_FILE)
 YANDEX_BASE_URL = "https://ai.api.cloud.yandex.net/v1"
 DEFAULT_EDITOR_MODEL = "qwen3-235b-a22b-fp8/latest"
 DEFAULT_REPORT_MODEL = "yandexgpt-5.1/latest"
-DEFAULT_ART_MODEL = "yandex-art/latest"
+# YandexART (yandex-art/latest, yandex-art-2.0) выведена из эксплуатации -- осталась Alice AI ART.
+DEFAULT_ART_MODEL = "aliceai-image-art-3.0"
 
 
 def credentials() -> Optional[tuple[str, str]]:

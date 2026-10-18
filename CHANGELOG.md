@@ -6,7 +6,7 @@
 
 ### Добавлено
 
-- **Отдельный ключ для визуализаций и YandexART 2.0.** `YANDEX_ART_API_KEY`, `YANDEX_ART_FOLDER`, `YANDEX_ART_MODEL` — ключ только для картинок, текст‑обоснование остаётся на `YANDEX_CLOUD_*`. Модель `yandex-art-2.0/latest` идёт через OpenAI‑совместимый `/v1/images/generations`, как в примере кода AI Studio; ошибка 500 «failed to execute calls to all endpoints» объясняется как отсутствие доступа к модели.
+- **Визуализации на Alice AI ART и отдельный ключ для картинок.** Yandex вывел YandexART из эксплуатации (`yandex-art/latest` отвечает «Access to model ... denied», `yandex-art-2.0` — 500); картинки теперь рисует Alice AI ART (`aliceai-image-art-3.0`) через OpenAI‑совместимый `/v1/images/generations`. Ключ только для картинок — `YANDEX_ART_API_KEY`, `YANDEX_ART_FOLDER`, `YANDEX_ART_MODEL`; текст‑обоснование остаётся на `YANDEX_CLOUD_*`. Проверено реальным запросом.
 
 ## [1.1.0] — 2026-10-18
 
