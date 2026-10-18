@@ -384,7 +384,8 @@ def plan_site(
     zones = partition_zones(scene, usable=planting_area)
     characteristics = characterize_site(scene, usable=usable)
     assignments = assign_patterns(scene, zones, k=k, characteristics=characteristics, style=style)
-    placer = Placer(scene, root_barrier=root_barrier)
+    # planting_ground -- дерево и куст только на земле и не у бортового камня.
+    placer = Placer(scene, root_barrier=root_barrier, planting_ground=True)
 
     # Один набор видов на пару (вид зоны, приём) на всём участке: изгородь
     # вдоль всех дорожек -- из одного вида.

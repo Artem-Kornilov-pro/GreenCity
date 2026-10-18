@@ -324,6 +324,12 @@ def _rejection(placer, index, x, z, obj_type, kind, species, zone_kind, pattern)
                 **base, reason=f"ближе нормы к объекту «{worst.what}»", norm=worst.norm,
                 distance_m=worst.distance_m, required_m=worst.required_m,
             )
+    surface = placer.surface_problem(x, z, kind)
+    if surface is not None:
+        # У бортового камня -- норма края тротуара; не на земле -- правило планировщика.
+        on_curb = surface.startswith("у бортового камня")
+        norm = setback_reference("pedestrian_path", kind, 0.0, species).text() if on_curb else PLANNER_RULE
+        return Rejection(**base, reason=surface, norm=norm)
     hit = placer.blocker(x, z, kind, OBJECT_CLEARANCE_M, obj_type)
     if hit is not None:
         key, required, distance = hit

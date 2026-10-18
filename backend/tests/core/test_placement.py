@@ -572,3 +572,36 @@ def test_signal_cable_zone_needs_2m_for_a_tree():
     placer = Placer(make_scene(restrictions=[cable]))
     assert not placer.is_free(6.5, 0, "tree")
     assert placer.is_free(7.5, 0, "tree")
+
+
+# --- Посадки GreenPlan: только на земле и не у бортового камня ---------------
+
+
+def _square(x0, z0, x1, z1):
+    return [Point2(x=x0, z=z0), Point2(x=x1, z=z0), Point2(x=x1, z=z1), Point2(x=x0, z=z1)]
+
+
+def test_planting_ground_keeps_plants_on_allowed_zones_only():
+    lawn = make_zone(id="a1", type="protected_zone", severity="allowed", min_distance=0.0, polygon=_square(20, 20, 30, 30))
+    scene = make_scene(restrictions=[lawn])
+    strict = Placer(scene, planting_ground=True)
+    assert strict.in_region(25, 25, "tree") is True
+    assert strict.in_region(-30, -30, "tree") is False  # участок, но не земля
+    assert strict.in_region(-30, -30, "bush") is False
+    assert strict.in_region(-30, -30, None) is True  # фонарь, скамейка -- не посадки
+    assert "не на земле" in strict.explain(-30, -30, "tree")
+    # Правки текстом и ручная расстановка -- как раньше: газон область не сужает.
+    assert Placer(scene).in_region(-30, -30, "tree") is True
+
+
+def test_planting_ground_keeps_norm_distance_from_curbs():
+    scene = make_scene().model_copy(update={"curbs": [[Point2(x=-40, z=0), Point2(x=40, z=0)]]})
+    strict = Placer(scene, planting_ground=True)
+    # Без разрешённых зон землёй считается весь участок -- ограничивает только борт.
+    assert strict.in_region(10, 0.5, "tree") is False  # дерево -- 0,7 м
+    assert strict.in_region(10, 0.9, "tree") is True
+    assert strict.in_region(10, 0.4, "bush") is False  # кустарник -- 0,5 м
+    assert strict.in_region(10, 0.7, "bush") is True
+    assert strict.in_region(10, 0.1, None) is True
+    assert "у бортового камня" in strict.explain(10, 0.5, "tree")
+    assert Placer(scene).in_region(10, 0.2, "tree") is True
