@@ -34,7 +34,7 @@ from docx.shared import Mm, Pt, RGBColor
 
 from core.paths import LOCATIONS_DIR, NORMS_DIR
 from core.plant_catalog import catalog_by_id
-from core.schemas import Scene
+from core.schemas import Scene, is_offsite
 from core.setback_norms import NORM_STATUS_LABELS, SETBACK_NORMS, setback_reference, species_rules
 from core.versions import versions
 from greenplan.assortment_report import AssortmentRow, improvements_assortment, lawn_assortment, summarize_assortment
@@ -264,7 +264,7 @@ def _section_general(doc, title: str, c: Optional[SiteCharacteristics], scene: S
         territory += " (определён по геометрии участка; тип не подтверждён)"
     present = sorted({z.type for z in scene.restrictions if z.severity != "allowed"})
     networks = ", ".join(ZONE_TYPE_LABELS.get(t, t) for t in present) or "нет"
-    existing = Counter(o.type for o in scene.objects if o.type in ("tree", "bush"))
+    existing = Counter(o.type for o in scene.objects if o.type in ("tree", "bush") and not is_offsite(o))
     rows = [
         ["Объект", title],
         ["Площадь участка", f"{_fmt_area(c.total_area_sqm)} м²"],

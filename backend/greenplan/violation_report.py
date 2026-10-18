@@ -19,7 +19,7 @@ from pydantic import BaseModel
 from shapely.geometry import Point, Polygon
 from shapely.strtree import STRtree
 
-from core.schemas import Scene
+from core.schemas import Scene, is_offsite
 from core.setback_norms import SPECIES_SETBACK_RULES, plant_kind_of_object_type, setback_for
 from core.shapes import polygon_from_points
 
@@ -88,7 +88,8 @@ def find_violations(scene: Scene) -> list[Violation]:
     violations: list[Violation] = []
     for obj in scene.objects:
         kind = plant_kind_of_object_type(obj.type)
-        if kind is None:
+        # За границей участка -- не наш объект: нарушение не его, а чертежа соседей.
+        if kind is None or is_offsite(obj):
             continue
         point = Point(obj.position.x, obj.position.z)
         species = obj.metadata.get("species")

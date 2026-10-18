@@ -186,6 +186,7 @@ def parse_dxf_doc(doc, scale=None, center=True, layer_map=None, dropped_layers=N
         # квартал вокруг участка, а на сцене такие дома висели бы без земли.
         objects, curbs = _clip_offsite_points(objects, curbs, boundary)
         objects, restrictions, facade = _clip_offsite_buildings(objects, restrictions, facade, boundary)
+        _mark_offsite_points(objects, boundary)
         buildings = [o for o in objects if o["type"] == "building"]
 
     # Открытая земля -- участок минус всё известное: план покрытий часто не
@@ -428,6 +429,26 @@ def _clip_offsite_points(objects, curbs, boundary):
     ]
     kept_curbs = [c for c in curbs if any(shapely.contains_xy(region, p["x"], p["z"]) for p in c)]
     return kept_objects, kept_curbs
+
+
+# Точечные объекты за границей участка (в полосе _clip_offsite_points)
+# остаются в сцене невидимыми ограничениями: дерево или фонарь в паре метров
+# за границей задают норму посадкам у края (фонарь -- дерево 4 м), но это не
+# объекты участка -- редактор их не показывает, отчёты и правка текстом не
+# учитывают (metadata.offsite). Подъезды не помечаются: они на фасадах
+# соседних домов, а дома за границей остаются на сцене.
+OFFSITE_KEY = "offsite"
+_ONSITE_TYPES = ("building", "entrance")
+
+
+def _mark_offsite_points(objects, boundary):
+    site = Polygon([(p["x"], p["z"]) for p in boundary["polygon"]])
+    if not site.is_valid:
+        site = site.buffer(0)
+    shapely.prepare(site)
+    for o in objects:
+        if o["type"] not in _ONSITE_TYPES and not shapely.intersects_xy(site, o["position"]["x"], o["position"]["z"]):
+            o.setdefault("metadata", {})[OFFSITE_KEY] = True
 
 
 def read_dxf(path):

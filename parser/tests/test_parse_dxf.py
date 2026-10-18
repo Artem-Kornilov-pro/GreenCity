@@ -44,6 +44,28 @@ def test_parse_dxf_doc_center_false_keeps_original_coordinates(empty_doc):
     assert result["meta"]["origin"] == {"x": 0.0, "y": 0.0}
 
 
+def test_points_outside_the_boundary_stay_as_hidden_constraints(empty_doc):
+    # Дерево в 3 м за границей -- в сцене (норма посадкам у края), но с
+    # пометкой offsite; на границе и внутри -- обычные объекты; дальше полосы
+    # влияния (20 м) -- отсеяно, как и раньше.
+    msp = empty_doc.modelspace()
+    msp.add_lwpolyline([(0, 0), (40, 0), (40, 40), (0, 40)], close=True, dxfattribs={"layer": "TERRITORY_BOUNDARY"})
+    for x, y in ((20, 20), (40, 20), (43, 20), (100, 20)):
+        msp.add_point((x, y), dxfattribs={"layer": "Деревья"})
+    result = parse_dxf_doc(empty_doc, center=False)
+    trees = {o["position"]["x"]: o["metadata"].get("offsite", False) for o in result["objects"] if o["type"] == "tree"}
+    assert trees == {20: False, 40: False, 43: True}
+
+
+def test_points_are_not_hidden_with_an_estimated_boundary(empty_doc):
+    # Оценённая граница строится по самому содержимому -- по ней ничего не прячем.
+    msp = empty_doc.modelspace()
+    for x, y in ((0, 0), (30, 0), (30, 30), (0, 30), (15, 15)):
+        msp.add_point((x, y), dxfattribs={"layer": "Деревья"})
+    result = parse_dxf_doc(empty_doc)
+    assert result["objects"] and not any(o["metadata"].get("offsite") for o in result["objects"])
+
+
 def test_parse_dxf_doc_explicit_scale_overrides_insunits(empty_doc):
     result = parse_dxf_doc(empty_doc, scale=0.5)
     assert result["meta"]["scale"] == 0.5

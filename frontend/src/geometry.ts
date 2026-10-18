@@ -1,4 +1,4 @@
-import type { Point2, RestrictionZone, Scene } from "./types";
+import type { Point2, RestrictionZone, Scene, SceneObject } from "./types";
 import { MAX_SETBACK_M, setbackFor, type PlantKind } from "./setbackNorms";
 
 export function pointInPolygon(px: number, pz: number, poly: Point2[]): boolean {
@@ -193,6 +193,13 @@ export function checkViolationsAt(
   return result;
 }
 
+// Объект из чертежа за границей участка (parser: _mark_offsite_points) --
+// невидимое ограничение: расстановка на бэкенде соблюдает норму до него, а
+// редактор его не рисует и выбрать не даёт.
+export function isOffsite(obj: SceneObject): boolean {
+  return obj.metadata?.offsite === true;
+}
+
 // Земля окрестностей (scene/Ground.tsx) -- только под тем, что есть в чертеже,
 // без заливки пустого места: площадка вокруг каждого дома (оболочка контура с
 // запасом pad), круг радиуса pad под каждым прочим объектом за границей
@@ -207,6 +214,7 @@ export function computeSurroundings(scene: Scene, pad: number): { yards: Point2[
   const site = scene.boundary?.polygon;
   for (const o of scene.objects) {
     if (o.type !== "building") {
+      if (isOffsite(o)) continue; // не рисуется -- земля под ним не нужна
       const { x, z } = o.position;
       if (site && site.length >= 3 && !pointInPolygon(x, z, site)) {
         yards.push(
