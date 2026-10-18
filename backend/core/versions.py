@@ -17,7 +17,7 @@ from pathlib import Path
 
 from core.paths import REPO_ROOT
 
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.1.0"
 
 _PARSER_RULES = ("parser/dxf_parsing/*.py", "parser/parse_dxf.py")
 _NORMS = ("backend/core/setback_norms.py", "data/norms/**/*")
