@@ -92,7 +92,7 @@ export function useGreenPlan({
     downloadBlob(blob, `Пояснительная записка — ${title}.docx`);
   });
 
-  // Визуализации (YandexART): каждый запуск -- другое зерно, другие картинки.
+  // Визуализации (Alice AI ART): каждый запуск -- другое зерно, другие картинки.
   const [visualizations, setVisualizations] = useState<GreenPlanVisualizations | null>(null);
   const [visualsOpen, setVisualsOpen] = useState(false);
   const seed = useRef(1);

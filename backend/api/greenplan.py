@@ -87,7 +87,7 @@ class GreenPlanVisualizationsRequest(BaseModel):
 class GreenPlanVisualization(BaseModel):
     view: str
     prompt: str = Field(description="Что попросили нарисовать -- по решениям GreenPlan.")
-    image: str = Field(description="JPEG в base64.")
+    image: str = Field(description="Изображение в base64 (JPEG; PNG -- если так отдаст модель).")
 
 
 class GreenPlanVisualizationsResult(BaseModel):
@@ -154,11 +154,11 @@ def _generate(request: GreenPlanGenerateRequest, k: int) -> GreenPlanGenerateRes
     response_model=GreenPlanVisualizationsResult,
     tags=["GreenPlan"],
     summary="Фотореалистичные визуализации плана (ИИ)",
-    responses={429: HEAVY_RESPONSES[429], 502: {"description": "YandexART не вернул изображение."}, 503: {"description": "Ключ Yandex AI Studio не задан."}},
+    responses={429: HEAVY_RESPONSES[429], 502: {"description": "Alice AI ART не вернул изображение."}, 503: {"description": "Ключ Yandex AI Studio не задан."}},
     dependencies=[rate_limit("llm")],
 )
 async def greenplan_visualizations(request: GreenPlanVisualizationsRequest):
-    """Бонусное задание ТЗ: иллюстрации участка после озеленения (YandexART).
+    """Бонусное задание ТЗ: иллюстрации участка после озеленения (Alice AI ART).
     Картинка рисуется по описанию решений GreenPlan -- стиль, приёмы, породы,
     газон, -- а не по чертежу, поэтому это иллюстрация замысла, а не точная
     расстановка (пометка `note`). Ракурсы -- `views`, до трёх; генерация --

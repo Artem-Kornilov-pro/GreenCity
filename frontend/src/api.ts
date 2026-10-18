@@ -202,7 +202,7 @@ export function fetchGreenPlanReport(assignments: GreenPlanZoneAssignment[]): Pr
   return request<GreenPlanReportResult>("/api/greenplan/report", { json: assignments, errorMessage: "Не удалось получить отчёт GreenPlan" });
 }
 
-// Иллюстрации участка после озеленения (YandexART) -- по решениям GreenPlan.
+// Иллюстрации участка после озеленения (Alice AI ART) -- по решениям GreenPlan.
 export interface GreenPlanVisualizations {
   note: string;
   visualizations: { view: string; prompt: string; image: string }[];

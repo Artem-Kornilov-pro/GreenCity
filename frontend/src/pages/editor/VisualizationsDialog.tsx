@@ -9,7 +9,7 @@ const VIEW_LABELS: Record<string, string> = {
   detail: "Крупный план посадок",
 };
 
-// Иллюстрации участка после озеленения (YandexART, бонусное задание ТЗ):
+// Иллюстрации участка после озеленения (Alice AI ART, бонусное задание ТЗ):
 // рисуются по описанию решений GreenPlan, не по чертежу -- рядом пометка.
 export function VisualizationsDialog({
   open,
@@ -31,7 +31,9 @@ export function VisualizationsDialog({
         </DialogHeader>
         <div className="flex flex-col gap-4">
           {result?.visualizations.map((v) => {
-            const src = `data:image/jpeg;base64,${v.image}`;
+            // Alice AI ART отдаёт JPEG; на случай PNG -- по сигнатуре.
+            const png = v.image.startsWith("iVBOR");
+            const src = `data:image/${png ? "png" : "jpeg"};base64,${v.image}`;
             const label = VIEW_LABELS[v.view] ?? v.view;
             return (
               <figure key={v.view} className="flex flex-col gap-2">
@@ -41,7 +43,7 @@ export function VisualizationsDialog({
                     <span className="font-medium text-ink-700">{label}.</span> {v.prompt}
                   </span>
                   <Button asChild size="sm" variant="outline">
-                    <a href={src} download={`Визуализация — ${title} — ${label}.jpg`}>
+                    <a href={src} download={`Визуализация — ${title} — ${label}.${png ? "png" : "jpg"}`}>
                       <Download className="h-3.5 w-3.5" />
                       JPG
                     </a>
