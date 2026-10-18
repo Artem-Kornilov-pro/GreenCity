@@ -38,6 +38,11 @@ from greenplan.violation_report import Violation, find_violations
 # Теги, которые меняются при любой записи и не говорят о содержимом:
 # handle, владелец, реакторы.
 _VOLATILE_CODES = {5, 330, 102}
+# Тег со значением по умолчанию -- то же, что его отсутствие: «67 0»
+# (пространство модели) у атрибутов блока ezdxf пишет, а прочитав файл
+# заново, опускает (Парковая: 4 вставки с атрибутами «изменялись» при
+# записи без единой правки).
+_DEFAULT_TAGS = {(67, "0")}
 _PLANTS = ("tree", "bush")
 POSITION_TOLERANCE_M = 0.01
 
@@ -71,7 +76,11 @@ def entity_fingerprints(doc) -> dict[str, str]:
             except Exception:  # noqa: BLE001 -- сущность, которую ezdxf не пишет, сравнивается по типу и слою
                 found[entity.dxf.handle] = f"{entity.dxftype()}:{entity.dxf.get('layer', '')}"
                 continue
-            tags = [(tag.code, str(tag.value)) for tag in collector.tags if tag.code not in _VOLATILE_CODES]
+            tags = [
+                (tag.code, str(tag.value))
+                for tag in collector.tags
+                if tag.code not in _VOLATILE_CODES and (tag.code, str(tag.value)) not in _DEFAULT_TAGS
+            ]
             found[entity.dxf.handle] = hashlib.sha256(repr(tags).encode("utf-8")).hexdigest()
     return found
 

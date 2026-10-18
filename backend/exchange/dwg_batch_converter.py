@@ -24,6 +24,7 @@ dwg2dxf (LibreDWG), .dxf читается как есть, затем modelspace
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 import shutil
 import subprocess
@@ -42,6 +43,8 @@ import exchange.dxf_parser  # noqa: F401 -- добавляет parser/ в sys.pa
 from dxf_parsing.drawing import ParsedContentFilter
 from dxf_parsing.layer_names import LayerResolver
 from exchange.dxf_parser import read_dxf, reread_in_real_encoding
+
+log = logging.getLogger("greencity.parse")
 
 DXF_VERSION = "R2010"
 
@@ -85,7 +88,25 @@ def _convert_one(tool: str, dwg_path: Path, dxf_path: Path) -> None:
         stderr = result.stderr.decode("utf-8", errors="replace").strip()
         stdout = result.stdout.decode("utf-8", errors="replace").strip()
         detail = stderr or stdout or f"код возврата {result.returncode}"
-        raise RuntimeError(detail)
+        log.warning("dwg2dxf не сконвертировал %s: %s", dwg_path.name, detail[:500])
+        raise RuntimeError(conversion_error_text(detail))
+
+
+# Код версии DWG в сообщении LibreDWG: «version code AC1032».
+_VERSION_CODE = re.compile(r"version code (AC\d{4})")
+
+
+def conversion_error_text(detail: str) -> str:
+    """Что сказать пользователю об ошибке dwg2dxf: без путей временных папок
+    сервера и служебных строк LibreDWG (полный вывод -- в журнале)."""
+    version = _VERSION_CODE.search(detail)
+    if "unimplemented DWG version" in detail or "Invalid or unimplemented" in detail:
+        code = f" (код {version.group(1)})" if version else ""
+        return f"файл повреждён или версия DWG не поддерживается{code} — пересохраните чертёж в CAD как DWG 2000–2018 или DXF"
+    if "Failed to decode" in detail or "READ ERROR" in detail:
+        return "файл повреждён: LibreDWG не смог его прочитать — пересохраните чертёж в CAD или выгрузите DXF"
+    first = detail.splitlines()[0] if detail else "неизвестная ошибка"
+    return re.sub(r"(/[^\s:]+)+/", "", first)[:300]
 
 
 def _read_converted_dxf(dxf_path: Path) -> ezdxf.document.Drawing:
@@ -145,6 +166,24 @@ def _repair_dxf_text(src: Path, dst: Path) -> int:
                 fout.write(line)
                 expect_code = True
     return fixes
+
+
+def drop_dangling_inserts(doc: ezdxf.document.Drawing) -> int:
+    """Убрать вставки блоков, определения которых в чертеже нет, -- в
+    пространстве модели, на листах и внутри блоков. LibreDWG теряет часть
+    определений (Шаблоны значков: «Вегейла», «Тсуга»), ссылки на них остаются,
+    и Importer падал на всём файле: «Source block not found». Возвращает,
+    сколько вставок убрано; сверка числа объектов DWG и DXF (count_dwg_entities)
+    покажет их в замечаниях как не дошедшие INSERT."""
+    names = {block.name for block in doc.blocks}
+    dropped = 0
+    containers = [doc.modelspace(), *(doc.layouts.get(n) for n in doc.layouts.names() if n != "Model"), *doc.blocks]
+    for container in containers:
+        for insert in list(container.query("INSERT")):
+            if insert.dxf.name not in names:
+                container.delete_entity(insert)
+                dropped += 1
+    return dropped
 
 
 def _import_all_layouts(
@@ -300,6 +339,10 @@ def _extract_compact(
     counts: Counter = Counter()
     try:
         source_doc = _read_source(src, dxf_tmp)
+        # До сверки с DWG: убранные вставки попадут в «не дошло объектов».
+        dropped = drop_dangling_inserts(source_doc)
+        if dropped:
+            log.warning("%s: вставок без определения блока убрано: %d", src.name, dropped)
         lost = {}
         if src.suffix.lower() == ".dwg":
             dwg_counts = dwg_entities(src)

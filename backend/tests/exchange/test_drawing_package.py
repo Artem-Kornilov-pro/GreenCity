@@ -17,10 +17,18 @@ class _Cp866Info(zipfile.ZipInfo):
         return self.filename.encode("cp866"), self.flag_bits & ~0x800
 
 
-def _zip(path: Path, members: dict[str, bytes], cp866: bool = False) -> Path:
+class _Utf8NoFlagInfo(zipfile.ZipInfo):
+    """Так пишет имена zip на macOS и Linux: UTF-8, но без флага UTF-8."""
+
+    def _encodeFilenameFlags(self):  # noqa: N802 -- имя метода zipfile
+        return self.filename.encode("utf-8"), self.flag_bits & ~0x800
+
+
+def _zip(path: Path, members: dict[str, bytes], cp866: bool = False, utf8_no_flag: bool = False) -> Path:
     with zipfile.ZipFile(path, "w") as zf:
         for name, data in members.items():
-            zf.writestr(_Cp866Info(name) if cp866 else zipfile.ZipInfo(name), data)
+            info = _Cp866Info(name) if cp866 else _Utf8NoFlagInfo(name) if utf8_no_flag else zipfile.ZipInfo(name)
+            zf.writestr(info, data)
     return path
 
 
@@ -56,6 +64,13 @@ def test_cp866_names_from_russian_windows_are_decoded(tmp_path):
     out = tmp_path / "out"
     out.mkdir()
     assert [p.name for p in extract_drawings(archive, out)] == ["Генплан.dwg"]
+
+
+def test_utf8_names_without_the_flag_from_macos_zip_are_decoded(tmp_path):
+    archive = _zip(tmp_path / "a.zip", {"Песчаный/output_1-5__3_ДЖКХ-25_00752tp.dwg": b"tp"}, utf8_no_flag=True)
+    out = tmp_path / "out"
+    out.mkdir()
+    assert [p.name for p in extract_drawings(archive, out)] == ["output_1-5__3_ДЖКХ-25_00752tp.dwg"]
 
 
 def test_paths_from_the_archive_never_leave_the_target_folder(tmp_path):

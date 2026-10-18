@@ -412,3 +412,40 @@ def test_real_dwg_converts_without_losses(tmp_path):
     if not result.converted:
         pytest.skip(f"LibreDWG не прочитал DWG, который сам записал: {result.failed}")
     assert result.lost == {}
+
+
+def test_inserts_of_missing_blocks_are_dropped_and_the_file_still_merges(tmp_path):
+    # LibreDWG теряет часть определений блоков («Шаблоны значков»: «Вегейла»,
+    # «Тсуга»), ссылки остаются -- файл не должен отклоняться целиком.
+    from ezdxf.addons.importer import Importer
+
+    from exchange.dwg_batch_converter import _import_all_layouts, drop_dangling_inserts
+
+    doc = ezdxf.new()
+    doc.blocks.new("Сирень").add_circle((0, 0), 1)
+    doc.blocks.new("Вегейла").add_circle((0, 0), 1)
+    nested = doc.blocks.new("Группа")
+    nested.add_blockref("Вегейла", (0, 0))
+    msp = doc.modelspace()
+    msp.add_blockref("Сирень", (1, 1), dxfattribs={"layer": "Кустарники"})
+    msp.add_blockref("Вегейла", (2, 2), dxfattribs={"layer": "Кустарники"})
+    msp.add_blockref("Группа", (3, 3), dxfattribs={"layer": "Кустарники"})
+    doc.blocks.delete_block("Вегейла", safe=False)
+    with pytest.raises(ValueError, match="not found"):
+        importer = Importer(doc, ezdxf.new())
+        importer.import_entities(list(msp))
+        importer.finalize()
+
+    assert drop_dangling_inserts(doc) == 2  # в модели и внутри блока «Группа»
+    target = ezdxf.new()
+    _import_all_layouts(doc, target)
+    assert sorted(e.dxf.name for e in target.modelspace().query("INSERT")) == ["Группа", "Сирень"]
+
+
+def test_conversion_error_hides_server_paths_and_libredwg_noise():
+    from exchange.dwg_batch_converter import conversion_error_text
+
+    raw = "ERROR: Invalid or unimplemented DWG version code AC1009|\nERROR: Failed to decode file: /var/folders/hb/T/tmp1/old.dwg 0x800\nREAD ERROR 0x800"
+    text = conversion_error_text(raw)
+    assert "AC1009" in text and "пересохраните" in text and "/var/" not in text and "0x800" not in text
+    assert "/tmp/" not in conversion_error_text("Failed to decode file: /tmp/abc/x.dwg")

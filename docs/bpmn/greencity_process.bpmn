@@ -16,7 +16,7 @@
 <bpmn:dataStoreReference id="Corpus" name="Корпус 34 проектов, нормы НПА, ассортимент"/>
 <bpmn:task id="Check" name="Проверка результата, ручные правки на сцене"><bpmn:incoming>Main_Flow_9</bpmn:incoming><bpmn:outgoing>Main_Flow_10</bpmn:outgoing></bpmn:task>
 <bpmn:exclusiveGateway id="TextEdit" name="Правка текстом?"><bpmn:incoming>Main_Flow_10</bpmn:incoming><bpmn:outgoing>Main_Flow_11</bpmn:outgoing><bpmn:outgoing>Main_Flow_12</bpmn:outgoing></bpmn:exclusiveGateway>
-<bpmn:serviceTask id="Assistant" name="ИИ-ассистент: список операций правки (Qwen3 235B)"><bpmn:incoming>Main_Flow_11</bpmn:incoming><bpmn:outgoing>Main_Flow_13</bpmn:outgoing></bpmn:serviceTask>
+<bpmn:serviceTask id="Assistant" name="ИИ-ассистент: список операций правки (DeepSeek V4 Flash)"><bpmn:incoming>Main_Flow_11</bpmn:incoming><bpmn:outgoing>Main_Flow_13</bpmn:outgoing></bpmn:serviceTask>
 <bpmn:task id="Apply" name="Применение операций планировщиком с проверкой норм"><bpmn:incoming>Main_Flow_13</bpmn:incoming><bpmn:outgoing>Main_Flow_14</bpmn:outgoing></bpmn:task>
 <bpmn:exclusiveGateway id="EditJoin" name=""><bpmn:incoming>Main_Flow_12</bpmn:incoming><bpmn:incoming>Main_Flow_14</bpmn:incoming><bpmn:outgoing>Main_Flow_15</bpmn:outgoing></bpmn:exclusiveGateway>
 <bpmn:parallelGateway id="Fork" name=""><bpmn:incoming>Main_Flow_15</bpmn:incoming><bpmn:outgoing>Main_Flow_16</bpmn:outgoing><bpmn:outgoing>Main_Flow_17</bpmn:outgoing><bpmn:outgoing>Main_Flow_18</bpmn:outgoing></bpmn:parallelGateway>

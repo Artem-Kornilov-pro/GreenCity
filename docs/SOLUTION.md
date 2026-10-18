@@ -203,7 +203,7 @@ CSV (разделитель «;», UTF-8 с BOM — открывается в Ex
 
 **Языковые модели** — [Yandex AI Studio](https://yandex.cloud/ru/services/ai-studio), один ключ и каталог:
 
-- ИИ-ассистент — [Qwen3 235B A22B](https://github.com/QwenLM/Qwen3): строгий JSON по длинной инструкции;
+- ИИ-ассистент — DeepSeek V4 Flash в Yandex AI Studio: строгий JSON по длинной инструкции, без рассуждений (Qwen3 235B Yandex вывел из AI Studio);
 - текст-обоснование — [YandexGPT 5.1 Pro](https://yandex.cloud/ru/docs/ai-studio/concepts/generation/models).
 
 **Инфраструктура:**
