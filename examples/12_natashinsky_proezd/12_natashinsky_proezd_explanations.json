@@ -3,8 +3,8 @@
   "source_id": "e934c09d928c7400af03deb71439ff9e",
   "source_sha256": "e934c09d928c7400af03deb71439ff9e4280689a26b76956bb1423b111646fdd",
   "versions": {
-   "app": "1.1.0",
-   "parser_rules": "9a2f4f4507b3",
+   "app": "1.1.1",
+   "parser_rules": "a00cc2c6a3fd",
    "norms": "7b99d79c694a",
    "precedent_corpus": "30f86334551b"
   },
