@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-10-18
+
 По обратной связи организаторов: заказчики передают DWG и DXF как им удобно, единых имён слоёв и стандартизации нет. Конвертер доработан так, чтобы такие чертежи разбирались, а слои с прежними именами — ровно как раньше (весь корпус разбирается так же, как в 1.0.1: `make parser-regression`).
 
 ### Добавлено
@@ -126,6 +128,8 @@
 
 Первая рабочая версия: разбор DXF и DWG, 3D-редактор с проверкой норм, GreenPlan, правка текстом, экспорт DXF, аккаунты и проекты, мониторинг, Docker.
 
+[Unreleased]: https://github.com/Artem-Kornilov-pro/GreenCity/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/Artem-Kornilov-pro/GreenCity/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/Artem-Kornilov-pro/GreenCity/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Artem-Kornilov-pro/GreenCity/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/Artem-Kornilov-pro/GreenCity/releases/tag/v0.1.0
