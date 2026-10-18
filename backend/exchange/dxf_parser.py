@@ -12,6 +12,7 @@ sys.path здесь, в одном месте.
 import sys
 
 from core.building_setbacks import compute_building_setbacks
+from core.geo import scene_geo
 from core.paths import PARSER_DIR
 from core.plant_catalog import catalog_by_id, load_catalog
 from core.schemas import Scene
@@ -63,6 +64,9 @@ def complete_scene(scene: dict) -> dict:
     нормативных отступов вокруг зданий и сохраняемый газон со слоёв плана
     покрытий -- чтобы газон из чертежа был виден сразу, до GreenPlan."""
     scene["buildingSetbacks"] = compute_building_setbacks(scene.get("objects", []))
+    geo = scene_geo(scene.get("meta", {}))
+    if geo is not None:
+        scene["meta"]["geo"] = geo
     lawns = existing_lawns(Scene.model_validate(scene), catalog_by_id())
     scene["lawns"] = [lawn.model_dump() for lawn in lawns]
     return scene

@@ -4,6 +4,7 @@ import { OrbitControls } from "@react-three/drei";
 import type { Point2, RestrictionZone, Scene } from "../types";
 import type { CatalogItem } from "../catalog";
 import { computeSceneBounds, computeSurroundings } from "../geometry";
+import { Basemap } from "./Basemap";
 import { Ground } from "./Ground";
 import { FLAT_LAYER_ORDER } from "./geometryHelpers";
 import { RestrictionZones } from "./RestrictionZones";
@@ -34,8 +35,11 @@ export function SceneView({
   onRotate,
   onHoverZone,
   onAreaSelected,
+  showBasemap = false,
 }: {
   scene: Scene;
+  // Подложка карты (Basemap.tsx) -- только у сцены с привязкой meta.geo.
+  showBasemap?: boolean;
   sceneLoadToken: number;
   catalogById: Map<string, CatalogItem>;
   availableModels: Set<string>;
@@ -76,7 +80,8 @@ export function SceneView({
       <ambientLight intensity={0.7} />
       <directionalLight position={[30, 50, 20]} intensity={1.1} castShadow />
       <FitCamera bounds={bounds} sceneLoadToken={sceneLoadToken} />
-      <Ground boundary={scene.boundary} surroundings={surroundings} />
+      {showBasemap && scene.meta.geo && <Basemap geo={scene.meta.geo} bounds={bounds} />}
+      <Ground boundary={scene.boundary} surroundings={surroundings} withSurroundings={!(showBasemap && scene.meta.geo)} />
       <Lawns lawns={scene.lawns ?? []} />
       <RestrictionZones zones={displayZones} onHover={onHoverZone} />
       <Buildings objects={scene.objects} />

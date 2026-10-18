@@ -47,6 +47,9 @@ export default function EditorPage() {
   // Правые панели занимают одно место -- открытая одна закрывает другую.
   const [rightPanel, setRightPanel] = useState<RightPanel>(null);
   const [hoveredZone, setHoveredZone] = useState<RestrictionZone | null>(null);
+  // Подложка карты -- по кнопке «Карта»; по умолчанию выключена: в закрытой
+  // сети тайлов нет.
+  const [basemapOn, setBasemapOn] = useState(false);
 
   const editor = useSceneEditing();
   const { scene } = editor;
@@ -117,6 +120,8 @@ export default function EditorPage() {
           onLayers={layers.hasLayers ? layers.open : undefined}
           selectionMode={editor.selectionMode}
           onToggleSelection={() => editor.setSelectionMode((v) => !v)}
+          onToggleBasemap={scene?.meta.geo ? () => setBasemapOn((v) => !v) : undefined}
+          basemapOn={basemapOn}
           assistantOpen={rightPanel === "assistant"}
           onToggleAssistant={() => togglePanel("assistant")}
           greenPlanBusy={greenPlan.generate.busy}
@@ -158,8 +163,16 @@ export default function EditorPage() {
               onRotate={editor.rotate}
               onHoverZone={setHoveredZone}
               onAreaSelected={editor.selectArea}
+              showBasemap={basemapOn}
             />
-          ) : (
+          ) : null}
+          {scene && basemapOn && scene.meta.geo && (
+            <div className="pointer-events-auto absolute bottom-2 right-2 z-20 rounded-md bg-white/80 px-2 py-0.5 text-[11px] text-ink-600 shadow-sm">
+              Карта © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="underline">участники OpenStreetMap</a>
+              {" · "}привязка: {scene.meta.geo.crs}
+            </div>
+          )}
+          {!scene && (
             // Место под сцену, пока её нет: сюда же бросают файл.
             <div className="flex h-full items-center justify-center pl-80">
               <div className="flex flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-ink-300 px-16 py-14 text-center text-ink-400">
