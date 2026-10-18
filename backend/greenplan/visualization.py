@@ -29,12 +29,13 @@ import httpx
 from core import yandex_ai
 from core.schemas import Scene
 from greenplan.pattern_assignment import ZoneAssignment
-from greenplan.plant_appearance import described, species_name
+from greenplan.plant_appearance import described, short_described
 
 ART_URL = "https://llm.api.cloud.yandex.net/foundationModels/v1/imageGenerationAsync"
 OPERATION_URL = "https://llm.api.cloud.yandex.net:443/operations/{id}"
 IMAGES_URL = f"{yandex_ai.YANDEX_BASE_URL}/images/generations"
-IMAGES_SIZE = "1024x1024"
+# Широкий кадр: модель отдаёт 1344x768 (почти 16:9).
+IMAGES_SIZE = "1792x1024"
 # Длина запроса у Alice AI ART -- до 500 символов.
 MAX_PROMPT_CHARS = 500
 POLL_INTERVAL_S = 2.0
@@ -43,9 +44,9 @@ NOTE = "Иллюстрация ИИ (Alice AI ART) по решениям GreenPl
 
 # Ракурсы: что показать и как.
 VIEWS: dict[str, str] = {
-    "overview": "Общий вид сверху под углом 45 градусов",
-    "pedestrian": "Вид на уровне глаз пешехода с тротуара",
-    "detail": "Крупный план посадок: деревья, кустарники и газон",
+    "overview": "Вид с дрона, 40 м, под 45°, весь участок целиком",
+    "pedestrian": "Вид с тротуара на уровне глаз, дорожка и посадки вдоль неё",
+    "detail": "Крупный план посадок у дорожки",
 }
 
 
@@ -78,9 +79,12 @@ PATTERN_LOOK: dict[str, str] = {
 }
 # Приёмы, которые видно с тротуара.
 _STREET_PATTERNS = ("linear_hedge_row", "building_ring", "flowing_rows", "diagonal_rows")
-_STYLE = {"regular": "регулярное озеленение", "landscape": "пейзажное озеленение"}
+_STYLE = {"regular": "регулярный стиль, строгая геометрия", "landscape": "пейзажный стиль, свободные группы"}
+# Тип территории (двор, улица, площадь) в промпт не идёт: site_characterization
+# угадывает его эвристикой, и неверное место действия портит картинку
+# сильнее, чем нейтральное «городская территория».
 FLOOR_HEIGHT_M = 3.0
-TAIL = " Лето, ясный день, фотореализм, без текста и надписей."
+TAIL = " Лето, ясный день, фотореализм, без текста."
 
 
 @dataclass
@@ -103,6 +107,7 @@ def _species(objects) -> list[tuple[str, Optional[str]]]:
 
 
 def site_brief(scene: Scene, assignments: list[ZoneAssignment]) -> SiteBrief:
+    """Факты плана для промптов."""
     new = [o for o in scene.objects if o.metadata.get("generated")]
     buildings = [o for o in scene.objects if o.type == "building"]
     heights = sorted(h for o in buildings if isinstance(h := o.metadata.get("height"), (int, float)) and h > 0)
@@ -132,6 +137,7 @@ def _parts(view: str, brief: SiteBrief) -> list[_Part]:
     """Части промпта с важностью для ракурса: на общем виде важна планировка,
     с тротуара -- изгороди и ряды вдоль дорожек, на крупном плане -- породы."""
     parts: list[_Part] = []
+    near = view == "detail"  # форма листьев -- только на крупном плане
     pattern_rank = {"overview": 2, "pedestrian": 2, "detail": 20}[view]
     patterns = brief.patterns
     if view == "pedestrian":
@@ -143,21 +149,22 @@ def _parts(view: str, brief: SiteBrief) -> list[_Part]:
     if view == "detail":
         tree_ranks, bush_ranks = (1, 3, 7), (2, 4, 6)
     for i, (species, catalog_id) in enumerate(brief.trees[:3]):
-        parts.append(_Part("trees", described(species, catalog_id), species_name(species), tree_ranks[i]))
+        parts.append(_Part("trees", described(species, catalog_id, near), short_described(species), tree_ranks[i]))
     for i, (species, catalog_id) in enumerate(brief.bushes[:3]):
-        parts.append(_Part("bushes", described(species, catalog_id), species_name(species), bush_ranks[i]))
+        parts.append(_Part("bushes", described(species, catalog_id, near), short_described(species), bush_ranks[i]))
     if brief.new_lawn:
-        parts.append(_Part("extra", "ухоженный газон", None, 6))
+        parts.append(_Part("extra", "ухоженный газон", None, 5))
     if brief.existing_trees:
-        parts.append(_Part("extra", "сохранённые взрослые деревья", None, 11))
+        parts.append(_Part("extra", "сохранённые взрослые деревья", None, 8))
     return parts
 
 
 def _render(view: str, brief: SiteBrief, parts: list[_Part], shortened: set[int]) -> str:
-    homes = f"между {brief.floors}-этажными жилыми домами" if brief.floors else "между жилыми домами"
-    context = "Двор в Москве " + homes if brief.has_buildings else "Городской участок в Москве"
+    homes = f"жилой квартал, {brief.floors}-этажные дома" if brief.floors else "жилой квартал"
+    context = "Москва, " + homes if brief.has_buildings else "Москва, городская территория"
     sentences = [VIEWS[view], context + (f", {brief.style}" if brief.style else "")]
-    for group, title in (("patterns", "Посадки"), ("trees", "Деревья"), ("bushes", "Кустарники"), ("extra", "")):
+    # «только эти породы» -- иначе модель дорисовывает берёзы и ели, которых в плане нет.
+    for group, title in (("patterns", "Посадки"), ("trees", "Деревья только этих пород"), ("bushes", "Кустарники"), ("extra", "")):
         items = [(p.short if id(p) in shortened else p.full) for p in parts if p.group == group]
         if items:
             text = ", ".join(items)

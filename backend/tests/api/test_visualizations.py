@@ -49,13 +49,14 @@ def test_prompt_names_the_planted_species_with_their_looks(planted):
         assert top_species[1:] in prompt  # первая буква -- строчная
     look = appearance(top_species, brief.trees[0][1])
     assert look and look in visualization.prompt_for("detail", brief)
+    assert "листья" not in visualization.prompt_for("overview", brief).split("Деревья только этих пород:")[1].split(".")[0]
 
 
 def _long_brief(**kw):
     trees = [("Липа мелколистная", None), ("Клен остролистный", None), ("Береза повислая", None)]
     bushes = [("Спирея Бумальда", None), ("Кизильник блестящий", None), ("Дерен белый", None)]
     data = dict(
-        floors=9, has_buildings=True, style="регулярное озеленение",
+        floors=9, has_buildings=True, style="регулярное озеленение: строгая геометрия, стриженые формы",
         patterns=["grove_clusters", "linear_hedge_row", "poisson_scatter_fill"], trees=trees, bushes=bushes,
         existing_trees=10, new_lawn=True,
     )
@@ -67,11 +68,11 @@ def test_long_plan_keeps_the_most_important_parts_per_view():
     brief = _long_brief()
     prompts = {view: visualization.prompt_for(view, brief) for view in visualization.VIEWS}
     assert all(len(p) <= visualization.MAX_PROMPT_CHARS for p in prompts.values())
-    assert all("между 9-этажными жилыми домами" in p and "липа мелколистная (" in p for p in prompts.values())
+    assert all("9-этажные дома" in p and "липа мелколистная (" in p for p in prompts.values())
     # Общий вид -- планировка; с тротуара -- изгороди вдоль дорожек; крупный план -- породы с приметами.
     assert "группы-рощицы" in prompts["overview"]
-    assert prompts["pedestrian"].index("изгороди") < prompts["pedestrian"].index("Деревья")
-    assert "Посадки:" not in prompts["detail"] and "спирея Бумальда (низкий куст, мелкие плоские розовые" in prompts["detail"]
+    assert prompts["pedestrian"].index("изгороди") < prompts["pedestrian"].index("Деревья только")
+    assert "Посадки:" not in prompts["detail"] and "спирея Бумальда (Spiraea × bumalda; низкий куст, мелкие плоские розовые" in prompts["detail"]
 
 
 def test_species_looks_come_from_species_then_genus_then_shape():
@@ -227,3 +228,27 @@ def test_openai_compatible_api_failures_are_explained(status, body, expected):
 
     with pytest.raises(visualization.VisualizationFailed, match=expected):
         _openai_run(lambda request: httpx.Response(status, json=body))
+
+
+
+def test_far_look_keeps_crown_and_colours_but_not_leaf_shape():
+    from greenplan.plant_appearance import far_look
+
+    assert far_look("густая округлая крона, крупные пальчато-лопастные листья") == "густая округлая крона"
+    assert far_look("ажурные перистые листья, грозди оранжево-красных ягод") == "ажурные перистые листья, грозди оранжево-красных ягод"
+    assert far_look("белый ствол с чёрными штрихами, лёгкая ажурная крона") == "белый ствол с чёрными штрихами"
+
+
+def test_latin_name_from_species_then_genus():
+    from greenplan.plant_appearance import described, latin
+
+    assert latin("Клён остролистный") == "Acer platanoides"
+    assert latin("Клен татарский") == "Acer"  # вида нет -- род
+    assert latin("Неизвестное растение") is None
+    assert described("Липа мелколистная", near=False) == "липа мелколистная (Tilia cordata; густая яйцевидная крона)"
+
+
+def test_every_genus_with_a_look_has_a_latin_name():
+    from greenplan.plant_appearance import GENUS_LOOK, LATIN_GENUS
+
+    assert set(GENUS_LOOK) <= set(LATIN_GENUS)

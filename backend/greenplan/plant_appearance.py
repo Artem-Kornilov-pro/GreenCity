@@ -6,6 +6,10 @@
 добавляются приметы, по которым вид узнают на фото: форма кроны, листья,
 кора, цветки или ягоды летом.
 
+К названию добавляется латинское (LATIN_SPECIES, иначе род из LATIN_GENUS):
+модели генерации изображений учились на подписях, где вид назван по-латыни,
+и «Acer platanoides» узнают надёжнее, чем «клён остролистный».
+
 Описание ищется по виду (SPECIES_LOOK -- виды, непохожие на свой род:
 розовые спиреи, голубая ель, пурпурная яблоня), затем по роду (первое слово
 названия, как genus_of в нормах), затем по форме из каталога видов
@@ -24,6 +28,8 @@ from greenplan.species_selection import model_group
 
 # Вид (начало названия, строчными, ё -> е) -> приметы, если вид не похож на свой род.
 SPECIES_LOOK: dict[str, str] = {
+    "спирея березолистная": "низкий компактный куст, белые плоские щитки соцветий",
+    "черемуха маака": "медно-золотистая блестящая кора, кисти белых цветков",
     "спирея бумальда": "низкий куст, мелкие плоские розовые соцветия",
     "спирея японская": "низкий куст, мелкие плоские розовые соцветия",
     "спирея билларда": "розовые соцветия-свечи",
@@ -38,8 +44,8 @@ SPECIES_LOOK: dict[str, str] = {
     "кизильник горизонтальный": "стелющийся куст, ветви ёлочкой",
     "клен гиннала": "многоствольное деревце, мелкие трёхлопастные листья",
     "клен сахаристый/серебристый": "ажурная крона, рассечённые листья с серебристым низом",
-    "липа мелколистная": "густая крона, мелкие сердцевидные листья",
-    "липа крупнолистная": "густая крона, крупные сердцевидные листья",
+    "липа мелколистная": "густая яйцевидная крона, мелкие сердцевидные листья",
+    "липа крупнолистная": "густая яйцевидная крона, крупные сердцевидные листья",
     "смородина альпийская": "плотный куст, мелкие лопастные листья, стриженая изгородь",
     "смородина красная": "куст с гроздьями красных ягод",
     "жимолость татарская": "раскидистый куст, красные ягоды",
@@ -50,6 +56,56 @@ SPECIES_LOOK: dict[str, str] = {
     "тополь дрожащий": "серо-зелёная кора, округлые трепещущие листья",
     "яблоня недзведцкого": "пурпурные листья, тёмно-красные плоды",
     "ива козья": "кустовидное деревце, широкие овальные листья",
+}
+
+# Вид (начало названия, строчными, ё -> е) -> латинское название. Все виды,
+# которые GreenPlan выбирает на тестовых участках и реальных объектах.
+LATIN_SPECIES: dict[str, str] = {
+    "клен остролистный": "Acer platanoides", "клен гиннала": "Acer ginnala", "клен красный": "Acer rubrum",
+    "липа мелколистная": "Tilia cordata", "липа крупнолистная": "Tilia platyphyllos",
+    "липа европейская": "Tilia × europaea", "липа американская": "Tilia americana",
+    "вяз гибридный резиста": "Ulmus 'Resista'", "вяз перисто-ветвистый": "Ulmus pumila",
+    "рябина промежуточная": "Sorbus intermedia", "бархат амурский": "Phellodendron amurense",
+    "дуб черешчатый": "Quercus robur", "орех серый": "Juglans cinerea",
+    "черемуха маака": "Prunus maackii", "черемуха поздняя": "Prunus serotina", "черемуха пенсильванская": "Prunus pensylvanica",
+    "яблоня саржента": "Malus sargentii", "яблоня сливолистная": "Malus prunifolia", "яблоня зибольда": "Malus toringo",
+    "яблоня недзведцкого": "Malus niedzwetzkyana", "слива колючая": "Prunus spinosa",
+    "тополь советский пирамидальный": "Populus 'Sowietica Pyramidalis'", "береза повислая": "Betula pendula",
+    "боярышник арнольда": "Crataegus arnoldiana", "боярышник зеленомясый": "Crataegus chlorosarca",
+    "боярышник сливолистный": "Crataegus × prunifolia", "боярышник перистонадрезанный": "Crataegus pinnatifida",
+    "спирея березолистная": "Spiraea betulifolia", "спирея японская": "Spiraea japonica", "спирея бумальда": "Spiraea × bumalda",
+    "спирея острозубчатая": "Spiraea × arguta", "спирея трехлопастная": "Spiraea trilobata",
+    "спирея иволистная": "Spiraea salicifolia", "спирея серая": "Spiraea × cinerea",
+    "жимолость максимовича": "Lonicera maximowiczii", "жимолость маака": "Lonicera maackii",
+    "жимолость обыкновенная": "Lonicera xylosteum", "жимолость золотистая": "Lonicera chrysantha",
+    "жимолость альпийская": "Lonicera alpigena", "жимолость татарская": "Lonicera tatarica",
+    "смородина красная": "Ribes rubrum", "смородина альпийская": "Ribes alpinum", "смородина золотистая": "Ribes aureum",
+    "кизильник блестящий": "Cotoneaster lucidus", "кизильник горизонтальный": "Cotoneaster horizontalis",
+    "барбарис амурский": "Berberis amurensis", "барбарис обыкновенный": "Berberis vulgaris",
+    "барбарис оттавский": "Berberis × ottawensis", "барбарис тунберга": "Berberis thunbergii",
+    "стефанандра надрезаннолистная": "Stephanandra incisa", "стефанандра танаки": "Stephanandra tanakae",
+    "бересклет бородавчатый": "Euonymus verrucosus", "бересклет маака": "Euonymus maackii",
+    "бересклет форчуна": "Euonymus fortunei", "бересклет европейский": "Euonymus europaeus",
+    "лапчатка кустарниковая": "Dasiphora fruticosa",
+}
+
+# Род -> латинское название рода, если вида нет в LATIN_SPECIES.
+LATIN_GENUS: dict[str, str] = {
+    "бархат": "Phellodendron", "береза": "Betula", "боярышник": "Crataegus", "вишня": "Prunus", "вяз": "Ulmus",
+    "груша": "Pyrus", "дуб": "Quercus", "ива": "Salix", "ивы": "Salix", "кладрастис": "Cladrastis", "клен": "Acer",
+    "липа": "Tilia", "лиственница": "Larix", "маакия": "Maackia", "орех": "Juglans", "ель": "Picea", "пихта": "Abies",
+    "псевдотсуга": "Pseudotsuga", "рябина": "Sorbus", "слива": "Prunus", "сосна": "Pinus", "тополь": "Populus",
+    "туя": "Thuja", "черемуха": "Prunus padus", "яблоня": "Malus", "ясень": "Fraxinus",
+    "аморфа": "Amorpha", "арония": "Aronia", "барбарис": "Berberis", "бересклет": "Euonymus", "бирючина": "Ligustrum",
+    "бузина": "Sambucus", "вейгела": "Weigela", "гортензия": "Hydrangea", "дерен": "Cornus", "жимолость": "Lonicera",
+    "ирга": "Amelanchier", "калина": "Viburnum", "карагана": "Caragana", "кедровый": "Pinus pumila",
+    "кизильник": "Cotoneaster", "лапчатка": "Dasiphora", "лещина": "Corylus", "лох": "Elaeagnus", "магония": "Mahonia",
+    "микробиота": "Microbiota", "миндаль": "Prunus tenella", "можжевельник": "Juniperus", "рододендрон": "Rhododendron",
+    "роза": "Rosa", "сирень": "Syringa", "скумпия": "Cotinus", "смородина": "Ribes", "снежноягодник": "Symphoricarpos",
+    "спирея": "Spiraea", "стефанандра": "Stephanandra", "форзиция": "Forsythia", "чубушник": "Philadelphus",
+    "экзохорда": "Exochorda", "ракитник": "Cytisus", "актинидия": "Actinidia", "аристолохия": "Aristolochia",
+    "виноград": "Vitis", "девичий": "Parthenocissus", "древогубец": "Celastrus", "клематис": "Clematis",
+    "лимонник": "Schisandra",
 }
 
 # Род -> приметы летом.
@@ -159,9 +215,34 @@ GROUP_LOOK: dict[str, str] = {
 }
 
 
+# Приметы, которые видно издалека, кроме формы кроны: цвет цветков, ягод,
+# коры, листвы. Форма листа издалека не видна, а в промпте общего вида
+# тянет модель к крупному плану листьев.
+_FAR_WORDS = (
+    "белы", "розов", "медно", "жёлт", "красн", "оранж", "пурпур", "серебрист", "сиз", "фиолет", "лилов", "голуб", "тёмно-син",
+    "чёрн", "рыжеват", "плакуч", "свисающ", "колонновид", "стриженая", "стелющ", "хвойн",
+)
+
+
+def far_look(look: str) -> str:
+    """Приметы для дальнего плана: первая (форма кроны или куста) и цветные."""
+    parts = [p.strip() for p in look.split(",")]
+    return ", ".join([parts[0], *(p for p in parts[1:] if any(w in p for w in _FAR_WORDS))])
+
+
+def _key(species: Optional[str]) -> str:
+    return (species or "").strip().lower().replace("ё", "е")
+
+
+def latin(species: Optional[str]) -> Optional[str]:
+    """Латинское название вида или рода; None -- неизвестно."""
+    name = _key(species)
+    return next((v for k, v in LATIN_SPECIES.items() if name.startswith(k)), None) or LATIN_GENUS.get(genus_of(species) or "")
+
+
 def appearance(species: Optional[str], catalog_id: Optional[str] = None) -> Optional[str]:
     """Приметы вида летом или None, если сказать нечего."""
-    name = (species or "").strip().lower().replace("ё", "е")
+    name = _key(species)
     look = next((v for k, v in SPECIES_LOOK.items() if name.startswith(k)), None) or GENUS_LOOK.get(genus_of(species) or "")
     if look:
         return look
@@ -170,12 +251,21 @@ def appearance(species: Optional[str], catalog_id: Optional[str] = None) -> Opti
     return GROUP_LOOK.get(group or "")
 
 
-def described(species: str, catalog_id: Optional[str] = None) -> str:
-    """«липа европейская (густая яйцевидная крона, сердцевидные листья)».
-    Сорт и фамилия в названии -- как есть: «вяз гибридный Резиста»."""
+def described(species: str, catalog_id: Optional[str] = None, near: bool = True) -> str:
+    """«липа европейская (Tilia × europaea; густая яйцевидная крона,
+    сердцевидные листья)»; near=False -- только приметы, видные издалека.
+    Сорт и фамилия -- как есть: «вяз гибридный Резиста»."""
     look = appearance(species, catalog_id)
-    name = species_name(species)
-    return f"{name} ({look})" if look else name
+    if look and not near:
+        look = far_look(look)
+    inside = "; ".join(x for x in (latin(species), look) if x)
+    return f"{species_name(species)} ({inside})" if inside else species_name(species)
+
+
+def short_described(species: str) -> str:
+    """Без примет, только латинское название: «липа европейская (Tilia × europaea)»."""
+    lat = latin(species)
+    return f"{species_name(species)} ({lat})" if lat else species_name(species)
 
 
 def species_name(species: str) -> str:
