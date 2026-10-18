@@ -27,27 +27,70 @@ def planted(client):
     return client.post("/api/greenplan/generate", json={"scene": scene}).json()
 
 
-def test_prompt_describes_the_plan(planted):
+def _brief(planted):
     from core.schemas import Scene
     from greenplan.pattern_assignment import ZoneAssignment
 
     scene = Scene.model_validate(planted["scene"])
-    assignments = [ZoneAssignment.model_validate(a) for a in planted["assignments"]]
-    text = visualization.plan_description(scene, assignments)
-    species = {o.metadata.get("species") for o in scene.objects if o.metadata.get("generated") and o.type == "tree"}
-    assert text.startswith("Городской участок в Москве")
-    assert "деревья:" in text and any(s.lower() in text for s in species if s)
-    assert "в пейзажном стиле" in text or "в регулярном стиле" in text
-    prompt = visualization.prompt_for("pedestrian", text)
-    assert "уровне глаз пешехода" in prompt and "без текста" in prompt
-    assert len(prompt) <= visualization.MAX_PROMPT_CHARS
+    return scene, visualization.site_brief(scene, [ZoneAssignment.model_validate(a) for a in planted["assignments"]])
 
 
-def test_long_description_is_cut_by_whole_parts():
-    text = "Городской участок в Москве; деревья: " + ", ".join(["липа мелколистная"] * 20) + "; кустарники: спирея."
-    prompt = visualization.prompt_for("overview", text)
-    assert len(prompt) <= visualization.MAX_PROMPT_CHARS
-    assert "Городской участок в Москве." in prompt and "кустарники" not in prompt and prompt.endswith("без текста и надписей.")
+def test_prompt_names_the_planted_species_with_their_looks(planted):
+    from greenplan.plant_appearance import appearance
+
+    scene, brief = _brief(planted)
+    new_trees = [o for o in scene.objects if o.metadata.get("generated") and o.type == "tree"]
+    top_species = brief.trees[0][0]
+    assert top_species in {o.metadata["species"] for o in new_trees}
+    for view in visualization.VIEWS:
+        prompt = visualization.prompt_for(view, brief)
+        assert len(prompt) <= visualization.MAX_PROMPT_CHARS
+        assert visualization.VIEWS[view] in prompt and "без текста" in prompt
+        assert top_species[1:] in prompt  # первая буква -- строчная
+    look = appearance(top_species, brief.trees[0][1])
+    assert look and look in visualization.prompt_for("detail", brief)
+
+
+def _long_brief(**kw):
+    trees = [("Липа мелколистная", None), ("Клен остролистный", None), ("Береза повислая", None)]
+    bushes = [("Спирея Бумальда", None), ("Кизильник блестящий", None), ("Дерен белый", None)]
+    data = dict(
+        floors=9, has_buildings=True, style="регулярное озеленение",
+        patterns=["grove_clusters", "linear_hedge_row", "poisson_scatter_fill"], trees=trees, bushes=bushes,
+        existing_trees=10, new_lawn=True,
+    )
+    data.update(kw)
+    return visualization.SiteBrief(**data)
+
+
+def test_long_plan_keeps_the_most_important_parts_per_view():
+    brief = _long_brief()
+    prompts = {view: visualization.prompt_for(view, brief) for view in visualization.VIEWS}
+    assert all(len(p) <= visualization.MAX_PROMPT_CHARS for p in prompts.values())
+    assert all("между 9-этажными жилыми домами" in p and "липа мелколистная (" in p for p in prompts.values())
+    # Общий вид -- планировка; с тротуара -- изгороди вдоль дорожек; крупный план -- породы с приметами.
+    assert "группы-рощицы" in prompts["overview"]
+    assert prompts["pedestrian"].index("изгороди") < prompts["pedestrian"].index("Деревья")
+    assert "Посадки:" not in prompts["detail"] and "спирея Бумальда (низкий куст, мелкие плоские розовые" in prompts["detail"]
+
+
+def test_species_looks_come_from_species_then_genus_then_shape():
+    from greenplan.plant_appearance import appearance
+
+    assert "розовые" in appearance("Спирея Бумальда")  # вид не похож на род
+    assert "белые" in appearance("Спирея березолистная")  # род
+    assert appearance("Клён остролистный") == appearance("Клен остролистный")
+    assert appearance("Неизвестное растение") is None
+
+
+def test_every_genus_of_the_species_catalog_has_a_look():
+    import json
+
+    from core.paths import DATA_DIR
+    from greenplan.plant_appearance import appearance
+
+    names = [x["name"] for x in json.loads((DATA_DIR / "plant_archetypes" / "species_catalog.json").read_text(encoding="utf-8"))]
+    assert [n for n in names if appearance(n) is None] == []
 
 
 def test_visualizations_come_back_as_jpeg_with_a_note(client, planted, monkeypatch):

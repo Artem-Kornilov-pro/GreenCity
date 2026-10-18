@@ -4,9 +4,10 @@ issue #114) -- Alice AI ART (бывший YandexART) в Yandex AI Studio; клю
 каталог -- YANDEX_ART_* или те же, что у LLM проекта (core/yandex_ai.py).
 
 Alice AI ART рисует по тексту, а не по чертежу: описание собирается из решений
-GreenPlan -- стиль участка, приёмы по зонам, породы деревьев и кустарников,
-сколько их, есть ли газон, -- и картинка иллюстрирует замысел, а не точную
-расстановку. Это прямо написано рядом с каждой картинкой («иллюстрация ИИ»):
+GreenPlan (site_brief) -- стиль участка, приёмы по зонам, самые частые породы
+с приметами внешнего вида (plant_appearance.py), газон, сохранённые деревья,
+-- и картинка иллюстрирует замысел, а не точную расстановку. У каждого
+ракурса свои акценты (prompt_for). Это прямо написано рядом с каждой картинкой («иллюстрация ИИ»):
 проектный документ -- DXF и записка.
 
 Модель по умолчанию -- aliceai-image-art-3.0 через OpenAI-совместимый
@@ -21,13 +22,14 @@ import asyncio
 import base64
 from collections import Counter
 from dataclasses import dataclass
+from typing import Optional
 
 import httpx
 
 from core import yandex_ai
 from core.schemas import Scene
 from greenplan.pattern_assignment import ZoneAssignment
-from greenplan.pattern_library import PATTERN_LIBRARY
+from greenplan.plant_appearance import described, species_name
 
 ART_URL = "https://llm.api.cloud.yandex.net/foundationModels/v1/imageGenerationAsync"
 OPERATION_URL = "https://llm.api.cloud.yandex.net:443/operations/{id}"
@@ -62,52 +64,122 @@ class Visualization:
     image_jpeg: bytes
 
 
-def _top(names, n: int) -> list[str]:
-    return [name for name, _count in Counter(names).most_common(n)]
+# Приём -> как он выглядит на картинке.
+PATTERN_LOOK: dict[str, str] = {
+    "linear_hedge_row": "живые изгороди и ряды кустарника вдоль дорожек",
+    "building_ring": "полосы кустарника вдоль фасадов",
+    "diagonal_rows": "диагональные ряды деревьев",
+    "flowing_rows": "плавные волнистые ряды посадок",
+    "formal_bosque_grid": "боскет -- деревья по строгой сетке",
+    "concentric_rings": "кольца посадок вокруг площадки",
+    "triangular_grid_fill": "деревья в шахматном порядке",
+    "grove_clusters": "свободные группы-рощицы деревьев",
+    "poisson_scatter_fill": "одиночные деревья, свободно разбросанные по газону",
+}
+# Приёмы, которые видно с тротуара.
+_STREET_PATTERNS = ("linear_hedge_row", "building_ring", "flowing_rows", "diagonal_rows")
+_STYLE = {"regular": "регулярное озеленение", "landscape": "пейзажное озеленение"}
+FLOOR_HEIGHT_M = 3.0
+TAIL = " Лето, ясный день, фотореализм, без текста и надписей."
 
 
-# «озеленение в пейзажном стиле» -- STYLE_LABELS в предложном падеже.
-_STYLE_IN = {"regular": "регулярном", "landscape": "пейзажном"}
+@dataclass
+class SiteBrief:
+    """Что нарисовать: факты плана GreenPlan, из которых собираются промпты."""
+
+    floors: Optional[int]
+    has_buildings: bool
+    style: Optional[str]
+    patterns: list[str]  # id приёмов, частые первыми
+    trees: list[tuple[str, Optional[str]]]  # (вид, catalogId), частые первыми
+    bushes: list[tuple[str, Optional[str]]]
+    existing_trees: int
+    new_lawn: bool
 
 
-def _short(label: str) -> str:
-    """Название приёма без пояснения: «органичные рощи -- случайные группы...» -> «органичные рощи»."""
-    return label.split(" -- ")[0].split(" (")[0].strip().lower()
+def _species(objects) -> list[tuple[str, Optional[str]]]:
+    counts = Counter((str(o.metadata.get("species")), o.metadata.get("catalogId")) for o in objects if o.metadata.get("species"))
+    return [key for key, _count in counts.most_common()]
 
 
-def plan_description(scene: Scene, assignments: list[ZoneAssignment]) -> str:
-    """Замысел плана одним абзацем -- для промпта Alice AI ART."""
+def site_brief(scene: Scene, assignments: list[ZoneAssignment]) -> SiteBrief:
     new = [o for o in scene.objects if o.metadata.get("generated")]
-    trees = _top((str(o.metadata.get("species") or "") for o in new if o.type == "tree"), 3)
-    bushes = _top((str(o.metadata.get("species") or "") for o in new if o.type == "bush"), 3)
-    patterns = _top((_short(PATTERN_LIBRARY[a.pattern_id].label) for a in assignments if a.pattern_id in PATTERN_LIBRARY), 3)
-    style = next((_STYLE_IN.get(a.site_style or "") for a in assignments if a.site_style), None)
-    buildings = sum(1 for o in scene.objects if o.type == "building")
-    parts = ["Городской участок в Москве"]
-    if buildings:
-        parts.append("между многоэтажными жилыми домами")
-    if style:
-        parts.append(f"озеленение в {style} стиле")
-    if patterns:
-        parts.append("приёмы: " + ", ".join(patterns))
-    if trees:
-        parts.append("деревья: " + ", ".join(t.lower() for t in trees if t))
-    if bushes:
-        parts.append("кустарники: " + ", ".join(b.lower() for b in bushes if b))
-    if any(lawn.status == "new" for lawn in scene.lawns):
-        parts.append("ухоженный газон")
-    return "; ".join(p for p in parts if p) + "."
+    buildings = [o for o in scene.objects if o.type == "building"]
+    heights = sorted(h for o in buildings if isinstance(h := o.metadata.get("height"), (int, float)) and h > 0)
+    floors = round(heights[len(heights) // 2] / FLOOR_HEIGHT_M) if heights else None
+    patterns = Counter(a.pattern_id for a in assignments if a.pattern_id in PATTERN_LOOK)
+    return SiteBrief(
+        floors=floors if floors and 2 <= floors <= 40 else None,
+        has_buildings=bool(buildings),
+        style=next((_STYLE[a.site_style] for a in assignments if a.site_style in _STYLE), None),
+        patterns=[pid for pid, _count in patterns.most_common()],
+        trees=_species(o for o in new if o.type == "tree"),
+        bushes=_species(o for o in new if o.type in ("bush", "hedge_segment")),
+        existing_trees=sum(1 for o in scene.objects if o.type == "tree" and not o.metadata.get("generated")),
+        new_lawn=any(lawn.status == "new" for lawn in scene.lawns),
+    )
 
 
-def prompt_for(view: str, description: str) -> str:
-    """Промпт не длиннее MAX_PROMPT_CHARS: лишнее описание отбрасывается с
-    конца, по целым частям (приёмы, породы), ракурс и стиль картинки остаются."""
-    head = f"{VIEWS[view]}. "
-    tail = " Лето, ясный день. Фотореалистичная визуализация благоустройства, без текста и надписей."
-    parts = description.rstrip(".").split("; ")
-    while len(parts) > 1 and len(head) + len("; ".join(parts)) + 1 + len(tail) > MAX_PROMPT_CHARS:
-        parts.pop()
-    return (head + "; ".join(parts) + "." + tail)[:MAX_PROMPT_CHARS]
+@dataclass
+class _Part:
+    group: str  # trees, bushes, patterns, extra
+    full: str
+    short: Optional[str]  # без примет -- если не помещается
+    rank: int  # больше -- менее важно: укорачивается и выбрасывается первым
+
+
+def _parts(view: str, brief: SiteBrief) -> list[_Part]:
+    """Части промпта с важностью для ракурса: на общем виде важна планировка,
+    с тротуара -- изгороди и ряды вдоль дорожек, на крупном плане -- породы."""
+    parts: list[_Part] = []
+    pattern_rank = {"overview": 2, "pedestrian": 2, "detail": 20}[view]
+    patterns = brief.patterns
+    if view == "pedestrian":
+        patterns = [p for p in patterns if p in _STREET_PATTERNS] + [p for p in patterns if p not in _STREET_PATTERNS]
+    for i, pid in enumerate(patterns[:3]):
+        offset = 15 if view == "pedestrian" and pid not in _STREET_PATTERNS else 0
+        parts.append(_Part("patterns", PATTERN_LOOK[pid], None, pattern_rank + 3 * i + offset))
+    tree_ranks, bush_ranks = (1, 4, 9), (3, 7, 10)
+    if view == "detail":
+        tree_ranks, bush_ranks = (1, 3, 7), (2, 4, 6)
+    for i, (species, catalog_id) in enumerate(brief.trees[:3]):
+        parts.append(_Part("trees", described(species, catalog_id), species_name(species), tree_ranks[i]))
+    for i, (species, catalog_id) in enumerate(brief.bushes[:3]):
+        parts.append(_Part("bushes", described(species, catalog_id), species_name(species), bush_ranks[i]))
+    if brief.new_lawn:
+        parts.append(_Part("extra", "ухоженный газон", None, 6))
+    if brief.existing_trees:
+        parts.append(_Part("extra", "сохранённые взрослые деревья", None, 11))
+    return parts
+
+
+def _render(view: str, brief: SiteBrief, parts: list[_Part], shortened: set[int]) -> str:
+    homes = f"между {brief.floors}-этажными жилыми домами" if brief.floors else "между жилыми домами"
+    context = "Двор в Москве " + homes if brief.has_buildings else "Городской участок в Москве"
+    sentences = [VIEWS[view], context + (f", {brief.style}" if brief.style else "")]
+    for group, title in (("patterns", "Посадки"), ("trees", "Деревья"), ("bushes", "Кустарники"), ("extra", "")):
+        items = [(p.short if id(p) in shortened else p.full) for p in parts if p.group == group]
+        if items:
+            text = ", ".join(items)
+            sentences.append(f"{title}: {text}" if title else text[0].upper() + text[1:])
+    return ". ".join(sentences) + "." + TAIL
+
+
+def prompt_for(view: str, brief: SiteBrief) -> str:
+    """Промпт ракурса не длиннее MAX_PROMPT_CHARS. Не помещается -- у наименее
+    важной части сначала убираются приметы вида, потом она сама."""
+    parts = _parts(view, brief)
+    shortened: set[int] = set()
+    text = _render(view, brief, parts, shortened)
+    while len(text) > MAX_PROMPT_CHARS and parts:
+        worst = max(parts, key=lambda p: p.rank)
+        if worst.short and id(worst) not in shortened:
+            shortened.add(id(worst))
+            worst.rank -= 0.5  # без примет вид ещё держится, пока не уйдут менее важные
+        else:
+            parts.remove(worst)
+        text = _render(view, brief, parts, shortened)
+    return text[:MAX_PROMPT_CHARS]
 
 
 def _access_denied() -> VisualizationFailed:
@@ -180,8 +252,8 @@ async def generate_visualizations(
             "Визуализации не настроены: задайте YANDEX_CLOUD_API_KEY и YANDEX_CLOUD_FOLDER или YANDEX_ART_API_KEY и YANDEX_ART_FOLDER (см. .env.example)."
         )
     api_key, folder, model = creds
-    description = plan_description(scene, assignments)
-    prompts = [(view, prompt_for(view, description)) for view in views]
+    brief = site_brief(scene, assignments)
+    prompts = [(view, prompt_for(view, brief)) for view in views]
     async with httpx.AsyncClient(timeout=30.0) as client:
         images = await asyncio.gather(*(_generate(client, api_key, folder, prompt, seed + i, model) for i, (_view, prompt) in enumerate(prompts)))
     return [Visualization(view, prompt, image) for (view, prompt), image in zip(prompts, images, strict=True)]
