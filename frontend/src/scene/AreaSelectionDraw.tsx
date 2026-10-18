@@ -40,7 +40,9 @@ export function AreaSelectionDraw({
       );
       raycaster.setFromCamera(ndc, camera);
       const hit = new THREE.Vector3();
-      return raycaster.ray.intersectPlane(groundPlane, hit) ? [hit.x, hit.z] : null;
+      // Луч -- в мировых координатах; сцена отражена по z (SceneView,
+      // SCENE_TO_WORLD) -- точка сцены (x, -z).
+      return raycaster.ray.intersectPlane(groundPlane, hit) ? [hit.x, -hit.z] : null;
     };
 
     const finish = () => {

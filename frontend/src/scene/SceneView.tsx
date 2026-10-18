@@ -21,6 +21,14 @@ import { AreaSelectionDraw } from "./AreaSelectionDraw";
 const GRID_Y = 0.03;
 // Ширина площадки вокруг дома (отмостка, тротуар), м.
 const YARD_PAD_M = 4;
+// Сцена хранит точку чертежа как x -- восток, z -- север, а three.js рисует
+// с осью y вверх: тройка (восток, север, вверх) -> (x, z, y) -- отражение, и
+// без поправки план виден зеркально относительно CAD. Всё содержимое сцены --
+// в группе с отражением по z: координаты сцены (бэкенд, экспорт, нормы) не
+// меняются, а на экране север -- от зрителя, как на плане. Мировые
+// координаты (камера, луч выделения зоны) переводятся в координаты сцены
+// сменой знака z.
+const SCENE_TO_WORLD: [number, number, number] = [1, 1, -1];
 
 export function SceneView({
   scene,
@@ -53,6 +61,7 @@ export function SceneView({
   onAreaSelected: (polygon: Point2[]) => void;
 }) {
   const bounds = useMemo(() => computeSceneBounds(scene), [scene]);
+  const worldBounds = useMemo(() => ({ ...bounds, minZ: -bounds.maxZ, maxZ: -bounds.minZ }), [bounds]);
   const width = bounds.maxX - bounds.minX;
   const depth = bounds.maxZ - bounds.minZ;
   const gridSize = Math.max(width, depth, 20) * 1.3;
@@ -79,7 +88,8 @@ export function SceneView({
       <color attach="background" args={["#cfe0e8"]} />
       <ambientLight intensity={0.7} />
       <directionalLight position={[30, 50, 20]} intensity={1.1} castShadow />
-      <FitCamera bounds={bounds} sceneLoadToken={sceneLoadToken} />
+      <FitCamera bounds={worldBounds} sceneLoadToken={sceneLoadToken} />
+      <group scale={SCENE_TO_WORLD}>
       {showBasemap && scene.meta.geo && <Basemap geo={scene.meta.geo} bounds={bounds} />}
       <Ground boundary={scene.boundary} surroundings={surroundings} withSurroundings={!(showBasemap && scene.meta.geo)} />
       <Lawns lawns={scene.lawns ?? []} />
@@ -109,6 +119,7 @@ export function SceneView({
         material-depthWrite={false}
       />
       <AreaSelectionDraw active={selectionMode} onComplete={onAreaSelected} />
+      </group>
       {/* В режиме выделения drag должен обводить участок, а не крутить
           камеру -- поэтому OrbitControls на это время выключены. */}
       <OrbitControls makeDefault enabled={!selectionMode} />
