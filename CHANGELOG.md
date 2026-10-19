@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.1.3] — 2026-10-19
+
 ### Исправлено
 
 - **`make test` не запускался** («.venv/bin/pytest: No such file or directory»), если папку проекта перенесли после создания venv: скрипты venv хранят абсолютный путь к интерпретатору. Makefile вызывает pytest, ruff, pip и uvicorn через `python -m`; `make test`, `test-e2e`, `test-cov`, `lint` проходят.
@@ -166,7 +168,8 @@
 
 Первая рабочая версия: разбор DXF и DWG, 3D-редактор с проверкой норм, GreenPlan, правка текстом, экспорт DXF, аккаунты и проекты, мониторинг, Docker.
 
-[Unreleased]: https://github.com/Artem-Kornilov-pro/GreenCity/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/Artem-Kornilov-pro/GreenCity/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/Artem-Kornilov-pro/GreenCity/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/Artem-Kornilov-pro/GreenCity/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/Artem-Kornilov-pro/GreenCity/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Artem-Kornilov-pro/GreenCity/compare/v1.0.1...v1.1.0
