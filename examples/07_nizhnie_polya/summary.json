@@ -4,16 +4,16 @@
  "site_style": "landscape",
  "lead_project": "19_2ya_pryadilnaya",
  "zones": 241,
- "new_trees": 292,
- "new_bushes": 1215,
+ "new_trees": 287,
+ "new_bushes": 1210,
  "new_lawn_sqm": 671,
  "violations_new_objects": 0,
- "rejected_by_norm": 1061,
+ "rejected_by_norm": 1071,
  "assortment": [
   {
    "category": "дерево",
    "species": "Вяз гибридный Резиста",
-   "count": 201,
+   "count": 196,
    "unit": "шт."
   },
   {
@@ -31,7 +31,7 @@
   {
    "category": "кустарник",
    "species": "Спирея березолистная",
-   "count": 1138,
+   "count": 1133,
    "unit": "шт."
   },
   {
