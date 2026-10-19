@@ -3,7 +3,7 @@
   "source_id": "d7e7c59a6c5e226db3f08419389780f1",
   "source_sha256": "d7e7c59a6c5e226db3f08419389780f10c5a7d2e5ce1851b4908fbe1fdcb8307",
   "versions": {
-   "app": "1.1.2",
+   "app": "1.1.3",
    "parser_rules": "45e4aefac059",
    "norms": "7b99d79c694a",
    "precedent_corpus": "30f86334551b"
