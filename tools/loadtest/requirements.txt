@@ -1,0 +1,3 @@
+# Нагрузочный прогон (tools/loadtest/locustfile.py). Отдельно от requirements-dev:
+# Locust тянет gevent, а тестам и CI он не нужен. Ставится make loadtest.
+locust==2.46.7

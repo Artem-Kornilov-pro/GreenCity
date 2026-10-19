@@ -177,11 +177,12 @@ make test-e2e    # только сквозные сценарии (backend/tests
 make test-cov    # всё + отчёт о покрытии
 make parser-regression  # разбор всех DXF корпуса: текущий код против main
 make greenplan-regression  # посадки GreenPlan на тестовых участках и примерах: текущий код против main
+make loadtest-headless HOST=https://baobab24.ru  # нагрузочный прогон Locust по ступеням (tools/loadtest/README.md)
 make docker-public-up      # публичный стенд с HTTPS для PUBLIC_DOMAIN (docs/PUBLIC_STAND.md)
 make audit-references      # аудит эталонов корпуса против норм отступов (docs/AUDIT_REFERENCES.md)
 ```
 
-Около 1300 тестов, прогон около минуты. Тесты лежат по тем же пакетам, что и код (`backend/tests/core/`, `greenplan/`, `text_editor/`, …; `parser/tests/`). Сквозные тесты (`backend/tests/e2e/`) гоняют настоящее приложение через HTTP на реальных DXF из `locations/`: загрузка → GreenPlan → текст-обоснование → пояснительная записка → экспорт DXF → повторная загрузка; загрузка → правка текстом → генерация → экспорт; регистрация → проект → сохранение результата → выход. Подменены только внешние границы: MongoDB и Redis (in-memory), облачные LLM Yandex AI Studio — правка текстом и текст-обоснование (фиксированные ответы). Ни один тест не обращается к платному API. Качество ИИ-ассистента на настоящей модели проверяет отдельный инструмент `tools/ai_editor_eval/run.py` (платные запросы, запускается вручную; см. `docs/TECHNICAL_OVERVIEW.md`, раздел 5.2).
+Около 1500 тестов, прогон около полутора минут. Тесты лежат по тем же пакетам, что и код (`backend/tests/core/`, `greenplan/`, `text_editor/`, …; `parser/tests/`). Сквозные тесты (`backend/tests/e2e/`) гоняют настоящее приложение через HTTP на реальных DXF из `locations/`: загрузка → GreenPlan → текст-обоснование → пояснительная записка → экспорт DXF → повторная загрузка; загрузка → правка текстом → генерация → экспорт; регистрация → проект → сохранение результата → выход. Подменены только внешние границы: MongoDB и Redis (in-memory), облачные LLM Yandex AI Studio — правка текстом и текст-обоснование (фиксированные ответы). Ни один тест не обращается к платному API. Качество ИИ-ассистента на настоящей модели проверяет отдельный инструмент `tools/ai_editor_eval/run.py` (платные запросы, запускается вручную; см. `docs/TECHNICAL_OVERVIEW.md`, раздел 5.2).
 
 CI (GitHub Actions и SourceCraft) запускает ruff, oxlint, проверку типов TypeScript и все тесты.
 

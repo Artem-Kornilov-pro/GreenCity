@@ -13,6 +13,7 @@ CATEGORY ?= tree
 
 .PHONY: help venv backend frontend-install frontend frontend-build parse clean \
         lint lint-py lint-web lint-fix models test test-e2e test-cov parser-regression greenplan-regression audit-references corpus-features primers examples docs \
+        loadtest loadtest-headless \
         docker-build docker-up docker-down docker-logs docker-prod-up docker-prod-down docker-public-up docker-public-down docker-prune
 
 help:
@@ -25,6 +26,8 @@ help:
 	@echo "make test              - юнит-тесты backend/ и parser/ (pytest, без сети/докера)"
 	@echo "make test-e2e          - только сквозные сценарии (tests/e2e: DXF -> GreenPlan -> записка -> DXF)"
 	@echo "make test-cov          - то же самое + отчёт о покрытии (terminal + htmlcov/)"
+	@echo "make loadtest HOST=... - нагрузочный прогон Locust с веб-интерфейсом (http://localhost:8089)"
+	@echo "make loadtest-headless HOST=... - ступенчатый прогон без интерфейса, отчёт в loadtest-report/"
 	@echo "make parser-regression [BASE=main] - разбор всех DXF корпуса: текущий код против ревизии BASE"
 	@echo "make greenplan-regression [BASE=main] - посадки GreenPlan на тестовых участках и примерах: текущий код против BASE"
 	@echo "make audit-references  - аудит эталонов: реальные проекты корпуса против норм отступов (docs/AUDIT_REFERENCES.md)"
@@ -120,6 +123,24 @@ docs:
 
 test-cov: $(VENV)/bin/activate
 	$(PYTEST) -n auto --cov --cov-report=term-missing --cov-report=html
+
+# Нагрузочный прогон (tools/loadtest/locustfile.py, описание -- tools/loadtest/README.md).
+# HOST -- адрес стенда; ступени -- LOAD_STEP_USERS, LOAD_STEP_SECONDS,
+# LOAD_MAX_USERS; LOAD_THINK=0 -- без пауз между запросами; USERS_CLASSES --
+# какие пользователи (Visitor ApiReader Engineer), по умолчанию все.
+HOST ?= http://localhost
+USERS_CLASSES ?=
+loadtest-deps: $(VENV)/bin/activate
+	$(PIP) install -q -r tools/loadtest/requirements.txt
+
+loadtest: loadtest-deps
+	$(PYTHON) -m locust -f tools/loadtest/locustfile.py --host $(HOST) $(USERS_CLASSES)
+
+loadtest-headless: loadtest-deps
+	mkdir -p loadtest-report
+	LOAD_SHAPE=step $(PYTHON) -m locust -f tools/loadtest/locustfile.py --host $(HOST) --headless --processes 4 \
+		--csv loadtest-report/run --csv-full-history --html loadtest-report/report.html $(USERS_CLASSES)
+	$(PYTHON) tools/loadtest/steps.py loadtest-report/run_stats_history.csv
 
 # Оба линтера завершаются ненулевым кодом при любой находке (у oxlint для
 # этого нужен --deny-warnings) — цель годится как гейт в CI, а не только
