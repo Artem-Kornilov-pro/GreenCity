@@ -1,7 +1,7 @@
 {
  "site": {
-  "source_id": "0f9a6ac4c57f3a1a7caed5ce469076cf",
-  "source_sha256": "0f9a6ac4c57f3a1a7caed5ce469076cf14f842ae4d2e924d5cbc18033ff14daa",
+  "source_id": "e934c09d928c7400af03deb71439ff9e",
+  "source_sha256": "e934c09d928c7400af03deb71439ff9e4280689a26b76956bb1423b111646fdd",
   "versions": {
    "app": "1.1.2",
    "parser_rules": "45e4aefac059",
@@ -22161,44 +22161,17 @@
    "status": "посажено",
    "origin": "GreenPlan",
    "dxf_layer": "NEW_TREE",
-   "x": -57.353,
+   "x": -59.184,
    "z": 37.808,
-   "dxf_x": 254.866,
+   "dxf_x": 253.034,
    "dxf_y": 181.094,
    "zone_kind": "open_area",
    "pattern": "Органичные рощи -- случайные группы по несколько деревьев",
    "source_project": "12_natashinsky_proezd",
    "site_style": "пейзажный",
-   "reason": "Органичные рощи -- случайные группы по несколько деревьев — по аналогии с проектом «12_natashinsky_proezd»; ближайшее ограничение — кабель связи: 5.8 м при норме 2.0 м (СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1)",
+   "reason": "Органичные рощи -- случайные группы по несколько деревьев — по аналогии с проектом «12_natashinsky_proezd»; нормируемых ограничений ближе 5 м сверх нормы нет",
    "species_basis": "ассортимент для озеленения Москвы, категория «дворовые территории (тип участка не определён)»; в приоритете базовый ассортимент ППМ 515-ПП; без инвазивных видов ППМ 369-ПП",
    "constraints": [
-    {
-     "what": "кабель связи",
-     "zone_id": "signal_cable_135",
-     "distance_m": 5.82,
-     "required_m": 2.0,
-     "ok": true,
-     "norm": "СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1",
-     "norm_status": "verified"
-    },
-    {
-     "what": "кабель связи",
-     "zone_id": "signal_cable_134",
-     "distance_m": 5.97,
-     "required_m": 2.0,
-     "ok": true,
-     "norm": "СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1",
-     "norm_status": "verified"
-    },
-    {
-     "what": "кабель связи",
-     "zone_id": "signal_cable_136",
-     "distance_m": 6.5,
-     "required_m": 2.0,
-     "ok": true,
-     "norm": "СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1",
-     "norm_status": "verified"
-    },
     {
      "what": "дерево tree_open_area_018_032",
      "zone_id": null,
@@ -22211,7 +22184,34 @@
     {
      "what": "дерево tree_open_area_018_033",
      "zone_id": null,
-     "distance_m": 3.17,
+     "distance_m": 3.66,
+     "required_m": 3.0,
+     "ok": true,
+     "norm": "правило планировщика (не норма): зазор между объектами",
+     "norm_status": null
+    },
+    {
+     "what": "дерево tree_020",
+     "zone_id": null,
+     "distance_m": 4.18,
+     "required_m": 3.0,
+     "ok": true,
+     "norm": "правило планировщика (не норма): зазор между объектами",
+     "norm_status": null
+    },
+    {
+     "what": "дерево tree_027",
+     "zone_id": null,
+     "distance_m": 4.74,
+     "required_m": 3.0,
+     "ok": true,
+     "norm": "правило планировщика (не норма): зазор между объектами",
+     "norm_status": null
+    },
+    {
+     "what": "дерево tree_099",
+     "zone_id": null,
+     "distance_m": 5.34,
      "required_m": 3.0,
      "ok": true,
      "norm": "правило планировщика (не норма): зазор между объектами",
@@ -22226,9 +22226,9 @@
    "status": "посажено",
    "origin": "GreenPlan",
    "dxf_layer": "NEW_TREE",
-   "x": -60.1,
+   "x": -61.932,
    "z": 36.222,
-   "dxf_x": 252.119,
+   "dxf_x": 250.287,
    "dxf_y": 179.508,
    "zone_kind": "open_area",
    "pattern": "Органичные рощи -- случайные группы по несколько деревьев",
@@ -22237,24 +22237,6 @@
    "reason": "Органичные рощи -- случайные группы по несколько деревьев — по аналогии с проектом «12_natashinsky_proezd»; нормируемых ограничений ближе 5 м сверх нормы нет",
    "species_basis": "ассортимент для озеленения Москвы, категория «дворовые территории (тип участка не определён)»; в приоритете базовый ассортимент ППМ 515-ПП; без инвазивных видов ППМ 369-ПП",
    "constraints": [
-    {
-     "what": "дерево tree_open_area_018_035",
-     "zone_id": null,
-     "distance_m": 3.17,
-     "required_m": 3.0,
-     "ok": true,
-     "norm": "правило планировщика (не норма): зазор между объектами",
-     "norm_status": null
-    },
-    {
-     "what": "дерево tree_open_area_018_034",
-     "zone_id": null,
-     "distance_m": 3.17,
-     "required_m": 3.0,
-     "ok": true,
-     "norm": "правило планировщика (не норма): зазор между объектами",
-     "norm_status": null
-    },
     {
      "what": "дерево tree_open_area_018_031",
      "zone_id": null,
@@ -22265,9 +22247,9 @@
      "norm_status": null
     },
     {
-     "what": "дерево tree_020",
+     "what": "дерево tree_open_area_018_034",
      "zone_id": null,
-     "distance_m": 3.43,
+     "distance_m": 3.66,
      "required_m": 3.0,
      "ok": true,
      "norm": "правило планировщика (не норма): зазор между объектами",
@@ -22276,7 +22258,25 @@
     {
      "what": "дерево tree_022",
      "zone_id": null,
-     "distance_m": 4.58,
+     "distance_m": 4.67,
+     "required_m": 3.0,
+     "ok": true,
+     "norm": "правило планировщика (не норма): зазор между объектами",
+     "norm_status": null
+    },
+    {
+     "what": "дерево tree_020",
+     "zone_id": null,
+     "distance_m": 4.95,
+     "required_m": 3.0,
+     "ok": true,
+     "norm": "правило планировщика (не норма): зазор между объектами",
+     "norm_status": null
+    },
+    {
+     "what": "дерево tree_027",
+     "zone_id": null,
+     "distance_m": 5.37,
      "required_m": 3.0,
      "ok": true,
      "norm": "правило планировщика (не норма): зазор между объектами",
@@ -22291,21 +22291,21 @@
    "status": "посажено",
    "origin": "GreenPlan",
    "dxf_layer": "NEW_TREE",
-   "x": -54.605,
-   "z": 36.222,
-   "dxf_x": 257.613,
-   "dxf_y": 179.508,
+   "x": -55.521,
+   "z": 37.808,
+   "dxf_x": 256.697,
+   "dxf_y": 181.094,
    "zone_kind": "open_area",
    "pattern": "Органичные рощи -- случайные группы по несколько деревьев",
    "source_project": "12_natashinsky_proezd",
    "site_style": "пейзажный",
-   "reason": "Органичные рощи -- случайные группы по несколько деревьев — по аналогии с проектом «12_natashinsky_proezd»; ближайшее ограничение — кабель связи: 2.9 м при норме 2.0 м (СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1)",
+   "reason": "Органичные рощи -- случайные группы по несколько деревьев — по аналогии с проектом «12_natashinsky_proezd»; ближайшее ограничение — кабель связи: 4.0 м при норме 2.0 м (СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1)",
    "species_basis": "ассортимент для озеленения Москвы, категория «дворовые территории (тип участка не определён)»; в приоритете базовый ассортимент ППМ 515-ПП; без инвазивных видов ППМ 369-ПП",
    "constraints": [
     {
      "what": "кабель связи",
-     "zone_id": "signal_cable_134",
-     "distance_m": 2.92,
+     "zone_id": "signal_cable_135",
+     "distance_m": 3.99,
      "required_m": 2.0,
      "ok": true,
      "norm": "СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1",
@@ -22313,8 +22313,8 @@
     },
     {
      "what": "кабель связи",
-     "zone_id": "signal_cable_135",
-     "distance_m": 3.4,
+     "zone_id": "signal_cable_134",
+     "distance_m": 4.2,
      "required_m": 2.0,
      "ok": true,
      "norm": "СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1",
@@ -22323,16 +22323,7 @@
     {
      "what": "кабель связи",
      "zone_id": "signal_cable_136",
-     "distance_m": 4.54,
-     "required_m": 2.0,
-     "ok": true,
-     "norm": "СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1",
-     "norm_status": "verified"
-    },
-    {
-     "what": "кабель связи",
-     "zone_id": "signal_cable_133",
-     "distance_m": 6.72,
+     "distance_m": 4.71,
      "required_m": 2.0,
      "ok": true,
      "norm": "СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1",
@@ -22341,7 +22332,16 @@
     {
      "what": "дерево tree_open_area_018_031",
      "zone_id": null,
-     "distance_m": 3.17,
+     "distance_m": 3.66,
+     "required_m": 3.0,
+     "ok": true,
+     "norm": "правило планировщика (не норма): зазор между объектами",
+     "norm_status": null
+    },
+    {
+     "what": "дерево tree_099",
+     "zone_id": null,
+     "distance_m": 4.08,
      "required_m": 3.0,
      "ok": true,
      "norm": "правило планировщика (не норма): зазор между объектами",
@@ -22356,10 +22356,10 @@
    "status": "посажено",
    "origin": "GreenPlan",
    "dxf_layer": "NEW_TREE",
-   "x": -62.847,
-   "z": 37.808,
-   "dxf_x": 249.371,
-   "dxf_y": 181.094,
+   "x": -63.763,
+   "z": 33.05,
+   "dxf_x": 248.455,
+   "dxf_y": 176.336,
    "zone_kind": "open_area",
    "pattern": "Органичные рощи -- случайные группы по несколько деревьев",
    "source_project": "12_natashinsky_proezd",
@@ -22368,36 +22368,9 @@
    "species_basis": "ассортимент для озеленения Москвы, категория «дворовые территории (тип участка не определён)»; в приоритете базовый ассортимент ППМ 515-ПП; без инвазивных видов ППМ 369-ПП",
    "constraints": [
     {
-     "what": "дерево tree_open_area_018_035",
+     "what": "дерево tree_022",
      "zone_id": null,
-     "distance_m": 3.17,
-     "required_m": 3.0,
-     "ok": true,
-     "norm": "правило планировщика (не норма): зазор между объектами",
-     "norm_status": null
-    },
-    {
-     "what": "дерево tree_open_area_018_032",
-     "zone_id": null,
-     "distance_m": 3.17,
-     "required_m": 3.0,
-     "ok": true,
-     "norm": "правило планировщика (не норма): зазор между объектами",
-     "norm_status": null
-    },
-    {
-     "what": "дерево tree_027",
-     "zone_id": null,
-     "distance_m": 3.87,
-     "required_m": 3.0,
-     "ok": true,
-     "norm": "правило планировщика (не норма): зазор между объектами",
-     "norm_status": null
-    },
-    {
-     "what": "дерево tree_039",
-     "zone_id": null,
-     "distance_m": 4.28,
+     "distance_m": 3.27,
      "required_m": 3.0,
      "ok": true,
      "norm": "правило планировщика (не норма): зазор между объектами",
@@ -22406,7 +22379,34 @@
     {
      "what": "дерево tree_104",
      "zone_id": null,
-     "distance_m": 5.43,
+     "distance_m": 3.52,
+     "required_m": 3.0,
+     "ok": true,
+     "norm": "правило планировщика (не норма): зазор между объектами",
+     "norm_status": null
+    },
+    {
+     "what": "дерево tree_open_area_018_040",
+     "zone_id": null,
+     "distance_m": 3.66,
+     "required_m": 3.0,
+     "ok": true,
+     "norm": "правило планировщика (не норма): зазор между объектами",
+     "norm_status": null
+    },
+    {
+     "what": "дерево tree_open_area_018_032",
+     "zone_id": null,
+     "distance_m": 3.66,
+     "required_m": 3.0,
+     "ok": true,
+     "norm": "правило планировщика (не норма): зазор между объектами",
+     "norm_status": null
+    },
+    {
+     "what": "дерево tree_020",
+     "zone_id": null,
+     "distance_m": 6.31,
      "required_m": 3.0,
      "ok": true,
      "norm": "правило планировщика (не норма): зазор между объектами",
@@ -22421,61 +22421,61 @@
    "status": "посажено",
    "origin": "GreenPlan",
    "dxf_layer": "NEW_TREE",
-   "x": -62.847,
-   "z": 34.636,
-   "dxf_x": 249.371,
-   "dxf_y": 177.922,
+   "x": -52.774,
+   "z": 42.567,
+   "dxf_x": 259.445,
+   "dxf_y": 185.853,
    "zone_kind": "open_area",
    "pattern": "Органичные рощи -- случайные группы по несколько деревьев",
    "source_project": "12_natashinsky_proezd",
    "site_style": "пейзажный",
-   "reason": "Органичные рощи -- случайные группы по несколько деревьев — по аналогии с проектом «12_natashinsky_proezd»; нормируемых ограничений ближе 5 м сверх нормы нет",
+   "reason": "Органичные рощи -- случайные группы по несколько деревьев — по аналогии с проектом «12_natashinsky_proezd»; ближайшее ограничение — кабель связи: 2.6 м при норме 2.0 м (СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1)",
    "species_basis": "ассортимент для озеленения Москвы, категория «дворовые территории (тип участка не определён)»; в приоритете базовый ассортимент ППМ 515-ПП; без инвазивных видов ППМ 369-ПП",
    "constraints": [
     {
-     "what": "дерево tree_open_area_018_034",
-     "zone_id": null,
-     "distance_m": 3.17,
-     "required_m": 3.0,
+     "what": "кабель связи",
+     "zone_id": "signal_cable_136",
+     "distance_m": 2.64,
+     "required_m": 2.0,
      "ok": true,
-     "norm": "правило планировщика (не норма): зазор между объектами",
-     "norm_status": null
+     "norm": "СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1",
+     "norm_status": "verified"
     },
     {
-     "what": "дерево tree_open_area_018_032",
-     "zone_id": null,
-     "distance_m": 3.17,
-     "required_m": 3.0,
+     "what": "кабель связи",
+     "zone_id": "signal_cable_137",
+     "distance_m": 4.72,
+     "required_m": 2.0,
      "ok": true,
-     "norm": "правило планировщика (не норма): зазор между объектами",
-     "norm_status": null
+     "norm": "СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1",
+     "norm_status": "verified"
     },
     {
-     "what": "дерево tree_022",
-     "zone_id": null,
-     "distance_m": 3.59,
-     "required_m": 3.0,
+     "what": "кабель связи",
+     "zone_id": "signal_cable_135",
+     "distance_m": 4.81,
+     "required_m": 2.0,
      "ok": true,
-     "norm": "правило планировщика (не норма): зазор между объектами",
-     "norm_status": null
+     "norm": "СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1",
+     "norm_status": "verified"
     },
     {
-     "what": "дерево tree_104",
-     "zone_id": null,
-     "distance_m": 4.19,
-     "required_m": 3.0,
+     "what": "кабель связи",
+     "zone_id": "signal_cable_134",
+     "distance_m": 6.2,
+     "required_m": 2.0,
      "ok": true,
-     "norm": "правило планировщика (не норма): зазор между объектами",
-     "norm_status": null
+     "norm": "СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1",
+     "norm_status": "verified"
     },
     {
-     "what": "дерево tree_020",
-     "zone_id": null,
-     "distance_m": 5.37,
-     "required_m": 3.0,
+     "what": "кабель связи",
+     "zone_id": "signal_cable_138",
+     "distance_m": 6.21,
+     "required_m": 2.0,
      "ok": true,
-     "norm": "правило планировщика (не норма): зазор между объектами",
-     "norm_status": null
+     "norm": "СП 42.13330.2016, п. 9.6, табл. 9.1; ППМ 743-ПП, табл. 3.6.1",
+     "norm_status": "verified"
     }
    ]
   },
@@ -22767,6 +22767,15 @@
      "norm_status": null
     },
     {
+     "what": "дерево tree_open_area_018_034",
+     "zone_id": null,
+     "distance_m": 3.66,
+     "required_m": 3.0,
+     "ok": true,
+     "norm": "правило планировщика (не норма): зазор между объектами",
+     "norm_status": null
+    },
+    {
      "what": "дерево tree_104",
      "zone_id": null,
      "distance_m": 4.7,
@@ -22779,15 +22788,6 @@
      "what": "дерево tree_022",
      "zone_id": null,
      "distance_m": 5.15,
-     "required_m": 3.0,
-     "ok": true,
-     "norm": "правило планировщика (не норма): зазор между объектами",
-     "norm_status": null
-    },
-    {
-     "what": "дерево tree_open_area_018_035",
-     "zone_id": null,
-     "distance_m": 5.49,
      "required_m": 3.0,
      "ok": true,
      "norm": "правило планировщика (не норма): зазор между объектами",

@@ -1,9 +1,13 @@
 VENV     := $(CURDIR)/.venv
 PYTHON   := $(VENV)/bin/python
-PIP      := $(VENV)/bin/pip
-UVICORN  := $(VENV)/bin/uvicorn
-RUFF     := $(VENV)/bin/ruff
-PYTEST   := $(VENV)/bin/pytest
+# Инструменты venv -- через «python -m»: скрипты .venv/bin/pytest, pip,
+# uvicorn хранят в первой строке абсолютный путь к интерпретатору и ломаются
+# («No such file or directory»), если папку проекта перенесли или
+# переименовали после создания venv.
+PIP      := $(PYTHON) -m pip
+UVICORN  := $(PYTHON) -m uvicorn
+RUFF     := $(PYTHON) -m ruff
+PYTEST   := $(PYTHON) -m pytest
 OUT      ?= output
 CATEGORY ?= tree
 
