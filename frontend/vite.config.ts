@@ -32,15 +32,18 @@ export default defineConfig(({ mode }) => {
     build: {
       rolldownOptions: {
         output: {
-          // Библиотеки -- отдельными чанками: меняются реже кода приложения и
-          // остаются в кэше браузера между релизами.
+          // 3D-библиотеки -- отдельными чанками: меняются реже кода приложения
+          // и остаются в кэше браузера между релизами. Только их и React: общий
+          // чанк «vendor» для всего node_modules связывал страницу входа с
+          // чанками three.js, и она заранее грузила 1,2 МБ сцены редактора.
           codeSplitting: {
             groups: [
               { name: 'three', test: /node_modules[\\/]three[\\/]/, priority: 3 },
-              { name: 'react-three', test: /node_modules[\\/]@react-three[\\/]/, priority: 2 },
-              { name: 'three-extras', test: /node_modules[\\/](three-stdlib|three-mesh-bvh|troika[^\\/]*|camera-controls|maath|meshline|stats-gl|@monogrid)[\\/]/, priority: 2 },
-              { name: 'react', test: /node_modules[\\/](react|react-dom|scheduler|react-router|@reduxjs|react-redux)[\\/]/, priority: 1 },
-              { name: 'vendor', test: /node_modules/ },
+              { name: 'react-three', test: /node_modules[\\/](@react-three|three-stdlib|three-mesh-bvh|troika[^\\/]*|camera-controls|maath|meshline|stats-gl|@monogrid)[\\/]/, priority: 2 },
+              // Приоритет выше 3D: у @react-three/fiber своя вложенная копия
+              // scheduler, и с меньшим приоритетом React попадал в чанк
+              // react-three -- страница входа тянула за ним и three.js.
+              { name: 'react', test: /node_modules[\\/](react|react-dom|scheduler|react-router|@reduxjs|react-redux)[\\/]/, priority: 4 },
             ],
           },
         },
