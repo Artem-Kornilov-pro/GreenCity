@@ -69,9 +69,11 @@ export function SceneView({
   // Земля окрестностей -- под соседними домами и улицами.
   const surroundings = useMemo(() => computeSurroundings(scene, YARD_PAD_M), [scene]);
 
-  // Кольца отступов приходят с бэкенда (building_setbacks.py).
+  // Кольца отступов приходят с бэкенда (building_setbacks.py). Зоны целиком
+  // за границей участка не рисуются (обрывки сетей над пустотой), но
+  // подсветка нарушений в PlacedObjects их учитывает -- там все restrictions.
   const displayZones = useMemo(
-    () => [...scene.restrictions, ...(scene.buildingSetbacks ?? [])],
+    () => [...scene.restrictions.filter((z) => !z.offsite), ...(scene.buildingSetbacks ?? [])],
     [scene.restrictions, scene.buildingSetbacks]
   );
 

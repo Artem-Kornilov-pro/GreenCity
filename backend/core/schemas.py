@@ -49,6 +49,11 @@ class RestrictionZone(BaseModel):
         default=None,
         description="Класс напряжения воздушной ЛЭП, кВ: из имени слоя («ВЛ 10кВ») или из параметров GreenPlan; не задан -- 10 кВ.",
     )
+    offsite: bool = Field(
+        default=False,
+        description="Зона из чертежа целиком за границей участка (parse_dxf._mark_offsite_zones): отступ посадкам у "
+        "края соблюдается, но на сцене не рисуется.",
+    )
 
 
 class SceneObject(BaseModel):

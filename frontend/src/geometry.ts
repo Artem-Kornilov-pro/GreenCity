@@ -208,6 +208,7 @@ export function isOffsite(obj: SceneObject): boolean {
 // сцена не расширяется.
 const STREET_ZONE_TYPES = new Set(["road", "pedestrian_path"]);
 const OBJECT_PAD_SIDES = 12;
+const OFFSITE_STREET_REACH_M = 20;
 
 export function computeSurroundings(scene: Scene, pad: number): { yards: Point2[][]; streets: Point2[][] } {
   const yards: Point2[][] = [];
@@ -238,7 +239,12 @@ export function computeSurroundings(scene: Scene, pad: number): { yards: Point2[
     const hull = convexHull(pts);
     if (hull.length >= 3) yards.push(hull);
   }
-  const streets = scene.restrictions.filter((r) => STREET_ZONE_TYPES.has(r.type)).map((r) => r.polygon);
+  // Улица за границей участка (zone.offsite) -- только если подходит к ней
+  // ближе OFFSITE_STREET_REACH_M: между участком и соседними домами земля
+  // нужна, а дальние обрывки тротуаров висели бы над пустотой.
+  const near = (zone: RestrictionZone) =>
+    !zone.offsite || !site || zone.polygon.some((p) => distanceToPolygonEdge(p.x, p.z, site) <= OFFSITE_STREET_REACH_M);
+  const streets = scene.restrictions.filter((r) => STREET_ZONE_TYPES.has(r.type) && near(r)).map((r) => r.polygon);
   return { yards, streets };
 }
 
