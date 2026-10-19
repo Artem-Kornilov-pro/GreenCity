@@ -254,10 +254,39 @@ export interface ProjectSummary {
   name: string;
   created_at: string;
   updated_at: string;
+  files_count?: number;
+  shared?: boolean;
+}
+
+// Файл проекта (backend/accounts/schemas.py ProjectFile): документы и
+// картинки по результату GreenPlan.
+export interface ProjectFile {
+  id: string;
+  name: string;
+  kind: "docx" | "explanations_json" | "explanations_csv" | "explanations_xlsx" | "dxf" | "export_check" | "visualization" | string;
+  media_type: string;
+  size: number;
+  created_at: string;
+  auto: boolean;
 }
 
 export interface Project extends ProjectSummary {
   scene: Scene;
+  files?: ProjectFile[];
+  share_token?: string | null;
+}
+
+// Проект по ссылке -- только просмотр.
+export interface SharedProject {
+  name: string;
+  scene: Scene;
+  updated_at: string;
+  files: ProjectFile[];
+}
+
+export interface GreenPlanFilesResult {
+  files: ProjectFile[];
+  notes: string[];
 }
 
 export function listProjects(session: Session): Promise<ProjectSummary[]> {
@@ -296,4 +325,57 @@ export function renameProject(session: Session, id: string, name: string): Promi
 
 export async function deleteProject(session: Session, id: string): Promise<void> {
   await send(`/api/projects/${id}`, { method: "DELETE", authorize: sessionAuth(session), errorMessage: "Не удалось удалить проект" });
+}
+
+// Сохранить результат GreenPlan в проект и подготовить комплект файлов
+// (записка, объяснения, DXF с проверкой, визуализации). На крупном объекте --
+// минуты. Без повторов: каждый запуск -- новый комплект и платные картинки.
+export function prepareGreenPlanFiles(
+  session: Session,
+  id: string,
+  body: {
+    scene: Scene;
+    assignments: GreenPlanZoneAssignment[];
+    rejections: unknown;
+    report: string | null;
+    options: GreenPlanOptions;
+    notes: string[];
+    visualizations: boolean;
+  },
+): Promise<GreenPlanFilesResult> {
+  return request<GreenPlanFilesResult>(`/api/projects/${id}/greenplan-files`, {
+    json: body,
+    authorize: sessionAuth(session),
+    errorMessage: "Не удалось подготовить файлы проекта",
+  });
+}
+
+export function downloadProjectFile(session: Session, projectId: string, fileId: string): Promise<Blob> {
+  return requestBlob(`/api/projects/${projectId}/files/${fileId}`, { authorize: sessionAuth(session), errorMessage: "Не удалось скачать файл" });
+}
+
+export async function deleteProjectFile(session: Session, projectId: string, fileId: string): Promise<void> {
+  await send(`/api/projects/${projectId}/files/${fileId}`, { method: "DELETE", authorize: sessionAuth(session), errorMessage: "Не удалось удалить файл" });
+}
+
+export async function setProjectSharing(session: Session, id: string, enabled: boolean): Promise<string | null> {
+  const r = await request<{ share_token: string | null }>(`/api/projects/${id}/share`, {
+    json: { enabled },
+    authorize: sessionAuth(session),
+    errorMessage: "Не удалось изменить доступ по ссылке",
+  });
+  return r.share_token;
+}
+
+export function loadSharedProject(token: string): Promise<SharedProject> {
+  return request<SharedProject>(`/api/shared/${token}`, { errorMessage: "Не удалось открыть проект по ссылке" });
+}
+
+export function downloadSharedFile(token: string, fileId: string): Promise<Blob> {
+  return requestBlob(`/api/shared/${token}/files/${fileId}`, { errorMessage: "Не удалось скачать файл" });
+}
+
+// Адрес страницы проекта по ссылке.
+export function shareUrl(token: string): string {
+  return `${window.location.origin}/share/${token}`;
 }

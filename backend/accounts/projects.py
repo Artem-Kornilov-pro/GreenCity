@@ -9,7 +9,9 @@ bcrypt -- единственная блокирующая часть, поэто
 from __future__ import annotations
 
 import asyncio
+import secrets
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Optional
 
 from bson import ObjectId
@@ -17,6 +19,7 @@ from bson.errors import InvalidId
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 
+from accounts import project_files
 from accounts.auth import (
     REFRESH_TOKEN_TTL_SECONDS,
     AuthError,
@@ -27,7 +30,7 @@ from accounts.auth import (
     validate_username,
     verify_password,
 )
-from accounts.schemas import AuthResponse, Project, ProjectSummary
+from accounts.schemas import AuthResponse, Project, ProjectFile, ProjectSummary, SharedProject
 from core.schemas import Scene
 from storage import cache
 from storage.db import projects as projects_col
@@ -98,7 +101,18 @@ def _owner_filter(user_id: str, project_id: str) -> dict:
 
 
 def _to_summary(doc: dict) -> ProjectSummary:
-    return ProjectSummary(id=str(doc["_id"]), name=doc["name"], created_at=doc["created_at"], updated_at=doc["updated_at"])
+    return ProjectSummary(
+        id=str(doc["_id"]),
+        name=doc["name"],
+        created_at=doc["created_at"],
+        updated_at=doc["updated_at"],
+        files_count=len(doc.get("files") or []),
+        shared=bool(doc.get("share_token")),
+    )
+
+
+def _files(doc: dict) -> list[ProjectFile]:
+    return [ProjectFile.model_validate(f) for f in doc.get("files") or []]
 
 
 def _to_project(doc: dict) -> Project:
@@ -108,11 +122,13 @@ def _to_project(doc: dict) -> Project:
         scene=Scene.model_validate(doc["scene"]),
         created_at=doc["created_at"],
         updated_at=doc["updated_at"],
+        files=_files(doc),
+        share_token=doc.get("share_token"),
     )
 
 
 async def list_projects(user_id: str) -> list[ProjectSummary]:
-    cursor = projects_col.find({"owner_id": user_id}).sort("updated_at", -1)
+    cursor = projects_col.find({"owner_id": user_id}, {"scene": 0}).sort("updated_at", -1)
     return [_to_summary(doc) async for doc in cursor]
 
 
@@ -161,3 +177,78 @@ async def delete_project(user_id: str, project_id: str) -> None:
     result = await projects_col.delete_one(_owner_filter(user_id, project_id))
     if result.deleted_count == 0:
         raise NotFoundError("Такого проекта нет или он не ваш")
+    await asyncio.to_thread(project_files.remove_project, project_id)
+
+
+# --- Файлы проекта ----------------------------------------------------------------
+
+
+def _file_of(doc: dict, file_id: str) -> tuple[ProjectFile, Path]:
+    for meta in _files(doc):
+        if meta.id == file_id:
+            return meta, project_files.path_of(str(doc["_id"]), meta.id)
+    raise NotFoundError("Такого файла в проекте нет")
+
+
+async def get_file(user_id: str, project_id: str, file_id: str) -> tuple[ProjectFile, Path]:
+    doc = await projects_col.find_one(_owner_filter(user_id, project_id), {"files": 1})
+    if doc is None:
+        raise NotFoundError("Такого проекта нет или он не ваш")
+    return _file_of(doc, file_id)
+
+
+async def delete_file(user_id: str, project_id: str, file_id: str) -> None:
+    meta, _path = await get_file(user_id, project_id, file_id)
+    await projects_col.update_one(_owner_filter(user_id, project_id), {"$pull": {"files": {"id": meta.id}}})
+    await asyncio.to_thread(project_files.remove, project_id, [meta.id])
+
+
+async def replace_auto_files(user_id: str, project_id: str, files: list[ProjectFile]) -> list[ProjectFile]:
+    """Новый комплект файлов после GreenPlan вместо прошлого (auto); файлы,
+    добавленные не комплектом, остаются. Возвращает все файлы проекта."""
+    doc = await projects_col.find_one(_owner_filter(user_id, project_id), {"files": 1})
+    if doc is None:
+        await asyncio.to_thread(project_files.remove, project_id, [f.id for f in files])
+        raise NotFoundError("Такого проекта нет или он не ваш")
+    old = _files(doc)
+    kept = [f for f in old if not f.auto]
+    all_files = kept + files
+    await projects_col.update_one(
+        _owner_filter(user_id, project_id),
+        {"$set": {"files": [f.model_dump(mode="python") for f in all_files], "updated_at": _now()}},
+    )
+    await asyncio.to_thread(project_files.remove, project_id, [f.id for f in old if f.auto])
+    return all_files
+
+
+# --- Доступ по ссылке ---------------------------------------------------------------
+
+
+async def set_sharing(user_id: str, project_id: str, enabled: bool) -> Optional[str]:
+    """Включить доступ по ссылке (ключ сохраняется, если уже был) или выключить:
+    выключение отзывает ключ навсегда, новое включение даёт новую ссылку."""
+    doc = await projects_col.find_one(_owner_filter(user_id, project_id), {"share_token": 1})
+    if doc is None:
+        raise NotFoundError("Такого проекта нет или он не ваш")
+    if not enabled:
+        await projects_col.update_one(_owner_filter(user_id, project_id), {"$unset": {"share_token": ""}})
+        return None
+    token = doc.get("share_token") or secrets.token_urlsafe(16)
+    await projects_col.update_one(_owner_filter(user_id, project_id), {"$set": {"share_token": token}})
+    return token
+
+
+async def _shared_doc(token: str, projection: Optional[dict] = None) -> dict:
+    doc = await projects_col.find_one({"share_token": token}, projection) if token else None
+    if doc is None:
+        raise NotFoundError("Ссылка недействительна: проект удалён или доступ по ссылке выключен")
+    return doc
+
+
+async def get_shared(token: str) -> SharedProject:
+    doc = await _shared_doc(token)
+    return SharedProject(name=doc["name"], scene=Scene.model_validate(doc["scene"]), updated_at=doc["updated_at"], files=_files(doc))
+
+
+async def get_shared_file(token: str, file_id: str) -> tuple[ProjectFile, Path]:
+    return _file_of(await _shared_doc(token, {"files": 1}), file_id)

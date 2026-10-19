@@ -46,6 +46,19 @@ class MeResponse(BaseModel):
     username: str
 
 
+class ProjectFile(BaseModel):
+    """Файл проекта: документы и картинки по результату GreenPlan. Содержимое
+    -- на диске (accounts/project_files.py), здесь -- описание."""
+
+    id: str
+    name: str = Field(description="Имя для сохранения: «Пояснительная записка — Двор.docx».")
+    kind: str = Field(description="docx, explanations_json, explanations_csv, explanations_xlsx, dxf, export_check, visualization")
+    media_type: str
+    size: int = Field(description="Байт.")
+    created_at: datetime
+    auto: bool = Field(default=True, description="Подготовлен сам после GreenPlan: следующий запуск заменяет весь такой комплект.")
+
+
 class ProjectSummary(BaseModel):
     """Для списка проектов -- без сцены: она может быть тяжёлой (район --
     тысячи объектов), а список нужен только чтобы выбрать, какой открыть."""
@@ -54,6 +67,8 @@ class ProjectSummary(BaseModel):
     name: str
     created_at: datetime
     updated_at: datetime
+    files_count: int = 0
+    shared: bool = Field(default=False, description="Открыт доступ по ссылке.")
 
 
 class ProjectCreate(BaseModel):
@@ -75,3 +90,18 @@ class Project(BaseModel):
     scene: Scene
     created_at: datetime
     updated_at: datetime
+    files: list[ProjectFile] = []
+    share_token: Optional[str] = Field(default=None, description="Ключ ссылки /share/<ключ>; None -- доступ по ссылке выключен.")
+
+
+class SharedProject(BaseModel):
+    """Проект по ссылке -- только просмотр: без владельца и ключа."""
+
+    name: str
+    scene: Scene
+    updated_at: datetime
+    files: list[ProjectFile] = []
+
+
+class ShareResponse(BaseModel):
+    share_token: Optional[str]

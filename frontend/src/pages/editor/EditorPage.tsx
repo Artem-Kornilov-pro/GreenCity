@@ -4,6 +4,7 @@ import { UploadCloud } from "lucide-react";
 import { SceneView } from "../../scene/SceneView";
 import { objectDisplayName } from "../../catalog";
 import type { RestrictionZone } from "../../types";
+import type { ProjectFile } from "../../api";
 import { PageTransition } from "../../components/PageTransition";
 import type { AsyncTask } from "../../hooks/useAsyncTask";
 import { selectSession } from "../../store/authSlice";
@@ -16,6 +17,7 @@ import { GreenPlanPanel } from "./GreenPlanPanel";
 import { BoundaryChoiceDialog } from "./BoundaryChoiceDialog";
 import { VisualizationsDialog } from "./VisualizationsDialog";
 import { LayerMappingDialog } from "./LayerMappingDialog";
+import { ProjectFilesDialog, ShareDialog } from "./ProjectFilesDialog";
 import { SaveAsDialog } from "./SaveAsDialog";
 import { StatusBanners, type BannerError } from "./StatusBanners";
 import { useAssistant } from "./hooks/useAssistant";
@@ -25,6 +27,7 @@ import { useFileDrop } from "./hooks/useFileDrop";
 import { useGreenPlan } from "./hooks/useGreenPlan";
 import { useLayerMapping } from "./hooks/useLayerMapping";
 import { useProject } from "./hooks/useProject";
+import { useProjectFiles } from "./hooks/useProjectFiles";
 import { useSceneEditing } from "./hooks/useSceneEditing";
 import { useSceneImport } from "./hooks/useSceneImport";
 
@@ -85,6 +88,26 @@ export default function EditorPage() {
     onReparsed: onGreenPlanUndone,
   });
 
+  const projectFiles = useProjectFiles({
+    projectId,
+    session,
+    scene,
+    greenPlan: greenPlan.result,
+    reportLoading: greenPlan.reportLoading,
+    files: project.files,
+    setFiles: project.setFiles,
+    shareToken: project.shareToken,
+    setShareToken: project.setShareToken,
+  });
+  const [filesOpen, setFilesOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const downloadFile = async (file: ProjectFile) => {
+    setDownloadingId(file.id);
+    await projectFiles.download.run(file);
+    setDownloadingId(null);
+  };
+
   const uploading = importer.dxf.busy || importer.dwg.busy || project.load.busy || layers.reparse.busy;
   const { dragging, dropHandlers } = useFileDrop(importer.importFiles, !uploading);
   const togglePanel = (panel: Exclude<RightPanel, null>) => setRightPanel((p) => (p === panel ? null : panel));
@@ -100,6 +123,8 @@ export default function EditorPage() {
     greenPlan.docx,
     greenPlan.explanations,
     greenPlan.visuals,
+    projectFiles.download,
+    projectFiles.remove,
     catalog.load,
     layers.loadKinds,
     layers.reparse,
@@ -132,6 +157,11 @@ export default function EditorPage() {
           isSavedProject={Boolean(projectId)}
           projectBusy={project.busy}
           onSave={project.saveOrAsk}
+          onFiles={projectId && session ? () => setFilesOpen(true) : undefined}
+          filesCount={projectFiles.files.length}
+          filesPreparing={projectFiles.prepare.busy}
+          onShare={projectId && session ? () => setShareOpen(true) : undefined}
+          shared={Boolean(projectFiles.shareToken)}
         />
 
         <StatusBanners
@@ -236,6 +266,13 @@ export default function EditorPage() {
             onRetryReport={greenPlan.retryReport}
             visualsBusy={greenPlan.visuals.busy}
             onVisualize={() => void greenPlan.visuals.run()}
+            projectFiles={{
+              saved: Boolean(projectId && session),
+              signedIn: Boolean(session),
+              preparing: projectFiles.prepare.busy,
+              count: projectFiles.files.length,
+              onOpen: () => setFilesOpen(true),
+            }}
           />
         </main>
 
@@ -282,6 +319,27 @@ export default function EditorPage() {
         canReparse={Boolean(scene?.meta.sourceId)}
         busy={layers.reparse.busy}
         onApply={(layerMap) => void layers.reparse.run(layerMap)}
+      />
+      <ProjectFilesDialog
+        open={filesOpen}
+        onOpenChange={setFilesOpen}
+        files={projectFiles.files}
+        preparing={projectFiles.prepare.busy}
+        notes={projectFiles.notes}
+        prepareError={projectFiles.prepare.error}
+        onRetry={projectFiles.prepare.retry}
+        onDownload={(file) => void downloadFile(file)}
+        onDelete={(file) => void projectFiles.remove.run(file)}
+        loadBlob={projectFiles.loadBlob}
+        downloadingId={downloadingId}
+      />
+      <ShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        token={projectFiles.shareToken}
+        busy={projectFiles.share.busy}
+        error={projectFiles.share.error}
+        onToggle={(enabled) => void projectFiles.share.run(enabled)}
       />
       <SaveAsDialog
         open={project.saveAsOpen}

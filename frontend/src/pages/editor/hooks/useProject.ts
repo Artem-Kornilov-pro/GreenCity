@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createProject, loadProject, saveProject } from "../../../api";
+import { createProject, loadProject, saveProject, type ProjectFile } from "../../../api";
 import type { Session } from "../../../auth";
 import { useAsyncTask } from "../../../hooks/useAsyncTask";
 import type { Scene } from "../../../types";
@@ -19,6 +19,10 @@ export function useProject({
 }) {
   const navigate = useNavigate();
   const [name, setName] = useState<string | null>(null);
+  // Файлы проекта и ключ ссылки -- с сервера при открытии; дальше их
+  // обновляет useProjectFiles.
+  const [files, setFiles] = useState<ProjectFile[]>([]);
+  const [shareToken, setShareToken] = useState<string | null>(null);
   const [saveAsOpen, setSaveAsOpen] = useState(false);
   const [saveAsName, setSaveAsName] = useState("");
 
@@ -26,6 +30,8 @@ export function useProject({
     const project = await loadProject(owner, id);
     loadScene(project.scene);
     setName(project.name);
+    setFiles(project.files ?? []);
+    setShareToken(project.share_token ?? null);
   });
   const { run: runLoad } = load;
 
@@ -43,6 +49,9 @@ export function useProject({
     const projectName = saveAsName.trim();
     if (!session || !scene || !projectName) return;
     const created = await createProject(session, projectName, scene);
+    setName(created.name);
+    setFiles([]);
+    setShareToken(null);
     setSaveAsOpen(false);
     setSaveAsName("");
     navigate(`/editor/${created.id}`, { replace: true });
@@ -50,6 +59,10 @@ export function useProject({
 
   return {
     name,
+    files,
+    setFiles,
+    shareToken,
+    setShareToken,
     load,
     save,
     saveAs,

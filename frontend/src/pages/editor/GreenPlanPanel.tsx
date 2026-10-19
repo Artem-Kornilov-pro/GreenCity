@@ -1,4 +1,4 @@
-import { Download, Image as ImageIcon, Loader2, RotateCw, Trees } from "lucide-react";
+import { Download, FolderOpen, Image as ImageIcon, Loader2, RotateCw, Trees } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
@@ -23,6 +23,7 @@ export function GreenPlanPanel({
   onRetryReport,
   visualsBusy,
   onVisualize,
+  projectFiles,
 }: {
   open: boolean;
   onToggle: () => void;
@@ -35,6 +36,8 @@ export function GreenPlanPanel({
   onRetryReport: () => void;
   visualsBusy: boolean;
   onVisualize: () => void;
+  // Файлы проекта: у сохранённого проекта комплект готовится сам после GreenPlan.
+  projectFiles: { saved: boolean; signedIn: boolean; preparing: boolean; count: number; onOpen: () => void };
 }) {
   const existingLawnSqm = (result?.scene.lawns ?? []).filter((l) => l.status === "existing").reduce((sum, l) => sum + l.area_sqm, 0);
   const [showExisting, setShowExisting] = useState(false);
@@ -69,6 +72,25 @@ export function GreenPlanPanel({
 
         {result && (
           <>
+            {projectFiles.saved ? (
+              <div className="flex items-center gap-2 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-sm text-brand-800">
+                {projectFiles.preparing ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <FolderOpen className="h-4 w-4 shrink-0" />}
+                <span className="flex-1">
+                  {projectFiles.preparing
+                    ? "Готовим файлы проекта: записку, объяснения, чертёж и визуализации…"
+                    : `Файлы проекта сохранены: ${projectFiles.count}`}
+                </span>
+                <Button size="sm" variant="outline" onClick={projectFiles.onOpen}>
+                  Открыть
+                </Button>
+              </div>
+            ) : (
+              <p className="rounded-lg bg-ink-100/70 px-3 py-2 text-xs text-ink-600">
+                {projectFiles.signedIn
+                  ? "Сохраните проект — записка, объяснения, чертёж DXF и визуализации подготовятся и сохранятся сами."
+                  : "Войдите и сохраните проект — записка, объяснения, чертёж DXF и визуализации подготовятся и сохранятся сами."}
+              </p>
+            )}
             {/* Пояснительная записка -- "сценарий выгрузки документации" из ТЗ.
                 Можно и без текста от LLM: он идёт только приложением. */}
             <Button size="sm" variant="outline" onClick={onDownloadDocument} disabled={documentBusy}>

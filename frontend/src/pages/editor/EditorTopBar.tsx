@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Download, FolderKanban, LassoSelect, Layers, Leaf, Loader2, LogOut, Map as MapIcon, Save, Sparkles, Trees, User } from "lucide-react";
+import { Download, FolderKanban, FolderOpen, LassoSelect, Layers, Leaf, Loader2, LogOut, Map as MapIcon, Save, Share2, Sparkles, Trees, User } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import {
   DropdownMenu,
@@ -37,6 +37,11 @@ export function EditorTopBar({
   isSavedProject,
   projectBusy,
   onSave,
+  onFiles,
+  filesCount = 0,
+  filesPreparing = false,
+  onShare,
+  shared = false,
 }: {
   title: string;
   // Раздельно: раньше один общий флаг крутил загрузку на обеих кнопках,
@@ -64,6 +69,12 @@ export function EditorTopBar({
   isSavedProject: boolean;
   projectBusy: boolean;
   onSave: () => void;
+  // Сохранённый проект: его файлы и доступ по ссылке.
+  onFiles?: () => void;
+  filesCount?: number;
+  filesPreparing?: boolean;
+  onShare?: () => void;
+  shared?: boolean;
 }) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -149,6 +160,23 @@ export function EditorTopBar({
               <Button size="sm" variant="outline" onClick={onSave} disabled={projectBusy}>
                 {projectBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                 {isSavedProject ? "Сохранить" : "Сохранить как…"}
+              </Button>
+            )}
+            {onFiles && (
+              <Button size="sm" variant="outline" onClick={onFiles} title="Файлы проекта: записка, объяснения, чертёж, визуализации">
+                {filesPreparing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FolderOpen className="h-3.5 w-3.5" />}
+                Файлы{filesCount > 0 ? ` · ${filesCount}` : ""}
+              </Button>
+            )}
+            {onShare && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onShare}
+                title={shared ? "Доступ по ссылке открыт" : "Поделиться проектом по ссылке"}
+                className={shared ? "border-brand-300 bg-brand-50" : undefined}
+              >
+                <Share2 className="h-3.5 w-3.5" />
               </Button>
             )}
           </>

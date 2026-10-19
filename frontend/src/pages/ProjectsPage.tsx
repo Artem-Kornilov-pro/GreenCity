@@ -131,6 +131,13 @@ export default function ProjectsPage() {
                           {p.name}
                         </h3>
                         <p className="mt-1.5 text-sm text-ink-400">Изменено {formatDate(p.updated_at)}</p>
+                        {(Boolean(p.files_count) || p.shared) && (
+                          <p className="mt-1 text-sm text-ink-500">
+                            {p.files_count ? `Файлов: ${p.files_count}` : ""}
+                            {p.files_count && p.shared ? " · " : ""}
+                            {p.shared ? "открыт по ссылке" : ""}
+                          </p>
+                        )}
                       </div>
                       <div className="mt-6 flex items-center gap-2">
                         <Button className="flex-1" onClick={() => navigate(`/editor/${p.id}`)}>

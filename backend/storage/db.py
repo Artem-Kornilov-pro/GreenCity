@@ -36,12 +36,19 @@ users = db["users"]
 projects = db["projects"]
 
 
+async def _create_indexes() -> None:
+    await users.create_index("username", unique=True)
+    await projects.create_index("owner_id")
+    # Ключ ссылки на проект (/share/<ключ>) -- уникален; у проектов без
+    # ссылки его нет, поэтому индекс разреженный.
+    await projects.create_index("share_token", unique=True, sparse=True)
+
+
 async def ensure_indexes() -> bool:
     """Создаёт индексы; вызывается при старте приложения (lifespan).
     create_index идемпотентен. False -- база недоступна."""
     try:
-        await users.create_index("username", unique=True)
-        await projects.create_index("owner_id")
+        await _create_indexes()
     except PyMongoError as e:
         # База недоступна -- не работают только аккаунты и проекты, остальной
         # бэкенд с ними не связан.
@@ -63,8 +70,7 @@ async def ensure_indexes_when_available() -> None:
     for _ in range(INDEX_RETRY_ATTEMPTS):
         await asyncio.sleep(INDEX_RETRY_INTERVAL_S)
         try:
-            await users.create_index("username", unique=True)
-            await projects.create_index("owner_id")
+            await _create_indexes()
         except PyMongoError:
             continue
         logger.info("MongoDB доступна, индексы созданы")

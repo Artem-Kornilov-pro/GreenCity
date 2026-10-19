@@ -11,6 +11,8 @@ import ProjectsPage from "./pages/ProjectsPage";
 // scene/). Без lazy() они грузились бы в основной бандл даже для посетителя
 // лендинга, который 3D вообще не увидит.
 const EditorPage = lazy(() => import("./pages/editor/EditorPage"));
+// Проект по ссылке -- та же 3D-сцена, только просмотр.
+const SharedProjectPage = lazy(() => import("./pages/SharedProjectPage"));
 
 function EditorFallback() {
   return (
@@ -22,14 +24,26 @@ function EditorFallback() {
 
 export default function App() {
   const location = useLocation();
+  // Новый и сохранённый проект в редакторе -- одна страница: после «Сохранить
+  // как…» адрес меняется на /editor/<id>, а результат GreenPlan и его файлы
+  // остаются (иначе смена ключа пересоздала бы страницу).
+  const routeKey = location.pathname.startsWith("/editor") ? "/editor" : location.pathname;
 
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+      <Routes location={location} key={routeKey}>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<AuthPage mode="login" />} />
         <Route path="/register" element={<AuthPage mode="register" />} />
         <Route path="/projects" element={<ProjectsPage />} />
+        <Route
+          path="/share/:token"
+          element={
+            <Suspense fallback={<EditorFallback />}>
+              <SharedProjectPage />
+            </Suspense>
+          }
+        />
         <Route
           path="/editor"
           element={
