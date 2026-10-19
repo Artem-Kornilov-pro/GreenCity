@@ -323,9 +323,9 @@ $ .venv/bin/python tools/check_export.py locations/12_natashinsky_proezd/12_nata
 
 | Участок | Стиль, ведущий аналог | Зон | Новых деревьев | Новых кустарников | Новый газон | Нарушений у новых | Отклонено точек |
 |---|---|---|---|---|---|---|---|
-| [07_nizhnie_polya](../examples/07_nizhnie_polya/) | пейзажный, 19_2ya_pryadilnaya | 241 | 292 | 1215 | 671 м² | 0 | 1061 |
+| [07_nizhnie_polya](../examples/07_nizhnie_polya/) | пейзажный, 19_2ya_pryadilnaya | 241 | 287 | 1210 | 671 м² | 0 | 1071 |
 | [06_kamchatskaya_ulitsa](../examples/06_kamchatskaya_ulitsa/) | регулярный, 06_kamchatskaya_ulitsa | 109 | 81 | 633 | 12 781 м² | 0 | 463 |
-| [12_natashinsky_proezd](../examples/12_natashinsky_proezd/) | пейзажный, 12_natashinsky_proezd | 44 | 114 | 482 | 2085 м² | 0 | 267 |
+| [12_natashinsky_proezd](../examples/12_natashinsky_proezd/) | пейзажный, 12_natashinsky_proezd | 44 | 110 | 467 | 2101 м² | 0 | 286 |
 
 «Отклонено точек» — кандидаты, не прошедшие проверку при расстановке: по норме и по зазору между соседними объектами. Разбивка по правилам — в `summary.rejected_by_rule` файла объяснений.
 

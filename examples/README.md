@@ -4,9 +4,9 @@
 
 | Участок | Стиль, ведущий аналог | Новых деревьев | Новых кустарников | Новый газон | Нарушений у новых посадок |
 |---|---|---|---|---|---|
-| `07_nizhnie_polya` | пейзажный, 19_2ya_pryadilnaya | 292 | 1215 | 671 м² | 0 |
+| `07_nizhnie_polya` | пейзажный, 19_2ya_pryadilnaya | 287 | 1210 | 671 м² | 0 |
 | `06_kamchatskaya_ulitsa` | регулярный, 06_kamchatskaya_ulitsa | 81 | 633 | 12 781 м² | 0 |
-| `12_natashinsky_proezd` | пейзажный, 12_natashinsky_proezd | 114 | 482 | 2085 м² | 0 |
+| `12_natashinsky_proezd` | пейзажный, 12_natashinsky_proezd | 110 | 467 | 2101 м² | 0 |
 
 В папке участка:
 

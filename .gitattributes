@@ -1,0 +1,7 @@
+# Чертежи -- байт в байт как в репозитории на любой ОС: иначе git на Windows
+# (core.autocrlf) переводит DXF в CRLF, и SHA-256 исходника в отчётах и
+# примерах (examples/) не совпадает с файлом из репозитория.
+*.dxf -text
+*.DXF -text
+*.dwg binary
+*.DWG binary
