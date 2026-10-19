@@ -4,11 +4,11 @@
  "site_style": "landscape",
  "lead_project": "12_natashinsky_proezd",
  "zones": 44,
- "new_trees": 114,
- "new_bushes": 482,
- "new_lawn_sqm": 2085,
+ "new_trees": 110,
+ "new_bushes": 467,
+ "new_lawn_sqm": 2101,
  "violations_new_objects": 0,
- "rejected_by_norm": 267,
+ "rejected_by_norm": 286,
  "assortment": [
   {
    "category": "дерево",
@@ -19,7 +19,7 @@
   {
    "category": "дерево",
    "species": "Липа мелколистная",
-   "count": 44,
+   "count": 41,
    "unit": "шт."
   },
   {
@@ -31,13 +31,13 @@
   {
    "category": "дерево",
    "species": "Черемуха Маака",
-   "count": 5,
+   "count": 4,
    "unit": "шт."
   },
   {
    "category": "кустарник",
    "species": "Жимолость золотистая",
-   "count": 336,
+   "count": 321,
    "unit": "шт."
   },
   {
@@ -49,7 +49,7 @@
   {
    "category": "газон",
    "species": "Газон обыкновенный",
-   "count": 2085,
+   "count": 2101,
    "unit": "м²"
   }
  ]
