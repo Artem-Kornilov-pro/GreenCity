@@ -33,6 +33,9 @@ services:
       # дописывает слои результата в них -- том, чтобы они переживали
       # перезапуск и пересборку контейнера.
       - sources_data:/app/var/sources
+      # Файлы проектов -- записка, объяснения, выгрузка DXF, визуализации
+      # (backend/accounts/project_files.py).
+      - project_files_data:/app/var/project_files
     environment:
       # Имена сервисов ниже ("mongo", "redis") резолвятся только внутри сети
       # compose -- в контейнере backend это правильные адреса, снаружи они
@@ -40,6 +43,7 @@ services:
       - MONGO_URI=mongodb://mongo:27017
       - REDIS_URL=redis://redis:6379/0
       - GREENCITY_SOURCES_DIR=/app/var/sources
+      - GREENCITY_PROJECT_FILES_DIR=/app/var/project_files
       # 1 -- дев-режим: один процесс с --reload, правки подхватываются на лету
       # (см. развилку в backend/Dockerfile). Поднимать имеет смысл под реальную
       # нагрузку: геометрия на shapely упирается в GIL, и несколько запросов к
@@ -310,6 +314,7 @@ services:
 volumes:
   mongo_data:
   sources_data:
+  project_files_data:
   prometheus_data:
   loki_data:
   grafana_data:

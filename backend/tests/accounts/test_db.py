@@ -43,7 +43,7 @@ async def test_indexes_are_created_once_mongo_comes_up_later(monkeypatch):
     monkeypatch.setattr(db, "projects", _LateCollection())
     monkeypatch.setattr(db, "INDEX_RETRY_INTERVAL_S", 0)
     await db.ensure_indexes_when_available()
-    assert calls == [("username",), ("username",), ("username",), ("owner_id",)]
+    assert calls == [("username",), ("username",), ("username",), ("owner_id",), ("share_token",)]
 
 
 def test_mongo_uri_is_a_valid_connection_string():

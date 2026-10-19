@@ -27,6 +27,7 @@ from pydantic import BaseModel
 from api import accounts as accounts_api
 from api import editor as editor_api
 from api import greenplan as greenplan_api
+from api import project_files as project_files_api
 from api.protection import BodySizeLimitMiddleware, metric_path
 from core.concurrency import ServerBusy
 from core.paths import ENV_FILE
@@ -129,3 +130,4 @@ async def health():
 app.include_router(editor_api.router)
 app.include_router(greenplan_api.router)
 app.include_router(accounts_api.router)
+app.include_router(project_files_api.router)
