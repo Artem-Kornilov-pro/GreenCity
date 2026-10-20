@@ -12,7 +12,7 @@
 - [docs/PUBLIC_STAND.md](docs/PUBLIC_STAND.md) — публичный стенд с HTTPS одной командой (`make docker-public-up`).
 - [docs/AUDIT_REFERENCES.md](docs/AUDIT_REFERENCES.md) — аудит реальных проектов корпуса теми же нормами отступов, что и посадки GreenPlan.
 - [tools/loadtest/README.md](tools/loadtest/README.md) — нагрузочный прогон на Locust и результаты на стенде.
-- [docs/presentation/GreenCity_Вороны.pptx](docs/presentation/GreenCity_Вороны.pptx) — презентация проекта.
+- [docs/presentation/GreenCity_Вороны.pptx](docs/presentation/GreenCity_Вороны.pptx) ([PDF](docs/presentation/GreenCity_Вороны.pdf)) — презентация проекта.
 - [examples/](examples/) — выходные DXF, файлы объяснений (JSON, CSV, Excel) и пояснительные записки для трёх участков из набора кейса.
 - [locations/location_test/README.md](locations/location_test/README.md) — три тестовых участка для приёмки (школа, улица с бульваром, реконструкция двора) с ориентирами результата.
 - [backend/README.md](backend/README.md) — эндпоинты бэкенда, алгоритм автогенерации озеленения, параметры.
