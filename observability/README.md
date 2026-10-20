@@ -70,16 +70,19 @@ healthcheck, promtail -- раньше loki. У всех `restart: unless-stopped
 эндпоинте (`Instrumentator().instrument(app).expose(app)` в `main.py`).
 
 Бизнес-метрики -- то, что HTTP-инструментация в принципе не может знать,
-увеличиваются явно в нужных местах `main.py`:
+увеличиваются явно в модулях эндпоинтов `api/`:
 
 | Метрика | Тип | Метки | Когда растёт |
 |---|---|---|---|
 | `greencity_dxf_parses_total` | Counter | -- | Успешный `/api/parse` |
 | `greencity_dxf_parse_errors_total` | Counter | -- | `/api/parse` не смог разобрать файл |
 | `greencity_dxf_exports_total` | Counter | -- | `/api/export-dxf` |
+| `greencity_dwg_batch_conversions_total` | Counter | `outcome` (success/all_failed/tool_missing) | `/api/parse-dwg`, на каждую пачку DWG |
+| `greencity_dwg_files_processed_total` | Counter | `outcome` (converted/failed) | `/api/parse-dwg`, на каждый файл пачки |
 | `greencity_greenery_generated_total` | Counter | `object_type` (tree/bush/lawn_patch) | `/api/generate-greenery`, на каждый добавленный объект |
 | `greencity_llm_edit_requests_total` | Counter | `outcome` (success/llm_error/not_configured) | `/api/edit-with-text` |
 | `greencity_greenplan_generate_total` | Counter | `report_outcome` (success/unavailable) | `/api/greenplan/report` (GreenPlan) |
+| `greencity_greenplan_documents_total` | Counter | -- | `/api/greenplan/document` (пояснительная записка DOCX) |
 | `greencity_auth_registrations_total` | Counter | `outcome` (success/rejected/rate_limited) | `/api/auth/register` |
 | `greencity_auth_logins_total` | Counter | `outcome` (success/rejected/rate_limited) | `/api/auth/login` |
 | `greencity_rate_limit_blocks_total` | Counter | `endpoint` (register/login и группы тяжёлых эндпоинтов: parse/parse_dwg/greenplan/llm/export/generate) | Запрос отклонён лимитом частоты (429) |
@@ -110,9 +113,11 @@ healthcheck, promtail -- раньше loki. У всех `restart: unless-stopped
 |---|---|
 | `greencity.access` | Каждый HTTP-запрос (RequestLoggingMiddleware) |
 | `greencity.auth` | Регистрации/входы/выходы, отклонённые попытки, блокировки лимитом частоты -- без паролей, только имя пользователя и IP |
-| `greencity.parse` | Каждый `/api/parse` -- успех (кол-во объектов/зон) или причина отказа |
+| `greencity.parse` | Каждый `/api/parse` и `/api/parse-dwg` -- успех (кол-во объектов/зон) или причина отказа, ход конвертации DWG |
 | `greencity.generate` | Каждый `/api/generate-greenery` -- сколько объектов добавлено |
-| `greencity.export` | Каждый `/api/export-dxf` |
+| `greencity.export` | Каждый `/api/export-dxf` и проверка выгрузки `/api/export-dxf/verify` |
+| `greencity.greenplan` | GreenPlan: расстановка, текст-обоснование, записка, визуализации |
+| `greencity.projects` | Файлы проекта и ссылки «поделиться» (`api/project_files.py`) |
 | `greencity.llm` | Запросы к LLM (`text_editor/service.py`, было и раньше) -- инструкция, применённые/отклонённые операции |
 | `greencity.db` / `greencity.cache` | Недоступность MongoDB/Redis (было и раньше) |
 

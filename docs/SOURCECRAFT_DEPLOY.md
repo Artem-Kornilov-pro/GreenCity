@@ -23,7 +23,13 @@ Connection → реестр". Без шагов ниже джоба `deploy-back
   (парсинг DXF, генерация, правка текстом, GreenPlan) от них не зависит и
   работает как обычно — это штатное поведение, не поломка деплоя.
 - **Yandex AI Studio** (без `YANDEX_CLOUD_API_KEY`/`YANDEX_CLOUD_FOLDER`) — правка текстом ответит 503, `POST /api/greenplan/report` ответит
-  `report_error` вместо текста, расстановка (`/api/greenplan/generate`) не пострадает.
+  `report_error` вместо текста, визуализации (`/api/greenplan/visualizations`,
+  Alice AI ART; свой ключ — `YANDEX_ART_*`) ответят 503, расстановка
+  (`/api/greenplan/generate`) не пострадает.
+- **Хранилище файлов проекта** — файлы проекта (записка, объяснения, DXF,
+  визуализации) пишутся на диск в `GREENCITY_PROJECT_FILES_DIR`. В
+  Serverless Containers диск временный: файлы пропадут при перезапуске
+  контейнера; для постоянного хранения — ВМ с томом (как в docker compose).
 - **Frontend** — продакшен-образ `frontend/Dockerfile.prod` (статика за nginx,
   `/api/` проксируется на адрес из `BACKEND_URL`) собирается в CI и
   публикуется в ghcr.io (`docker-publish.yml`), но в этот workflow SourceCraft
@@ -44,8 +50,10 @@ Connection → реестр". Без шагов ниже джоба `deploy-back
 
 Для полноценного демо с аккаунтами/LLM нужно отдельно поднять MongoDB/Redis
 (например тоже в Yandex Cloud) и передать `MONGO_URI`/`REDIS_URL`/
-`YANDEX_CLOUD_API_KEY`/`YANDEX_CLOUD_FOLDER` через `--environment` в шаге `deploy` — сейчас там только
-`UVICORN_WORKERS`.
+`YANDEX_CLOUD_API_KEY`/`YANDEX_CLOUD_FOLDER` и `JWT_SECRET` (без него
+токены подписываются dev-ключом из исходников) через `--environment` в шаге
+`deploy` — сейчас там только `UVICORN_WORKERS`. Публичный стенд на одной ВМ с
+HTTPS — [PUBLIC_STAND.md](PUBLIC_STAND.md).
 
 ## 1. Сервисный аккаунт в Yandex Cloud
 
