@@ -11,7 +11,7 @@
 | Найти требование ТЗ | раздел 3 |
 | Документация решения | [SOLUTION.md](SOLUTION.md), PDF — [pdf/GreenCity_documentation.pdf](pdf/GreenCity_documentation.pdf) |
 | Как пользоваться сайтом | [USER_GUIDE.md](USER_GUIDE.md) |
-| Презентация | [presentation/GreenCity_Вороны.pptx](presentation/GreenCity_Вороны.pptx) |
+| Презентация | [presentation/GreenCity_Вороны.pptx](presentation/GreenCity_Вороны.pptx), [PDF](presentation/GreenCity_Вороны.pdf) |
 
 ## 1. Запуск
 
