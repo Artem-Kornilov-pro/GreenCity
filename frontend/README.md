@@ -20,21 +20,23 @@ npm run build            # production-сборка в dist/
 
 | Папка / файл | Что внутри |
 |---|---|
-| `pages/` | Лендинг, вход/регистрация, список проектов (`useProjects.ts`) |
-| `pages/editor/` | Редактор: `EditorPage.tsx` собирает страницу из частей — `EditorTopBar`, `UploadButtons`, `EditorSidebar` (каталог, выбранный объект, легенда), `AssistantPanel` (правка текстом), `GreenPlanPanel`, диалог параметров `GreenPlanOptionsDialog`, общая выезжающая панель `SlidePanel`, `SaveAsDialog`, `StatusBanners` |
-| `pages/editor/hooks/` | Логика редактора: загрузка DXF/DWG и перетаскивание файлов в окно (`useSceneImport`, `useFileDrop`), правка объектов (`useSceneEditing`), GreenPlan, ассистент, экспорт, проект, каталог |
-| `scene/` | 3D-сцена: здания, зоны ограничений, газон GreenPlan (`Lawns.tsx`), объекты (с GPU-инстансингом повторяющихся моделей), выделение области мышкой, камера (`OrbitControls`: левая кнопка — вращать, правая или два пальца — двигать центр, колесо — масштаб) |
+| `pages/` | Лендинг, вход/регистрация, список проектов (`useProjects.ts`), проект по ссылке без входа (`SharedProjectPage.tsx`: план на 3D-сцене и файлы, только просмотр) |
+| `pages/editor/` | Редактор: `EditorPage.tsx` собирает страницу из частей — `EditorTopBar`, `UploadButtons`, `EditorSidebar` (каталог, выбранный объект, легенда), `AssistantPanel` (правка текстом), `GreenPlanPanel`, диалог параметров `GreenPlanOptionsDialog`, общая выезжающая панель `SlidePanel`, `SaveAsDialog`, `StatusBanners`; диалоги `LayerMappingDialog` (тип слоя чертежа и повторный разбор), `BoundaryChoiceDialog` (выбор границы, когда слоя границы нет), `VisualizationsDialog` (иллюстрации Alice AI ART), `ProjectFilesDialog` (файлы проекта и ссылка «поделиться») |
+| `pages/editor/hooks/` | Логика редактора: загрузка DXF/DWG и перетаскивание файлов в окно (`useSceneImport`, `useFileDrop`), правка объектов (`useSceneEditing`), слои чертежа (`useLayerMapping`), GreenPlan, ассистент, экспорт с проверкой, проект и его файлы (`useProject`, `useProjectFiles`), каталог |
+| `scene/` | 3D-сцена: здания, зоны ограничений, газон GreenPlan (`Lawns.tsx`), бордюры (`CurbStrips.tsx`), подложка карты (`Basemap.tsx`: тайлы OpenStreetMap под сценой, свой сервер тайлов — `VITE_BASEMAP_URL`), объекты (с GPU-инстансингом повторяющихся моделей), выделение области мышкой, камера (`OrbitControls`: левая кнопка — вращать, правая или два пальца — двигать центр, колесо — масштаб) |
 | `store/` | Redux Toolkit: сессия (`authSlice`), последние параметры GreenPlan (`greenPlanSlice`) |
 | `lib/` | `http.ts` — общий клиент API (разбор ошибок, обновление токена, повтор GET), `authSchema.ts` — проверка форм входа (zod), `download.ts`, `typograph.ts` |
 | `api.ts`, `auth.ts`, `catalog.ts` | Запросы к бэкенду, токены, каталог видов |
 | `geometry.ts`, `setbackNorms.ts` | Проверка нарушений отступов при перетаскивании; `setbackNorms.ts` — копия `backend/core/setback_norms.py` (синхронизируется вручную) |
 | `types.ts` | Формат сцены — тот же, что `backend/core/schemas.py` |
-| `components/ui/` | Кнопки, карточки, диалоги, меню |
+| `components/` | `ProjectFilesList.tsx` — список файлов проекта (в редакторе и на странице по ссылке); `ui/` — кнопки, карточки, диалоги, меню |
+| `hooks/` | `useAsyncTask.ts` — действие с флагом «идёт», ошибкой и повтором |
 
 Продакшен-образ — `Dockerfile.prod`: `npm run build` и статика за nginx
 (`nginx/default.conf.template`: сжатие, кеширование сборки, `/api/` —
 прокси на бэкенд по `BACKEND_URL`). `Dockerfile` рядом — дев-режим (vite dev
 server), для сервера не годится.
 
-Страница редактора загружается лениво (`App.tsx`): three.js не попадает в
-основной бандл для посетителей лендинга.
+Страница редактора и страница проекта по ссылке загружаются лениво
+(`App.tsx`): three.js не попадает в основной бандл для посетителей лендинга
+и страницы входа.
